@@ -130,29 +130,29 @@
   (conde
     [(== prim-id 'cons)
      (fresh (a d)
-       (== `(,a ,d) a*)
-       (== `(,a . ,d) val))]
+       (l== `(,a ,d) a*)
+       (l== `(,a . ,d) val))]
     [(== prim-id 'car)
      (fresh (d)
-       (== `((,val . ,d)) a*)
+       (l== `((,val . ,d)) a*)
        (=/= 'closure val))]
     [(== prim-id 'cdr)
      (fresh (a)
-       (== `((,a . ,val)) a*)
+       (l== `((,a . ,val)) a*)
        (=/= 'closure a))]
-    [(== prim-id 'not)
+    [(== prim-id 'not) ;; TODO: stage
      (fresh (b)
        (== `(,b) a*)
        (conde
          ((=/= #f b) (== #f val))
          ((== #f b) (== #t val))))]
-    [(== prim-id 'equal?)
+    [(== prim-id 'equal?) ;; TODO: stage
      (fresh (v1 v2)
        (== `(,v1 ,v2) a*)
        (conde
          ((== v1 v2) (== #t val))
          ((=/= v1 v2) (== #f val))))]
-    [(== prim-id 'symbol?)
+    [(== prim-id 'symbol?) ;; TODO: stage
      (fresh (v)
        (== `(,v) a*)
        (conde
@@ -163,10 +163,10 @@
             (== #f val)))))]
     [(== prim-id 'null?)
      (fresh (v)
-       (== `(,v) a*)
-       (conde
-         ((== '() v) (== #t val))
-         ((=/= '() v) (== #f val))))]))
+       (l== `(,v) a*)
+       (lift `(conde
+               ((== '() ,v) (== #t ,val))
+               ((=/= '() ,v) (== #f ,val)))))]))
 
 (define (prim-expo expr env val)
   (conde
