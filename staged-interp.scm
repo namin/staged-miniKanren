@@ -2,21 +2,18 @@
 ;; using the "half-closure" approach from Reynold's definitional
 ;; interpreters.
 
-(define (evalo expr val)
-  (eval-expo expr initial-env val))
-
-(define (eval-expo expr env val)
+(define (eval-expo stage? expr env val)
   (conde
     ((fresh (v)
        (== `(quote ,v) expr)
        (absento 'closure v)
        (absento 'prim v)
        (not-in-envo 'quote env)
-       (l== val v)))
+       ((if stage? l== ==) val v)))
 
-    ((numbero expr) (l== expr val))
+    ((numbero expr) ((if stage? l== ==) expr val))
 
-    ((symbolo expr) (lookupo expr env val))
+    ((symbolo expr) (lookupo stage? expr env val))
 
     ((fresh (x body)
        (== `(lambda ,x ,body) expr)
@@ -33,21 +30,21 @@
        ;; variadic
        (symbolo x)
        (== `((,x . (val . ,a*)) . ,env^) res)
-       (eval-expo rator env `(closure (lambda ,x ,body) ,env^))
-       (eval-expo body res val)
+       (eval-expo #f rator env `(closure (lambda ,x ,body) ,env^))
+       (eval-expo stage? body res val)
        (eval-listo rands env a*)))
 
     ((fresh (rator x* rands body env^ a* res)
        (== `(,rator . ,rands) expr)
        ;; Multi-argument
-       (eval-expo rator env `(closure (lambda ,x* ,body) ,env^))
+       (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^))
        (eval-listo rands env a*)
        (ext-env*o x* a* env^ res)
-       (eval-expo body res val)))
+       (eval-expo stage? body res val)))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
-       (eval-expo rator env `(prim . ,prim-id))
+       (eval-expo #f rator env `(prim . ,prim-id))
        (eval-primo prim-id a* val)
        (eval-listo rands env a*)))
     
@@ -64,13 +61,13 @@
          ; Multiple argument
          ((list-of-symbolso x)))
        (not-in-envo 'letrec env)
-       (eval-expo letrec-body
+       (eval-expo stage? letrec-body
                   `((,p-name . (rec . (lambda ,x ,body))) . ,env)
                   val)))
 
     ((fresh (x)
-       (== `(unfold ,x) expr)
-       (unfold-lookupo x env val)))
+       (== `(fold ,x) expr)
+       (lookupo #t x env val)))
     
     ((prim-expo expr env val))
     
@@ -78,21 +75,18 @@
 
 (define empty-env '())
 
-(define (lookupo x env t) (ilookupo #t x env t))
-(define (unfold-lookupo x env t) (ilookupo #f x env t))
-
-(define (ilookupo fold? x env t)
+(define (lookupo stage? x env t)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
       ((== x y)
        (conde
-         ((fresh (v) (== `(val . ,v) b) (l== v t)))
+         ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) v t)))
          ((fresh (lam-expr)
             (== `(rec . ,lam-expr) b)
-            ((if fold? l== ==) `(closure ,lam-expr ,env) t)))))
+            ((if stage? l== ==) `(closure ,lam-expr ,env) t)))))
       ((=/= x y)
-       (ilookupo fold? x rest t)))))
+       (lookupo stage? x rest t)))))
 
 (define (not-in-envo x env)
   (conde
@@ -109,7 +103,7 @@
     ((fresh (a d v-a v-d)
        (== `(,a . ,d) expr)
        (== `(,v-a . ,v-d) val)
-       (eval-expo a env v-a)
+       (eval-expo #t a env v-a)
        (eval-listo d env v-d)))))
 
 ;; need to make sure lambdas are well formed.
@@ -197,15 +191,15 @@
     ((== '() e*) (== #t val))
     ((fresh (e)
        (== `(,e) e*)
-       (eval-expo e env val)))
+       (eval-expo #t e env val)))
     ((fresh (e1 e2 e-rest v)
        (== `(,e1 ,e2 . ,e-rest) e*)
        (conde
          ((== #f v)
           (== #f val)
-          (eval-expo e1 env v))
+          (eval-expo #t e1 env v))
          ((=/= #f v)
-          (eval-expo e1 env v)
+          (eval-expo #t e1 env v)
           (ando `(,e2 . ,e-rest) env val)))))))
 
 (define (or-primo expr env val)
@@ -219,24 +213,24 @@
     ((== '() e*) (== #f val))
     ((fresh (e)
        (== `(,e) e*)
-       (eval-expo e env val)))
+       (eval-expo #t e env val)))
     ((fresh (e1 e2 e-rest v)
        (== `(,e1 ,e2 . ,e-rest) e*)
        (conde
          ((=/= #f v)
           (== v val)
-          (eval-expo e1 env v))
+          (eval-expo #t e1 env v))
          ((== #f v)
-          (eval-expo e1 env v)
+          (eval-expo #t e1 env v)
           (oro `(,e2 . ,e-rest) env val)))))))
 
 (define (if-primo expr env val)
   (fresh (e1 e2 e3 t c2 c3)
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
-    (eval-expo e1 env t)
-    (lift-scope (eval-expo e2 env val) c2)
-    (lift-scope (eval-expo e3 env val) c3)
+    (eval-expo #t e1 env t)
+    (lift-scope (eval-expo #t e2 env val) c2)
+    (lift-scope (eval-expo #t e3 env val) c3)
     (lift `(conde
             ((=/= #f ,t) ,c2)
             ((== #f ,t) ,c3)))))
@@ -256,7 +250,7 @@
     (fresh (against-expr mval clause clauses)
       (== `(match ,against-expr ,clause . ,clauses) expr)
       (not-in-envo 'match env)
-      (eval-expo against-expr env mval)
+      (eval-expo #t against-expr env mval)
       (match-clauses mval `(,clause . ,clauses) env val))))
 
 (define (not-symbolo t)
@@ -309,7 +303,7 @@
       ((fresh (env^)
          (p-match p mval '() penv)
          (regular-env-appendo penv env env^)
-         (eval-expo result-expr env^ val)))
+         (eval-expo #t result-expr env^ val)))
       ((p-no-match p mval '() penv)
        (match-clauses mval d env val)))))
 
@@ -320,7 +314,7 @@
     (conde
       ((== mval val)
        (== penv penv-out)
-       (lookupo var penv val))
+       (lookupo #t var penv val))
       ((== `((,var . (val . ,mval)) . ,penv) penv-out)
        (not-in-envo var penv)))))
 
@@ -329,7 +323,7 @@
     (symbolo var)
     (=/= mval val)
     (== penv penv-out)
-    (lookupo var penv val)))
+    (lookupo #t var penv val)))
 
 (define (p-match p mval penv penv-out)
   (conde
