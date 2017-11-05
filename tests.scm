@@ -93,4 +93,9 @@
      (lambda ,(car p1)
        (fresh (...)
          ,(cadr p1)))))
-                       
+
+;; TODOs from looking at generated-appendo
+;; 1. fresh (...) needs to be completed.
+;; 2. pairs in unification need to be properly quoted/lifted.
+;; 3. folded recursive calls could be less noisily lifted.
+;; 4. it should be possible to just evaluate the generated code.
