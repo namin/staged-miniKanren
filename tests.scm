@@ -69,7 +69,7 @@
      '(letrec ((f (lambda (x) (if (null? x) '() (cons 1 ((fold f) (cdr x)))))))
         (f x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
 
-(define r
+(define r (car
 (run 1 (q)
   (fresh (in1 in2 out)
     (== q `(,in1 ,in2 ,out))
@@ -82,20 +82,17 @@
      (cons `(xs-in . (val . ,in1))
            (cons `(ys-in . (val . ,in2))
                  initial-env)) out)))
-)
-
-(define r1 (list (car (car r)) (reverse (caddr (car r)))))
-
-(define p1 (walk* r1 (reify-S r1 '())))
+))
 
 (define generated-appendo
   `(define appendo
-     (lambda ,(car p1)
+     (lambda ,(car r)
        (fresh (...)
-         ,(cadr p1)))))
+         ,(caddr r)))))
 
 ;; TODOs from looking at generated-appendo
 ;; 1. fresh (...) needs to be completed.
 ;; 2. pairs in unification need to be properly quoted/lifted.
 ;; 3. folded recursive calls could be less noisily lifted.
 ;; 4. it should be possible to just evaluate the generated code.
+;; 5. it seems like some pair unifications could be optimized by partial lifting.

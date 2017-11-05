@@ -581,10 +581,8 @@
       (let ((S (c->S c)) (D (c->D c))
             (A (c->A c)) (T (c->T c))
             (C (c->C c)))
-        (let ((v (walk* x S)))
-          (let ((S S
-                   ;(reify-S v '())
-                   ))
+        (let ((v (walk* (list x '!! (reverse C)) S)))
+          (let ((S (reify-S v '())))
             (reify+ v S
               (let ((D (remp
                          (lambda (d) (anyvar? d S))
@@ -597,14 +595,10 @@
               (remp
                 (lambda (t)
                   (var? (walk (lhs t) S)))
-                T)
-              (remp
-                (lambda (t)
-                  (var? (walk (lhs t) S)))
-                C))))))))
+                T))))))))
 
 (define reify+ 
-  (lambda (v S D A T C)
+  (lambda (v S D A T)
     (let ((D (subsume A D)))
       (let ((A (map (lambda (a)
                       (let ((x (lhs a))
@@ -617,30 +611,21 @@
                         `(,x . ,tag)))
                     T)))
         (form (walk* v S)
-              S
               (walk* D S)
               (walk* A S)
-              (rem-subsumed-T (walk* T S))
-              (walk* C S))))))
+              (rem-subsumed-T (walk* T S)))))))
 
 (define form
-  (lambda (v S D A T C)
+  (lambda (v D A T)
     (let ((fd (drop-dot-D (sorter (map sorter D))))
           (fa (sorter (map sort-part (partition* A))))
-          (ft (drop-dot-T (sorter T)))
-          (fc (sorter C)))
+          (ft (drop-dot-T (sorter T))))
       (let ((fb (append ft fa)))
-        (if (null? fc)
-            (cond
-              ((and (null? fd) (null? fb)) v)
-              ((null? fd) `(,v . ,fb))
-              ((null? fb) `(,v . ((=/= . ,fd))))
-              (else `(,v (=/= . ,fd) . ,fb)))
-            (cond
-              ((and (null? fd) (null? fb)) `(,v !! ,fc))
-              ((null? fd) `(,v !! ,fc . ,fb))
-              ((null? fb) `(,v !! ,fc . ((=/= . ,fd))))
-              (else `(,v !! ,fc (=/= . ,fd) . ,fb))))))))
+        (cond
+          ((and (null? fd) (null? fb)) v)
+          ((null? fd) `(,v . ,fb))
+          ((null? fb) `(,v . ((=/= . ,fd))))
+          (else `(,v (=/= . ,fd) . ,fb)))))))
 
 (define drop-dot-D
   (lambda (D)
