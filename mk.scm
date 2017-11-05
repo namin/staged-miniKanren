@@ -1,8 +1,3 @@
-(define lift
-  (lambda (x)
-    (lambdag@ (c : S D A T C)
-      `(,S ,D ,A ,T ,(cons x C)))))
-
 (define c->S (lambda (c) (car c)))
 
 (define c->D (lambda (c) (cadr c)))
@@ -805,3 +800,18 @@
          ((c f) (bind* (unit c) g ...)))))))
 
 (define onceo (lambda (g) (condu (g))))
+
+(define lift
+  (lambda (x)
+    (lambdag@ (c : S D A T C)
+      `(,S ,D ,A ,T ,(cons x C)))))
+
+(define lift-scope
+  (lambda (g out)
+    (lambdag@ (c : S D A T C)
+      (bind*
+       (g `(,S ,D ,A ,T ()))
+       (lambdag@ (c2 : S2 D2 A2 T2 C2)
+         ((fresh ()
+            (== out (walk* C2 S2)))
+          `(,S ,D ,A ,T ,C)))))))
