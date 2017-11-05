@@ -582,7 +582,9 @@
             (A (c->A c)) (T (c->T c))
             (C (c->C c)))
         (let ((v (walk* x S)))
-          (let ((S (reify-S v '())))
+          (let ((S S
+                   ;(reify-S v '())
+                   ))
             (reify+ v S
               (let ((D (remp
                          (lambda (d) (anyvar? d S))
@@ -815,3 +817,5 @@
          ((fresh ()
             (== out (walk* C2 S2)))
           `(,S ,D ,A ,T ,C)))))))
+
+(define l== (lambda (e1 e2) (fresh () (lift `(== ,e1 ,e2)))))
