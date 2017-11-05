@@ -637,10 +637,10 @@
               ((null? fb) `(,v . ((=/= . ,fd))))
               (else `(,v (=/= . ,fd) . ,fb)))
             (cond
-              ((and (null? fd) (null? fb)) `(,v !! , S !! ,fc))
-              ((null? fd) `(,v !! ,S !! ,fc . ,fb))
-              ((null? fb) `(,v !! ,S !! ,fc . ((=/= . ,fd))))
-              (else `(,v !! ,S !! ,fc (=/= . ,fd) . ,fb))))))))
+              ((and (null? fd) (null? fb)) `(,v !! ,fc))
+              ((null? fd) `(,v !! ,fc . ,fb))
+              ((null? fb) `(,v !! ,fc . ((=/= . ,fd))))
+              (else `(,v !! ,fc (=/= . ,fd) . ,fb))))))))
 
 (define drop-dot-D
   (lambda (D)
