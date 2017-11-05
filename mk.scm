@@ -620,21 +620,30 @@
                         `(,x . ,tag)))
                     T)))
         (form (walk* v S)
+              S
               (walk* D S)
               (walk* A S)
-              (rem-subsumed-T (walk* T S)))))))
+              (rem-subsumed-T (walk* T S))
+              (walk* C S))))))
 
 (define form
-  (lambda (v D A T)
+  (lambda (v S D A T C)
     (let ((fd (drop-dot-D (sorter (map sorter D))))
           (fa (sorter (map sort-part (partition* A))))
-          (ft (drop-dot-T (sorter T))))
+          (ft (drop-dot-T (sorter T)))
+          (fc (sorter C)))
       (let ((fb (append ft fa)))
-        (cond
-          ((and (null? fd) (null? fb)) v)
-          ((null? fd) `(,v . ,fb))
-          ((null? fb) `(,v . ((=/= . ,fd))))
-          (else `(,v (=/= . ,fd) . ,fb)))))))
+        (if (null? fc)
+            (cond
+              ((and (null? fd) (null? fb)) v)
+              ((null? fd) `(,v . ,fb))
+              ((null? fb) `(,v . ((=/= . ,fd))))
+              (else `(,v (=/= . ,fd) . ,fb)))
+            (cond
+              ((and (null? fd) (null? fb)) `(,v !! , S !! ,fc))
+              ((null? fd) `(,v !! ,S !! ,fc . ,fb))
+              ((null? fb) `(,v !! ,S !! ,fc . ((=/= . ,fd))))
+              (else `(,v !! ,S !! ,fc (=/= . ,fd) . ,fb))))))))
 
 (define drop-dot-D
   (lambda (D)
