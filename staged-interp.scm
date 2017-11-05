@@ -7,12 +7,14 @@
 
 (define (eval-expo expr env val)
   (conde
-    ((== `(quote ,val) expr)
-     (absento 'closure val)
-     (absento 'prim val)
-     (not-in-envo 'quote env))
+    ((fresh (v)
+       (== `(quote ,v) expr)
+       (absento 'closure v)
+       (absento 'prim v)
+       (not-in-envo 'quote env)
+       (l== val v)))
 
-    ((numbero expr) (== expr val))
+    ((numbero expr) (l== expr val))
 
     ((symbolo expr) (lookupo expr env val))
 
@@ -78,7 +80,7 @@
     (conde
       ((== x y)
        (conde
-         ((== `(val . ,t) b))
+         ((fresh (v) (== `(val . ,v) b) (l== v t)))
          ((fresh (lam-expr)
             (== `(rec . ,lam-expr) b)
             (== `(closure ,lam-expr ,env) t)))))
@@ -222,13 +224,15 @@
           (oro `(,e2 . ,e-rest) env val)))))))
 
 (define (if-primo expr env val)
-  (fresh (e1 e2 e3 t)
+  (fresh (e1 e2 e3 t c2 c3)
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
     (eval-expo e1 env t)
-    (conde
-      ((=/= #f t) (eval-expo e2 env val))
-      ((== #f t) (eval-expo e3 env val)))))
+    (lift-scope (eval-expo e2 env val) c2)
+    (lift-scope (eval-expo e3 env val) c3)
+    (lift `(conde
+            ((=/= #f ,t) ,c2)
+            ((== #f ,t) ,c3)))))
 
 (define initial-env `((list . (val . (closure (lambda x x) ,empty-env)))
                       (not . (val . (prim . not)))
