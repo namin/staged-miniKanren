@@ -67,6 +67,10 @@
        (eval-expo letrec-body
                   `((,p-name . (rec . (lambda ,x ,body))) . ,env)
                   val)))
+
+    ((fresh (x)
+       (== `(unfold ,x) expr)
+       (unfold-lookupo x env val)))
     
     ((prim-expo expr env val))
     
@@ -74,7 +78,10 @@
 
 (define empty-env '())
 
-(define (lookupo x env t)
+(define (lookupo x env t) (ilookupo #t x env t))
+(define (unfold-lookupo x env t) (ilookupo #f x env t))
+
+(define (ilookupo fold? x env t)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
@@ -83,9 +90,9 @@
          ((fresh (v) (== `(val . ,v) b) (l== v t)))
          ((fresh (lam-expr)
             (== `(rec . ,lam-expr) b)
-            (== `(closure ,lam-expr ,env) t)))))
+            ((if fold? l== ==) `(closure ,lam-expr ,env) t)))))
       ((=/= x y)
-       (lookupo x rest t)))))
+       (ilookupo fold? x rest t)))))
 
 (define (not-in-envo x env)
   (conde
