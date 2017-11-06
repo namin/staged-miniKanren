@@ -28,6 +28,8 @@
       (apply (eval f) inputs))))
 
 (ex 't '(x) 'x)
+(gen 't '(x) 'x)
+
 (ex 't '(x) '((lambda (y) y) x))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x))
@@ -42,7 +44,6 @@
 
 (ex 't '(x) '(letrec ((f (lambda (y) y))) (f x)))
 
-;; TODO: quote pairs in unification
 (ex 't '(x) '(letrec ((f (lambda (y) (cons y y)))) (f x)))
 
 (run 1 (q)

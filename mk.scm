@@ -581,7 +581,7 @@
       (let ((S (c->S c)) (D (c->D c))
             (A (c->A c)) (T (c->T c))
             (C (c->C c)))
-        (let ((v (walk* (list x '!! (reverse C)) S)))
+        (let ((v (list (walk* x S) '!! (walk-lift C S))))
           (let ((S (reify-S v '())))
             (reify+ v S
               (let ((D (remp
@@ -788,6 +788,23 @@
 
 (define onceo (lambda (g) (condu (g))))
 
+(define fix-l==
+  (lambda (t)
+    (if (and (pair? t) (eq? '== (car t)))
+        (list '== (quasi (cadr t)) (quasi (caddr t)))
+        t)))
+
+(define quasi
+  (lambda (t)
+    (cond
+      ((var? t) t)
+      ((pair? t) (list 'cons (quasi (car t)) (quasi (cdr t))))
+      (else (list 'quote t)))))
+
+(define walk-lift
+  (lambda (C S)
+    (map fix-l== (walk* (reverse C) S))))
+
 (define lift
   (lambda (x)
     (lambdag@ (c : S D A T C)
@@ -800,7 +817,7 @@
        (g `(,S ,D ,A ,T ()))
        (lambdag@ (c2 : S2 D2 A2 T2 C2)
          ((fresh ()
-            (== out (reverse (walk* C2 S2))))
+            (== out (walk-lift C2 S2)))
           `(,S ,D ,A ,T ,C)))))))
 
 (define l== (lambda (e1 e2) (fresh () (lift `(== ,e1 ,e2)))))
