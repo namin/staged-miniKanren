@@ -800,7 +800,7 @@
        (g `(,S ,D ,A ,T ()))
        (lambdag@ (c2 : S2 D2 A2 T2 C2)
          ((fresh ()
-            (== out (walk* C2 S2)))
+            (== out (reverse (walk* C2 S2))))
           `(,S ,D ,A ,T ,C)))))))
 
 (define l== (lambda (e1 e2) (fresh () (lift `(== ,e1 ,e2)))))

@@ -247,8 +247,8 @@
     (lift-scope (eval-expo #t e2 env val) c2)
     (lift-scope (eval-expo #t e3 env val) c3)
     (lift `(conde
-            ((=/= #f ,t) ,c2)
-            ((== #f ,t) ,c3)))))
+            ((=/= #f ,t) . ,c2)
+            ((== #f ,t) . ,c3)))))
 
 (define initial-env `((list . (val . (closure (lambda x x) ,empty-env)))
                       (not . (val . (prim . not)))

@@ -22,69 +22,28 @@
              (== q ,(car r))
              . ,(caddr r)))))))
 
-(gen 't '(x) 'x)
+(define ex
+  (lambda (p-name inputs rhs)
+    (let ((f (gen p-name inputs rhs)))
+      (apply (eval f) inputs))))
 
-((lambda (x)
-    (run 1 (_.0)
-      (fresh (_.1 _.2)
-        (letrec ([t (lambda (x) (lambda (_.1) (fresh () (== x _.1))))])
-          (fresh () ((t _.2) _.0) (== x _.2))))))
- 'x
- )
+(ex 't '(x) 'x)
+(ex 't '(x) '((lambda (y) y) x))
+(ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x))
+(ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t 'x-in `((x-in . (val . ,in))) out)))
+(ex 't '(x) '5)
+(ex 't '(x) '((lambda (y) y) 5))
+(ex 't '(x) '(((lambda (y) (lambda (z) z)) x) 5))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t '((lambda (x) x) x-in) `((x-in . (val . ,in))) out)))
+(ex 't '(x) '(if #t x 5))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t '(((lambda (y) (lambda (x) x)) x-in) x-in) `((x-in . (val . ,in))) out)))
+(ex 't '(x) '(letrec ((f (lambda (y) y))) 1))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t '5 `((x-in . (val .,in))) out)))
+(ex 't '(x) '(letrec ((f (lambda (y) y))) (f x)))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t '((lambda (x) x) 5) `((x-in . (val . ,in))) out)))
-
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t '(((lambda (y) (lambda (x) x)) x-in) 5) `((x-in . (val . ,in))) out)))
-
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t '(if x-in 4 5) `((x-in . (val . ,in))) out)))
-
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t '(if #t x-in 5) `((x-in . (val . ,in))) out)))
-
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t
-     '(letrec ((f (lambda (x) x)))
-        1) `((x-in . (val . ,in))) out)))
-
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t
-     '(letrec ((f (lambda (x) x)))
-        (f x-in)) `((x-in . (val . ,in))) out)))
+;; TODO: quote pairs in unification
+(ex 't '(x) '(letrec ((f (lambda (y) (cons y y)))) (f x)))
 
 (run 1 (q)
   (fresh (in out)
