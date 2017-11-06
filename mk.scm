@@ -799,7 +799,8 @@
     (cond
       ((var? t) t)
       ((pair? t) (list 'cons (quasi (car t)) (quasi (cdr t))))
-      (else (list 'quote t)))))
+      ((null? t) ''())
+      (else t))))
 
 (define walk-lift
   (lambda (C S)

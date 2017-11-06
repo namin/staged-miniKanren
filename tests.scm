@@ -46,8 +46,12 @@
 
 (ex 't '(x) '(letrec ((f (lambda (y) (cons y y)))) (f x)))
 
+((eval (gen 't '(x) '(null? x))) '())
+((eval (gen 't '(x) '(null? x))) '(a b))
+
 ;; TODO:something fishy is going on... maybe scoping issues?
 (ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
+(gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
 
 (ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
 (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
