@@ -52,7 +52,8 @@
 ((eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cdr y))))) (f x)))) '())
 ((eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cdr y))))) (f x)))) '(a b))
 
-;; TODO:something fishy is going on... maybe scoping issues?
+;; TODO: seems like recursive calls are not working...
+;;   ... maybe due to reuse of variables that should be fresh?
 (ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
 (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
 
