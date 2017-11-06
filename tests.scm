@@ -1,6 +1,7 @@
 (load "mk.scm")
 (load "staged-interp.scm")
 
+;; # Utilities for quick-fixing scope
 (define union
   (lambda (a b)
     (if (null? a) b
@@ -57,6 +58,7 @@
   (lambda (t)
     (car (fix-scope2 (fix-scope1 t) '()))))
 
+;; # Helpers for turning functional procedure into relational one
 (define gen
   (lambda (p-name inputs rhs)
     (let ((r (car
@@ -69,20 +71,27 @@
                              env
                              q))))))
       (fix-scope
-       `(lambda ,inputs
-          (lambda (out)
-            (fresh ()
-              (== ,(car r) out)
-              . ,(caddr r))))))))
+       `(lambda (,@inputs out)
+          (fresh ()
+            (== ,(car r) out)
+            . ,(caddr r)))))))
 
 (define ex
   (lambda (p-name inputs rhs)
     (let ((r (eval (gen p-name inputs rhs))))
-      (run 1 (q)
-        ((apply r inputs) q)))))
+      (run 1 (q) (apply r (append inputs (list q)))))))
+
+(define fwd1
+  (lambda (r)
+    (lambda (x)
+      (run* (q) (r x q)))))
+
+;; # Examples
 
 (ex 't '(x) 'x)
 (gen 't '(x) 'x)
+(define ido (eval (gen 't '(x) 'x)))
+(run* (q) (ido q q))
 
 (ex 't '(x) '((lambda (y) y) x))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x))
@@ -100,28 +109,25 @@
 
 (ex 't '(x) '(letrec ((f (lambda (y) (cons y y)))) (f x)))
 
-((eval (gen 't '(x) '(null? x))) '())
-((eval (gen 't '(x) '(null? x))) '(a b))
+((fwd1 (eval (gen 't '(x) '(null? x)))) '())
+((fwd1 (eval (gen 't '(x) '(null? x)))) '(a b))
 
-((eval (gen 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cdr y))))) (f x)))) '())
-((eval (gen 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cdr y))))) (f x)))) '(a b))
+((fwd1 (eval (gen 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cdr y))))) (f x))))) '())
+((fwd1 (eval (gen 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cdr y))))) (f x))))) '(a b))
 
 (ex 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
 (gen 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
 
 (ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
 (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
-((eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))) '(a b))
+((fwd1 (eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x))))) '(a b))
 
 (define appendo
-  (let ((r
-         (eval
-          (gen 'append '(xs ys)
-               '(if (null? xs) ys
-                    (cons (car xs)
-                          (append (cdr xs) ys)))))
-         ))
-    (lambda (xs ys out) ((r xs ys) out))))
+  (eval
+   (gen 'append '(xs ys)
+        '(if (null? xs) ys
+             (cons (car xs)
+                   (append (cdr xs) ys))))))
 
 (run* (q) (appendo '(a) '(b) q))
 (run* (q) (appendo q '(b) '(a b)))
