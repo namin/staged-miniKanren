@@ -24,4 +24,46 @@ We [stage this interpreter](staged-interp.scm), and observe via [example runs](t
 
 We use the `lift` operator to defer unifications so that the generated program can perform all necessary constraints. We use `lift-scope` so that we can generate code for `if`/`conde` branches. We want to keep the generated relational code first-order, and so a good strategy is to not lift functions and applications. For recursively defined functions, we use explicit folding. For convenience, we change the interface of the interpreter so that the eval and lookup functions, `eval-expo` and `lookupo`, take an extra first parameter `stage?` which allows us to control whether we want/expect lifted or unlifted values.
 
-To be continued...
+Currently, we fix the scope of intermediary fresh variables after the fact... the current algorithm simply assigns a free variable to the closest enclosing fresh capturing all of its occurrences.
+
+Voilà! This is enough to turn `append` into `appendo` automatically, turning the functional code into relational code.
+
+### Generated Code: from `append` to `appendo`
+
+```scheme
+(lambda (xs ys out)
+  (fresh (_.0)
+    (== _.0 out)
+    (letrec ([append (lambda (xs ys)
+                       (lambda (_.1)
+                         (fresh (_.2 _.3 _.4 _.5 _.6 _.9 _.7 _.10 _.11 _.13 _.8 _.12 _.14)
+                           (== (cons _.2 '()) (cons _.3 '()))
+                           (conde
+                             ((== '() _.2) (== #t _.4))
+                             ((=/= '() _.2) (== #f _.4)))
+                           (== xs _.3)
+                           (conde
+                             ((=/= #f _.4) (== ys _.1))
+                             ((== #f _.4)
+                               (== (cons _.5 (cons _.6 '()))
+                                   (cons _.7 (cons _.8 '())))
+                               (== (cons _.5 _.6) _.1)
+                               (== (cons (cons _.7 _.9) '())
+                                   (cons _.10 '()))
+                               (== xs _.10)
+                               (== (cons (cons _.11 _.12) '())
+                                   (cons _.13 '()))
+                               (== xs _.13) (== ys _.14)
+                               ((append _.12 _.14) _.8))))))])
+      (fresh (_.15 _.16)
+        (== xs _.15)
+        (== ys _.16)
+        ((append _.15 _.16) _.0)))))
+```
+
+## Next Steps
+
+- The generated code could be optimized (e.g. exploding unification between two concrete pairs, shortcutting intermediary unifications, ...).
+- Can we be more principled in generating code and fixing scopes?
+- Can we collapse towers of interpreters? What would be interesting towers to try to collapse?
+- Can we meta-run backwards? That is, can we run the staged interpreter with a partially known expression or partially known output? What about constraints like quines?
