@@ -46,47 +46,17 @@
 
 (ex 't '(x) '(letrec ((f (lambda (y) (cons y y)))) (f x)))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t
-     '(letrec ((f (lambda (x) (cons x x))))
-        (f x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
+;; TODO:something fishy is going on... maybe scoping issues?
+(ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t
-    '(letrec ((f (lambda (x) (if (null? x) '() (f (cdr x))))))
-        (f x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
+(ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
+(gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
+((eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))) '(a b))
 
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t
-     '(letrec ((f (lambda (x) (if (null? x) '() (cons 1 (f (cdr x)))))))
-        (f x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
-
-(define r (car
-(run 1 (q)
-  (fresh (in1 in2 out)
-    (== q `(,in1 ,in2 ,out))
-    (eval-expo #t
-     '(letrec ((append (lambda (xs ys)
-                         (if (null? xs) ys
-                             (cons (car xs)
-                                   (append (cdr xs) ys))))))
-        (append xs-in ys-in))
-     (cons `(xs-in . (val . ,in1))
-           (cons `(ys-in . (val . ,in2))
-                 initial-env)) out)))
-))
-
-(define generated-appendo
-  `(define appendo
-     (lambda ,(car r)
-       (fresh (...)
-         ,(caddr r)))))
+(ex 'append '(xs ys)
+    '(if (null? xs) ys
+         (cons (car xs)
+               (append (cdr xs) ys))))
 
 ;; TODOs from looking at generated-appendo
 ;; 1. fresh (...) needs to be completed.
