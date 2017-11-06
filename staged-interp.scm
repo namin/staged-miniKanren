@@ -1,7 +1,3 @@
-;; The definition of 'letrec' is based based on Dan Friedman's code,
-;; using the "half-closure" approach from Reynold's definitional
-;; interpreters.
-
 (define (eval-expo stage? expr env val)
   (conde
     ((fresh (v)
@@ -42,6 +38,13 @@
        (ext-env*o x* a* env^ res)
        (eval-expo stage? body res val)))
 
+    ((fresh (rator rands a* p-name)
+       (== stage? #t)
+       (== `(,rator . ,rands) expr)
+       (eval-expo #f rator env `(call ,p-name))
+       (eval-listo rands env a*)
+       (lift `((,p-name . ,a*) ,val))))
+
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
        (eval-expo #f rator env `(prim . ,prim-id))
@@ -50,25 +53,35 @@
     
     ((handle-matcho expr env val))
 
-    ((fresh (p-name x body letrec-body)
+    ((fresh (p-name x body letrec-body res env^)
        ;; single-function variadic letrec version
        (== `(letrec ((,p-name (lambda ,x ,body)))
               ,letrec-body)
            expr)
+       (== env^ `((,p-name . (rec ,stage? . (lambda ,x ,body))) . ,env))
        (conde
          ; Variadic
-         ((symbolo x))
+         ((symbolo x)
+          (== `((,x . (val . ,x)) . ,env^) res))
          ; Multiple argument
-         ((list-of-symbolso x)))
+         ((list-of-symbolso x)
+          (ext-env*o x x env^ res)))
        (not-in-envo 'letrec env)
-       (eval-expo stage? letrec-body
-                  `((,p-name . (rec . (lambda ,x ,body))) . ,env)
-                  val)))
+       (conde
+         ((== stage? #t)
+          (fresh (out c-body c-letrec-body)
+            (lift-scope
+             (eval-expo #t body res out)
+             c-body)
+            (lift-scope
+             (eval-expo #t letrec-body env^ val)
+             c-letrec-body)
+            (lift `(letrec ((,p-name (lambda ,x (lambda (,out) ,c-body))))
+                     ,c-letrec-body)))
+          )
+         ((== stage? #f)
+          (eval-expo stage? letrec-body env^ val)))))
 
-    ((fresh (x)
-       (== `(fold ,x) expr)
-       (lookupo #t x env val)))
-    
     ((prim-expo expr env val))
     
     ))
@@ -82,9 +95,11 @@
       ((== x y)
        (conde
          ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) v t)))
-         ((fresh (lam-expr)
-            (== `(rec . ,lam-expr) b)
-            ((if stage? l== ==) `(closure ,lam-expr ,env) t)))))
+         ((fresh (rec-fold? lam-expr)
+            (== `(rec ,rec-fold? . ,lam-expr) b)
+            (conde
+              ((== rec-fold? #t) ((if stage? l== ==) `(call ,x) t))
+              ((== rec-fold? #f) ((if stage? l== ==) `(closure ,lam-expr ,env) t)))))))
       ((=/= x y)
        (lookupo stage? x rest t)))))
 

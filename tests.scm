@@ -46,27 +46,34 @@
     (== q `(,in ,out))
     (eval-expo #t
      '(letrec ((f (lambda (x) x)))
-        ((unfold f) x-in)) `((x-in . (val . ,in))) out)))
+        1) `((x-in . (val . ,in))) out)))
+
+(run 1 (q)
+  (fresh (in out)
+    (== q `(,in ,out))
+    (eval-expo #t
+     '(letrec ((f (lambda (x) x)))
+        (f x-in)) `((x-in . (val . ,in))) out)))
 
 (run 1 (q)
   (fresh (in out)
     (== q `(,in ,out))
     (eval-expo #t
      '(letrec ((f (lambda (x) (cons x x))))
-        ((unfold f) x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
-
-(run 1 (q)
-  (fresh (in out)
-    (== q `(,in ,out))
-    (eval-expo #t
-    '(letrec ((f (lambda (x) (if (null? x) '() ((fold f) (cdr x))))))
         (f x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
 
 (run 1 (q)
   (fresh (in out)
     (== q `(,in ,out))
     (eval-expo #t
-     '(letrec ((f (lambda (x) (if (null? x) '() (cons 1 ((fold f) (cdr x)))))))
+    '(letrec ((f (lambda (x) (if (null? x) '() (f (cdr x))))))
+        (f x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
+
+(run 1 (q)
+  (fresh (in out)
+    (== q `(,in ,out))
+    (eval-expo #t
+     '(letrec ((f (lambda (x) (if (null? x) '() (cons 1 (f (cdr x)))))))
         (f x-in)) (cons `(x-in . (val . ,in)) initial-env) out)))
 
 (define r (car
@@ -77,7 +84,7 @@
      '(letrec ((append (lambda (xs ys)
                          (if (null? xs) ys
                              (cons (car xs)
-                                   ((fold append) (cdr xs) ys))))))
+                                   (append (cdr xs) ys))))))
         (append xs-in ys-in))
      (cons `(xs-in . (val . ,in1))
            (cons `(ys-in . (val . ,in2))
