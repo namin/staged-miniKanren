@@ -19,7 +19,7 @@
       `(lambda ,inputs
          (run 1 (q)
            (fresh ,(map reify-name (range 0 20))
-             (== q ,(car r))
+             (== q (list (cons ',p-name ,(quasi inputs)) '= ,(car r)))
              . ,(caddr r)))))))
 
 (define ex
