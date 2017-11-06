@@ -1,6 +1,37 @@
 (load "mk.scm")
 (load "staged-interp.scm")
 
+(define range
+  (lambda (a b)
+    (if (>= a b) '() (cons a (range (+ a 1) b)))))
+
+(define gen
+  (lambda (p-name inputs rhs)
+    (let ((r (car
+              (run 1 (q)
+                (fresh (env)
+                  (ext-env*o inputs inputs initial-env env)
+                  (eval-expo #t
+                             `(letrec ((,p-name (lambda ,inputs ,rhs)))
+                                (,p-name . ,inputs))
+                             env
+                             q))))))
+      `(lambda ,inputs
+         (run 1 (q)
+           (fresh ,(map reify-name (range 0 20))
+             (== q ,(car r))
+             . ,(caddr r)))))))
+
+(gen 't '(x) 'x)
+
+((lambda (x)
+    (run 1 (_.0)
+      (fresh (_.1 _.2)
+        (letrec ([t (lambda (x) (lambda (_.1) (fresh () (== x _.1))))])
+          (fresh () ((t _.2) _.0) (== x _.2))))))
+ 'x
+ )
+
 (run 1 (q)
   (fresh (in out)
     (== q `(,in ,out))

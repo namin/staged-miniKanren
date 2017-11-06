@@ -76,8 +76,8 @@
             (lift-scope
              (eval-expo #t letrec-body env^ val)
              c-letrec-body)
-            (lift `(letrec ((,p-name (lambda ,x (lambda (,out) ,c-body))))
-                     ,c-letrec-body)))
+            (lift `(letrec ((,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
+                     (fresh () . ,c-letrec-body))))
           )
          ((== stage? #f)
           (eval-expo stage? letrec-body env^ val)))))
