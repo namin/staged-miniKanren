@@ -29,8 +29,12 @@ Currently, we fix the scope of intermediary fresh variables after the fact... th
 Voilà! This is enough to turn `append` into `appendo` automatically, turning the functional code into relational code.
 
 ### Generated Code: from `append` to `appendo`
-
-```scheme
+ ```scheme
+(gen 'append '(xs ys)
+        '(if (null? xs) ys
+             (cons (car xs)
+                   (append (cdr xs) ys))))
+;;=> equivalent to appendo: (define appendo (eval (gen 'append '(xs ys) ...)))
 (lambda (xs ys out)
   (fresh (_.0)
     (== _.0 out)
