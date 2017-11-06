@@ -70,15 +70,16 @@
                              q))))))
       (fix-scope
        `(lambda ,inputs
-          (run 1 (q)
+          (lambda (out)
             (fresh ()
-              (== q (list (cons ',p-name ,(quasi inputs)) '= ,(car r)))
+              (== ,(car r) out)
               . ,(caddr r))))))))
 
 (define ex
   (lambda (p-name inputs rhs)
-    (let ((f (gen p-name inputs rhs)))
-      (apply (eval f) inputs))))
+    (let ((r (eval (gen p-name inputs rhs))))
+      (run 1 (q)
+        ((apply r inputs) q)))))
 
 (ex 't '(x) 'x)
 (gen 't '(x) 'x)
@@ -112,12 +113,15 @@
 (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
 ((eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))) '(a b))
 
-(define my-append
-  (eval
-   (gen 'append '(xs ys)
-        '(if (null? xs) ys
-             (cons (car xs)
-                   (append (cdr xs) ys))))))
+(define appendo
+  (let ((r
+         (eval
+          (gen 'append '(xs ys)
+               '(if (null? xs) ys
+                    (cons (car xs)
+                          (append (cdr xs) ys)))))
+         ))
+    (lambda (xs ys out) ((r xs ys) out))))
 
-(my-append '(a) '(b))
-(my-append '(a) '(b c))
+(run* (q) (appendo '(a) '(b) q))
+(run* (q) (appendo q '(b) '(a b)))
