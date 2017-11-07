@@ -71,3 +71,4 @@ Voilà! This is enough to turn `append` into `appendo` automatically, turning th
 - Can we be more principled in generating code and fixing scopes?
 - Can we collapse towers of interpreters? What would be interesting towers to try to collapse?
 - Can we meta-run backwards? That is, can we run the staged interpreter with a partially known expression or partially known output? What about constraints like quines?
+- What about JIT? Would it make sense to compile/optimize based on static = ground and dynamic = unknown/variable? Would this be similar to partial reduction?
