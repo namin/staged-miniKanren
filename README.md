@@ -72,3 +72,7 @@ Voilà! This is enough to turn `append` into `appendo` automatically, turning th
 - Can we collapse towers of interpreters? What would be interesting towers to try to collapse?
 - Can we meta-run backwards? That is, can we run the staged interpreter with a partially known expression or partially known output? What about constraints like quines?
 - What about JIT? Would it make sense to compile/optimize based on static = ground and dynamic = unknown/variable? Would this be similar to partial reduction?
+- Use case: can we optimize the query to generate quines to get a quine generator without interpretive overhead? In this case, the binding annotations will have to fluidly follow the query?
+- Use case: Can we optimize a mostly ground interpreter to fully run examples where the holes are irrelevant and only defer (or possibly synthesize, if given test cases) what it does not know? How can any staging help at all?
+- Question: Don't we need to keep the constraints from the meta-run when fulfilling the run?
+- Question: Meta-running the staged interpreter which assumes a ground expression causes lots of hypotheticals that are easily disproved when considering the deferred operations. Can we fail fast and still package an optimized deferred run?
