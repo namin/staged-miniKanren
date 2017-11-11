@@ -798,9 +798,10 @@
   (lambda (t)
     (cond
       ((var? t) t)
+      ((and (pair? t) (eq? (car t) 'sym)) (cdr t))
       ((pair? t) (list 'cons (quasi (car t)) (quasi (cdr t))))
       ((null? t) ''())
-      (else t))))
+      (else (list 'quote t)))))
 
 (define walk-lift
   (lambda (C S)

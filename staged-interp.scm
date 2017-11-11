@@ -1,3 +1,15 @@
+(define (mapo fo xs ys)
+  (conde
+    ((== xs '()) (== ys '()))
+    ((fresh (xa xd ya yd)
+       (== xs (cons xa xd))
+       (== ys (cons ya yd))
+       (fo xa ya)
+       (mapo fo xd yd)))))
+
+(define (make-list-of-symso xs ys)
+  (mapo (lambda (x y) (== y (cons 'sym x))) xs ys))
+
 (define (eval-expo stage? expr env val)
   (conde
     ((fresh (v)
@@ -53,7 +65,7 @@
     
     ((handle-matcho expr env val))
 
-    ((fresh (p-name x body letrec-body res env^)
+    ((fresh (p-name x body letrec-body x^ res env^)
        ;; single-function variadic letrec version
        (== `(letrec ((,p-name (lambda ,x ,body)))
               ,letrec-body)
@@ -62,10 +74,12 @@
        (conde
          ; Variadic
          ((symbolo x)
-          (== `((,x . (val . ,x)) . ,env^) res))
+          (== x^ (cons 'sym x))
+          (== `((,x . (val . ,x^)) . ,env^) res))
          ; Multiple argument
          ((list-of-symbolso x)
-          (ext-env*o x x env^ res)))
+          (make-list-of-symso x x^)
+          (ext-env*o x x^ env^ res)))
        (not-in-envo 'letrec env)
        (conde
          ((== stage? #t)

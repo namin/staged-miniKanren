@@ -63,8 +63,9 @@
   (lambda (p-name inputs rhs)
     (let ((r (car
               (run 1 (q)
-                (fresh (env)
-                  (ext-env*o inputs inputs initial-env env)
+                (fresh (env inputs^)
+                  (make-list-of-symso inputs inputs^)
+                  (ext-env*o inputs inputs^ initial-env env)
                   (eval-expo #t
                              `(letrec ((,p-name (lambda ,inputs ,rhs)))
                                 (,p-name . ,inputs))
@@ -79,7 +80,8 @@
 (define ex
   (lambda (p-name inputs rhs)
     (let ((r (eval (gen p-name inputs rhs))))
-      (run 1 (q) (apply r (append inputs (list q)))))))
+      (run 1 (q)
+        (apply r (append inputs (list q)))))))
 
 (define fwd1
   (lambda (r)
@@ -123,6 +125,9 @@
 (ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
 (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x)))
 ((fwd1 (eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x))))) '(a b))
+
+(ex 't '(x) ''(a b c))
+(gen 't '(x) ''(a b c))
 
 (define appendo
   (eval
