@@ -383,7 +383,7 @@
              (T (cdr T)))
          (cond
            ((eq? (lhs t) x)
-            (let ((D (ext-D x (pr->tag t) D S C)))
+            (let ((D (ext-D x (pr->tag t) D S)))
               (update-D/T+ x T+ S D T C)))
            (else
             (let ((T+ (cons t T+)))
