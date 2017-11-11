@@ -94,10 +94,12 @@
 (run* (q) (ido q q))
 
 (ex 't '(x) '((lambda (y) y) x))
+(gen 't '(x) '((lambda (y) y) x))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x))
 
 (ex 't '(x) '5)
+(gen 't '(x) '5)
 (ex 't '(x) '((lambda (y) y) 5))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) 5))
 
