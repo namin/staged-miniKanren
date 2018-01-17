@@ -61,5 +61,5 @@
 ;; explicitly deferred
 (run* (q) (l== 1 q))
 
-;; implicitly deferred (TODO)
+;; implicitly deferred
 (run* (q) (dynamic q) (== 1 q))

@@ -248,6 +248,21 @@
          (post-unify-== c S D A T C L))
         (else (mzero))))))
 
+(define partition
+  (lambda (p xs)
+    (cons (filter p xs) (filter (lambda (x) (not (p x))) xs))))
+
+(define defer-dynamic
+  (lambdag@ (c : S D A T C L)
+    (let ((dynamic? (lambda (x) (member x L))))
+      (let ((C+S- (partition (lambda (v) (or (dynamic? (car v))
+                                        (dynamic? (cdr v))))
+                             S)))
+        (let ((S- (cdr C+S-))
+              (C+ (map (lambda (v) `(== ,(car v) ,(cdr v)))
+                       (car C+S-))))
+          `(,S- ,D ,A ,T ,(append C+ C) ,L))))))
+
 (define post-unify-==
   (lambda (c S D A T C L)
     (lambda (S+)
@@ -256,7 +271,8 @@
         ((verify-D D S+) =>
          (lambda (D)
            (cond
-             ((post-verify-D S+ D A T C L) => unit)
+             ((post-verify-D S+ D A T C L) =>
+              defer-dynamic)
              (else (mzero)))))
         (else (mzero))))))
 
