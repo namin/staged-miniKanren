@@ -51,3 +51,15 @@
 (run* (q) (appendo '(a) '(b) q))
 (run* (q) (appendo q '(b) '(a b)))
 (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+
+;; blurring distinction
+;; between logic variable and code
+
+;; fully now
+(run* (q) (== 1 q))
+
+;; explicitly deferred
+(run* (q) (l== 1 q))
+
+;; implicitly deferred (TODO)
+(run* (q) (dynamic q) (== 1 q))
