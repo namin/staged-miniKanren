@@ -63,3 +63,21 @@
 
 ;; implicitly deferred
 (run* (q) (dynamic q) (== 1 q))
+(run* (q) (dynamic q) (== (list 1) (list q)))
+
+;; what to do about constraints?
+(run* (q) (dynamic q) (=/= 1 q))
+
+;; staging with vanilla interp!
+(load "full-interp.scm")
+(run* (q) (dynamic q) (eval-expo 1 '() q))
+
+(run 1 (q)
+  (fresh (arg res) (== q (list arg res))
+    (eval-expo 'x `((x . (val . ,arg))) res)))
+
+(run 1 (q)
+  (fresh (arg res)
+    (dynamic arg res)
+    (== q (list arg res))
+    (eval-expo 'x `((x . (val . ,arg))) res)))
