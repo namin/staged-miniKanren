@@ -261,6 +261,7 @@
         (let ((S- (cdr C+S-))
               (C+ (map (lambda (v) `(== ,(car v) ,(cdr v)))
                        (car C+S-))))
+          ;; TODO: try S instead of S- for supercompilation?
           `(,S- ,D ,A ,T ,(append C+ C) ,L))))))
 
 (define post-unify-==

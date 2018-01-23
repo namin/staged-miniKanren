@@ -66,7 +66,6 @@
   (lift-scope (fake-evalo q 2) c2)
   (lift `(conde ,c1 ,c2))))
 
-
 ;; blurring distinction
 ;; between logic variable and code
 
@@ -117,3 +116,18 @@
     (== q (list arg res))
     (ext-env*o '(x) `(,arg) initial-env env)
     (eval-expo '(if (null? x) 1 2) env res)))
+
+;; WUT?
+(run 1 (q)
+  (fresh (xs ys res env)
+    (dynamic xs ys res)
+    (== q (list xs ys res))
+    (ext-env*o '(xs ys) (list xs ys) initial-env env)
+    (eval-expo `(letrec
+                    ((append (lambda (xs ys)
+                               (if (null? xs) ys
+                                   (cons (car xs)
+                                         (append (cdr xs) ys))))))
+                  (append xs ys))
+               env
+               res)))
