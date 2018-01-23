@@ -120,7 +120,7 @@
 ;; WUT?
 (run 1 (q)
   (fresh (xs ys res env)
-    (dynamic xs ys res)
+    (dynamic xs ys)
     (== q (list xs ys res))
     (ext-env*o '(xs ys) (list xs ys) initial-env env)
     (eval-expo `(letrec
