@@ -52,6 +52,21 @@
 (run* (q) (appendo q '(b) '(a b)))
 (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
 
+(gen 'ex-if '(x) '(if (null? x) 1 2))
+(run* (q) (l== q 1) (l== q 2))
+(run* (q) (conde [(l== q 1)] [(l== q 2)]))
+(run* (q) (lift `(conde [(== ,q 1)] [(== ,q 2)])))
+(define fake-evalo (lambda (q n)
+                     (fresh ()
+                       (l== q n)
+                       (l== n n))))
+(run* (q)
+  (fresh (c1 c2)
+  (lift-scope (fake-evalo q 1) c1)
+  (lift-scope (fake-evalo q 2) c2)
+  (lift `(conde ,c1 ,c2))))
+
+
 ;; blurring distinction
 ;; between logic variable and code
 
@@ -81,3 +96,24 @@
     (dynamic arg res)
     (== q (list arg res))
     (eval-expo 'x `((x . (val . ,arg))) res)))
+
+(run 1 (q)
+  (fresh (arg res env)
+    (dynamic arg res)
+    (== q (list arg res))
+    (ext-env*o '(x) `(,arg) initial-env env)
+    (eval-expo '(if (null? '()) 1 2) env res)))
+
+
+(run* (q)
+  (fresh (arg res env)
+    (== q (list arg res))
+    (ext-env*o '(x) `(,arg) initial-env env)
+    (eval-expo '(if (null? x) 1 2) env res)))
+
+(run* (q)
+  (fresh (arg res env)
+    (dynamic arg res)
+    (== q (list arg res))
+    (ext-env*o '(x) `(,arg) initial-env env)
+    (eval-expo '(if (null? x) 1 2) env res)))
