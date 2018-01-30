@@ -140,3 +140,6 @@
                   (append xs ys))
                env
                res)))
+
+;; next step
+;; what is an alternative to semantics to if-grounding for dynamic variables?
