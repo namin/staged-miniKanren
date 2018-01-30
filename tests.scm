@@ -96,6 +96,9 @@
     (== q (list arg res))
     (eval-expo 'x `((x . (val . ,arg))) res)))
 
+;; The examples with if show that each branch is grounded
+;; into an answer.
+
 (run 1 (q)
   (fresh (arg res env)
     (dynamic arg res)
@@ -103,7 +106,6 @@
     (ext-env*o '(x) `(,arg) initial-env env)
     (eval-expo '(if (null? '()) 1 2) env res)))
 
-
 (run* (q)
   (fresh (arg res env)
     (== q (list arg res))
@@ -116,9 +118,16 @@
     (== q (list arg res))
     (ext-env*o '(x) `(,arg) initial-env env)
     (eval-expo '(if (null? x) 1 2) env res)))
+;; =>
+'(((_.0 _.1) !! ((== '() _.0) (== _.1 '1)))
+  (((_.0 _.1) !! ((== _.2 _.0) (== _.1 '2)))
+   (=/= ((_.2 ())))))
 
-;; WUT?
-(run 1 (q)
+;; The if-grounding means that for a recursive relation,
+;; we ground on the recursive structure...
+;; This is not symbolic enough, it's suggestive
+;; of limitations SMT has with recursion.
+(run 2 (q)
   (fresh (xs ys res env)
     (dynamic xs ys)
     (== q (list xs ys res))
