@@ -143,3 +143,17 @@
 
 ;; next step
 ;; what is an alternative to semantics to if-grounding for dynamic variables?
+
+;; here is one alternative:
+(load "dynamic-interp.scm")
+(define appendo
+  (eval
+   (gen 'append '(xs ys)
+        '(if (null? xs) ys
+             (cons (car xs)
+                   (append (cdr xs) ys))))))
+
+
+(run* (q) (appendo '(a) '(b) q))
+(run* (q) (appendo q '(b) '(a b)))
+(run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))

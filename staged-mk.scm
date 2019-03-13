@@ -252,16 +252,18 @@
   (lambda (p xs)
     (cons (filter p xs) (filter (lambda (x) (not (p x))) xs))))
 
-(define defer-dynamic
+(define (defer-dynamic oldS)
   (lambdag@ (c : S D A T C L)
-    (let ((dynamic? (lambda (x) (member x L))))
-      (let ((C+S- (partition (lambda (v) (or (dynamic? (car v))
-                                        (dynamic? (cdr v))))
+    (let ((dynamic? (lambda (x) (memq x L))))
+      (let ((C+S- (partition (lambda (v)
+                               (and (not (memq v oldS))
+                                    (or (dynamic? (car v))
+                                        (dynamic? (cdr v)))))
                              S)))
-        (let ((S- (cdr C+S-))
-              (C+ (map (lambda (v) `(== ,(car v) ,(cdr v)))
-                       (car C+S-))))
-          ;; TODO: try S instead of S- for supercompilation?
+        (let* ((S- (cdr C+S-))
+               (C+ (map (lambda (v) `(== ,(car v) ,(cdr v)))
+                        (car C+S-))))
+          ;;(printf "dynamic: ~a\n~a\n~a\n" L C+ S-)
           `(,S- ,D ,A ,T ,(append C+ C) ,L))))))
 
 (define post-unify-==
@@ -273,7 +275,7 @@
          (lambda (D)
            (cond
              ((post-verify-D S+ D A T C L) =>
-              defer-dynamic)
+              (defer-dynamic S))
              (else (mzero)))))
         (else (mzero))))))
 
@@ -836,7 +838,7 @@
   (lambda (g out)
     (lambdag@ (c : S D A T C L)
       (bind*
-       (g `(,S ,D ,A ,T (), L))
+       (g `(,S ,D ,A ,T () ,L))
        (lambdag@ (c2 : S2 D2 A2 T2 C2 L2)
          ((fresh ()
             (== out (walk-lift C2 S2)))

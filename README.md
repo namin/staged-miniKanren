@@ -63,6 +63,31 @@ Voilà! This is enough to turn `append` into `appendo` automatically, turning th
         (== xs _.15)
         (== ys _.16)
         ((append _.15 _.16) _.0)))))
+;;
+;; with dynamic interpretation, the code is more concise:
+(lambda (xs ys out)
+  (fresh
+    (_.0)
+    (== _.0 out)
+    (letrec ([append (lambda (xs ys)
+                       (lambda (_.1)
+                         (fresh
+                           (_.2 _.3 _.5 _.7 _.8 _.6 _.9 _.10 _.4)
+                           (conde
+                             ((== '() _.2) (== #t _.3))
+                             ((=/= '() _.2) (== #f _.3)))
+                           (== _.2 xs)
+                           (conde
+                             ((=/= #f _.3) (== _.4 ys) (== _.4 _.1))
+                             ((== #f _.3) (== _.1 (cons _.5 _.6))
+                               (== (cons _.5 _.7) xs)
+                               (== (cons _.8 _.9) xs) (== _.10 ys)
+                               ((append _.9 _.10) _.6))))))])
+      (fresh
+        (_.11 _.12)
+        (== _.11 xs)
+        (== _.12 ys)
+        ((append _.11 _.12) _.0)))))
 ```
 
 ## Next Steps

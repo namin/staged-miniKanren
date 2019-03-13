@@ -61,8 +61,8 @@
     (let ((r (car
               (run 1 (q)
                 (fresh (env inputs^)
-                  (make-list-of-symso inputs inputs^)
                   (ext-env*o inputs inputs^ initial-env env)
+                  (make-list-of-symso inputs inputs^)
                   (eval-expo #t
                              `(letrec ((,p-name (lambda ,inputs ,rhs)))
                                 (,p-name . ,inputs))
