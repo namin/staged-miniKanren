@@ -15,7 +15,7 @@ These are the sorts of questions we want to answer.
 
 Our starting point is [the canonical miniKanren](https://github.com/miniKanren/miniKanren), which supports logical operators `==`, `fresh`, `conde`, interface operators `run`, `run*` and constraint operators `=/=`, `symbolo`, `numbero`, `absento`.
 
-We extend miniKanren with staging operators `lift` and `lift-scope`. `lift` records some term for later, `lift-scope` takes a goal and a variable and runs the goal accumulating all lifted terms into the variable and discarding the local context.
+We extend miniKanren with staging operators `lift`, `lift-scope` and `dynamic`. `lift` records some term for later, `lift-scope` takes a goal and a variable and runs the goal accumulating all lifted terms into the variable and discarding the local context. A variable `x` marked `dynamic` with `(dynamic x)` has all unifications with it automatically lifted.
 
 ### Tests
 
