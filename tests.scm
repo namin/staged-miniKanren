@@ -157,3 +157,71 @@
 (run* (q) (appendo '(a) '(b) q))
 (run* (q) (appendo q '(b) '(a b)))
 (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+
+;; beyond appendo
+;; challenge 6 of ICFP'17
+(load "staged-mk.scm")
+(load "staged-interp.scm")
+(define member?o
+  (eval (gen 'member? '(x ls)
+             '(if (null? ls) #f
+                  (if (equal? (car ls) x) #t
+                      (member? x (cdr ls)))))))
+(run* (q) (member?o 'A '(A) q))
+(run* (q) (member?o 'A '(B) q))
+(run* (q) (fresh (a b) (== q (list a b)) (member?o a '() b)))
+(define proof?o
+  (eval (gen 'proof? '(proof)
+             '(match proof
+                [`(,A ,assms assumption ()) (member? A assms)]
+                [`(,B ,assms modus-ponens
+                      (((,A => ,B) ,assms ,r1 ,ants1)
+                       (,A ,assms ,r2 ,ants2)))
+                 (and (proof? (list (list A '=> B) assms r1 ants1))
+                      (proof? (list A assms r2 ants2)))]
+                [`((,A => ,B) ,assms conditional
+                   ((,B (,A . ,assms) ,rule ,ants)))
+                 (proof? (list B (cons A assms) rule ants))])
+             (lambda (x)
+               `(letrec ([member?
+                         (lambda (x ls)
+                           (if (null? ls) #f
+                               (if (equal? (car ls) x) #t
+                                   (member? x (cdr ls)))))])
+                  ,x)))))
+
+
+(define proof?o (eval r))
+
+(run 10 (q) (proof?o q #t))
+(run* (q) (proof?o '(A (A (A => B) (B => C)) assumption ()) #t))
+(run* (q) (proof?o '((A => B) (A (A => B) (B => C)) assumption ()) q))
+(run* (q) (proof?o '(B (A (A => B) (B => C))
+        modus-ponens
+        (((A => B) (A (A => B) (B => C)) assumption ())
+          (A (A (A => B) (B => C)) assumption ()))) q))
+(run 2 (q) (proof?o example-proof #t))
+
+(run 1 (prf)
+  (fresh (body)
+    ;; prove C holds, given A, A => B, B => C
+    (== prf `(C (A (A => B) (B => C)) . ,body))
+    (proof?o prf #t)))
+
+(time
+ (run 1 (prf)
+   (fresh (body)
+     ;; prove (A => B) => (B => C) => (A => C) holds absolutely
+     (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
+     (proof?o prf #t))))
+
+(time
+ (run 1 (prf)
+   (fresh (body)
+     ;; prove commutativity of ∧, encoded with =>
+     ;; ((A ∧ B) => (B ∧ A))
+     ;; (¬(¬A ∨ ¬B) => ¬(¬B ∨ ¬A))
+     ;; (¬(A => ¬B) => ¬(B => ¬A))
+     ;; (((A => (B => C)) => C) => ((B => (A => C)) => C))
+     (== prf `((((A => (B => C)) => C) => ((B => (A => C)) => C)) () . ,body))
+     (proof?o prf #t))))
