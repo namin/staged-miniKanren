@@ -219,3 +219,28 @@
      ;; (((A => (B => C)) => C) => ((B => (A => C)) => C))
      (== prf `((((A => (B => C)) => C) => ((B => (A => C)) => C)) () . ,body))
      (proof?o prf #t))))
+
+
+;; running with holes
+(load "unstaged-interp.scm")
+(define (gen-hole query result)
+  (let ((r (run 1 (q)
+             (eval-expo #t
+                        (query q)
+                        initial-env
+                        (quasi result)))))
+    (let ((r (car r)))
+      (fix-scope
+       `(lambda (,(car r)) (fresh () . ,(caddr r)))))))
+(define (syn-hole query result)
+  (let ((e (eval (gen-hole query result))))
+    (run 1 (q) (e q))))
+
+(syn-hole
+  (lambda (q)
+   `(letrec ((append
+              (lambda (xs ys)
+                (if (null? xs) ,q
+                    (cons (car xs) (append (cdr xs) ys))))))
+      (append '(1 2) '(3 4))))
+  '(1 2 3 4))

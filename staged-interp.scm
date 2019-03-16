@@ -10,95 +10,115 @@
 (define (make-list-of-symso xs ys)
   (mapo (lambda (x y) (== y (cons 'sym x))) xs ys))
 
+(define (varo x)
+  (lambda (c)
+    (if (var? (walk* x (c->S c)))
+        c
+        #f)))
+
+(define (non-varo x)
+  (lambda (c)
+    (if (var? (walk* x (c->S c)))
+        #f
+        c)))
+
 (define (eval-expo stage? expr env val)
   (conde
-    ((fresh (v)
-       (== `(quote ,v) expr)
-       (absento 'closure v)
-       (absento 'prim v)
-       (not-in-envo 'quote env)
-       ((if stage? l== ==) val v)))
+    ((== stage? #t) (varo expr)
+     (lambda (c)
+       ((lift `(u-eval-expo ,expr ,(quasi (walk* env (c->S c))) ,val))
+        c)))
+    ((conde
+       ((non-varo expr))
+       ((== stage? #f)))
+     (conde
+       ((fresh (v)
+          (== `(quote ,v) expr)
+          (absento 'closure v)
+          (absento 'prim v)
+          (not-in-envo 'quote env)
+          ((if stage? l== ==) val v)))
 
-    ((numbero expr) ((if stage? l== ==) expr val))
+       ((numbero expr) ((if stage? l== ==) expr val))
 
-    ((symbolo expr) (lookupo stage? expr env val))
+       ((symbolo expr) (lookupo stage? expr env val))
 
-    ((fresh (x body)
-       (== `(lambda ,x ,body) expr)
-       (== `(closure (lambda ,x ,body) ,env) val)
-       (conde
-         ;; Variadic
-         ((symbolo x))
-         ;; Multi-argument
-         ((list-of-symbolso x)))
-       (not-in-envo 'lambda env)))
-    
-    ((fresh (rator x rands body env^ a* res)
-       (== `(,rator . ,rands) expr)
-       ;; variadic
-       (symbolo x)
-       (== `((,x . (val . ,a*)) . ,env^) res)
-       (eval-expo #f rator env `(closure (lambda ,x ,body) ,env^))
-       (eval-expo stage? body res val)
-       (eval-listo rands env a*)))
+       ((fresh (x body)
+          (== `(lambda ,x ,body) expr)
+          (== `(closure (lambda ,x ,body) ,env) val)
+          (conde
+            ;; Variadic
+            ((symbolo x))
+            ;; Multi-argument
+            ((list-of-symbolso x)))
+          (not-in-envo 'lambda env)))
+       
+       ((fresh (rator x rands body env^ a* res)
+          (== `(,rator . ,rands) expr)
+          ;; variadic
+          (symbolo x)
+          (== `((,x . (val . ,a*)) . ,env^) res)
+          (eval-expo #f rator env `(closure (lambda ,x ,body) ,env^))
+          (eval-expo stage? body res val)
+          (eval-listo rands env a*)))
 
-    ((fresh (rator x* rands body env^ a* res)
-       (== `(,rator . ,rands) expr)
-       ;; Multi-argument
-       (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^))
-       (eval-listo rands env a*)
-       (ext-env*o x* a* env^ res)
-       (eval-expo stage? body res val)))
+       ((fresh (rator x* rands body env^ a* res)
+          (== `(,rator . ,rands) expr)
+          ;; Multi-argument
+          (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^))
+          (eval-listo rands env a*)
+          (ext-env*o x* a* env^ res)
+          (eval-expo stage? body res val)))
 
-    ((fresh (rator rands a* p-name)
-       (== stage? #t)
-       (== `(,rator . ,rands) expr)
-       (eval-expo #f rator env `(call ,p-name))
-       (eval-listo rands env a*)
-       (lift `((,p-name . ,a*) ,val))))
+       ((fresh (rator rands a* p-name)
+          (== stage? #t)
+          (== `(,rator . ,rands) expr)
+          (eval-expo #f rator env `(call ,p-name))
+          (eval-listo rands env a*)
+          (lift `((,p-name . ,a*) ,val))))
 
-    ((fresh (rator x* rands a* prim-id)
-       (== `(,rator . ,rands) expr)
-       (eval-expo #f rator env `(prim . ,prim-id))
-       (eval-primo prim-id a* val)
-       (eval-listo rands env a*)))
-    
-    ((handle-matcho expr env val))
+       ((fresh (rator x* rands a* prim-id)
+          (== `(,rator . ,rands) expr)
+          (eval-expo #f rator env `(prim . ,prim-id))
+          (eval-primo prim-id a* val)
+          (eval-listo rands env a*)))
+       
+       ((handle-matcho expr env val))
 
-    ((fresh (p-name x body letrec-body x^ res env^)
-       ;; single-function variadic letrec version
-       (== `(letrec ((,p-name (lambda ,x ,body)))
-              ,letrec-body)
-           expr)
-       (== env^ `((,p-name . (rec ,stage? . (lambda ,x ,body))) . ,env))
-       (conde
-         ; Variadic
-         ((symbolo x)
-          (== x^ (cons 'sym x))
-          (== `((,x . (val . ,x^)) . ,env^) res))
-         ; Multiple argument
-         ((list-of-symbolso x)
-          (make-list-of-symso x x^)
-          (ext-env*o x x^ env^ res)))
-       (not-in-envo 'letrec env)
-       (conde
-         ((== stage? #t)
-          (fresh (out c-body c-letrec-body)
-            (lift-scope
-             (eval-expo #t body res out)
-             c-body)
-            (lift-scope
-             (eval-expo #t letrec-body env^ val)
-             c-letrec-body)
-            (lift `(letrec ((,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
-                     (fresh () . ,c-letrec-body))))
-          )
-         ((== stage? #f)
-          (eval-expo stage? letrec-body env^ val)))))
+       ((fresh (p-name x body letrec-body x^ res env^)
+          ;; single-function variadic letrec version
+          (== `(letrec ((,p-name (lambda ,x ,body)))
+                 ,letrec-body)
+              expr)
+          (== env^ `((,p-name . (rec ,stage? . (lambda ,x ,body))) . ,env))
+          (conde
+                                        ; Variadic
+            ((symbolo x)
+             (== x^ (cons 'sym x))
+             (== `((,x . (val . ,x^)) . ,env^) res))
+                                        ; Multiple argument
+            ((list-of-symbolso x)
+             (make-list-of-symso x x^)
+             (ext-env*o x x^ env^ res)))
+          (not-in-envo 'letrec env)
+          (conde
+            ((== stage? #t)
+             (fresh (out c-body c-letrec-body)
+               (lift-scope
+                (eval-expo #t body res out)
+                c-body)
+               (lift-scope
+                (eval-expo #t letrec-body env^ val)
+                c-letrec-body)
+               (lift `(letrec ((,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
+                        (fresh () . ,c-letrec-body))))
+             )
+            ((== stage? #f)
+             (eval-expo stage? letrec-body env^ val)))))
 
-    ((prim-expo expr env val))
-    
-    ))
+       ((prim-expo expr env val))
+       
+       ))))
 
 (define empty-env '())
 
