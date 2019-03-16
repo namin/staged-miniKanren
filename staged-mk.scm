@@ -1,3 +1,7 @@
+(define partition
+  (lambda (p xs)
+    (cons (filter p xs) (filter (lambda (x) (not (p x))) xs))))
+
 (define c->S (lambda (c) (car c)))
 
 (define c->D (lambda (c) (cadr c)))
@@ -112,6 +116,26 @@
      (lambdag@ (c) (inc (mplus* (bind* (g0 c) g ...)
                                 (bind* (g1 c) g^ ...) ...))))))
 
+(define all-of
+  (lambda (c-inf)
+    (case-inf c-inf
+      (() (list))
+      ((f) (all-of (f)))
+      ((c) (list c))
+      ((c f) (cons c
+                   (all-of f)
+                   )
+       ))))
+
+(define-syntax lconde
+  (syntax-rules ()
+    ((_ (g0 g ...) (g1 g^ ...) ...)
+     (lambdag@ (c : S D A T C L)
+       (let ((r (let ((c2 `(,S ,D ,A ,T () ,L)))
+                  (append (all-of (bind* (g0 c2) g ...))
+                          (all-of (bind* (g1 c2) g^ ...)) ...))))
+         ((lift `(conde ,@(map (lambda (c3) (walk-lift (c->C c3) (c->S c3))) r))) c))))))
+
 (define-syntax mplus*
   (syntax-rules ()
     ((_ e) e)
@@ -209,8 +233,16 @@
         (else (let ((D+ (list (prefix-S S+ S))))
                 (let ((D+ (subsume A D+)))
                   (let ((D+ (subsume T D+)))
-                    (let ((D (append D+ D)))
-                      (unit `(,S ,D ,A ,T ,C ,L)))))))))))
+                    (let ((dynamic? (lambda (x) (memq x L))))
+                      (let ((C+D- (partition (lambda (v)
+                                               (or (dynamic? (car v))
+                                                   (dynamic? (cdr v))))
+                                             (apply append D+))))
+                        (let ((C+ (map (lambda (v) `(=/= ,(car v) ,(cdr v)))
+                                       (car C+D-))))
+                          (let ((D (append D+ D)))
+                            (let ((C (append (reverse C+) C)))
+                              (unit `(,S ,D ,A ,T ,C ,L)))))))))))))))
 
 (define prefix-S
   (lambda (S+ S)
@@ -248,10 +280,6 @@
          (post-unify-== c S D A T C L))
         (else (mzero))))))
 
-(define partition
-  (lambda (p xs)
-    (cons (filter p xs) (filter (lambda (x) (not (p x))) xs))))
-
 (define (defer-dynamic oldS)
   (lambdag@ (c : S D A T C L)
     (let ((dynamic? (lambda (x) (memq x L))))
@@ -264,7 +292,7 @@
                (C+ (map (lambda (v) `(== ,(car v) ,(cdr v)))
                         (car C+S-))))
           ;;(printf "dynamic: ~a\n~a\n~a\n" L C+ S-)
-          `(,S- ,D ,A ,T ,(append C+ C) ,L))))))
+          `(,S- ,D ,A ,T ,(append (reverse C+) C) ,L))))))
 
 (define post-unify-==
   (lambda (c S D A T C L)
@@ -812,8 +840,10 @@
 
 (define fix-l==
   (lambda (t)
-    (if (and (pair? t) (eq? '== (car t)))
-        (list '== (quasi (cadr t)) (quasi (caddr t)))
+    (if (and (pair? t)
+             (or (eq? '== (car t))
+                 (eq? '=/= (car t))))
+        (list (car t) (quasi (cadr t)) (quasi (caddr t)))
         t)))
 
 (define quasi

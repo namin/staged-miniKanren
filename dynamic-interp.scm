@@ -134,6 +134,7 @@
     ((== '() expr)
      (== '() val))
     ((fresh (a d v-a v-d)
+       (dynamic v-a)
        (== `(,a . ,d) expr)
        (== `(,v-a . ,v-d) val)
        (eval-expo #t a env v-a)
@@ -181,8 +182,10 @@
          ((== #f b) (== #t val))))]
     [(== prim-id 'equal?)
      (fresh (v1 v2)
+       (dynamic v1 v2)
+       (dynamic val)
        (== `(,v1 ,v2) a*)
-       (conde
+       (lconde
          ((== v1 v2) (== #t val))
          ((=/= v1 v2) (== #f val))))]
     [(== prim-id 'symbol?)
@@ -196,10 +199,12 @@
             (== #f val)))))]
     [(== prim-id 'null?)
      (fresh (v)
+       (dynamic v)
+       (dynamic val)
        (== `(,v) a*)
-       (lift `(conde
-               ((== '() ,v) (== #t ,val))
-               ((=/= '() ,v) (== #f ,val)))))]))
+       (lconde
+        ((== '() v) (== #t val))
+        ((=/= '() v) (== #f val))))]))
 
 (define (prim-expo expr env val)
   (conde
@@ -226,8 +231,9 @@
        (== `(,e) e*)
        (eval-expo #t e env val)))
     ((fresh (e1 e2 e-rest v)
+       (dynamic v)
        (== `(,e1 ,e2 . ,e-rest) e*)
-       (conde
+       (lconde
          ((== #f v)
           (== #f val)
           (eval-expo #t e1 env v))
@@ -259,14 +265,13 @@
 
 (define (if-primo expr env val)
   (fresh (e1 e2 e3 t c2 c3)
+    (dynamic t)
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
     (eval-expo #t e1 env t)
-    (lift-scope (eval-expo #t e2 env val) c2)
-    (lift-scope (eval-expo #t e3 env val) c3)
-    (lift `(conde
-            ((=/= #f ,t) . ,c2)
-            ((== #f ,t) . ,c3)))))
+    (lconde
+      ((=/= #f t) (eval-expo #t e2 env val))
+      ((== #f t) (eval-expo #t e3 env val)))))
 
 (define initial-env `((list . (val . (closure (lambda x x) ,empty-env)))
                       (not . (val . (prim . not)))
@@ -281,6 +286,8 @@
 (define handle-matcho
   (lambda  (expr env val)
     (fresh (against-expr mval clause clauses)
+      (dynamic mval)
+      (dynamic val)
       (== `(match ,against-expr ,clause . ,clauses) expr)
       (not-in-envo 'match env)
       (eval-expo #t against-expr env mval)
@@ -332,23 +339,23 @@
 (define (match-clauses mval clauses env val)
   (fresh (p result-expr d penv)
     (== `((,p ,result-expr) . ,d) clauses)
-    (conde
-      ((fresh (env^)
-         (p-match p mval '() penv)
-         (regular-env-appendo penv env env^)
-         (eval-expo #t result-expr env^ val)))
-      ((p-no-match p mval '() penv)
-       (match-clauses mval d env val)))))
+    (lconde
+     ((fresh (env^)
+        (p-match p mval '() penv)
+        (regular-env-appendo penv env env^)
+        (eval-expo #t result-expr env^ val)))
+     (;(p-no-match p mval '() penv)
+      (match-clauses mval d env val)))))
 
 (define (var-p-match var mval penv penv-out)
   (fresh (val)
     (symbolo var)
     (=/= 'closure mval)
+    (== mval val)
     (conde
-      ((== mval val)
-       (== penv penv-out)
-       (lookupo #t var penv val))
-      ((== `((,var . (val . ,mval)) . ,penv) penv-out)
+      ((== penv penv-out)
+       (lookupo #f var penv val))
+      ((== `((,var . (val . ,val)) . ,penv) penv-out)
        (not-in-envo var penv)))))
 
 (define (var-p-no-match var mval penv penv-out)
@@ -356,7 +363,7 @@
     (symbolo var)
     (=/= mval val)
     (== penv penv-out)
-    (lookupo #t var penv val)))
+    (lookupo #f var penv val)))
 
 (define (p-match p mval penv penv-out)
   (conde

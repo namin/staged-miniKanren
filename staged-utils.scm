@@ -59,8 +59,7 @@
 (define gen
   (lambda (p-name inputs rhs . contexts)
     (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
-      (let ((r (car
-                (run 1 (q)
+      (let ((r (run 1 (q)
                   (fresh (env inputs^)
                     (ext-env*o inputs inputs^ initial-env env)
                     (make-list-of-symso inputs inputs^)
@@ -69,12 +68,13 @@
                                 `(letrec ((,p-name (lambda ,inputs ,rhs)))
                                    (,p-name . ,inputs)))
                                env
-                               q))))))
-        (fix-scope
-         `(lambda (,@inputs out)
-            (fresh ()
-              (== ,(car r) out)
-              . ,(caddr r))))))))
+                               q)))))
+        (let ((r (car r)))
+          (fix-scope
+           `(lambda (,@inputs out)
+              (fresh ()
+                (== ,(car r) out)
+                . ,(caddr r)))))))))
 
 (define ex
   (lambda (p-name inputs rhs)

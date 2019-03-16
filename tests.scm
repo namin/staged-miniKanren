@@ -153,15 +153,12 @@
              (cons (car xs)
                    (append (cdr xs) ys))))))
 
-
 (run* (q) (appendo '(a) '(b) q))
 (run* (q) (appendo q '(b) '(a b)))
 (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
 
 ;; beyond appendo
 ;; challenge 6 of ICFP'17
-(load "staged-mk.scm")
-(load "staged-interp.scm")
 (define member?o
   (eval (gen 'member? '(x ls)
              '(if (null? ls) #f
@@ -191,8 +188,6 @@
                   ,x)))))
 
 
-(define proof?o (eval r))
-
 (run 10 (q) (proof?o q #t))
 (run* (q) (proof?o '(A (A (A => B) (B => C)) assumption ()) #t))
 (run* (q) (proof?o '((A => B) (A (A => B) (B => C)) assumption ()) q))
@@ -200,7 +195,6 @@
         modus-ponens
         (((A => B) (A (A => B) (B => C)) assumption ())
           (A (A (A => B) (B => C)) assumption ()))) q))
-(run 2 (q) (proof?o example-proof #t))
 
 (run 1 (prf)
   (fresh (body)
