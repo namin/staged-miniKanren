@@ -52,7 +52,7 @@
             ;; Multi-argument
             ((list-of-symbolso x)))
           (not-in-envo 'lambda env)))
-       
+
        ((fresh (rator x rands body env^ a* res)
           (== `(,rator . ,rands) expr)
           ;; variadic
@@ -85,13 +85,13 @@
             (lambda (c)
               ((lift `(u-eval-expo ',expr ,(quasi (walk* env (c->S c))) ,val))
                c))))
-                
+
        ((fresh (rator x* rands a* prim-id)
           (== `(,rator . ,rands) expr)
           (eval-expo #f rator env `(prim . ,prim-id))
           (eval-primo prim-id a* val)
           (eval-listo rands env a*)))
-       
+
        ((handle-matcho expr env val))
 
        ((fresh (bindings* letrec-body out-bindings* env^)
@@ -110,7 +110,7 @@
                      (fresh () . ,c-letrec-body))))))
 
        ((prim-expo expr env val))
-       
+
        ))))
 
 (define (letrec-bindings-evalo bindings* out-bindings* env envt env^)

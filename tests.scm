@@ -271,7 +271,7 @@
            (if (null? l) #f
                (if (p (car (car l))) (car l)
                    (assp p (cdr l))))))
-        
+
         (var
          (lambda (c) (cons 'var c)))
         (var?
@@ -287,7 +287,7 @@
         (ext-s
          (lambda (x v s)
            (cons (cons x v) s)))
-        
+
         (==
          (lambda (u v)
            (lambda (s/c)
@@ -300,7 +300,7 @@
         (mzero
          (lambda ()
            '()))
-        
+
         (unify
          (lambda (u v s)
            ((lambda (u v)
@@ -318,20 +318,20 @@
            (lambda (s/c)
              ((lambda (c) ((f (var c)) (cons (car s/c) (cons 's c))))
               (cdr s/c)))))
-        
+
         (disj
          (lambda (g1 g2)
            (lambda (s/c) (mplus (g1 s/c) (g2 s/c)))))
         (conj
          (lambda (g1 g2)
            (lambda (s/c) (bind (g1 s/c) g2))))
-        
+
         (mplus
          (lambda ($1 $2)
            (if (null? $1) $2
                (if (pair? $1) (cons (car $1) (mplus (cdr $1) $2))
                    (lambda () (mplus $2 ($1)))))))
-        
+
         (bind
          (lambda ($ g)
            (if (null? $) (mzero)
@@ -359,7 +359,7 @@
 )
 
      1
-     
+
      )
 
    initial-env
