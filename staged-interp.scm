@@ -85,40 +85,48 @@
        
        ((handle-matcho expr env val))
 
-       ((fresh (p-name x body letrec-body x^ res env^)
+       ((fresh (bindings* letrec-body out-bindings* env^)
           ;; single-function variadic letrec version
-          (== `(letrec ((,p-name (lambda ,x ,body)))
+          (== `(letrec ,bindings*
                  ,letrec-body)
               expr)
-          (== env^ `((,p-name . (rec ,stage? . (lambda ,x ,body))) . ,env))
-          (conde
-                                        ; Variadic
-            ((symbolo x)
-             (== x^ (cons 'sym x))
-             (== `((,x . (val . ,x^)) . ,env^) res))
-                                        ; Multiple argument
-            ((list-of-symbolso x)
-             (make-list-of-symso x x^)
-             (ext-env*o x x^ env^ res)))
+          (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
           (not-in-envo 'letrec env)
-          (conde
-            ((== stage? #t)
-             (fresh (out c-body c-letrec-body)
-               (lift-scope
-                (eval-expo #t body res out)
-                c-body)
-               (lift-scope
-                (eval-expo #t letrec-body env^ val)
-                c-letrec-body)
-               (lift `(letrec ((,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
-                        (fresh () . ,c-letrec-body))))
-             )
-            ((== stage? #f)
-             (eval-expo stage? letrec-body env^ val)))))
+          (== stage? #t)
+          (fresh (c-letrec-body)
+            (lift-scope
+             (eval-expo #t letrec-body env^ val)
+             c-letrec-body)
+            (lift `(letrec ,out-bindings*
+                     (fresh () . ,c-letrec-body))))))
 
        ((prim-expo expr env val))
        
        ))))
+
+(define (letrec-bindings-evalo bindings* out-bindings* env envt env^)
+  (conde
+    ((== '() bindings*)
+     (== '() out-bindings*)
+     (== env env^))
+    ((fresh (b bs e es res out c-body o os p-name x body x^)
+       (== (cons b bs) bindings*)
+       (== b `(,p-name (lambda ,x ,body)))
+       (== (cons e es) env^)
+       (== e `(,p-name . (rec . (lambda ,x ,body))))
+       (== (cons o os) out-bindings*)
+       (letrec-bindings-evalo bs os env envt es)
+       (conde
+            ((symbolo x)
+             (== x^ (cons 'sym x))
+             (== `((,x . (val . ,x^)) . ,envt) res))
+            ((list-of-symbolso x)
+             (make-list-of-symso x x^)
+             (ext-env*o x x^ envt res)))
+       (lift-scope
+        (eval-expo #t body res out)
+        c-body)
+       (== o `(,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
 
 (define empty-env '())
 
@@ -129,11 +137,9 @@
       ((== x y)
        (conde
          ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) v t)))
-         ((fresh (rec-fold? lam-expr)
-            (== `(rec ,rec-fold? . ,lam-expr) b)
-            (conde
-              ((== rec-fold? #t) ((if stage? l== ==) `(call ,x) t))
-              ((== rec-fold? #f) ((if stage? l== ==) `(closure ,lam-expr ,env) t)))))))
+         ((fresh (lam-expr)
+            (== `(rec . ,lam-expr) b)
+            ((if stage? l== ==) `(call ,x) t)))))
       ((=/= x y)
        (lookupo stage? x rest t)))))
 

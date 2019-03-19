@@ -244,3 +244,18 @@
                     (cons (car xs) (append (cdr xs) ys))))))
       (append '(1 2) '(3 4))))
   '(1 2 3 4))
+
+;; mutually-recursive
+(run 1 (q)
+  (eval-expo #t
+             `(letrec ((even? (lambda (n)
+                                (if (equal? n 'z) #t
+                                    (if (equal? n '(s z)) #f
+                                        (odd? (car (cdr n)))))))
+                       (odd? (lambda (n)
+                               (if (equal? n 'z) #f
+                                   (if (equal? n '(s z)) #t
+                                       (even? (car (cdr n))))))))
+                (even? '(s (s (s z)))))
+             initial-env
+             q))
