@@ -262,10 +262,8 @@
 
 ;; this requires
 ;; https://github.com/namin/faster-miniKanren/tree/staged
-(run 1 (q)
-  (eval-expo
-   #t
-   `(letrec
+(define (micro query)
+     `(letrec
        ((assp
          (lambda (p l)
            (if (null? l) #f
@@ -358,9 +356,23 @@
                 (pull $)))))
 )
 
-     1
+     ,query
 
-     )
+     ))
 
-   initial-env
-   q))
+(define (gen-micro x)
+  (let ((r
+         (run 1 (q)
+           (eval-expo
+            #t
+            (micro x)
+            initial-env
+            q))))
+    (let ((r (car r)))
+      (fix-scope
+       `(lambda (out)
+          (fresh ()
+            (== ,(car r) out)
+            . ,(caddr r)))))))
+
+(define g1 (gen-micro 1))
