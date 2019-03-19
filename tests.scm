@@ -286,13 +286,13 @@
          (lambda (x v s)
            (cons (cons x v) s)))
 
-        (==
+        (===
          (lambda (u v)
            (lambda (s/c)
              ((lambda (s) (if s (unit (cons s (cdr s/c))) (mzero)))
               (unify u v (car s/c))))))
 
-                (unit
+        (unit
          (lambda (s/c)
            (cons s/c (mzero))))
         (mzero
@@ -376,3 +376,5 @@
             . ,(caddr r)))))))
 
 (define g1 (gen-micro 1))
+(define t1 (eval g1))
+(run 1 (q) (t1 q))

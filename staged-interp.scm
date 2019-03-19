@@ -45,7 +45,7 @@
 
        ((fresh (x body)
           (== `(lambda ,x ,body) expr)
-          (== `(closure (lambda ,x ,body) ,env) val)
+          ((if stage? l== ==) `(closure (lambda ,x ,body) ,env) val)
           (conde
             ;; Variadic
             ((symbolo x))
