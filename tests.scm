@@ -1,4 +1,8 @@
-(load "staged-mk.scm")
+;; using namin/faster-miniKaren branch staged
+(load "../faster-miniKanren/mk-vicare.scm")
+(load "../faster-miniKanren/mk.scm")
+
+;(load "staged-mk.scm")
 (load "staged-interp.scm")
 (load "staged-utils.scm")
 
