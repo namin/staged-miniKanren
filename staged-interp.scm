@@ -225,6 +225,15 @@
          ((fresh (a d)
             (== `(,a . ,d) v)
             (== #f val)))))]
+    [(== prim-id 'number?)
+     (fresh (v)
+       (l== `(,v) a*)
+       (lift `(conde
+         ((numbero ,v) (== #t ,val))
+         ((symbolo ,v) (== #f ,val))
+         ((fresh (a d)
+            (== `(,a . ,d) ,v)
+            (== #f ,val))))))]
     [(== prim-id 'pair?)
      (fresh (v)
        (l== `(,v) a*)
@@ -319,6 +328,7 @@
                       (not . (val . (prim . not)))
                       (equal? . (val . (prim . equal?)))
                       (symbol? . (val . (prim . symbol?)))
+		      (number? . (val . (prim . number?)))
                       (pair? . (val . (prim . pair?)))
                       (cons . (val . (prim . cons)))
                       (null? . (val . (prim . null?)))
