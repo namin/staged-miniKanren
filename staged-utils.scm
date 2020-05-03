@@ -23,7 +23,9 @@
       ((and (pair? t) (eq? 'fresh (car t)))
        (let ((r (map fix-scope1 (cddr t))))
          (let ((body (map car r))
-               (vs (fold-right union '() (map cadr r))))
+               (vs (fold-right union
+			       (filter (lambda (x) (not (is-reified-var? x))) (cadr t))
+			       (map cadr r))))
            (list `(fresh ,vs . ,body) (list)))))
       ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
        (let ((r (map fix-scope1 (cddr t))))
@@ -41,7 +43,7 @@
   (lambda (t s)
     (cond
       ((and (pair? t) (eq? 'fresh (car t)))
-       (let ((ds (diff (cadr t) s))
+       (let ((ds (diff (cadr t) (filter is-reified-var? s)))
              (us (union (cadr t) s)))
          `(fresh ,ds . ,(map (lambda (x) (fix-scope2 x us)) (cddr t)))))
       ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))

@@ -27,3 +27,7 @@
 	      (bin-tree? (car (cdr t)))
 	      (bin-tree? (car (cdr (cdr (cdr t))))))))
 ))
+
+(run 10 (q) (bin-treeo q #t))
+
+(run 10 (q) (bin-treeo q #f))
