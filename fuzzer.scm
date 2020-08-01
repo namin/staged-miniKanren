@@ -30,4 +30,4 @@
 
 (run 10 (q) (bin-treeo q #t))
 
-(run 10 (q) (bin-treeo q #f))
+(time (length (run 10000 (q) (bin-treeo q #f))))

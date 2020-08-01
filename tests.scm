@@ -381,4 +381,4 @@
 
 (define g1 (gen-micro 1))
 (define t1 (eval g1))
-(run 1 (q) (t1 q))
+(run 2 (q) (t1 q))
