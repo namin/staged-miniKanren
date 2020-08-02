@@ -382,3 +382,27 @@
 (define g1 (gen-micro 1))
 (define t1 (eval g1))
 (run 2 (q) (t1 q))
+
+
+(define my-mapo
+  (eval
+   (gen 'my-map '(f xs)
+        '(if (null? xs) '()
+             (cons (f (car xs))
+                   (my-map f (cdr xs)))))))
+
+(define h1o
+  (eval
+   (gen 'h1 '(f)
+        '(f 1))))
+
+(run 1
+     (q)
+     (h1o q 2))
+
+(run 1
+     (q)
+     (my-mapo
+      q
+      '((1) (2) (3))
+      '(1 2 3)))
