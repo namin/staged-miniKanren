@@ -406,3 +406,60 @@
       q
       '((1) (2) (3))
       '(1 2 3)))
+
+;; currying is painful
+(define curried-appendo
+  (eval
+   (gen 'curried-append '(xs)
+        '(lambda (ys)
+           (if (null? xs) ys
+               (cons (car xs)
+                     ((curried-append (cdr xs)) ys)))))))
+
+(define opt-curried-appendo
+  (eval
+   (gen 'opt-curried-append '(xs)
+        '(if (null? xs) (lambda (ys) ys)
+             (lambda (ys)
+               (cons (car xs)
+                     ((opt-curried-append (cdr xs)) ys)))))))
+
+(run* (q)
+     (fresh (p)
+            (curried-appendo '(a) p)
+            (fresh (l e)
+                   (== p `(closure ,l ,e))
+                   (u-eval-expo (list l (list 'quote '(b))) e q))))
+(run* (q)
+     (fresh (p)
+            (opt-curried-appendo '(a) p)
+            (fresh (l e)
+                   (== p `(closure ,l ,e))
+                   (u-eval-expo (list l (list 'quote '(b))) e q))))
+
+(run* (q)
+      (fresh (p)
+             (curried-appendo q p)
+             (fresh (l e)
+                    (== p `(closure ,l ,e))
+                    (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
+(run* (q)
+      (fresh (p)
+             (opt-curried-appendo q p)
+             (fresh (l e)
+                    (== p `(closure ,l ,e))
+                    (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
+
+(run* (q) (fresh (x y p)
+                 (== q (list x y))
+                 (curried-appendo x p)
+                 (fresh (l e)
+                    (== p `(closure ,l ,e))
+                    (u-eval-expo (list l (list 'quote y)) e '(a b c d e)))))
+
+(run* (q) (fresh (x y p)
+                 (== q (list x y))
+                 (opt-curried-appendo x p)
+                 (fresh (l e)
+                    (== p `(closure ,l ,e))
+                    (u-eval-expo (list l (list 'quote y)) e '(a b c d e)))))
