@@ -13,6 +13,22 @@
 (run 10 (q) (nato q #t))
 (run 10 (q) (nato q #f))
 
+;; l = '() | cons n l
+
+(define listo
+  (eval
+   (gen 'list? '(x)
+        '(if (null? x)
+             #t
+             (and (pair? x)
+                  (number? (car x))
+                  (list? (cdr x))
+                  )))))
+
+(run 10 (q) (listo q #t))
+(run 10 (q) (listo q #f))
+
+
 (define bin-treeo
 (eval
 (gen 'bin-tree? '(t)
