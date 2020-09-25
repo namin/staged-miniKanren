@@ -13,7 +13,7 @@
 (run 10 (q) (nato q #t))
 (run 10 (q) (nato q #f))
 
-;; l = ()| cons n l
+;; l = '() | cons n l
 
 (define listo
   (eval
