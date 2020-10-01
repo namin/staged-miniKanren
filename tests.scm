@@ -33,18 +33,25 @@
 (test (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x)) '(x))
 (test (ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x)) '(x))
 
-(ex 't '(x) '5)
-(gen 't '(x) '5)
-(ex 't '(x) '((lambda (y) y) 5))
-(ex 't '(x) '(((lambda (y) (lambda (z) z)) x) 5))
+(test (ex 't '(x) '5) '(5))
+(test (gen 't '(x) '5)
+      '(lambda (x out)
+         (fresh
+          (_.0)
+          (== _.0 out)
+          (letrec ([t (lambda (x)
+                        (lambda (_.1) (fresh () (== '5 _.1))))])
+            (fresh (_.2) (== x _.2) ((t _.2) _.0))))))
+(test (ex 't '(x) '((lambda (y) y) 5)) '(5))
+(test (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) 5)) '(5))
 
-(ex 't '(x) '(if #t x 5))
+(test (ex 't '(x) '(if #t x 5)) '(x))
 
-(ex 't '(x) '(letrec ((f (lambda (y) y))) 1))
+(test (ex 't '(x) '(letrec ((f (lambda (y) y))) 1)) '(1))
 
-(ex 't '(x) '(letrec ((f (lambda (y) y))) (f x)))
+(test (ex 't '(x) '(letrec ((f (lambda (y) y))) (f x))) '(x))
 
-(ex 't '(x) '(letrec ((f (lambda (y) (cons y y)))) (f x)))
+(test (ex 't '(x) '(letrec ((f (lambda (y) (cons y y)))) (f x))) '((x . x)))
 
 ((fwd1 (eval (gen 't '(x) '(null? x)))) '())
 ((fwd1 (eval (gen 't '(x) '(null? x)))) '(a b))
