@@ -8,22 +8,30 @@
 (load "test-check.scm")
 
 (test (ex 't '(x) 'x) '(x))
-(define id-gen
-  '(lambda (x out)
-     (fresh
-      (_.0)
-      (== _.0 out)
-      (letrec ([t (lambda (x)
-                    (lambda (_.1) (fresh () (== x _.1))))])
-        (fresh (_.2) (== x _.2) ((t _.2) _.0))))))
-(test (gen 't '(x) 'x) id-gen)
+(test
+ (gen 't '(x) 'x)
+ '(lambda (x out)
+    (fresh
+     (_.0)
+     (== _.0 out)
+     (letrec ([t (lambda (x)
+                   (lambda (_.1) (fresh () (== x _.1))))])
+       (fresh (_.2) (== x _.2) ((t _.2) _.0))))))
 (define ido (eval (gen 't '(x) 'x)))
 (test (run* (q) (ido q q)) '(_.0))
 
 (test (ex 't '(x) '((lambda (y) y) x)) '(x))
-(gen 't '(x) '((lambda (y) y) x))
-(ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x))
-(ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x))
+(test
+ (gen 't '(x) '((lambda (y) y) x))
+ '(lambda (x out)
+    (fresh
+     (_.0)
+     (== _.0 out)
+     (letrec ([t (lambda (x)
+                   (lambda (_.1) (fresh (_.2) (== x _.2) (== _.2 _.1))))])
+       (fresh (_.3) (== x _.3) ((t _.3) _.0))))))
+(test (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x)) '(x))
+(test (ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x)) '(x))
 
 (ex 't '(x) '5)
 (gen 't '(x) '5)
