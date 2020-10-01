@@ -145,23 +145,50 @@
              (cons (car xs)
                    (append (cdr xs) ys))))))
 
-(run* (q) (appendo '(a) '(b) q))
-(run* (q) (appendo q '(b) '(a b)))
-(run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+(test (run* (q) (appendo '(a) '(b) q)) '((a b)))
+(test (run* (q) (appendo q '(b) '(a b))) '((a)))
+(test
+ (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+ '((() (a b c d e)) ((a) (b c d e)) ((a b) (c d e))
+  ((a b c) (d e)) ((a b c d) (e)) ((a b c d e) ())))
 
-(gen 'ex-if '(x) '(if (null? x) 1 2))
-(run* (q) (l== q 1) (l== q 2))
-(run* (q) (conde [(l== q 1)] [(l== q 2)]))
-(run* (q) (lift `(conde [(== ,q 1)] [(== ,q 2)])))
+(test
+ (gen 'ex-if '(x) '(if (null? x) 1 2))
+ '(lambda (x out)
+  (fresh
+    (_.0)
+    (== _.0 out)
+    (letrec ([ex-if (lambda (x)
+                      (lambda (_.1)
+                        (fresh (_.2 _.3 _.4) (== (cons _.2 '()) (cons _.3 '()))
+                          (conde
+                            ((== '() _.2) (== #t _.4))
+                            ((=/= '() _.2) (== #f _.4)))
+                          (== x _.3)
+                          (conde
+                            ((=/= #f _.4) (== '1 _.1))
+                            ((== #f _.4) (== '2 _.1))))))])
+      (fresh (_.5) (== x _.5) ((ex-if _.5) _.0))))))
+(test (run* (q) (l== q 1) (l== q 2))
+      '((_.0 !! ((== _.0 2) (== _.0 1)))))
+(test (run* (q) (conde [(l== q 1)] [(l== q 2)]))
+      '((_.0 !! ((== _.0 1))) (_.0 !! ((== _.0 2)))))
+(test (run* (q) (lift `(conde [(== ,q 1)] [(== ,q 2)])))
+      '((_.0 !! ((conde ((== _.0 1)) ((== _.0 2)))))))
 (define fake-evalo (lambda (q n)
                      (fresh ()
                        (l== q n)
                        (l== n n))))
-(run* (q)
-  (fresh (c1 c2)
-  (lift-scope (fake-evalo q 1) c1)
-  (lift-scope (fake-evalo q 2) c2)
-  (lift `(conde ,c1 ,c2))))
+(test
+ (run* (q)
+       (fresh (c1 c2)
+              (lift-scope (fake-evalo q 1) c1)
+              (lift-scope (fake-evalo q 2) c2)
+              (lift `(conde ,c1 ,c2))))
+ '((_.0 !!
+        ((conde
+          ((== _.0 '1) (== '1 '1))
+          ((== _.0 '2) (== '2 '2)))))))
 
 ;; beyond appendo
 ;; challenge 6 of ICFP'17
