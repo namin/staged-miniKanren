@@ -197,9 +197,9 @@
              '(if (null? ls) #f
                   (if (equal? (car ls) x) #t
                       (member? x (cdr ls)))))))
-(run* (q) (member?o 'A '(A) q))
-(run* (q) (member?o 'A '(B) q))
-(run* (q) (fresh (a b) (== q (list a b)) (member?o a '() b)))
+(test (run* (q) (member?o 'A '(A) q)) '(#t))
+(test (run* (q) (member?o 'A '(B) q)) '(#f))
+(test (run* (q) (fresh (a b) (== q (list a b)) (member?o a '() b))) '((_.0 #f)))
 (define proof?o
   (eval (gen 'proof? '(proof)
              '(match proof
@@ -221,28 +221,83 @@
                   ,x)))))
 
 
-(run 10 (q) (proof?o q #t))
-(run* (q) (proof?o '(A (A (A => B) (B => C)) assumption ()) #t))
-(run* (q) (proof?o '((A => B) (A (A => B) (B => C)) assumption ()) q))
-(run* (q) (proof?o '(B (A (A => B) (B => C))
-        modus-ponens
-        (((A => B) (A (A => B) (B => C)) assumption ())
-          (A (A (A => B) (B => C)) assumption ()))) q))
+(test
+ (run 10 (q) (proof?o q #t))
+ '((_.0 (_.0 . _.1) assumption ()) ((_.0 (_.1 _.0 . _.2) assumption ()) (=/= ((_.0 _.1))))
+  ((_.0 (_.1 _.2 _.0 . _.3) assumption ())
+    (=/= ((_.0 _.1)) ((_.0 _.2))))
+  ((_.0 (_.1 _.2 _.3 _.0 . _.4) assumption ())
+    (=/= ((_.0 _.1)) ((_.0 _.2)) ((_.0 _.3))))
+  ((_.0 => _.0)
+    _.1
+    conditional
+    ((_.0 (_.0 . _.1) assumption ())))
+  ((_.0 (_.1 _.2 _.3 _.4 _.0 . _.5) assumption ())
+    (=/= ((_.0 _.1)) ((_.0 _.2)) ((_.0 _.3)) ((_.0 _.4))))
+  ((_.0 (_.1 _.2 _.3 _.4 _.5 _.0 . _.6) assumption ())
+    (=/= ((_.0 _.1)) ((_.0 _.2)) ((_.0 _.3)) ((_.0 _.4))
+         ((_.0 _.5))))
+  ((_.0 (_.1 _.2 _.3 _.4 _.5 _.6 _.0 . _.7) assumption ())
+    (=/= ((_.0 _.1)) ((_.0 _.2)) ((_.0 _.3)) ((_.0 _.4))
+         ((_.0 _.5)) ((_.0 _.6))))
+  ((_.0 (_.1 _.2 _.3 _.4 _.5 _.6 _.7 _.0 . _.8) assumption ())
+    (=/= ((_.0 _.1)) ((_.0 _.2)) ((_.0 _.3)) ((_.0 _.4))
+         ((_.0 _.5)) ((_.0 _.6)) ((_.0 _.7))))
+  (((_.0 => _.1)
+     (_.1 . _.2)
+     conditional
+     ((_.1 (_.0 _.1 . _.2) assumption ())))
+   (=/= ((_.0 _.1))))))
 
-(run 1 (prf)
-  (fresh (body)
-    ;; prove C holds, given A, A => B, B => C
-    (== prf `(C (A (A => B) (B => C)) . ,body))
-    (proof?o prf #t)))
-
-(time
+(test
+ (run* (q) (proof?o '(A (A (A => B) (B => C)) assumption ()) #t))
+ '(_.0))
+(test
+ (run* (q) (proof?o '((A => B) (A (A => B) (B => C)) assumption ()) q))
+ '(#t))
+(test
+ (run* (q) (proof?o '(B (A (A => B) (B => C))
+                        modus-ponens
+                        (((A => B) (A (A => B) (B => C)) assumption ())
+                         (A (A (A => B) (B => C)) assumption ()))) q))
+ '(#t))
+(test
+ (run 1 (prf)
+      (fresh (body)
+             ;; prove C holds, given A, A => B, B => C
+             (== prf `(C (A (A => B) (B => C)) . ,body))
+             (proof?o prf #t)))
+ '((C (A (A => B) (B => C))
+    modus-ponens
+    (((B => C) (A (A => B) (B => C)) assumption ())
+      (B (A (A => B) (B => C))
+         modus-ponens
+         (((A => B) (A (A => B) (B => C)) assumption ())
+           (A (A (A => B) (B => C)) assumption ())))))))
+(time-test
  (run 1 (prf)
    (fresh (body)
      ;; prove (A => B) => (B => C) => (A => C) holds absolutely
      (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-     (proof?o prf #t))))
+     (proof?o prf #t)))
+ '((((A => B) => ((B => C) => (A => C)))
+   ()
+   conditional
+   ((((B => C) => (A => C))
+      ((A => B))
+      conditional
+      (((A => C)
+         ((B => C) (A => B))
+         conditional
+         ((C (A (B => C) (A => B))
+             modus-ponens
+             (((B => C) (A (B => C) (A => B)) assumption ())
+               (B (A (B => C) (A => B))
+                  modus-ponens
+                  (((A => B) (A (B => C) (A => B)) assumption ())
+                    (A (A (B => C) (A => B)) assumption ())))))))))))))
 
-(time
+(time-test
  (run 1 (prf)
    (fresh (body)
      ;; prove commutativity of ∧, encoded with =>
@@ -251,7 +306,40 @@
      ;; (¬(A => ¬B) => ¬(B => ¬A))
      ;; (((A => (B => C)) => C) => ((B => (A => C)) => C))
      (== prf `((((A => (B => C)) => C) => ((B => (A => C)) => C)) () . ,body))
-     (proof?o prf #t))))
+     (proof?o prf #t)))
+ '(((((A => (B => C)) => C) => ((B => (A => C)) => C))
+    ()
+    conditional
+    ((((B => (A => C)) => C)
+      (((A => (B => C)) => C))
+      conditional
+      ((C ((B => (A => C)) ((A => (B => C)) => C))
+          modus-ponens
+          ((((A => (B => C)) => C)
+            ((B => (A => C)) ((A => (B => C)) => C))
+            assumption
+            ())
+           ((A => (B => C))
+            ((B => (A => C)) ((A => (B => C)) => C))
+              conditional
+              (((B => C)
+                (A (B => (A => C)) ((A => (B => C)) => C))
+                conditional
+                ((C (B A (B => (A => C)) ((A => (B => C)) => C))
+                     modus-ponens
+                     (((A => C)
+                       (B A (B => (A => C)) ((A => (B => C)) => C))
+                       modus-ponens
+                       (((B => (A => C))
+                         (B A (B => (A => C)) ((A => (B => C)) => C))
+                           assumption
+                           ())
+                        (B (B A (B => (A => C)) ((A => (B => C)) => C))
+                           assumption
+                           ())))
+                      (A (B A (B => (A => C)) ((A => (B => C)) => C))
+                          assumption
+                          ())))))))))))))))
 
 
 ;; running with holes
