@@ -5,12 +5,22 @@
 (load "staged-interp.scm")
 (load "staged-utils.scm")
 
-(ex 't '(x) 'x)
-(gen 't '(x) 'x)
-(define ido (eval (gen 't '(x) 'x)))
-(run* (q) (ido q q))
+(load "test-check.scm")
 
-(ex 't '(x) '((lambda (y) y) x))
+(test (ex 't '(x) 'x) '(x))
+(define id-gen
+  '(lambda (x out)
+     (fresh
+      (_.0)
+      (== _.0 out)
+      (letrec ([t (lambda (x)
+                    (lambda (_.1) (fresh () (== x _.1))))])
+        (fresh (_.2) (== x _.2) ((t _.2) _.0))))))
+(test (gen 't '(x) 'x) id-gen)
+(define ido (eval (gen 't '(x) 'x)))
+(test (run* (q) (ido q q)) '(_.0))
+
+(test (ex 't '(x) '((lambda (y) y) x)) '(x))
 (gen 't '(x) '((lambda (y) y) x))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x))
 (ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x))
