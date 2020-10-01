@@ -357,29 +357,96 @@
   (let ((e (eval (gen-hole query result))))
     (run 1 (q) (e q))))
 
-(syn-hole
+(test
+ (syn-hole
   (lambda (q)
-   `(letrec ((append
-              (lambda (xs ys)
-                (if (null? xs) ,q
-                    (cons (car xs) (append (cdr xs) ys))))))
-      (append '(1 2) '(3 4))))
+    `(letrec ((append
+               (lambda (xs ys)
+                 (if (null? xs) ,q
+                     (cons (car xs) (append (cdr xs) ys))))))
+       (append '(1 2) '(3 4))))
   '(1 2 3 4))
+ '(ys))
 
 ;; mutually-recursive
-(run 1 (q)
-  (eval-expo #t
-             `(letrec ((even? (lambda (n)
-                                (if (equal? n 'z) #t
-                                    (if (equal? n '(s z)) #f
-                                        (odd? (car (cdr n)))))))
-                       (odd? (lambda (n)
-                               (if (equal? n 'z) #f
-                                   (if (equal? n '(s z)) #t
-                                       (even? (car (cdr n))))))))
-                (even? '(s (s (s z)))))
-             initial-env
-             q))
+(test
+ (run 1 (q)
+      (eval-expo #t
+                 `(letrec ((even? (lambda (n)
+                                    (if (equal? n 'z) #t
+                                        (if (equal? n '(s z)) #f
+                                            (odd? (car (cdr n)))))))
+                           (odd? (lambda (n)
+                                   (if (equal? n 'z) #f
+                                       (if (equal? n '(s z)) #t
+                                           (even? (car (cdr n))))))))
+                    (even? '(s (s (s z)))))
+                 initial-env
+                 q))
+ '((_.0 !!
+      ((letrec ([even? (lambda (n)
+                         (lambda (_.1)
+                           (fresh ()
+                             (== (cons _.2 (cons _.3 '()))
+                                 (cons _.4 (cons _.5 '())))
+                             (conde
+                               ((== _.2 _.3) (== #t _.6))
+                               ((=/= _.2 _.3) (== #f _.6)))
+                             (== n _.4) (== _.5 'z)
+                             (conde
+                               ((=/= #f _.6) (== '#t _.1))
+                               ((== #f _.6)
+                                 (== (cons _.7 (cons _.8 '()))
+                                     (cons _.9 (cons _.10 '())))
+                                 (conde
+                                   ((== _.7 _.8) (== #t _.11))
+                                   ((=/= _.7 _.8) (== #f _.11)))
+                                 (== n _.9)
+                                 (== _.10 (cons 's (cons 'z '())))
+                                 (conde
+                                   ((=/= #f _.11) (== '#f _.1))
+                                   ((== #f _.11)
+                                     (== (cons (cons _.12 _.13) '())
+                                         (cons _.14 '()))
+                                     (== (cons (cons _.15 _.14) '())
+                                         (cons _.16 '()))
+                                     (== n _.16)
+                                     ((odd? _.12) _.1))))))))]
+                [odd? (lambda (n)
+                        (lambda (_.17)
+                          (fresh ()
+                            (== (cons _.18 (cons _.19 '()))
+                                (cons _.20 (cons _.21 '())))
+                            (conde
+                              ((== _.18 _.19) (== #t _.22))
+                              ((=/= _.18 _.19) (== #f _.22)))
+                            (== n _.20) (== _.21 'z)
+                            (conde
+                              ((=/= #f _.22) (== '#f _.17))
+                              ((== #f _.22)
+                                (== (cons _.23 (cons _.24 '()))
+                                    (cons _.25 (cons _.26 '())))
+                                (conde
+                                  ((== _.23 _.24) (== #t _.27))
+                                  ((=/= _.23 _.24) (== #f _.27)))
+                                (== n _.25)
+                                (== _.26 (cons 's (cons 'z '())))
+                                (conde
+                                  ((=/= #f _.27) (== '#t _.17))
+                                  ((== #f _.27)
+                                    (== (cons (cons _.28 _.29) '())
+                                        (cons _.30 '()))
+                                    (== (cons (cons _.31 _.30) '())
+                                        (cons _.32 '()))
+                                    (== n _.32)
+                                    ((even? _.28) _.17))))))))])
+         (fresh
+           ()
+           (== _.33
+               (cons
+                 's
+                 (cons (cons 's (cons (cons 's (cons 'z '())) '())) '())))
+           ((even? _.33) _.0)))))))
 
 ;; this requires
 ;; https://github.com/namin/faster-miniKanren/tree/staged
@@ -498,7 +565,7 @@
 
 (define g1 (gen-micro 1))
 (define t1 (eval g1))
-(run 2 (q) (t1 q))
+(time-test (run 2 (q) (t1 q)) '(1))
 
 
 (define my-mapo
@@ -513,16 +580,20 @@
    (gen 'h1 '(f)
         '(f 1))))
 
-(run 1
-     (q)
-     (h1o q 2))
+(test
+ (run 1
+      (q)
+      (h1o q 2))
+ '(((closure (lambda _.0 2) _.1) (sym _.0))))
 
-(run 1
-     (q)
-     (my-mapo
-      q
-      '((1) (2) (3))
-      '(1 2 3)))
+(test
+ (run 1
+      (q)
+      (my-mapo
+       q
+       '((1) (2) (3))
+       '(1 2 3)))
+ '((prim . car)))
 
 ;; currying is painful
 (define curried-appendo
@@ -541,42 +612,58 @@
                (cons (car xs)
                      ((opt-curried-append (cdr xs)) ys)))))))
 
-(run* (q)
-     (fresh (p)
-            (curried-appendo '(a) p)
-            (fresh (l e)
-                   (== p `(closure ,l ,e))
-                   (u-eval-expo (list l (list 'quote '(b))) e q))))
-(run* (q)
-     (fresh (p)
-            (opt-curried-appendo '(a) p)
-            (fresh (l e)
-                   (== p `(closure ,l ,e))
-                   (u-eval-expo (list l (list 'quote '(b))) e q))))
+(test
+ (run* (q)
+       (fresh (p)
+              (curried-appendo '(a) p)
+              (fresh (l e)
+                     (== p `(closure ,l ,e))
+                     (u-eval-expo (list l (list 'quote '(b))) e q))))
+ '((a b)))
 
-(run* (q)
-      (fresh (p)
-             (curried-appendo q p)
-             (fresh (l e)
-                    (== p `(closure ,l ,e))
-                    (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
-(run* (q)
-      (fresh (p)
-             (opt-curried-appendo q p)
-             (fresh (l e)
-                    (== p `(closure ,l ,e))
-                    (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
+(test
+ (run* (q)
+       (fresh (p)
+              (opt-curried-appendo '(a) p)
+              (fresh (l e)
+                     (== p `(closure ,l ,e))
+                     (u-eval-expo (list l (list 'quote '(b))) e q))))
+ '((a b)))
 
-(run* (q) (fresh (x y p)
-                 (== q (list x y))
-                 (curried-appendo x p)
-                 (fresh (l e)
-                    (== p `(closure ,l ,e))
-                    (u-eval-expo (list l (list 'quote y)) e '(a b c d e)))))
+(test
+ (run* (q)
+       (fresh (p)
+              (curried-appendo q p)
+              (fresh (l e)
+                     (== p `(closure ,l ,e))
+                     (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
+ '((a)))
 
-(run* (q) (fresh (x y p)
-                 (== q (list x y))
-                 (opt-curried-appendo x p)
-                 (fresh (l e)
-                    (== p `(closure ,l ,e))
-                    (u-eval-expo (list l (list 'quote y)) e '(a b c d e)))))
+(test
+ (run* (q)
+       (fresh (p)
+              (opt-curried-appendo q p)
+              (fresh (l e)
+                     (== p `(closure ,l ,e))
+                     (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
+ '((a)))
+
+(test
+ (run* (q) (fresh (x y p)
+                  (== q (list x y))
+                  (curried-appendo x p)
+                  (fresh (l e)
+                         (== p `(closure ,l ,e))
+                         (u-eval-expo (list l (list 'quote y)) e '(a b c d e)))))
+ '((() (a b c d e)) ((a) (b c d e)) ((a b) (c d e))
+   ((a b c) (d e)) ((a b c d) (e)) ((a b c d e) ())))
+
+(test
+ (run* (q) (fresh (x y p)
+                  (== q (list x y))
+                  (opt-curried-appendo x p)
+                  (fresh (l e)
+                         (== p `(closure ,l ,e))
+                         (u-eval-expo (list l (list 'quote y)) e '(a b c d e)))))
+ '((() (a b c d e)) ((a) (b c d e)) ((a b) (c d e))
+   ((a b c) (d e)) ((a b c d) (e)) ((a b c d e) ())))
