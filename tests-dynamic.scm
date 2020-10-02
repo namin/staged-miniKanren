@@ -12,14 +12,47 @@
 
 ;; explicitly deferred
 (test (run* (q) (l== 1 q)) '((_.0 !! ((== '1 _.0)))))
+(test (run* (q) (l== (cons 1 2) q))
+      '((_.0 !! ((== (cons '1 '2) _.0)))))
+(test (run* (q) (fresh (x) (l== (cons x x) q)))
+      '((_.0 !! ((== (cons _.1 _.1) _.0)))))
+(test (run* (q) (l== (list 1) (list q))) '((_.0 !! ((== (cons '1 '()) (cons _.0 '()))))))
+(test (run* (q) (l== (list 1 2) (list q 3)))
+      '((_.0 !! ((== (cons '1 (cons '2 '())) (cons _.0 (cons '3 '())))))))
+(test (run* (q) (l== 1 2)) '((_.0 !! ((== '1 '2)))))
+(test (run* (q) (fresh (p) (l== (cons p p) q) (l== p 1)))
+      '((_.0 !! ((== (cons _.1 _.1) _.0) (== _.1 '1)))))
+(test (run* (q) (fresh (p) (l== (cons p p) p)))
+      '((_.0 !! ((== (cons _.1 _.1) _.1)))))
 
 ;; implicitly deferred
 (test (run* (q) (dynamic q) (== 1 q)) '((_.0 !! ((== _.0 '1)))))
 (test (run* (q) (dynamic q) (== (list 1) (list q))) '((_.0 !! ((== _.0 '1)))))
+(test (run* (q) (dynamic q) (== (list 1 2) (list q 3))) '())
+(test (run* (q) (fresh (p) (dynamic p) (== (cons p p) q)))
+      '(((_.0 . _.0) !! ())))
+(test (run* (q) (fresh (p) (dynamic p) (== (cons q q) p)))
+      '((_.0 !! ((== _.1 (cons _.0 _.0))))))
+(test (run* (q) (fresh (p) (dynamic p) (== (cons p p) p)))
+      '()) ;; cool!
+(test (run* (q) (fresh (p) (dynamic q p) (== (cons p p) q)))
+      '((_.0 !! ((== _.0 (cons _.1 _.1))))))
+(test (run* (q) (fresh (p) (dynamic q p) (== (cons q q) q)))
+      '())
+(test (run* (q) (fresh (p) (== q (cons p p)) (== q p)))
+      '())
+(test (run* (q) (fresh (p) (dynamic q) (== q (cons p p)) (== q p)))
+      '((_.0 !! ((== _.0 (cons _.1 _.1)) (== _.0 _.1))))) ;; not as cool
+(test (run* (q) (fresh (p) (dynamic q) (== q p) (== q (cons p p))))
+      '((_.0 !! ((== _.0 _.1) (== _.0 (cons _.1 _.1)))))) ;; ditto
+(test (run* (q) (fresh (p) (dynamic p) (== q (cons p p)) (== q p)))
+      '()) ;; cool
+(test (run* (q) (fresh (p) (dynamic p) (== q p) (== q (cons p p))))
+      '(((_.0 . _.0) !! ((== (cons _.0 _.0) _.0)))))
 
 ;; what to do about constraints?
 (test (run* (q) (dynamic q) (=/= 1 q))
-      '(((_.0 !! ((=/= _.0 '1))) (=/= ((_.0 1))))))
+      '(((_.0 !! ((=/= _.0 '1))) (=/= ((_.0 1)))))) ;;wrong: asymmetry with unification?
 
 ;; staging with vanilla interp!
 (load "full-interp.scm")
