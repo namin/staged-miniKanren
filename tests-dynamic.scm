@@ -119,7 +119,7 @@
       ((=/= '#f _.1) (== _.0 '1))
       ((== _.1 '#f) (== _.0 '2)))))))
 
-(todo "slurpy-false"
+(test
  (run* (r)
       (fresh (q t)
              (dynamic q)
