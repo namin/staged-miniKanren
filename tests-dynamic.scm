@@ -1,4 +1,6 @@
-(load "staged-mk.scm")
+;; using namin/faster-miniKaren branch staged-dynamic
+(load "../faster-miniKanren/mk-vicare.scm")
+(load "../faster-miniKanren/mk.scm")
 
 (load "staged-utils.scm")
 
@@ -8,18 +10,21 @@
 ;; between logic variable and code
 
 ;; fully now
-(test (run* (q) (== 1 q)) '((1 !! ())))
+(test (run* (q) (== 1 q)) '(1))
 
 ;; explicitly deferred
 (test (run* (q) (l== 1 q)) '((_.0 !! ((== '1 _.0)))))
+(test (run* (q) (l== (cons 1 2) q)) '((_.0 !! ((== (cons '1 '2) _.0)))))
 
 ;; implicitly deferred
 (test (run* (q) (dynamic q) (== 1 q)) '((_.0 !! ((== _.0 '1)))))
 (test (run* (q) (dynamic q) (== (list 1) (list q))) '((_.0 !! ((== _.0 '1)))))
+(test (run* (q) (dynamic q) (== (cons 1 2) q)) '((_.0 !! ((== _.0 (cons '1 '2))))))
+
 
 ;; what to do about constraints?
 (test (run* (q) (dynamic q) (=/= 1 q))
-      '(((_.0 !! ((=/= _.0 '1))) (=/= ((_.0 1))))))
+      '((_.0 !! ((=/= '1 _.0)))))
 
 ;; staging with vanilla interp!
 (load "full-interp.scm")
@@ -29,7 +34,7 @@
 (test (run 1 (q)
            (fresh (arg res) (== q (list arg res))
                   (eval-expo 'x `((x . (val . ,arg))) res)))
-      '(((_.0 _.0) !! ())))
+      '((_.0 _.0)))
 
 (test (run 1 (q)
            (fresh (arg res)
@@ -56,7 +61,7 @@
               (== q (list arg res))
               (ext-env*o '(x) `(,arg) initial-env env)
               (eval-expo '(if (null? x) 1 2) env res)))
- '(((() 1) !! ()) (((_.0 2) !! ()) (=/= ((_.0 ()))))))
+ '((() 1) ((_.0 2) (=/= ((_.0 ()))))))
 
 (test
  (run* (q)
@@ -99,6 +104,7 @@
 ;; what is an alternative to semantics to if-grounding for dynamic variables?
 
 ;; here is one alternative:
+#|
 (load "dynamic-interp.scm")
 (define appendo
   (eval
@@ -121,3 +127,4 @@
    (((a b c) (d e)) !! ())
    (((a b c d) (e)) !! ())
    (((a b c d e) ()) !! ())))
+|#
