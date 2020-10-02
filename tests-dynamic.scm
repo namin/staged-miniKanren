@@ -129,6 +129,16 @@
               ((== #f t) (== q 2)))))
  '(((_.0 _.1) !! ((conde ((== _.0 '1)) ((== _.0 '2)))))))
 
+(test
+ (run* (r)
+      (fresh (q t)
+             (dynamic q)
+             (== r (list q t))
+             (lconde
+              ((=/= #f t) (conde ((== q 1)) ((== q 3))))
+              ((== #f t) (== q 2)))))
+ '(((_.0 _.1) !! ((conde ((== _.0 '1)) ((== _.0 '3)) ((== _.0 '2)))))))
+
 #|
 (load "dynamic-interp.scm")
 (define appendo
