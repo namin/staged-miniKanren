@@ -139,7 +139,6 @@
               ((== #f t) (== q 2)))))
  '(((_.0 _.1) !! ((conde ((== _.0 '1)) ((== _.0 '3)) ((== _.0 '2)))))))
 
-#|
 (load "dynamic-interp.scm")
 (define appendo
   (eval
@@ -150,16 +149,11 @@
 
 (test
  (run* (q) (appendo '(a) '(b) q))
- '(((a b) !! ())))
+ '((a b)))
 (test
  (run* (q) (appendo q '(b) '(a b)))
- '(((a) !! ())))
+ '((a)))
 (test
  (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
- '(((() (a b c d e)) !! ())
-   (((a) (b c d e)) !! ())
-   (((a b) (c d e)) !! ())
-   (((a b c) (d e)) !! ())
-   (((a b c d) (e)) !! ())
-   (((a b c d e) ()) !! ())))
-|#
+ '((() (a b c d e)) ((a) (b c d e)) ((a b) (c d e))
+  ((a b c) (d e)) ((a b c d) (e)) ((a b c d e) ())))
