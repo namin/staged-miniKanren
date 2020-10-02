@@ -98,6 +98,31 @@
 ;; next step
 ;; what is an alternative to semantics to if-grounding for dynamic variables?
 
+(test
+ (run* (r)
+      (fresh (q t)
+             (dynamic q t)
+             (== r (list q t))
+             (lconde
+              ((=/= #f t) (== q 1))
+              ((== #f t) (== q 2)))))
+ '(((_.0 _.1)
+   !!
+   ((conde
+      ((=/= _.1 '#f) (== _.0 '1))
+      ((== _.1 '#f) (== _.0 '2)))))))
+
+(test
+ (run* (r)
+      (fresh (q t)
+             (dynamic q)
+             (== r (list q t))
+             (lconde
+              ((=/= #f t) (== q 1))
+              ((== #f t) (== q 2)))))
+ '(((_.0 _.1) !! ((conde ((== _.0 '1)) ((== _.0 '2)))))))
+
+
 ;; here is one alternative:
 (load "dynamic-interp.scm")
 (define appendo
