@@ -54,7 +54,9 @@
     (== q (list arg res))
     (ext-env*o '(x) `(,arg) initial-env env)
     (eval-expo '(if (null? x) 1 2) env res)))
+
 ;; =>
+
 '(((_.0 _.1) !! ((== '() _.0) (== _.1 '1)))
   (((_.0 _.1) !! ((== _.2 _.0) (== _.1 '2)))
    (=/= ((_.2 ())))))
@@ -92,3 +94,26 @@
 (run* (q) (appendo '(a) '(b) q))
 (run* (q) (appendo q '(b) '(a b)))
 (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+
+(run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (dynamic x)
+                 (== x y)
+                 (== y 5)
+                 (== y 6)))
+
+
+(run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (dynamic x)
+                 (== y 5)
+                 (== x y)
+                 (== y 6)))
+
+
+(run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (dynamic x)
+                 (== y 5)
+                 (== y 6)
+                 (== x y)))
