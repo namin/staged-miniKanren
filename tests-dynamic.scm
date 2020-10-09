@@ -165,26 +165,29 @@
         '(if (null? xs) ys
              (cons (car xs)
                    (append (cdr xs) ys))))))
-
-(run* (q) (fresh (x y)
+(test
+ (run* (q) (fresh (x y)
                  (== q (list x y))
                  (dynamic x)
                  (== x y)
                  (== y 5)
                  (== y 6)))
+ '())
 
-
-(run* (q) (fresh (x y)
+(test 
+ (run* (q) (fresh (x y)
                  (== q (list x y))
                  (dynamic x)
                  (== y 5)
                  (== x y)
                  (== y 6)))
+ '())
 
-
-(run* (q) (fresh (x y)
+(test
+ (run* (q) (fresh (x y)
                  (== q (list x y))
                  (dynamic x)
                  (== y 5)
                  (== y 6)
                  (== x y)))
+ '())
