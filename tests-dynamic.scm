@@ -191,3 +191,27 @@
                  (== y 6)
                  (== x y)))
  '())
+
+(test
+
+
+ (run* (q) (appendo '(a) '(b) q))
+
+
+ '(((a b) !! ())))
+
+
+(test
+ (run* (q) (appendo q '(b) '(a b)))
+ '(((a) !! ())))
+
+
+(test
+ (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+
+ '(((() (a b c d e)) !! ())
+   (((a) (b c d e)) !! ())
+   (((a b) (c d e)) !! ())
+   (((a b c) (d e)) !! ())
+   (((a b c d) (e)) !! ())
+   (((a b c d e) ()) !! ())))
