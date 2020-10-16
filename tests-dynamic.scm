@@ -98,7 +98,6 @@
               (== q (list arg res))
               (ext-env*o '(x) `(,arg) initial-env env)
               (eval-expo '(if (null? x) 1 2) env res)))
-
 '(((_.0 _.1) !! ((== '() _.0) (== _.1 '1)))
   (((_.0 _.1) !! ((== _.2 _.0) (== _.1 '2)))
    (=/= ((_.2 ()))))))
@@ -156,6 +155,7 @@
               ((== #f t) (== q 2)))))
  '(((_.0 _.1) !! ((conde ((== _.0 '1)) ((== _.0 '2)))))))
 
+
 ;; here is one alternative:
 (load "dynamic-interp.scm")
 (define appendo
@@ -211,11 +211,9 @@
 (test
  (run* (q) (appendo '(a) '(b) q))
  '(((a b) !! ())))
-
 (test
  (run* (q) (appendo q '(b) '(a b)))
  '(((a) !! ())))
-
 (test
  (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
  '(((() (a b c d e)) !! ())
