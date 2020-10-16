@@ -164,6 +164,49 @@
         '(if (null? xs) ys
              (cons (car xs)
                    (append (cdr xs) ys))))))
+(test
+ (run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (dynamic x)
+                 (== 1 x)
+                 (== x 6)))
+ '(((_.0 _.1) !! ((== _.0 '1) (== _.0 '6)))))
+
+(test 
+ (run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (== x y)
+                 (dynamic x)
+                 (== y 5)
+                 (== y 6)))
+ '())
+
+(test 
+ (run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (== y x)
+                 (dynamic x)
+                 (== y 5)
+                 (== y 6)))
+ '(((_.0 _.0) !! ((== _.0 '5) (== _.0 '6)))))
+
+(test 
+ (run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (dynamic x)
+                 (== y 5)
+                 (== x y)
+                 (== y 6)))
+ '())
+
+(test
+ (run* (q) (fresh (x y)
+                 (== q (list x y))
+                 (dynamic x)
+                 (== y 5)
+                 (== y 6)
+                 (== x y)))
+ '())
 
 (test
  (run* (q) (appendo '(a) '(b) q))
