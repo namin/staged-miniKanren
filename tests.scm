@@ -568,6 +568,13 @@
 (time-test (run 2 (q) (t1 q)) '(1))
 
 
+(define (my-map f xs)
+  (if (null? xs) '()
+      (cons (f (car xs))
+            (my-map f (cdr xs)))))
+
+(my-map (lambda (x) (+ x 1)) '(1 2 3))
+
 (define my-mapo
   (eval
    (gen 'my-map '(f xs)
@@ -667,3 +674,8 @@
                          (u-eval-expo (list l (list 'quote y)) e '(a b c d e)))))
  '((() (a b c d e)) ((a) (b c d e)) ((a b) (c d e))
    ((a b c) (d e)) ((a b c d) (e)) ((a b c d e) ())))
+
+(test
+ (run 1 (q)
+      (eval-expo #t q '() 1))
+ '((_.0 !! ((u-eval-expo _.0 '() 1)))))
