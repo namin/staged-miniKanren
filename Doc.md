@@ -20,14 +20,19 @@ Suppose we have an unknown variable in a unification. To decide whether the unif
 ## Dynamic variable (talks about it, we tried but decided not to pursue, because it didn't work, and why)
 The following example demonstrates how deferring unifications works:
 
+```
 (run* (q) (fresh (x y)
                 (== q (list x y))
                 (dynamic x)
                 (== 1 x)
                 (== x 6)))
+```
 
 The result is a generated quote:
+
+```
 '(((_.0 _.1) !! ((== _.0 '1) (== _.0 '6)))))
+```
 
 The unifications get deferred so we have a generated non-empty quote.
 When deferring code, it’s useful to know whether the terms involved are dynamic. For example, if we just say that a term containing a dynamic variable is dynamic, then an expression like (cdr (cons 5 y)) where only y is dynamic will be treated as dynamic, which is not ideal.
