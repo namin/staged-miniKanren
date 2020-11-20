@@ -260,7 +260,9 @@
     ((boolean-primo expr env val))
     ((and-primo expr env val))
     ((or-primo expr env val))
-    ((if-primo expr env val))))
+    ((if-primo expr env val))
+    ((choice-primo expr env val))
+    ))
 
 (define (boolean-primo expr env val)
   (conde
@@ -323,6 +325,16 @@
     (lift `(conde
             ((=/= #f ,t) . ,c2)
             ((== #f ,t) . ,c3)))))
+
+(define (choice-primo expr env val)
+  (fresh (e2 e3 c2 c3)
+    (== `(choice ,e2 ,e3) expr)
+    (not-in-envo 'choice env)
+    (lift-scope (eval-expo #t e2 env val) c2)
+    (lift-scope (eval-expo #t e3 env val) c3)
+    (lift `(conde
+            ,c2
+            ,c3))))
 
 (define initial-env `((list . (val . (closure (lambda x x) ,empty-env)))
                       (not . (val . (prim . not)))

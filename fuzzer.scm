@@ -1,3 +1,7 @@
+(load "staged-mk.scm")
+(load "staged-interp.scm")
+(load "staged-utils.scm")
+
 ;; n = z | s n
 (define nato
   (eval
@@ -49,3 +53,36 @@
 
 (run 10 (q) (bin-treeo q #f))
 (time (length (run 10000 (q) (bin-treeo q #f))))
+
+(define bin-search-treeo
+(eval
+(gen 'bin-search-tree? '(t)
+     '(if (number? t)
+      #t
+      (and (pair? t)
+           (pair? (cdr t))
+           (pair? (cdr (cdr t)))
+           (pair? (cdr (cdr (cdr t))))
+           (null? (cdr (cdr (cdr (cdr t)))))
+           (equal? (car t) 'node)
+           (number? (car (cdr (cdr t))))
+	   (> (car (cdr (cdr t)))
+	      (car (cdr (cdr (car (cdr t))))))
+           (< (car (cdr (cdr t)))
+	      (car (cdr (cdr  (car (cdr (cdr (cdr t))))))))
+           (bin-search-tree? (car (cdr t)))
+           (bin-search-tree? (car (cdr (cdr (cdr t))))))))
+))
+
+(define quasi-listo
+  (eval
+   (gen 'list? '(x)
+        '(if (null? x)
+             #t
+             (and (pair? x)
+                  (number? (car x))
+                  (choice (number? (cdr x)) (list? (cdr x)))
+                  )))))
+
+(run 10 (q) (quasi-listo q #t))
+(run 10 (q) (quasi-listo q #f))
