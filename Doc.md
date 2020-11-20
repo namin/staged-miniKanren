@@ -2,6 +2,8 @@
 
 Staged miniKanren is an extension of miniKanren that supports staging. In particular, we apply partial evaluation techniques to relational programming. 
 
+(update: staged programming is manual partial evaluation, uses manual binding time analysis)
+
 
 ## What is partial evaluation
 Given a program and only partially known input data, partial evaluation allows one to eliminate or simplify certain parts of the code, by for example, executing the parts that don’t use the unknown data. Depending on the known input, we might be able to make decisions like whether we want to get rid of a loop, if for example, it is degenerate for most iterations. The result is a new program that is specialized to the known data. 
