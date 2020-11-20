@@ -1,4 +1,4 @@
-### Staged miniKanren
+# Staged miniKanren
 
 Staged miniKanren is an extension of miniKanren that supports staging. In particular, we apply partial evaluation techniques to relational programming. 
 
