@@ -446,9 +446,9 @@
       (== `(? ,pred ,var) p)
       (conde
         ((== 'symbol? pred)
-         (symbolo mval))
+         (lift `(symbolo ,mval)))
         ((== 'number? pred)
-         (numbero mval)))
+         (lift `(numbero ,mval))))
       (var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
@@ -467,13 +467,13 @@
        (conde
          ((== 'symbol? pred)
           (conde
-            ((not-symbolo mval))
-            ((symbolo mval)
+            ((lift `(not-symbolo ,mval)))
+            ((lift `(symbolo ,mval))
              (var-p-no-match var mval penv penv-out))))
          ((== 'number? pred)
           (conde
-            ((not-numbero mval))
-            ((numbero mval)
+            ((lift `(not-numbero ,mval)))
+            ((lift `(numbero ,mval))
              (var-p-no-match var mval penv penv-out)))))))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)

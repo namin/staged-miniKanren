@@ -679,3 +679,22 @@
  (run 1 (q)
       (eval-expo #t q '() 1))
  '((_.0 !! ((u-eval-expo _.0 '() 1)))))
+
+
+
+(define ex-matcho
+  (eval
+   (gen 'ex-matcho '(x)
+        '(match
+          x
+          [(? symbol? x)
+           'sym-case]
+          [`(,rator ,rand)
+           'app-case]))))
+
+(test
+ (run 1 (q) (ex-matcho 'x q))
+ '(sym-case))
+(test
+ (run 1 (q) (ex-matcho '(a b) q))
+ '(app-case))
