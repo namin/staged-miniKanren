@@ -7,6 +7,111 @@
 
 (load "test-check.scm")
 
+#|
+#lang racket
+
+(letrec ([lookup
+          (lambda (x env)
+            (match env
+              [`((,y . ,v) . ,renv)
+               (if (equal? x y)
+                   v
+                   (lookup x renv))]))]
+         [eval-expr
+          (lambda (expr env)
+            (match expr
+              [`(quote ,datum) datum]
+              [`(null? ,e)
+               (null? (eval-expr e env))]
+              [`(car ,e)
+               (car (eval-expr e env))]
+              [`(cdr ,e)
+               (cdr (eval-expr e env))]
+              [`(cons ,e1 ,e2)
+               (cons (eval-expr e1 env)
+                     (eval-expr e2 env))]
+              [`(if ,e1 ,e2 ,e3)
+               (if (eval-expr e1 env)
+                   (eval-expr e2 env)
+                   (eval-expr e3 env))]
+              [`(lambda (,(? symbol? x)) ,body)
+               (list 'clo x body env)]
+              [(? symbol? x) (lookup x env)]
+              [`(,rator ,rand)
+               (match (eval-expr rator env)
+                 [`(clo ,x ,body ,clo-env)
+                  (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
+  (eval-expr `((lambda (f)
+                 (((f f)
+                   (lambda (x) (cons x x)))
+                  '(a b c)))
+               (lambda (f)
+                 (lambda (f^)
+                   (lambda (l)
+                     (if (null? l)
+                         '()
+                         (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
+             '()))
+
+;; => ((a . a) (b . b) (c . c))
+|#
+
+#|
+(define map-in-double-eval
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec ([lookup
+                   (lambda (x env)
+                     (match env
+                       [`((,y . ,v) . ,renv)
+                        (if (equal? x y)
+                            v
+                            (lookup x renv))]))]
+                  [eval-expr
+                   (lambda (expr env)
+                     (match expr
+                       [`(quote ,datum) datum]
+                       [`(null? ,e)
+                        (null? (eval-expr e env))]
+                       [`(car ,e)
+                        (car (eval-expr e env))]
+                       [`(cdr ,e)
+                        (cdr (eval-expr e env))]
+                       [`(cons ,e1 ,e2)
+                        (cons (eval-expr e1 env)
+                              (eval-expr e2 env))]
+                       [`(if ,e1 ,e2 ,e3)
+                        (if (eval-expr e1 env)
+                            (eval-expr e2 env)
+                            (eval-expr e3 env))]
+                       [`(lambda (,(? symbol? x)) ,body)
+                        (list 'clo x body env)]
+                       [(? symbol? x) (lookup x env)]
+                       [`(,rator ,rand)
+                        (match (eval-expr rator env)
+                          [`(clo ,x ,body ,clo-env)
+                           (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
+           (eval-expr expr '())))))
+
+(time-test
+  (run 1 (q)
+    (absento 'clo q)
+    (== '((lambda (f)
+            (((f f)
+              (lambda (x) (cons x x)))
+             '(a b c)))
+          (lambda (f)
+            (lambda (f^)
+              (lambda (l)
+                (if (null? l)
+                    '()
+                    (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
+        expr)
+    (map-in-double-eval expr q))
+  '((a . a) (b . b) (c . c)))
+|#
+
+
 (define proofo
   (eval
    (gen 'proof? '(proof)
@@ -223,6 +328,9 @@
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      (=/= ((_.0 clo)))
      (sym _.0))))
+
+
+
 
 
 
