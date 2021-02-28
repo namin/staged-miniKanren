@@ -432,7 +432,7 @@
 (define (var-p-no-match var mval penv penv-out)
   (fresh (val)
     (symbolo var)
-    (=/= mval val)
+    (lift `(=/= ,mval ,val))
     (== penv penv-out)
     (lookupo #f var penv val)))
 
@@ -457,7 +457,7 @@
 (define (p-no-match p mval penv penv-out)
   (conde
     ((self-eval-literalo p)
-     (=/= p mval)
+     (lift `(=/= ,p ,mval))
      (== penv penv-out))
     ((var-p-no-match p mval penv penv-out))
     ((fresh (var pred val)
@@ -496,7 +496,7 @@
 
 (define (quasi-p-no-match quasi-p mval penv penv-out)
   (conde
-    ((=/= quasi-p mval)
+   ((lift `(=/= ,quasi-p ,mval))
      (== penv penv-out)
      (literalo quasi-p))
     ((fresh (p)
@@ -507,7 +507,7 @@
        (== `(,a . ,d) quasi-p)
        (=/= 'unquote a)
        (== penv penv-out)
-       (literalo mval)))
+       (lift `(literalo ,mval))))
     ((fresh (a d v1 v2 penv^)
        (== `(,a . ,d) quasi-p)
        (=/= 'unquote a)
