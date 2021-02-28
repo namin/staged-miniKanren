@@ -113,6 +113,44 @@
      (sym _.0))))
 
 
+(define double-evalo-variadic-list-fo-less-ridiculous
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec ([lookup
+                   (lambda (x env)
+                     (match env
+                       [`((,y . ,v) . ,renv)
+                        (if (equal? x y)
+                            v
+                            (lookup x renv))]))]
+                  [eval-expr
+                   (lambda (expr env)
+                     (match expr
+                       [`(quote ,datum) datum]
+                       [`(lambda (,(? symbol? x)) ,body)
+                        (list 'clo x body env)]
+                       [`(list . ,e*)
+                        (letrec ([f (lambda (e*)
+                                      (match e*
+                                        [`() '()]
+                                        [`(,e . ,rest)
+                                         (cons (eval-expr e env) (f rest))]))])
+                          (f e*))]
+                       [(? symbol? x) (lookup x env)]
+                       [`(,rator ,rand)
+                        (match (eval-expr rator env)
+                          [`(clo ,x ,body ,clo-env)
+                           (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
+           (eval-expr expr '())))))
+
+(time-test
+  (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
+  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     (=/= ((_.0 clo)))
+     (sym _.0))))
+
+
 #|
 ;; WEB -- apparently this version errors because it is higher-order
 
