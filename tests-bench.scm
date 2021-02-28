@@ -56,7 +56,6 @@
 ;; => ((a . a) (b . b) (c . c))
 |#
 
-#|
 (define map-in-double-eval
   (eval
    (gen 'eval-expr '(expr)
@@ -94,7 +93,8 @@
            (eval-expr expr '())))))
 
 (time-test
-  (run 1 (q)
+ (run 1 (q)
+   (fresh (expr)
     (absento 'clo q)
     (== '((lambda (f)
             (((f f)
@@ -107,9 +107,8 @@
                     '()
                     (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
         expr)
-    (map-in-double-eval expr q))
+    (map-in-double-eval expr q)))
   '((a . a) (b . b) (c . c)))
-|#
 
 
 (define proofo
