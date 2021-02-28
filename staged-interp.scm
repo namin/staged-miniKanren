@@ -434,9 +434,9 @@
     (symbolo var)
     (l=/= mval val)
     (== penv penv-out)
-    ;; TODO
-    ;; why is this here?
-    ;; why do things fail when I keep it?
+    ;; This lookup is for linear pattern matching
+    ;; which is not supported by staging,
+    ;; since penv is not reified.
     ;;(lookupo #t var penv val)
     ))
 
