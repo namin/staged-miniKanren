@@ -698,20 +698,3 @@
 (test
  (run 1 (q) (ex-matcho '(a b) q))
  '(app-case))
-
-
-(define ex-matchineqo
-  (eval
-   (gen 'ex-matchineqo '(x)
-        '(match
-          x
-          [`(,(? symbol? x) ,y)
-           'sym-app]
-          [`(1 ,y)
-           'num-app]
-          [`(,x ,y)
-           'other-app]))))
-
-(test
- (run 1 (q) (ex-matchineqo '(1 1) 'other-app))
- '())
