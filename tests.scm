@@ -698,3 +698,70 @@
 (test
  (run 1 (q) (ex-matcho '(a b) q))
  '(app-case))
+
+
+(define ex-matchineqo
+  (eval
+   (gen 'ex-matchineqo '(x)
+        '(match
+          x
+          [`(,(? symbol? x) ,y)
+           'sym-app]
+          [`(1 ,y)
+           'num-app]
+          [`(,x ,y)
+           'other-app]))))
+
+(test
+ (run* (q) (ex-matchineqo '(1 1) q))
+ '(num-app))
+
+(define ex-minimatchineqo
+  (eval
+   (gen 'ex-minimatchineqo '(x)
+        '(match
+          x
+          [`(1 ,y)
+           'num-app]
+          [`(,x ,y)
+           'other-app]))))
+
+(test
+ (run* (q) (ex-minimatchineqo '(1 1) q))
+ '(num-app))
+
+(define ex-minimatcho
+  (eval
+   (gen 'ex-minimatcho '(x)
+        '(match
+          x
+          [`(1 ,y)
+           'num-app]))))
+
+(define ex-matchsym
+  (eval
+   (gen 'ex-matchsym '(x)
+        '(match
+             x
+           [(? symbol? x) #t]))))
+
+(test
+    (run* (q) (ex-matchsym 'x q))
+  '(#t))
+
+
+(define my-lookupo
+  (eval
+   (gen 'lookup '(x env)
+        '(match env
+           [`((,y . ,v) . ,renv)
+            (if (equal? x y)
+                v
+                (lookup x renv))]))))
+
+(define myo
+  (eval
+   (gen 'lookup '(x env)
+        '(match env
+           [`((,x . ,y) . ,renv)
+            (equal? x y)]))))

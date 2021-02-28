@@ -425,16 +425,20 @@
     (l== mval val)
     (conde
       ((== penv penv-out)
-       (lookupo #f var penv val))
+       (lookupo #t var penv val))
       ((== `((,var . (val . ,val)) . ,penv) penv-out)
        (not-in-envo var penv)))))
 
 (define (var-p-no-match var mval penv penv-out)
   (fresh (val)
     (symbolo var)
-    (=/= mval val)
+    (l=/= mval val)
     (== penv penv-out)
-    (lookupo #f var penv val)))
+    ;; TODO
+    ;; why is this here?
+    ;; why do things fail when I keep it?
+    ;;(lookupo #t var penv val)
+    ))
 
 (define (p-match p mval penv penv-out)
   (conde
@@ -457,7 +461,7 @@
 (define (p-no-match p mval penv penv-out)
   (conde
     ((self-eval-literalo p)
-     (=/= p mval)
+     (l=/= p mval)
      (== penv penv-out))
     ((var-p-no-match p mval penv penv-out))
     ((fresh (var pred val)
@@ -466,10 +470,17 @@
        (symbolo var)
        (conde
          ((== 'symbol? pred)
-          (conde
-            ((lift `(not-symbolo ,mval)))
-            ((lift `(symbolo ,mval))
-             (var-p-no-match var mval penv penv-out))))
+          (fresh (z1 z2)
+            (lift-scope
+             (fresh ()
+               (lift `(not-symbolo ,mval)))
+             z1)
+            (lift-scope
+             (fresh ()
+               (lift `(symbolo ,mval))
+               (var-p-no-match var mval penv penv-out))
+             z2)
+            (lift `(conde ,z1 ,z2))))
          ((== 'number? pred)
           (conde
             ((lift `(not-numbero ,mval)))
@@ -495,24 +506,33 @@
        (quasi-p-match d v2 penv^ penv-out)))))
 
 (define (quasi-p-no-match quasi-p mval penv penv-out)
-  (conde
-    ((=/= quasi-p mval)
-     (== penv penv-out)
-     (literalo quasi-p))
-    ((fresh (p)
-       (== (list 'unquote p) quasi-p)
-       (=/= 'closure mval)
-       (p-no-match p mval penv penv-out)))
-    ((fresh (a d)
-       (== `(,a . ,d) quasi-p)
-       (=/= 'unquote a)
+  (fresh ()
+    (conde
+      ((l=/= quasi-p mval)
        (== penv penv-out)
-       (literalo mval)))
-    ((fresh (a d v1 v2 penv^)
-       (== `(,a . ,d) quasi-p)
-       (=/= 'unquote a)
-       (l== `(,v1 . ,v2) mval)
-       (conde
-         ((quasi-p-no-match a v1 penv penv^))
-         ((quasi-p-match a v1 penv penv^)
-          (quasi-p-no-match d v2 penv^ penv-out)))))))
+       (literalo quasi-p))
+      ((fresh (p)
+         (== (list 'unquote p) quasi-p)
+         (=/= 'closure mval)
+         (p-no-match p mval penv penv-out)))
+      ((fresh (a d v1 v2 penv^)
+         (== `(,a . ,d) quasi-p)
+         (=/= 'unquote a)
+         (fresh (z1 z2)
+           (lift-scope
+            (fresh ()
+              (== penv penv-out)
+              (lift `(literalo ,mval)))
+            z1)
+           (lift-scope
+            (fresh ()
+              (l== `(,v1 . ,v2) mval)
+              (conde
+                ((quasi-p-no-match a v1 penv penv^))
+                ((quasi-p-match a v1 penv penv^)
+                 (quasi-p-no-match d v2 penv^ penv-out))))
+            z2)
+           (lift `(conde ,z1 ,z2))))))))
+
+(define (l=/= a b)
+  (lift `(=/= ,a ,b)))
