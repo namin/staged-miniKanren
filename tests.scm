@@ -737,3 +737,13 @@
         '(match env
            [`((,x . ,y) . ,renv)
             (equal? x y)]))))
+
+(define my-symbolo
+  (eval
+   (gen 'sym? '(x)
+        '(symbol? x))))
+
+(test
+    (run* (q) (my-symbolo 'x q))
+  '(#t))
+(run* (p q) (my-symbolo p q))

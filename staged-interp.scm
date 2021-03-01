@@ -216,15 +216,15 @@
        (lift `(conde
                ((== ,v1 ,v2) (== #t ,val))
                ((=/= ,v1 ,v2) (== #f ,val)))))]
-    [(== prim-id 'symbol?) ;; TODO: stage
+    [(== prim-id 'symbol?)
      (fresh (v)
-       (== `(,v) a*)
-       (conde
-         ((symbolo v) (== #t val))
-         ((numbero v) (== #f val))
-         ((fresh (a d)
-            (== `(,a . ,d) v)
-            (== #f val)))))]
+       (l== `(,v) a*)
+       (lift `(conde
+               ((symbolo ,v) (== #t ,val))
+               ((numbero ,v) (== #f ,val))
+               ((fresh (a d)
+                  (== `(,a . ,d) ,v)
+                  (== #f ,val))))))]
     [(== prim-id 'number?)
      (fresh (v)
        (l== `(,v) a*)
