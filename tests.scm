@@ -747,3 +747,12 @@
     (run* (q) (my-symbolo 'x q))
   '(#t))
 (run* (p q) (my-symbolo p q))
+
+(define my-not-symbolo
+  (eval
+   (gen 'not-sym? '(x)
+        '(not (symbol? x)))))
+
+(test
+    (run* (q) (my-not-symbolo 'x q))
+  '(#f))

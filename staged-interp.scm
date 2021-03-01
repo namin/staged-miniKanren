@@ -204,12 +204,12 @@
      (fresh (a)
        (l== `((,a . ,val)) a*)
        (=/= 'closure a))]
-    [(== prim-id 'not) ;; TODO: stage
+    [(== prim-id 'not)
      (fresh (b)
-       (== `(,b) a*)
-       (conde
-         ((=/= #f b) (== #f val))
-         ((== #f b) (== #t val))))]
+       (l== `(,b) a*)
+       (lift `(conde
+               ((=/= #f ,b) (== #f ,val))
+               ((== #f ,b) (== #t ,val)))))]
     [(== prim-id 'equal?)
      (fresh (v1 v2)
        (l== `(,v1 ,v2) a*)
