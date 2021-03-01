@@ -481,7 +481,7 @@
                (var-p-no-match var mval penv penv-out))
              z2)
             (lift `(conde ,z1 ,z2))))
-         ((== 'number? pred)
+         ((== 'number? pred) ;; TODO: same pattern as symbol? above
           (conde
             ((lift `(not-numbero ,mval)))
             ((lift `(numbero ,mval))
