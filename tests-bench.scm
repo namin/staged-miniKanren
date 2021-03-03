@@ -108,7 +108,7 @@
                     (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
         expr)
     (map-in-double-eval expr q)))
-  '((a . a) (b . b) (c . c)))
+  '(((a . a) (b . b) (c . c))))
 
 
 (define proofo
