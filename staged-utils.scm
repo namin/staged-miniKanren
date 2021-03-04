@@ -71,12 +71,14 @@
                                    (,p-name . ,inputs)))
                                env
                                q)))))
-        (let ((r (car r)))
-          (fix-scope
-           `(lambda (,@inputs out)
-              (fresh ()
-                (== ,(car r) out)
-                . ,(caddr r)))))))))
+        (if (null? r)
+            (error 'gen "staging failed")
+            (let ((r (car r)))
+              (fix-scope
+               `(lambda (,@inputs out)
+                  (fresh ()
+                    (== ,(car r) out)
+                    . ,(caddr r))))))))))
 
 (define ex
   (lambda (p-name inputs rhs)
