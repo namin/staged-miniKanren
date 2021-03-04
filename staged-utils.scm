@@ -58,6 +58,7 @@
     (car (fix-scope2 (fix-scope1 t) '()))))
 
 ;; # Helpers for turning functional procedure into relational one
+(define res '())
 (define gen
   (lambda (p-name inputs rhs . contexts)
     (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
@@ -74,11 +75,13 @@
         (if (null? r)
             (error 'gen "staging failed")
             (let ((r (car r)))
-              (fix-scope
-               `(lambda (,@inputs out)
-                  (fresh ()
-                    (== ,(car r) out)
-                    . ,(caddr r))))))))))
+              (set! res
+                    (fix-scope
+                     `(lambda (,@inputs out)
+                        (fresh ()
+                          (== ,(car r) out)
+                          . ,(caddr r)))))
+              res))))))
 
 (define ex
   (lambda (p-name inputs rhs)
