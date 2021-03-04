@@ -73,7 +73,6 @@
              ((eval-expo #t body envt out))
              ((lift `fail)))
            c-body)
-          (lambda (c) (format #t "~a\n" (walk* `(lambda ,x (lambda (,out) (fresh () . ,c-body))) (c->S c))) c)
           (== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
           ))
 
