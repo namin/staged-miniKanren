@@ -110,7 +110,6 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
-
 (define proofo
   (eval
    (gen 'proof? '(proof)
