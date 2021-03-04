@@ -10,8 +10,9 @@
          (or (equal? expected produced)
              (begin
                (set! test-failed #t)
-               (printf "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
-                       'tested-expression expected produced))))))))
+               (error 'test
+                      (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
+                              'tested-expression expected produced)))))))))
 
 (define-syntax time-test
   (syntax-rules ()
