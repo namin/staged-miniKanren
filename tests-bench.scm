@@ -8,6 +8,29 @@
 (load "test-check.scm")
 
 #|
+(define ho-double-evalo
+  (eval
+   (gen 'eval-expr '(expr env)
+        `(letrec ([eval-expr
+                   (lambda (expr env)
+                     (match expr
+                     [`(quote ,datum) datum]
+                     [`(lambda (,(? symbol? x)) ,body)
+                      (lambda (a)
+                        (eval-expr body (lambda (y)
+                                          (if (equal? x y)
+                                              a
+                                              (env y)))))]
+                     [(? symbol? x) (env x)]
+                     [`(,rator ,rand)
+                      ((eval-expr rator env)
+                       (eval-expr rand env))]
+                     ))])
+           (eval-expr expr env)))))
+
+|#
+
+#|
 #lang racket
 
 (letrec ([lookup
