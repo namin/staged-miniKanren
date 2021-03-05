@@ -99,6 +99,15 @@
           (lift `((,p-name . ,a*) ,val))))
 
        ((fresh (rator rands a* p-name)
+          (== stage? #f)
+          (== `(,rator . ,rands) expr)
+          (eval-expo #f rator env `(call ,p-name))
+          (eval-listo rands env a*)
+          (fresh (out)
+            (lift `(callo ,p-name ,out . ,a*))
+            (== val `(sym . ,out)))))
+
+       ((fresh (rator rands a* p-name)
             (== stage? #t)
             (== `(,rator . ,rands) expr)
             (symbolo rator)
@@ -110,14 +119,18 @@
                        (callo ,cfun ,val . ,a*))))))
 
        ((fresh (rator rands a* p-name)
-          (== stage? #f)
-          (== `(,rator . ,rands) expr)
+            (== stage? #f)
+            (== `(,rator . ,rands) expr)
             (symbolo rator)
             (eval-expo #f rator env `(sym . ,p-name))
             (eval-listo rands env a*)
-            (fresh (out)
-              (lift `(callo ,p-name ,out . a*))
+            (fresh (clam cenv cfun out)
+              (lift `(fresh ()
+                       (== ,(list 'quote (list 'closure clam cenv cfun)) ,p-name)
+                       (callo ,cfun ,out . ,a*)))
               (== val `(sym . ,out)))))
+
+
 
 
        ((fresh (rator rands p-name)
