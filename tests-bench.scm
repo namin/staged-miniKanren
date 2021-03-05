@@ -7,10 +7,9 @@
 
 (load "test-check.scm")
 
-#|
 (define ho-double-evalo
   (eval
-   (gen 'eval-expr '(expr env)
+   (gen 'eval-expr '(expr)
         `(letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
@@ -26,9 +25,11 @@
                       ((eval-expr rator env)
                        (eval-expr rand env))]
                      ))])
-           (eval-expr expr env)))))
+           (eval-expr expr (lambda (y) y))))))
 
-|#
+(test
+    (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
+  '(hello))
 
 #|
 #lang racket
