@@ -39,6 +39,8 @@
          (if (member t bs)
              '()
              (list t)))
+        ((and (pair? t) (eq? (car t) 'lambda))
+         (free-vars (append bs (free-vars '()  (cadr t))) (cddr t)))
         ((pair? t) (append (free-vars bs (car t))
                            (free-vars bs (cdr t))))
         (else '())))
@@ -51,6 +53,11 @@
                (replace-vars (cdr t))))
         (else t)))
 
+(define (remove-list xs lst)
+  (if (null? xs)
+      lst
+      (remove-list (cdr xs) (remove (car xs) lst))))
+
 (define (sym-vars t)
   (cond ((symbol? t)
          (cond
@@ -59,6 +66,10 @@
            ((assoc t initial-env)
             '())
            (else (list t))))
+        ((and (pair? t) (eq? (car t) 'lambda))
+         (printf "lam is ~a\n" t)
+         (printf "syms are ~a\n" (sym-vars (cddr t)))
+         (remove-list (sym-vars (cadr t)) (sym-vars (cddr t))))
         ((pair? t)
          (append (sym-vars (car t))
                  (sym-vars (cdr t))))
@@ -66,30 +77,44 @@
 
 (define (closure-conversion-eval lam-expr)
   (let* ((bound-vars (param-vars (cadr lam-expr)))
-         (free-vars (remove-duplicates (free-vars bound-vars (cddr lam-expr))))
-         (sym-vars (remove-duplicates (sym-vars (cddr lam-expr))))
+         (free-vars (remove-duplicates (free-vars bound-vars lam-expr)))
+         (sym-vars (remove-duplicates (sym-vars lam-expr)))
          (f `(lambda ,sym-vars (lambda ,(replace-vars free-vars) ,(replace-vars lam-expr)))))
     (printf "~a\n" f) ;; TODO: remove
-    (apply (apply (eval f) sym-vars) free-vars)))
+    `(apply (apply (eval ,(list 'quote f))
+                   ,(cons 'list sym-vars))
+            ,(cons 'list free-vars))))
+
+(define quasi
+  (lambda (t)
+    (cond
+      ((var? t) t)
+      ((and (pair? t) (eq? (car t) 'sym)) (cdr t))
+      ((and (pair? t) (eq? (car t) 'closure-conversion-eval))
+       (closure-conversion-eval (cadr t)))
+      ((pair? t) (list 'cons (quasi (car t)) (quasi (cdr t))))
+      ((null? t) ''())
+      (else (list 'quote t)))))
 
 (define (callo cfun val . a*)
   (fresh ()
-    ;;(logo "callo")
+    (logo "callo")
     (conde
       ((varo cfun)
-       ;;(logo "callo: still var... failing")
-       ;;fail
+       (logo "callo: still var... failing")
+       fail
        )
       ((non-varo cfun)
        (conde
          ((fresh (clam cenv ccode)
             (== cfun `(closure ,clam ,cenv ,ccode))
-            ;;(logo "callo lambda")
+            (logo "callo lambda")
             (lambda (c)
-              (((apply (closure-conversion-eval (walk* ccode (c->S c))) a*) val)
+              (((apply (walk* ccode (c->S c)) a*) val)
                c))))
          ((absento 'closure cfun)
-          ;;(logo "callo f")
+          (logo "callo f")
+          ;;(logo "callo: ~a ~a ~a" cfun a* val)
           (lambda (c)
             (((apply (walk* cfun (c->S c)) a*) val)
              c))))))))
@@ -136,7 +161,8 @@
            (eval-expo #t body envt out)
            c-body)
           ;;(== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
-          (== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
+          (== clo-code `(closure-conversion-eval
+                         (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
           ))
 
        ((fresh (rator x rands body env^ a* res clo-code)
