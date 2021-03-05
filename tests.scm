@@ -445,7 +445,7 @@
       (h1o q 2))
  '((closure _.0 _.1 _.2)))
 
-(todo "map guess car"
+(test
  (run 1
       (q)
       (my-mapo
