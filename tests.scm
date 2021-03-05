@@ -454,6 +454,9 @@
        '(1 2 3)))
  '((prim . car)))
 
+(gen 'foo '(x)
+     '(lambda (y) ((foo 1) 2)))
+
 ;; currying is painful
 (define curried-appendo
   (eval
