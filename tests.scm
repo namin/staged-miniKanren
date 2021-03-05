@@ -420,7 +420,6 @@
                  (cons (cons 's (cons (cons 's (cons 'z '())) '())) '())))
            ((even? _.33) _.0)))))))
 
-
 (define (my-map f xs)
   (if (null? xs) '()
       (cons (f (car xs))
@@ -440,13 +439,13 @@
    (gen 'h1 '(f)
         '(f 1))))
 
-(todo "closure hole"
- (run 1
+(test
+ (run 2
       (q)
       (h1o q 2))
- '(((closure (lambda _.0 2) _.1) (sym _.0))))
+ '((closure _.3 _.4 _.5)))
 
-(test
+(todo "map guess car"
  (run 1
       (q)
       (my-mapo

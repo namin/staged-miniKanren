@@ -69,9 +69,7 @@
              (make-list-of-symso x x^)
              (ext-env*o x x^ env envt)))
           (lift-scope
-           (conde
-             ((eval-expo #t body envt out))
-             ((lift `fail)))
+           (eval-expo #t body envt out)
            c-body)
           (== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
           ))
@@ -106,9 +104,21 @@
             (symbolo rator)
             (eval-expo #f rator env `(sym . ,p-name))
             (eval-listo rands env a*)
-            (lift `(fresh (clam cenv cfun)
-                     (== `(closure clam cenv cfun) ,p-name)
-                     (callo cfun ,val . ,a*)))))
+            (fresh (clam cenv cfun)
+              (lift `(fresh ()
+                       (== ,(list 'quote (list 'closure clam cenv cfun)) ,p-name)
+                       (callo ,cfun ,val . ,a*))))))
+
+       ((fresh (rator rands a* p-name)
+          (== stage? #f)
+          (== `(,rator . ,rands) expr)
+            (symbolo rator)
+            (eval-expo #f rator env `(sym . ,p-name))
+            (eval-listo rands env a*)
+            (fresh (out)
+              (lift `(callo ,p-name ,out . a*))
+              (== val `(sym . ,out)))))
+
 
        ((fresh (rator rands p-name)
             (== stage? #t)
