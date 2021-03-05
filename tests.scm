@@ -475,6 +475,13 @@
                (cons (car xs)
                      ((opt-curried-append (cdr xs)) ys)))))))
 
+(todo "pretty curry"
+  (run* (q)
+    (fresh (p)
+      (curried-appendo '(a) p)
+      (callo p q '(b))))
+  '(a b))
+
 (test
  (run* (q)
        (fresh (p)

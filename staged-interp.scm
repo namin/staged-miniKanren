@@ -28,23 +28,68 @@
     (newline)
     c))
 
+(define (param-vars args)
+  (cond
+    ((null? args) '())
+    ((symbol? args) (list args))
+    (else (cons (car args) (param-vars (cdr args))))))
+
+(define (free-vars bs t)
+  (cond ((var? t)
+         (if (member t bs)
+             '()
+             (list t)))
+        ((pair? t) (append (free-vars bs (car t))
+                           (free-vars bs (cdr t))))
+        (else '())))
+
+(define (replace-vars t)
+  (cond ((var? t)
+         (string->symbol (format "x_~a" (var-idx t))))
+        ((pair? t)
+         (cons (replace-vars (car t))
+               (replace-vars (cdr t))))
+        (else t)))
+
+(define (sym-vars t)
+  (cond ((symbol? t)
+         (cond
+           ((member t '(if fresh conde =/= == quote callo lambda letrec closure))
+            '())
+           ((assoc t initial-env)
+            '())
+           (else (list t))))
+        ((pair? t)
+         (append (sym-vars (car t))
+                 (sym-vars (cdr t))))
+        (else '())))
+
+(define (closure-conversion-eval lam-expr)
+  (let* ((bound-vars (param-vars (cadr lam-expr)))
+         (free-vars (remove-duplicates (free-vars bound-vars (cddr lam-expr))))
+         (sym-vars (remove-duplicates (sym-vars (cddr lam-expr))))
+         (f `(lambda ,sym-vars (lambda ,(replace-vars free-vars) ,(replace-vars lam-expr)))))
+    (printf "~a\n" f) ;; TODO: remove
+    (apply (apply (eval f) sym-vars) free-vars)))
+
 (define (callo cfun val . a*)
   (fresh ()
-    (logo "callo")
+    ;;(logo "callo")
     (conde
       ((varo cfun)
-       (logo "callo: still var... failing")
-       fail)
+       ;;(logo "callo: still var... failing")
+       ;;fail
+       )
       ((non-varo cfun)
        (conde
          ((fresh (clam cenv ccode)
             (== cfun `(closure ,clam ,cenv ,ccode))
-            (logo "callo lambda")
+            ;;(logo "callo lambda")
             (lambda (c)
-              (((apply (walk* ccode (c->S c)) a*) val)
+              (((apply (closure-conversion-eval (walk* ccode (c->S c))) a*) val)
                c))))
          ((absento 'closure cfun)
-          (logo "callo f")
+          ;;(logo "callo f")
           (lambda (c)
             (((apply (walk* cfun (c->S c)) a*) val)
              c))))))))
@@ -90,8 +135,8 @@
           (lift-scope
            (eval-expo #t body envt out)
            c-body)
+          ;;(== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
           (== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
-          ;;(== clo-code (list 'eval `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))
           ))
 
        ((fresh (rator x rands body env^ a* res clo-code)
@@ -119,8 +164,8 @@
           (eval-expo #f rator env `(call ,p-name))
           ;;(logo "app call case ~a" rator)
           (eval-listo rands env a*)
-          ;;(lift `(callo ,p-name ,val . ,a*))
-          (lift `((,p-name . ,a*) ,val))
+          (lift `(callo ,p-name ,val . ,a*))
+          ;;(lift `((,p-name . ,a*) ,val))
           ))
 
        ((fresh (rator rands a* p-name)
@@ -131,7 +176,7 @@
           (eval-listo rands env a*)
           (fresh (out)
             (lift `(callo ,p-name ,out . ,a*))
-            (== val `(call . ,out)))))
+            (== val `(call ,out)))))
 
        ((fresh (rator rands a* p-name)
             (== stage? #t)
@@ -151,7 +196,7 @@
             (eval-listo rands env a*)
             (fresh (out)
               (lift `(callo ,p-name ,out . ,a*))
-              (== val `(call . ,out)))))
+              (== val `(call out)))))
 
        ((fresh (rator x* rands a* prim-id)
           (== `(,rator . ,rands) expr)

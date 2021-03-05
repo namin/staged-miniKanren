@@ -10,9 +10,9 @@
          (or (equal? expected produced)
              (begin
                (set! test-failed #t)
-               (error 'test
-                      (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
-                              'tested-expression expected produced))
+               ;; (error 'test
+               ;;        (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
+               ;;                'tested-expression expected produced))
                (format #t "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
                        'tested-expression expected produced)
                )))))))
