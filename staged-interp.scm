@@ -22,22 +22,32 @@
         #f
         c)))
 
-(define (callo cfun val . a*)
-  (conde
-    ((varo cfun) ;;fail
-     )
-    ((non-varo cfun)
-     (lambda (c)
-       (((apply (walk* cfun (c->S c)) a*) val)
-        c)))))
-
 (define (logo f . args)
   (lambda (c)
     (apply printf f (walk* args (c->S c)))
     (newline)
     c))
 
-(set! logo (lambda (f . args) succeed))
+(define (callo cfun val . a*)
+  (fresh ()
+    (logo "callo")
+    (conde
+      ((varo cfun)
+       (logo "callo: still var... failing")
+       fail)
+      ((non-varo cfun)
+       (conde
+         ((fresh (clam cenv ccode)
+            (== cfun `(closure ,clam ,cenv ,ccode))
+            (logo "callo lambda")
+            (lambda (c)
+              (((apply (walk* ccode (c->S c)) a*) val)
+               c))))
+         ((absento 'closure cfun)
+          (logo "callo f")
+          (lambda (c)
+            (((apply (walk* cfun (c->S c)) a*) val)
+             c))))))))
 
 (define (eval-expo stage? expr env val)
   (conde
@@ -62,7 +72,7 @@
 
        ((fresh (x body clo-code envt out c-body x^)
           (== `(lambda ,x ,body) expr)
-          (logo "closure case")
+          ;;(logo "closure case")
           ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
           (conde
             ;; Variadic
@@ -81,6 +91,7 @@
            (eval-expo #t body envt out)
            c-body)
           (== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
+          ;;(== clo-code (list 'eval `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))
           ))
 
        ((fresh (rator x rands body env^ a* res clo-code)
@@ -89,7 +100,7 @@
           (symbolo x)
           (== `((,x . (val . ,a*)) . ,env^) res)
           (eval-expo #f rator env `(closure (lambda ,x ,body) ,env^ ,clo-code))
-          (logo "app closure case ~a" rator)
+          ;;(logo "app closure case ~a" rator)
           (eval-expo stage? body res val)
           (eval-listo rands env a*)))
 
@@ -97,7 +108,7 @@
           (== `(,rator . ,rands) expr)
           ;; Multi-argument
           (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
-          (logo "app closure case (multi-arg) ~a" rator)
+          ;;(logo "app closure case (multi-arg) ~a" rator)
           (eval-listo rands env a*)
           (ext-env*o x* a* env^ res)
           (eval-expo stage? body res val)))
@@ -106,15 +117,17 @@
           (== stage? #t)
           (== `(,rator . ,rands) expr)
           (eval-expo #f rator env `(call ,p-name))
-          (logo "app call case ~a" rator)
+          ;;(logo "app call case ~a" rator)
           (eval-listo rands env a*)
-          (lift `((,p-name . ,a*) ,val))))
+          ;;(lift `(callo ,p-name ,val . ,a*))
+          (lift `((,p-name . ,a*) ,val))
+          ))
 
        ((fresh (rator rands a* p-name)
           (== stage? #f)
           (== `(,rator . ,rands) expr)
           (eval-expo #f rator env `(call ,p-name))
-            (logo "app call case (unstaged) ~a ~a" rator rands)
+          ;;(logo "app call case (unstaged) ~a ~a" rator rands)
           (eval-listo rands env a*)
           (fresh (out)
             (lift `(callo ,p-name ,out . ,a*))
@@ -125,37 +138,20 @@
             (== `(,rator . ,rands) expr)
             (symbolo rator)
             (eval-expo #f rator env `(sym . ,p-name))
-            (logo "app sym case ~a" rator)
+            ;;(logo "app sym case ~a" rator)
             (eval-listo rands env a*)
-            (fresh (clam cenv cfun)
-              (lift `(fresh ()
-                       (== `(closure ,,clam ,,cenv ,,cfun) ,p-name)
-                       (callo ,cfun ,val . ,a*))))))
+            (lift `(callo ,p-name ,val . ,a*))))
 
        ((fresh (rator rands a* p-name)
             (== stage? #f)
             (== `(,rator . ,rands) expr)
             (symbolo rator)
             (eval-expo #f rator env `(sym . ,p-name))
-            (logo "app sym case (unstaged) ~a ~a" rator rands)
+            ;;(logo "app sym case (unstaged) ~a ~a" rator rands)
             (eval-listo rands env a*)
-            (fresh (clam cenv cfun out)
-              (lift `(fresh ()
-                       (== `(closure ,,clam ,,cenv ,,cfun) ,p-name)
-                       (callo ,cfun ,out . ,a*)))
-              (== val `(sym . ,out)))))
-
-
-
-
-       ((fresh (rator rands p-name)
-            (== stage? #t)
-            (== `(,rator . ,rands) expr)
-            (symbolo rator)
-            (eval-expo #f rator env `(sym . ,p-name))
-            (lambda (c)
-              ((lift `(u-eval-expo ',expr ,(quasi (walk* env (c->S c))) ,val))
-               c))))
+            (fresh (out)
+              (lift `(callo ,p-name ,out . ,a*))
+              (== val `(call . ,out)))))
 
        ((fresh (rator x* rands a* prim-id)
           (== `(,rator . ,rands) expr)
@@ -180,9 +176,7 @@
             (lift `(letrec ,out-bindings*
                      (fresh () . ,c-letrec-body))))))
 
-       ((prim-expo expr env val))
-
-       ))))
+       ((prim-expo expr env val))))))
 
 (define (letrec-bindings-evalo bindings* out-bindings* env envt env^)
   (conde
