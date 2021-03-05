@@ -443,7 +443,7 @@
  (run 2
       (q)
       (h1o q 2))
- '((closure _.3 _.4 _.5)))
+ '((closure _.0 _.1 _.2)))
 
 (todo "map guess car"
  (run 1

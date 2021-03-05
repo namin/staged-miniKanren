@@ -115,7 +115,7 @@
             (eval-listo rands env a*)
             (fresh (clam cenv cfun)
               (lift `(fresh ()
-                       (== ,(list 'quote (list 'closure clam cenv cfun)) ,p-name)
+                       (== `(closure ,,clam ,,cenv ,,cfun) ,p-name)
                        (callo ,cfun ,val . ,a*))))))
 
        ((fresh (rator rands a* p-name)
@@ -126,7 +126,7 @@
             (eval-listo rands env a*)
             (fresh (clam cenv cfun out)
               (lift `(fresh ()
-                       (== ,(list 'quote (list 'closure clam cenv cfun)) ,p-name)
+                       (== `(closure ,,clam ,,cenv ,,cfun) ,p-name)
                        (callo ,cfun ,out . ,a*)))
               (== val `(sym . ,out)))))
 
