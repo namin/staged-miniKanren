@@ -13,23 +13,34 @@
         `(letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
-                     [`(quote ,datum) datum]
-                     [`(lambda (,(? symbol? x)) ,body)
-                      (lambda (a)
-                        (eval-expr body (lambda (y)
-                                          (if (equal? x y)
-                                              a
-                                              (env y)))))]
-                     [(? symbol? x) (env x)]
-                     [`(,rator ,rand)
-                      ((eval-expr rator env)
-                       (eval-expr rand env))]
-                     ))])
+                       [`(quote ,datum) datum]
+                       [`(list . ,e*)
+                        (letrec ([f (lambda (e*)
+                                      (match e*
+                                        [`() '()]
+                                        [`(,e . ,rest)
+                                         (cons (eval-expr e env) (f rest))]))])
+                          (f e*))]
+                       [`(lambda (,(? symbol? x)) ,body)
+                        (lambda (a)
+                          (eval-expr body (lambda (y)
+                                            (if (equal? x y)
+                                                a
+                                                (env y)))))]
+                       [(? symbol? x) (env x)]
+                       [`(,rator ,rand)
+                        ((eval-expr rator env)
+                         (eval-expr rand env))]
+                       ))])
            (eval-expr expr (lambda (y) y))))))
 
 (test
     (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
   '(hello))
+
+(todo "quines"
+      (run 2 (q) (ho-double-evalo q q))
+      '(TODO))
 
 #|
 #lang racket
