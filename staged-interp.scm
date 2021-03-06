@@ -94,7 +94,7 @@
       ((var? t) t)
       ((and (pair? t) (eq? (car t) 'sym)) (cdr t))
       ((and (pair? t) (eq? (car t) 'closure-conversion-eval))
-       (closure-conversion-eval (cadr t)))
+       (cadr t))
       ((pair? t) (list 'cons (quasi (car t)) (quasi (cdr t))))
       ((null? t) ''())
       (else (list 'quote t)))))

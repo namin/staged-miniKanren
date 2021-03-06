@@ -289,9 +289,6 @@
      (sym _.0))))
 
 
-#|
-;; WEB -- apparently this version errors because it is higher-order
-
 (define double-evalo-variadic-list-ho
   (eval
    (gen 'eval-expr '(expr)
@@ -325,8 +322,10 @@
 
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
-  '???)
-|#
+  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+    '(lambda (_.0) (list _.0 (list 'quote _.0))))
+   (=/= ((_.0 clo)) ((_.0 closure)))
+   (sym _.0))))
 
 (define double-evalo-cons
   (eval
