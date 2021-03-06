@@ -28,72 +28,12 @@
     (newline)
     c))
 
-(define (param-vars args)
-  (cond
-    ((null? args) '())
-    ((symbol? args) (list args))
-    (else (cons (car args) (param-vars (cdr args))))))
-
-(define free-vars
-  (lambda (bs t . in-cdr)
-    (cond ((var? t)
-           (if (member t bs)
-               '()
-               (list t)))
-          ((and (null? in-cdr) (pair? t) (eq? (car t) 'lambda))
-           (free-vars (append bs (free-vars '()  (cadr t))) (cddr t)))
-          ((pair? t) (append (free-vars bs (car t))
-                             (free-vars bs (cdr t) #t)))
-          (else '()))))
-
-(define (replace-vars t)
-  (cond ((var? t)
-         (string->symbol (format "x_~a" (var-idx t))))
-        ((pair? t)
-         (cons (replace-vars (car t))
-               (replace-vars (cdr t))))
-        (else t)))
-
-(define (remove-list xs lst)
-  (if (null? xs)
-      lst
-      (remove-list (cdr xs) (remove (car xs) lst))))
-
-(define sym-vars
-  (lambda (t . in-cdr)
-    (cond ((symbol? t)
-           (cond
-             ((member t '(if fresh conde =/= == quote callo lambda letrec closure quasiquote unquote))
-              '())
-             ((assoc t initial-env)
-              '())
-             (else (list t))))
-          ((and (null? in-cdr) (pair? t) (eq? (car t) 'lambda))
-           (remove-list (sym-vars (cadr t)) (sym-vars (cddr t))))
-          ((and (null? in-cdr) (pair? t) (eq? (car t) 'quote))
-           '())
-          ((pair? t)
-           (append (sym-vars (car t))
-                   (sym-vars (cdr t) in-cdr)))
-          (else '()))))
-
-(define (closure-conversion-eval lam-expr)
-  (printf "lam-expr is ~a\n" lam-expr)
-  (let* ((bound-vars (param-vars (cadr lam-expr)))
-         (free-vars (remove-duplicates (free-vars bound-vars lam-expr)))
-         (sym-vars (remove-duplicates (sym-vars lam-expr)))
-         (f `(lambda ,sym-vars (lambda ,(replace-vars free-vars) ,(replace-vars lam-expr)))))
-    (printf "~a\n" f)
-    `(apply (apply (eval ,(list 'quote f))
-                   ,(cons 'list sym-vars))
-            ,(cons 'list free-vars))))
-
 (define quasi
   (lambda (t)
     (cond
       ((var? t) t)
       ((and (pair? t) (eq? (car t) 'sym)) (cdr t))
-      ((and (pair? t) (eq? (car t) 'closure-conversion-eval))
+      ((and (pair? t) (eq? (car t) 'no-expand))
        (cadr t))
       ((pair? t) (list 'cons (quasi (car t)) (quasi (cdr t))))
       ((null? t) ''())
@@ -163,10 +103,8 @@
           (lift-scope
            (eval-expo #t body envt out)
            c-body)
-          ;;(== clo-code `(lambda ,x (lambda (,out) (fresh () . ,c-body))))
-          (== clo-code `(closure-conversion-eval
-                         (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
-          ))
+          (== clo-code `(no-expand
+                         (lambda ,x (lambda (,out) (fresh () . ,c-body)))))))
 
        ((fresh (rator x rands body env^ a* res clo-code)
           (== `(,rator . ,rands) expr)
