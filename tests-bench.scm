@@ -5,6 +5,8 @@
 (load "staged-interp.scm")
 (load "staged-utils.scm")
 
+(load "unstaged-interp.scm")
+
 (load "test-check.scm")
 
 
@@ -27,8 +29,6 @@
                        [`(,rator ,rand)
                         ((eval-expr rator env) (eval-expr rand env))]))])
            (eval-expr expr (lambda (y) 'error))))))
-
-(load "unstaged-interp.scm")
 
 (time-test
   (run 1 (q)
