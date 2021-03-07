@@ -44,9 +44,11 @@
     ;;(logo "callo")
     (conde
       ((varo cfun)
-       (logo "callo: still var... failing")
-       fail
-       )
+       (logo "callo: still var... going back to interpretation")
+       (fresh (x* body cenv ccode env^)
+         (== cfun `(closure `(lambda ,x* body) ,cenv ,ccode))
+         (ext-env*o x* a* cenv env^)
+         (u-eval-expo body env^ val)))
       ((non-varo cfun)
        (conde
          ((fresh (clam cenv ccode)
