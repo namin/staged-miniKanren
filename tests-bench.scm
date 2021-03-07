@@ -5,107 +5,9 @@
 (load "staged-interp.scm")
 (load "staged-utils.scm")
 
+(load "unstaged-interp.scm")
+
 (load "test-check.scm")
-
-
-(define ho-quine-interp
-  (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([eval-expr
-                   (lambda (expr env)
-                     (match expr
-                       [`(quote ,datum) datum]
-                       [`(lambda (,(? symbol? x)) ,body)
-                        (lambda (a)
-                          (eval-expr body (lambda (y)
-                                            (if (equal? x y)
-                                                a
-                                                (env y)))))]
-                       [(? symbol? x) (env x)]
-                       [`(cons ,e1 ,e2)
-                        (cons (eval-expr e1 env) (eval-expr e2 env))]
-                       [`(,rator ,rand)
-                        ((eval-expr rator env) (eval-expr rand env))]))])
-           (eval-expr expr (lambda (y) 'error))))))
-
-;(load "unstaged-interp.scm")
-
-(time-test
-  (run 1 (q)
-    ; (absento 'error q) ;; uncomment to get an error!   Why do we even need this line???
-    (ho-quine-interp q q))
-  '???)
-
-#!eof
-
-
-(define quasi-quine-evalo-single-letrec
-  (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([eval-quasi (lambda (q eval)
-                                (match q
-                                  [(? symbol? x) x]
-                                  [`() '()]
-                                  [`(,`unquote ,exp) (eval exp)]
-                                  [`(quasiquote ,datum) ('error)]
-                                  [`(,a . ,d)
-                                   (cons (eval-quasi a eval) (eval-quasi d eval))]))]
-                  [eval-expr
-                   (lambda (expr env)
-                     (match expr
-                       [`(quote ,datum) datum]
-                       [`(lambda (,(? symbol? x)) ,body)
-                        (lambda (a)
-                          (eval-expr body (lambda (y)
-                                            (if (equal? x y)
-                                                a
-                                                (env y)))))]
-                       [(? symbol? x) (env x)]
-                       [`(quasiquote ,datum)
-                        (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
-                       [`(,rator ,rand)
-                        ((eval-expr rator env) (eval-expr rand env))]))])
-           (eval-expr expr (lambda (y) 'error))))))
-
-
-(time-test
-  (run 1 (q) (quasi-quine-evalo-single-letrec q q))
-  '((lambda (x) `(,x ',x)) '(lambda (x) `(,x ',x))))
-
-
-
-(define quasi-quine-evalo
-  (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ((eval-quasi (lambda (q eval)
-                                (match q
-                                  [(? symbol? x) x]
-                                  [`() '()]
-                                  [`(,`unquote ,exp) (eval exp)]
-                                  [`(quasiquote ,datum) ('error)]
-                                  [`(,a . ,d)
-                                   (cons (eval-quasi a eval) (eval-quasi d eval))]))))
-           (letrec ((eval-expr
-                     (lambda (expr env)
-                       (match expr
-                         [`(quote ,datum) datum]
-                         [`(lambda (,(? symbol? x)) ,body)
-                          (lambda (a)
-                            (eval-expr body (lambda (y)
-                                              (if (equal? x y)
-                                                  a
-                                                  (env y)))))]
-                         [(? symbol? x) (env x)]
-                         [`(quasiquote ,datum)
-                          (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
-                         [`(,rator ,rand)
-                          ((eval-expr rator env) (eval-expr rand env))]))))
-             (eval-expr expr (lambda (y) 'error)))))))
-
-(time-test
-  (run 1 (q) (quasi-quine-evalo q q))
-  '((lambda (x) `(,x ',x)) '(lambda (x) `(,x ',x))))
-
 
 (define ho-double-evalo
   (eval
@@ -138,8 +40,6 @@
   (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
   '(hello))
 
-#|
-(load "unstaged-interp.scm")
 (time-test
  (run 2 (q) (absento 'closure q) (ho-double-evalo q q))
  '(error
@@ -147,8 +47,6 @@
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
     (=/= ((_.0 closure)))
     (sym _.0))))
-
-|#
 
 #|
 #lang racket
@@ -468,9 +366,6 @@
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      (=/= ((_.0 clo)) ((_.0 closure)))
      (sym _.0))))
-
-
-
 
 
 
