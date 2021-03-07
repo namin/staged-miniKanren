@@ -8,6 +8,41 @@
 (load "test-check.scm")
 
 
+(define quasi-quine-evalo-single-letrec
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec [(eval-quasi (lambda (q eval)
+                                (match q
+                                  [(? symbol? x) x]
+                                  [`() '()]
+                                  [`(,`unquote ,exp) (eval exp)]
+                                  [`(quasiquote ,datum) ('error)]
+                                  [`(,a . ,d)
+                                   (cons (eval-quasi a eval) (eval-quasi d eval))])))]
+                 [eval-expr
+                  (lambda (expr env)
+                    (match expr
+                      [`(quote ,datum) datum]
+                      [`(lambda (,(? symbol? x)) ,body)
+                       (lambda (a)
+                         (eval-expr body (lambda (y)
+                                           (if (equal? x y)
+                                               a
+                                               (env y)))))]
+                      [(? symbol? x) (env x)]
+                      [`(quasiquote ,datum)
+                       (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
+                      [`(,rator ,rand)
+                       ((eval-expr rator env) (eval-expr rand env))]))]
+                 (eval-expr ',q
+                            'initial-env)))))
+
+(time-test
+  (run 1 (q) (quasi-quine-evalo-single-letrec q q))
+  '((lambda (x) `(,x ',x)) '(lambda (x) `(,x ',x))))
+
+
+
 (define quasi-quine-evalo
   (eval
    (gen 'eval-expr '(expr)
