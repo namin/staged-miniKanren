@@ -8,6 +8,36 @@
 (load "test-check.scm")
 
 
+(define ho-quine-interp
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec ([eval-expr
+                   (lambda (expr env)
+                     (match expr
+                       [`(quote ,datum) datum]
+                       [`(lambda (,(? symbol? x)) ,body)
+                        (lambda (a)
+                          (eval-expr body (lambda (y)
+                                            (if (equal? x y)
+                                                a
+                                                (env y)))))]
+                       [(? symbol? x) (env x)]
+                       [`(cons ,e1 ,e2)
+                        (cons (eval-expr e1 env) (eval-expr e2 env))]
+                       [`(,rator ,rand)
+                        ((eval-expr rator env) (eval-expr rand env))]))])
+           (eval-expr expr (lambda (y) 'error))))))
+
+;(load "unstaged-interp.scm")
+
+(time-test
+  (run 1 (q)
+    ; (absento 'error q) ;; uncomment to get an error!   Why do we even need this line???
+    (ho-quine-interp q q))
+  '???)
+
+#!eof
+
 
 (define quasi-quine-evalo-single-letrec
   (eval
