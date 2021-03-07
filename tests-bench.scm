@@ -220,6 +220,24 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
+(time-test
+ (run 1 (q)
+   (fresh (expr)
+    (absento 'clo q)
+    (== `((lambda (f)
+            (((f f)
+              (lambda (x) ,q))
+             '(a b c)))
+          (lambda (f)
+            (lambda (f^)
+              (lambda (l)
+                (if (null? l)
+                    '()
+                    (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
+        expr)
+    (map-in-double-eval expr '((a . a) (b . b) (c . c)))))
+ '((cons x x)))
+
 (define proofo
   (eval
    (gen 'proof? '(proof)
