@@ -1,4 +1,3 @@
-;; using namin/faster-miniKaren branch staged
 (load "../faster-miniKanren/mk-vicare.scm")
 (load "../faster-miniKanren/mk.scm")
 
@@ -8,6 +7,37 @@
 (load "unstaged-interp.scm")
 
 (load "test-check.scm")
+
+(define ho-quine-interp-cons
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec ([eval-expr
+                   (lambda (expr env)
+                     (match expr
+                       [`(quote ,datum) datum]
+                       [`(lambda (,(? symbol? x)) ,body)
+                        (lambda (a)
+                          (eval-expr body (lambda (y)
+                                            (if (equal? x y)
+                                                a
+                                                (env y)))))]
+                       [(? symbol? x) (env x)]
+                       [`(cons ,e1 ,e2)
+                        (cons (eval-expr e1 env) (eval-expr e2 env))]
+                       [`(,rator ,rand)
+                        ((eval-expr rator env) (eval-expr rand env))]))])
+           (eval-expr expr (lambda (y) 'error))))))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q)
+    (absento 'closure q)
+    (ho-quine-interp-cons q q))
+  '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
+      '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
+     (=/= ((_.0 closure)) ((_.0 error)))
+     (sym _.0))))
+
 
 (define ho-double-evalo
   (eval
