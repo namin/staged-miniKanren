@@ -34,12 +34,13 @@
                        (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
                       [`(,rator ,rand)
                        ((eval-expr rator env) (eval-expr rand env))]))]
-                 (eval-expr ',q
+                 (eval-expr expr
                             'initial-env)))))
 
 (time-test
   (run 1 (q) (quasi-quine-evalo-single-letrec q q))
   '((lambda (x) `(,x ',x)) '(lambda (x) `(,x ',x))))
+
 
 
 
@@ -70,7 +71,7 @@
                          [`(,rator ,rand)
                           ((eval-expr rator env) (eval-expr rand env))]
                          ))))
-             (eval-expr ',q
+             (eval-expr expr
                         'initial-env))))))
 
 (time-test
