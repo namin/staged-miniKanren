@@ -32,7 +32,7 @@
 
 (time-test
   (run 1 (q)
-    ; (absento 'error q) ;; uncomment to get an error!   Why do we even need this line???
+    (absento 'error q)
     (ho-quine-interp q q))
   '???)
 
