@@ -32,15 +32,20 @@
                         ((eval-expr rator env)
                          (eval-expr rand env))]
                        ))])
-           (eval-expr expr (lambda (y) y))))))
+           (eval-expr expr (lambda (y) 'error))))))
 
 (test
     (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
   '(hello))
 
-(todo "quines"
-      (run 2 (q) (ho-double-evalo q q))
-      '(TODO))
+(load "unstaged-interp.scm")
+(time-test
+ (run 2 (q) (absento 'closure q) (ho-double-evalo q q))
+ '(error
+   (((lambda (_.0) (list _.0 (list 'quote _.0)))
+     '(lambda (_.0) (list _.0 (list 'quote _.0))))
+    (=/= ((_.0 closure)))
+    (sym _.0))))
 
 #|
 #lang racket

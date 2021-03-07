@@ -59,7 +59,7 @@
                c))))
          ((absento 'closure cfun)
           ;;(logo "callo f")
-          (logo "callo: ~a" cfun)
+          ;;(logo "callo: ~a" cfun)
           (lambda (c)
             (((maybe-apply (walk* cfun (c->S c)) a*) val)
              c))))))))
@@ -71,8 +71,7 @@
           ((apply cfun a*) val)
           (begin
             (printf "not a proc: ~a\n" cfun)
-            ;; TODO: what to do?
-            (lambda (c) c))))))
+            fail)))))
 
 (define (eval-expo stage? expr env val)
   (conde
