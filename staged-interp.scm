@@ -55,7 +55,7 @@
             (== cfun `(closure ,clam ,cenv ,ccode))
             ;;(logo "callo lambda")
             (lambda (c)
-              (((apply (walk* ccode (c->S c)) a*) val)
+              (((maybe-apply (walk* ccode (c->S c)) a*) val)
                c))))
          ((absento 'closure cfun)
           ;;(logo "callo f")
