@@ -612,6 +612,81 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-evalo `((lambda (proc)
+                            (cons (map proc '())
+                                  (cons (map proc '(a))
+                                        (cons (map proc '(b c))
+                                              (cons (map proc '(d e f))
+                                                    '())))))
+                          (lambda (x) ,q))
+                        '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
+  '((cons x (cons (cons x '()) (cons x '())))))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)    
+    (u-eval-expo
+     `(letrec ([map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))])
+        (letrec ([eval-expr
+                  (lambda (expr env)
+                    (match expr
+                      [`(quote ,datum) datum]
+                      [`(null? ,e)
+                       (null? (eval-expr e env))]
+                      [`(car ,e)
+                       (car (eval-expr e env))]
+                      [`(cdr ,e)
+                       (cdr (eval-expr e env))]
+                      [`(cons ,e1 ,e2)
+                       (cons (eval-expr e1 env)
+                             (eval-expr e2 env))]
+                      [`(if ,e1 ,e2 ,e3)
+                       (if (eval-expr e1 env)
+                           (eval-expr e2 env)
+                           (eval-expr e3 env))]                       
+                      [`(lambda (,(? symbol? x)) ,body)
+                       (lambda (a)
+                         (eval-expr body (lambda (y)
+                                           (if (equal? x y)
+                                               a
+                                               (env y)))))]
+                      [(? symbol? x) (env x)]
+                      [`(map ,e1 ,e2)
+                       (map (eval-expr e1 env) (eval-expr e2 env))]
+                      [`(,rator ,rand)
+                       ((eval-expr rator env) (eval-expr rand env))]))])
+          (eval-expr '((lambda (proc)
+                         (cons (map proc '())
+                               (cons (map proc '(a))
+                                     (cons (map proc '(b c))
+                                           (cons (map proc '(d e f))
+                                                 '())))))
+                       (lambda (x) ,q)) (lambda (y) 'error))))    
+     initial-env
+     '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
+  '((cons x (cons (cons x '()) (cons x '())))))
+
 
 
 (define quasi-quine-evalo
