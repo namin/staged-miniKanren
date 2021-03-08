@@ -500,36 +500,36 @@
                          (if (null? l)
                              '()
                              (cons (f (car l))
-                                   (map f (cdr l)))))]
-                  [eval-expr
-                   (lambda (expr env)
-                     (match expr
-                       [`(quote ,datum) datum]
-                       [`(null? ,e)
-                        (null? (eval-expr e env))]
-                       [`(car ,e)
-                        (car (eval-expr e env))]
-                       [`(cdr ,e)
-                        (cdr (eval-expr e env))]
-                       [`(cons ,e1 ,e2)
-                        (cons (eval-expr e1 env)
-                              (eval-expr e2 env))]
-                       [`(if ,e1 ,e2 ,e3)
-                        (if (eval-expr e1 env)
-                            (eval-expr e2 env)
-                            (eval-expr e3 env))]                       
-                       [`(lambda (,(? symbol? x)) ,body)
-                        (lambda (a)
-                          (eval-expr body (lambda (y)
-                                            (if (equal? x y)
-                                                a
-                                                (env y)))))]
-                       [(? symbol? x) (env x)]
-                       [`(map ,e1 ,e2)
-                        (map (eval-expr e1 env) (eval-expr e2 env))]
-                       [`(,rator ,rand)
-                        ((eval-expr rator env) (eval-expr rand env))]))])
-           (eval-expr expr (lambda (y) 'error))))))
+                                   (map f (cdr l)))))])
+           (letrec ([eval-expr
+                     (lambda (expr env)
+                       (match expr
+                         [`(quote ,datum) datum]
+                         [`(null? ,e)
+                          (null? (eval-expr e env))]
+                         [`(car ,e)
+                          (car (eval-expr e env))]
+                         [`(cdr ,e)
+                          (cdr (eval-expr e env))]
+                         [`(cons ,e1 ,e2)
+                          (cons (eval-expr e1 env)
+                                (eval-expr e2 env))]
+                         [`(if ,e1 ,e2 ,e3)
+                          (if (eval-expr e1 env)
+                              (eval-expr e2 env)
+                              (eval-expr e3 env))]                       
+                         [`(lambda (,(? symbol? x)) ,body)
+                          (lambda (a)
+                            (eval-expr body (lambda (y)
+                                              (if (equal? x y)
+                                                  a
+                                                  (env y)))))]
+                         [(? symbol? x) (env x)]
+                         [`(map ,e1 ,e2)
+                          (map (eval-expr e1 env) (eval-expr e2 env))]
+                         [`(,rator ,rand)
+                          ((eval-expr rator env) (eval-expr rand env))]))])
+             (eval-expr expr (lambda (y) 'error)))))))
 
 (time-test
   (run 1 (q)
