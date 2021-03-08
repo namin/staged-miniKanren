@@ -93,7 +93,47 @@
  '???)
 |#
 
+(time-test
+  (syn-hole 1
+    (lambda (q)
+      `(letrec ((map (lambda (f l)
+                       (if (null? l)
+                           '()
+                           (cons (f (car l))
+                                 (map f (cdr l)))))))
+         (map (lambda (y) y) '(d e))))
+    '(d e))
+  '(_.0))
 
+#|
+;; WEB Why does this test fail?
+(syn-hole 1
+  (lambda (q)
+    `(letrec ((map (lambda (f l)
+                     (if (null? l)
+                         '()
+                         (cons (f (car l))
+                               (map f (cdr l)))))))
+       (cons (map (lambda (y) y) '(d e))
+             '())))
+  '((d e)))
+|#
+
+#|
+;; WEB Why does this test fail?
+(syn-hole 1
+  (lambda (q)
+    `(letrec ((map (lambda (f l)
+                     (if (null? l)
+                         '()
+                         (cons (f (car l))
+                               (map f (cdr l)))))))
+       ((lambda x x)
+        (map (lambda (y) y) '(d e))
+        (map (lambda (x) (cons x x)) '(a b c)))))
+  '((d e)
+    ((a . a) (b . b) (c . c))))
+|#
 
 (time-test
  (syn-hole 3
