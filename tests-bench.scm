@@ -105,6 +105,53 @@
     '(d e))
   '(_.0))
 
+;;; WEB I would have expected (car l) to be generated...
+(time-test
+  (let ((e (eval (gen-hole
+                  (lambda (q)
+                    `(letrec ((map (lambda (f l)
+                                     (if (null? l)
+                                         '()
+                                         (cons (f ,q)
+                                               (map f (cdr l))))))
+                              (foo (lambda (f l1 l2)
+                                     (cons (map f l1)
+                                           (cons (map f l2)
+                                                 '())))))
+                       (foo (lambda (y) (cons y y)) '(a) '(b c))))
+                  '(((a . a)) ((b . b) (c . c)))))))
+    (run 1 (q)
+      (absento 'a q)
+      (absento 'b q)
+      (absento 'c q)
+      (e q)))
+  '(((match l
+       (`(,_.0) _.0)
+       (`(,_.1 unquote _.2) _.1)
+       .
+       _.3)
+     (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.2 a)) ((_.2 b)) ((_.2 c)))
+     (sym _.0 _.1 _.2)
+     (absento (a _.3) (b _.3) (c _.3)))))
+
+(time-test
+  (let ((e (eval (gen-hole
+                  (lambda (q)
+                    `(letrec ((map (lambda (f l)
+                                     (if (null? l)
+                                         '()
+                                         (cons (f (car l))
+                                               (map f (cdr l)))))))
+                       (map (lambda (y) (cons y y)) '(a b c))))
+                  '((a . a) (b . b) (c . c))))))
+    (run 1 (q)
+      (absento 'a q)
+      (absento 'b q)
+      (absento 'c q)
+      (e q)))
+  '((_.0
+     (absento (a _.0) (b _.0) (c _.0)))))
+
 #|
 ;; WEB Why does this test fail?
 (syn-hole 1
