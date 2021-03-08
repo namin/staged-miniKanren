@@ -8,6 +8,182 @@
 
 (load "test-check.scm")
 
+(define (gen-hole query result)
+  (let ((r (run 1 (q)
+             (eval-expo #t
+                        (query q)
+                        initial-env
+                        (quasi result)))))
+    (let ((r (car r)))
+      (fix-scope
+       `(lambda (,(car r)) (fresh () . ,(caddr r)))))))
+(define (syn-hole n query result)
+  (let ((e (eval (gen-hole query result))))
+    (run n (q) (e q))))
+
+
+
+(time-test
+ (syn-hole 1
+   (lambda (q)
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map (lambda (x) ,q) '(a b c))))
+   '((a . a) (b . b) (c . c)))
+ '((cons x x)))
+
+;; u-eval-expo seems 50% faster than the syn-hole version
+(time-test
+  (run 1 (q)
+    (u-eval-expo
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map (lambda (x) ,q) '(a b c)))    
+     initial-env
+     '((a . a) (b . b) (c . c))))
+  '((cons x x)))
+
+
+(time-test
+ (syn-hole 1
+   (lambda (q)
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map (lambda (x) ,q) '(a b c))))
+   '((a (a) a) (b (b) b) (c (c) c)))
+ '((((lambda _.0 _.0) x ((lambda _.1 _.1) x) x)
+    (sym _.0 _.1))))
+
+(time-test
+  (run 1 (q)
+    (u-eval-expo
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map (lambda (x) ,q) '(a b c)))    
+     initial-env
+     '((a (a) a) (b (b) b) (c (c) c))))
+  '((((lambda _.0 _.0) x ((lambda _.1 _.1) x) x)
+    (sym _.0 _.1))))
+
+#|
+;;; Why is this version so slow?
+
+(time-test
+ (syn-hole 1
+   (lambda (q)
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map ,q '(a b c))))
+   '((a . a) (b . b) (c . c)))
+ '???)
+|#
+
+
+
+(time-test
+ (syn-hole 3
+   (lambda (q)
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (append '(1 2) ,q)))
+   '(1 2 3 4))
+ '('(3 4)
+   (((lambda _.0 _.0) 3 4) (sym _.0))
+   (((lambda _.0 '(3 4))) (=/= ((_.0 quote))) (sym _.0))))
+
+(time-test
+ (run 3 (q)
+   (u-eval-expo
+    `(letrec ((append
+               (lambda (xs ys)
+                 (if (null? xs) ys
+                     (cons (car xs) (append (cdr xs) ys))))))
+       (append '(1 2) ,q))    
+    initial-env
+    '(1 2 3 4)))
+ '('(3 4)
+   (((lambda _.0 _.0) 3 4) (sym _.0))
+   (((lambda _.0 '(3 4))) (=/= ((_.0 quote))) (sym _.0))))
+
+
+(time-test
+ (length
+  (syn-hole 50
+   (lambda (q)
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (append '(1 2) ,q)))
+   '(1 2 3 4)))
+ 50)
+
+(time-test
+  (length
+   (run 50 (q)
+     (u-eval-expo
+      `(letrec ((append
+                 (lambda (xs ys)
+                   (if (null? xs) ys
+                       (cons (car xs) (append (cdr xs) ys))))))
+         (append '(1 2) ,q))    
+      initial-env
+      '(1 2 3 4))))
+  50)
+
+(time-test
+  (length
+   (run 50 (q)
+     (u-eval-expo
+      q    
+      initial-env
+      '(3 4))))
+  50)
+
+
+(time-test
+ (syn-hole 3
+   (lambda (q)
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (append ,q '(3 4))))
+   '(1 2 3 4))
+ '('(1 2)
+   (((lambda _.0 _.0) 1 2) (sym _.0))
+   (((lambda _.0 '(1 2))) (=/= ((_.0 quote))) (sym _.0))))
+
+(time
+ (run 3 (q)
+   (u-eval-expo
+    `(letrec ((append
+               (lambda (xs ys)
+                 (if (null? xs) ys
+                     (cons (car xs) (append (cdr xs) ys))))))
+       (append ,q '(3 4)))    
+    initial-env
+    '(1 2 3 4))))
+
+
+
 (define eval-and-map-evalo
   (eval
    (gen 'eval-expr '(expr)
