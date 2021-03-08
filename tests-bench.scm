@@ -8,6 +8,62 @@
 
 (load "test-check.scm")
 
+(define eval-and-map-evalo
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec ([map (lambda (f l)
+                         (if (null? l)
+                             '()
+                             (cons (f (car l))
+                                   (map f (cdr l)))))]
+                  [eval-expr
+                   (lambda (expr env)
+                     (match expr
+                       [`(quote ,datum) datum]
+                       [`(null? ,e)
+                        (null? (eval-expr e env))]
+                       [`(car ,e)
+                        (car (eval-expr e env))]
+                       [`(cdr ,e)
+                        (cdr (eval-expr e env))]
+                       [`(cons ,e1 ,e2)
+                        (cons (eval-expr e1 env)
+                              (eval-expr e2 env))]
+                       [`(if ,e1 ,e2 ,e3)
+                        (if (eval-expr e1 env)
+                            (eval-expr e2 env)
+                            (eval-expr e3 env))]                       
+                       [`(lambda (,(? symbol? x)) ,body)
+                        (lambda (a)
+                          (eval-expr body (lambda (y)
+                                            (if (equal? x y)
+                                                a
+                                                (env y)))))]
+                       [(? symbol? x) (env x)]
+                       [`(map ,e1 ,e2)
+                        (map (eval-expr e1 env) (eval-expr e2 env))]
+                       [`(,rator ,rand)
+                        ((eval-expr rator env) (eval-expr rand env))]))])
+           (eval-expr expr (lambda (y) 'error))))))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (eval-and-map-evalo `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
+  '(((lambda (_.0) (cons _.0 _.0))
+     (=/= ((_.0 closure)) ((_.0 error)))
+     (sym _.0))))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (eval-and-map-evalo `(map (lambda (x) ,q) '(a b c)) '((a . a) (b . b) (c . c))))
+  '((cons x x)))
+
+
+
 (define quasi-quine-evalo
   (eval
    (gen 'eval-expr '(expr)
@@ -16,7 +72,8 @@
                                   [(? symbol? x) x]
                                   [`() '()]
                                   [`(,`unquote ,exp) (eval exp)]
-                                  [`(quasiquote ,datum) 'error]
+                                  [`(quasiquote ,datum) 'error] ;; was ('error) in the 2017 ICFP Pearl, but
+                                  ;; the code generator rejects this erroneous code!
                                   [`(,a . ,d)
                                    (cons (eval-quasi a eval) (eval-quasi d eval))]))]
                   [eval-expr
@@ -36,10 +93,9 @@
                         ((eval-expr rator env) (eval-expr rand env))]))])
            (eval-expr expr (lambda (y) 'error))))))
 
-
 (time-test
   (run 1 (q)
-    (absento 'error q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'closure q)
     (quasi-quine-evalo q q))
   '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
