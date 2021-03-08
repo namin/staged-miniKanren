@@ -260,6 +260,70 @@
       (e q)))
   '(l))
 
+;; WEB Runs faster than the staged version
+(time-test
+  (run 1 (q)
+    (u-eval-expo
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car ,q))
+                                (map f (cdr l)))))))
+        (map (lambda (l) (map (lambda (y) (cons y y)) l)) '((a) (b c) (d e f))))    
+     initial-env
+     '(((a . a))
+       ((b . b) (c . c))
+       ((d . d) (e . e) (f . f)))))
+  '(l))
+
+
+(time-test
+  (let ((e (eval (gen-hole
+                  (lambda (q)
+                    `(letrec ((map (lambda (f l)
+                                     (if (null? l)
+                                         '()
+                                         (cons (f (car ,q))
+                                               (map f (cdr l)))))))
+                       (map (lambda (l) (map (lambda (y) (cons y y)) l)) '((a) (b c) (d e f)))))
+                  '(((a . a))
+                    ((b . b) (c . c))
+                    ((d . d) (e . e) (f . f)))))))
+    (run 1 (q)
+      (absento 'a q)
+      (absento 'b q)
+      (absento 'c q)
+      (absento 'd q)
+      (absento 'e q)
+      (absento 'f q)
+      (e q)))
+  '(l))
+
+#|
+;;; WEB Why does this fail??
+(time-test
+  (let ((e (eval (gen-hole
+                  (lambda (q)
+                    `(letrec ((map (lambda (f l)
+                                     (if (null? l)
+                                         '()
+                                         (cons (f (,q l))
+                                               (map f (cdr l)))))))
+                       (map (lambda (l) (map (lambda (y) (cons y y)) l)) '((a) (b c) (d e f)))))
+                  '(((a . a))
+                    ((b . b) (c . c))
+                    ((d . d) (e . e) (f . f)))))))
+    (run 1 (q)
+      (absento 'a q)
+      (absento 'b q)
+      (absento 'c q)
+      (absento 'd q)
+      (absento 'e q)
+      (absento 'f q)
+      (e q)))
+  '(car))
+|#
+
 #|
 ;; WEB I got bored of waiting for this test to return after ~1 minute.
 ;; WEB This is a very tough test, due to the nested `map`!
