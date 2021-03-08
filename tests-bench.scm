@@ -687,6 +687,169 @@
      '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
 
+(define eval-and-map-and-list-evalo
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec ([map (lambda (f l)
+                         (if (null? l)
+                             '()
+                             (cons (f (car l))
+                                   (map f (cdr l)))))])
+           (letrec ([eval-expr
+                     (lambda (expr env)
+                       (match expr
+                         [`(quote ,datum) datum]
+                         [`(null? ,e)
+                          (null? (eval-expr e env))]
+                         [`(car ,e)
+                          (car (eval-expr e env))]
+                         [`(cdr ,e)
+                          (cdr (eval-expr e env))]
+                         [`(cons ,e1 ,e2)
+                          (cons (eval-expr e1 env)
+                                (eval-expr e2 env))]
+                         [`(if ,e1 ,e2 ,e3)
+                          (if (eval-expr e1 env)
+                              (eval-expr e2 env)
+                              (eval-expr e3 env))]                       
+                         [`(lambda (,(? symbol? x)) ,body)
+                          (lambda (a)
+                            (eval-expr body (lambda (y)
+                                              (if (equal? x y)
+                                                  a
+                                                  (env y)))))]
+                         [(? symbol? x) (env x)]
+                         [`(map ,e1 ,e2)
+                          (map (eval-expr e1 env) (eval-expr e2 env))]
+                         [`(list . ,e*)
+                          (map (lambda (e) (eval-expr e env)) e*)]
+                         [`(,rator ,rand)
+                          ((eval-expr rator env) (eval-expr rand env))]))])
+             (eval-expr expr (lambda (y) 'error)))))))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-and-list-evalo `((lambda (proc)
+                                     (list (map proc '())
+                                           (map proc '(a))
+                                           (map proc '(b c))
+                                           (map proc '(d e f))))
+                                   (lambda (x) ,q))
+                        '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
+  '((cons x x)))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-and-list-evalo `((lambda (proc)
+                                     (list (map proc '())
+                                           (map proc '(a))
+                                           (map proc '(b c))
+                                           (map proc '(d e f))))
+                                   (lambda (x) ,q))
+                        '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
+  '((list x (cons x '()) x)))
+
+#|
+;;; WEB Painfully slow to generate this code!  Does it even terminate?
+(define eval-and-map-and-list-and-let-evalo
+  (eval
+   (gen 'eval-expr '(expr)
+        `(letrec ([map (lambda (f l)
+                         (if (null? l)
+                             '()
+                             (cons (f (car l))
+                                   (map f (cdr l)))))])
+           (letrec ([eval-expr
+                     (lambda (expr env)
+                       (match expr
+                         [`(quote ,datum) datum]
+                         [`(null? ,e)
+                          (null? (eval-expr e env))]
+                         [`(car ,e)
+                          (car (eval-expr e env))]
+                         [`(cdr ,e)
+                          (cdr (eval-expr e env))]
+                         [`(cons ,e1 ,e2)
+                          (cons (eval-expr e1 env)
+                                (eval-expr e2 env))]
+                         [`(if ,e1 ,e2 ,e3)
+                          (if (eval-expr e1 env)
+                              (eval-expr e2 env)
+                              (eval-expr e3 env))]                       
+                         [`(lambda (,(? symbol? x)) ,body)
+                          (lambda (a)
+                            (eval-expr body (lambda (y)
+                                              (if (equal? x y)
+                                                  a
+                                                  (env y)))))]
+                         [(? symbol? x) (env x)]
+                         [`(map ,e1 ,e2)
+                          (map (eval-expr e1 env) (eval-expr e2 env))]
+                         [`(let ([,(? symbol? x) ,e]) ,body)
+                          ((lambda (a)
+                             (eval-expr body (lambda (y)
+                                               (if (equal? x y)
+                                                   a
+                                                   (env y)))))
+                           (eval-expr e env))]
+                         [`(list . ,e*)
+                          (map (lambda (e) (eval-expr e env)) e*)]
+                         [`(,rator ,rand)
+                          ((eval-expr rator env) (eval-expr rand env))]))])
+             (eval-expr expr (lambda (y) 'error)))))))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-and-list-and-let-evalo `(let ((proc (lambda (x) ,q)))
+                                            (list (map proc '())
+                                                  (map proc '(a))
+                                                  (map proc '(b c))
+                                                  (map proc '(d e f))))
+                        '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
+  '((cons x x)))
+
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-and-list-and-let-evalo `(let ((proc (lambda (x) ,q)))
+                                            (list (map proc '())
+                                                  (map proc '(a))
+                                                  (map proc '(b c))
+                                                  (map proc '(d e f))))
+                        '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
+  '((list x (cons x '()) x)))
+|#
 
 
 (define quasi-quine-evalo
