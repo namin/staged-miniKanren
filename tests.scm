@@ -7,6 +7,8 @@
 
 (load "test-check.scm")
 
+;; TODO: need to update the codegen tests now that callo is used uniformly.
+
 (test (ex 't '(x) 'x) '(x))
 (test
  (gen 't '(x) 'x)
@@ -322,7 +324,7 @@
              (eval-expo #t
                         (query q)
                         initial-env
-                        (quasi result)))))
+                        result))))
     (let ((r (car r)))
       (fix-scope
        `(lambda (,(car r)) (fresh () . ,(caddr r)))))))

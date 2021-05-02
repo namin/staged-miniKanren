@@ -39,6 +39,17 @@
       ((null? t) ''())
       (else (list 'quote t)))))
 
+(define fix-callo
+  (lambda (t)
+    (if (and (pair? t)
+             (eq? 'callo (car t)))
+        (cons (car t) (cons (cadr t) (map quasi (cddr t))))
+        t)))
+
+(define walk-lift
+  (lambda (L S)
+    (map fix-callo (map fix-l== (walk* (reverse L) S)))))
+
 (define (callo cfun val . a*)
   (fresh ()
     ;;(logo "callo")
@@ -142,8 +153,8 @@
           (eval-expo #f rator env `(call ,p-name))
           ;;(logo "app call case ~a" rator)
           (eval-listo rands env a*)
-          ;;(lift `(callo ,p-name ,val . ,a*))
-          (lift `((,p-name . ,a*) ,val))
+          (lift `(callo ,p-name ,val . ,a*))
+          ;;(lift `((,p-name . ,a*) ,val))
           ))
 
        ((fresh (rator rands a* p-name)

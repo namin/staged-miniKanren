@@ -13,7 +13,7 @@
              (eval-expo #t
                         (query q)
                         initial-env
-                        (quasi result)))))
+                        result))))
     (let ((r (car r)))
       (fix-scope
        `(lambda (,(car r)) (fresh () . ,(caddr r)))))))
@@ -374,8 +374,7 @@
   '((_.0
      (absento (a _.0) (b _.0) (c _.0)))))
 
-#|
-;; WEB Why does this test fail?
+(test
 (syn-hole 1
   (lambda (q)
     `(letrec ((map (lambda (f l)
@@ -386,10 +385,9 @@
        (cons (map (lambda (y) y) '(d e))
              '())))
   '((d e)))
-|#
+'(_.0))
 
-#|
-;; WEB Why does this test fail?
+(test
 (syn-hole 1
   (lambda (q)
     `(letrec ((map (lambda (f l)
@@ -402,7 +400,7 @@
         (map (lambda (x) (cons x x)) '(a b c)))))
   '((d e)
     ((a . a) (b . b) (c . c))))
-|#
+'(_.0))
 
 (time-test
  (syn-hole 3
