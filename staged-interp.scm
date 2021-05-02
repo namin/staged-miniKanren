@@ -44,7 +44,7 @@
     ;;(logo "callo")
     (conde
       ((varo cfun)
-       (logo "callo: still var... going back to interpretation")
+       ;;(logo "callo: still var... going back to interpretation")
        (fresh (x* body cenv ccode env^)
          (== cfun `(closure `(lambda ,x* body) ,cenv ,ccode))
          (ext-env*o x* a* cenv env^)
@@ -70,7 +70,7 @@
       (if (procedure? cfun)
           ((apply cfun a*) val)
           (begin
-            (printf "not a proc: ~a\n" cfun)
+            ;;(printf "not a proc: ~a\n" cfun)
             fail)))))
 
 (define (eval-expo stage? expr env val)
