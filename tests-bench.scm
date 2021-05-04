@@ -9,6 +9,7 @@
 (load "test-check.scm")
 
 (define (gen-hole query result)
+  (printf "running first stage\n")
   (let ((r (run 1 (q)
              (eval-expo #t
                         (query q)
@@ -19,6 +20,7 @@
        `(lambda (,(car r)) (fresh () . ,(caddr r)))))))
 (define (syn-hole n query result)
   (let ((e (eval (gen-hole query result))))
+    (printf "running second stage\n")
     (run n (q) (e q))))
 
 
