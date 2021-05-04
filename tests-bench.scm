@@ -22,7 +22,11 @@
   (let ((e (eval (gen-hole query result))))
     (printf "running second stage\n")
     (run n (q) (e q))))
-
+(define (syn-hole-plus n query result extra)
+  (printf "running first stage\n")
+  (let ((e (eval (gen-hole query result))))
+    (printf "running second stage\n")
+    (run n (q) (extra q) (e q))))
 
 
 (time-test
@@ -53,7 +57,7 @@
 
 
 (time-test
- (syn-hole 1
+ (syn-hole-plus 1
    (lambda (q)
      `(letrec ((map (lambda (f l)
                       (if (null? l)
@@ -61,12 +65,13 @@
                           (cons (f (car l))
                                 (map f (cdr l)))))))
         (map (lambda (x) ,q) '(a b c))))
-   '((a (a) a) (b (b) b) (c (c) c)))
- '((((lambda _.0 _.0) x ((lambda _.1 _.1) x) x)
-    (sym _.0 _.1))))
+   '((a (a) a) (b (b) b) (c (c) c))
+   (lambda (q) (absento 'a q)))
+ '((cons x (cons (cons x '()) (cons x '())))))
 
 (time-test
   (run 1 (q)
+    (absento 'a q)
     (u-eval-expo
      `(letrec ((map (lambda (f l)
                       (if (null? l)
@@ -76,11 +81,7 @@
         (map (lambda (x) ,q) '(a b c)))    
      initial-env
      '((a (a) a) (b (b) b) (c (c) c))))
-  '((((lambda _.0 _.0) x ((lambda _.1 _.1) x) x)
-    (sym _.0 _.1))))
-
-#|
-;;; Why is this version so slow?
+  '((cons x (cons (cons x '()) (cons x '())))))
 
 (time-test
  (syn-hole 1
@@ -92,8 +93,9 @@
                                 (map f (cdr l)))))))
         (map ,q '(a b c))))
    '((a . a) (b . b) (c . c)))
- '???)
-|#
+ '(((lambda (_.0) (cons _.0 _.0))
+    (=/= ((_.0 cons)))
+    (sym _.0))))
 
 (time-test
   (syn-hole 1
@@ -413,9 +415,7 @@
                       (cons (car xs) (append (cdr xs) ys))))))
         (append '(1 2) ,q)))
    '(1 2 3 4))
- '('(3 4)
-   (((lambda _.0 _.0) 3 4) (sym _.0))
-   (((lambda _.0 '(3 4))) (=/= ((_.0 quote))) (sym _.0))))
+ '('(3 4) (list 3 4) ((letrec ((_.0 (lambda _.1 _.2))) '(3 4)) (=/= ((_.0 quote))) (sym _.1))))
 
 (time-test
  (run 3 (q)
@@ -428,9 +428,10 @@
     initial-env
     '(1 2 3 4)))
  '('(3 4)
-   (((lambda _.0 _.0) 3 4) (sym _.0))
-   (((lambda _.0 '(3 4))) (=/= ((_.0 quote))) (sym _.0))))
-
+  (list 3 4)
+  ((letrec ([_.0 (lambda _.1 _.2)]) '(3 4))
+    (=/= ((_.0 quote)))
+    (sym _.1))))
 
 (time-test
  (length
@@ -477,8 +478,10 @@
         (append ,q '(3 4))))
    '(1 2 3 4))
  '('(1 2)
-   (((lambda _.0 _.0) 1 2) (sym _.0))
-   (((lambda _.0 '(1 2))) (=/= ((_.0 quote))) (sym _.0))))
+   (list 1 2)
+   ((letrec ([_.0 (lambda _.1 _.2)]) '(1 2))
+    (=/= ((_.0 quote)))
+    (sym _.1))))
 
 (time
  (run 3 (q)

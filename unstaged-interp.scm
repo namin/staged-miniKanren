@@ -16,9 +16,9 @@
 
     ((symbolo expr) (u-lookupo expr env val))
 
-    ((fresh (x body)
+    ((fresh (x body extra)
        (== `(lambda ,x ,body) expr)
-       (== `(closure (lambda ,x ,body) ,env UNCOMPILED) val)
+       (== `(closure (lambda ,x ,body) ,env ,extra) val)
        (conde
          ;; Variadic
          ((symbolo x))
