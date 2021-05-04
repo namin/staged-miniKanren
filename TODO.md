@@ -2,3 +2,4 @@
       Then `l==` becomes `(lift (== ,(reify a) ,(reify b)))`.
 
 - [ ] Investigate how/if unstaged evalo should reenter staged code.
+      Share closure representation and calling convention.
