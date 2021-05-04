@@ -686,3 +686,12 @@
 (test
     (run 1 (q) (callo (lambda (x) (lambda (out) (== x out))) 1 q))
   '(1))
+
+(define mb-scope
+  (eval
+   (gen 'mb-scope '()
+        '((lambda (f) (list (not #t) (not #f))) (lambda (x) (not x))))))
+
+(test
+    (run 1 (q) (mb-scope q))
+  '((#f #t)))
