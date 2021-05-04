@@ -28,29 +28,7 @@
     (newline)
     c))
 
-(define quasi
-  (lambda (t)
-    (cond
-      ((var? t) t)
-      ((and (pair? t) (eq? (car t) 'sym)) (cdr t))
-      ((and (pair? t) (eq? (car t) 'no-expand))
-       (cadr t))
-      ((pair? t) (list 'cons (quasi (car t)) (quasi (cdr t))))
-      ((null? t) ''())
-      (else (list 'quote t)))))
-
-(define fix-callo
-  (lambda (t)
-    (if (and (pair? t)
-             (eq? 'callo (car t)))
-        (cons (car t) (cons (cadr t) (map quasi (cddr t))))
-        t)))
-
-(define walk-lift
-  (lambda (L S)
-    (map fix-callo (map fix-l== (walk* (reverse L) S)))))
-
-(define (callo cfun val . a*)
+(define (callo cfun val a*)
   (fresh ()
     ;;(logo "callo")
     (conde
@@ -88,7 +66,7 @@
   (conde
     ((== stage? #t) (varo expr)
      (lambda (c)
-       ((lift `(u-eval-expo ,expr ,(quasi (walk* env (c->S c))) ,val))
+       ((lift `(u-eval-expo ,expr ,(expand env) ,val))
         c)))
     ((conde
        ((non-varo expr))
@@ -125,8 +103,7 @@
           (lift-scope
            (eval-expo #t body envt out)
            c-body)
-          (== clo-code `(no-expand
-                         (lambda ,x (lambda (,out) (fresh () . ,c-body)))))))
+          (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))
 
        ((fresh (rator x rands body env^ a* res clo-code)
           (== `(,rator . ,rands) expr)
@@ -153,7 +130,7 @@
           (eval-expo #f rator env `(call ,p-name))
           ;;(logo "app call case ~a" rator)
           (eval-listo rands env a*)
-          (lift `(callo ,p-name ,val . ,a*))
+          (lift `(callo ,p-name ,(expand val) ,(expand a*)))
           ;;(lift `((,p-name . ,a*) ,val))
           ))
 
@@ -164,7 +141,7 @@
           ;;(logo "app call case (unstaged) ~a ~a" rator rands)
           (eval-listo rands env a*)
           (fresh (out)
-            (lift `(callo ,p-name ,out . ,a*))
+            (lift `(callo ,p-name ,(expand out) ,(expand a*)))
             (== val `(dynamic ,out)))))
 
        ((fresh (rator rands a* p-name)
@@ -173,7 +150,7 @@
           (eval-expo #f rator env `(dynamic ,p-name))
           ;;(logo "app call case ~a" rator)
           (eval-listo rands env a*)
-          (lift `(callo ,p-name ,val . ,a*))
+          (lift `(callo ,p-name ,(expand val) ,(expand a*)))
           ;;(lift `((,p-name . ,a*) ,val))
           ))
 
@@ -184,7 +161,7 @@
           ;;(logo "app call case (unstaged) ~a ~a" rator rands)
           (eval-listo rands env a*)
           (fresh (out)
-            (lift `(callo ,p-name ,out . ,a*))
+            (lift `(callo ,p-name ,(expand out) ,(expand a*)))
             (== val `(dynamic ,out)))))
 
        ((fresh (rator rands a* p-name)
@@ -194,7 +171,7 @@
             (eval-expo #f rator env `(sym . ,p-name))
             ;;(logo "app sym case ~a" rator)
             (eval-listo rands env a*)
-            (lift `(callo ,p-name ,val . ,a*))))
+            (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
 
        ((fresh (rator rands a* p-name)
             (== stage? #f)
@@ -204,7 +181,7 @@
             ;;(logo "app sym case (unstaged) ~a ~a" rator rands)
             (eval-listo rands env a*)
             (fresh (out)
-              (lift `(callo ,p-name ,out . ,a*))
+              (lift `(callo ,p-name ,(expand out) ,(expand a*)))
               (== val `(call out)))))
 
        ((fresh (rator x* rands a* prim-id)
@@ -652,6 +629,3 @@
                  (quasi-p-no-match d v2 penv^ penv-out))))
             z2)
            (lift `(conde ,z1 ,z2))))))))
-
-(define (l=/= a b)
-  (lift `(=/= ,a ,b)))

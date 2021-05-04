@@ -16,7 +16,7 @@
        (== _.0 out)
        (letrec ([t (lambda (x)
                      (lambda (_.1) (fresh () (== x _.1))))])
-         (fresh (_.2) (== x _.2) (callo t _.0 _.2))))))
+         (fresh (_.2) (== x _.2) (callo t _.0 (cons _.2 '())))))))
 (define ido (eval (gen 't '(x) 'x)))
 (test (run* (q) (ido q q)) '(_.0))
 
@@ -29,7 +29,7 @@
        (== _.0 out)
        (letrec ([t (lambda (x)
                      (lambda (_.1) (fresh (_.2) (== x _.2) (== _.2 _.1))))])
-         (fresh (_.3) (== x _.3) (callo t _.0 _.3))))))
+         (fresh (_.3) (== x _.3) (callo t _.0 (cons _.3 '())))))))
 (gen 't '(x) '(((lambda (y) (lambda (z) z)) x) x))
 (test (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) x)) '(x))
 (test (ex 't '(x) '(((lambda (y) (lambda (z) z)) 5) x)) '(x))
@@ -41,7 +41,7 @@
            (== _.0 out)
            (letrec ([t (lambda (x)
                          (lambda (_.1) (fresh () (== '5 _.1))))])
-             (fresh (_.2) (== x _.2) (callo t _.0 _.2))))))
+             (fresh (_.2) (== x _.2) (callo t _.0 (cons _.2 '())))))))
 (test (ex 't '(x) '((lambda (y) y) 5)) '(5))
 (test (ex 't '(x) '(((lambda (y) (lambda (z) z)) x) 5)) '(5))
 
@@ -62,13 +62,14 @@
 (test (ex 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x))) '())
 (test
   (gen 'f '(x) '(letrec ((f (lambda (y) (if (null? y) '() (f (cdr y)))))) (f x)))
- '(lambda (x out)
+'(lambda (x out)
   (fresh
     (_.0)
     (== _.0 out)
     (letrec ([f (lambda (x)
                   (lambda (_.1)
-                    (fresh ()
+                    (fresh
+                      ()
                       (letrec ([f (lambda (y)
                                     (lambda (_.2)
                                       (fresh (_.3 _.4 _.5 _.6 _.8 _.7)
@@ -83,9 +84,15 @@
                                             (== (cons (cons _.6 _.7) '())
                                                 (cons _.8 '()))
                                             (== y _.8)
-                                            (callo f _.2 _.7))))))])
-                        (fresh (_.9) (== x _.9) (callo f _.1 _.9))))))])
-      (fresh (_.10) (== x _.10) (callo f _.0 _.10))))))
+                                            (callo
+                                              f
+                                              _.2
+                                              (cons _.7 '())))))))])
+                        (fresh
+                          (_.9)
+                          (== x _.9)
+                          (callo f _.1 (cons _.9 '())))))))])
+      (fresh (_.10) (== x _.10) (callo f _.0 (cons _.10 '())))))))
 
 (test (ex 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x))) '())
 (test
@@ -118,9 +125,9 @@
                                             (== (cons (cons _.10 _.11) '())
                                                 (cons _.12 '()))
                                             (== y _.12)
-                                            (callo f _.9 _.11))))))])
-                        (fresh (_.13) (== x _.13) (callo f _.1 _.13))))))])
-      (fresh (_.14) (== x _.14) (callo t _.0 _.14))))))
+                                            (callo f _.9 (cons _.11 '())))))))])
+                        (fresh (_.13) (== x _.13) (callo f _.1 (cons _.13 '())))))))])
+      (fresh (_.14) (== x _.14) (callo t _.0 (cons _.14 '())))))))
 (test ((fwd1 (eval (gen 't '(x) '(letrec ((f (lambda (y) (if (null? y) '() (cons 1 (f (cdr y))))))) (f x))))) '(a b)) '((1 1)))
 
 (test (ex 't '(x) ''(a b c)) '((a b c)))
@@ -135,7 +142,7 @@
                     (fresh
                       ()
                       (== _.1 (cons 'a (cons 'b (cons 'c '())))))))])
-      (fresh (_.2) (== x _.2) (callo t _.0 _.2))))))
+      (fresh (_.2) (== x _.2) (callo t _.0 (cons _.2 '())))))))
 
 (define appendo
   (eval
@@ -160,32 +167,37 @@
   (fresh
     (_.0)
     (== _.0 out)
-    (letrec ([append
-              (lambda (xs ys)
-                (lambda (_.1)
-                  (fresh (_.2 _.3 _.4 _.5 _.6 _.9 _.7 _.10 _.11 _.13 _.14 _.12 _.8)
-                    (== (cons _.2 '()) (cons _.3 '()))
-                    (conde
-                      ((== '() _.2) (== #t _.4))
-                      ((=/= '() _.2) (== #f _.4)))
-                    (== xs _.3)
-                    (conde
-                      ((=/= #f _.4) (== ys _.1))
-                      ((== #f _.4)
-                       (== (cons _.5 (cons _.6 '()))
-                           (cons _.7 (cons _.8 '())))
-                       (== (cons _.5 _.6) _.1)
-                       (== (cons (cons _.7 _.9) '())
-                           (cons _.10 '()))
-                       (== xs _.10)
-                       (== (cons (cons _.11 _.12) '())
-                           (cons _.13 '()))
-                       (== xs _.13) (== ys _.14)
-                       (callo append _.8 _.12 _.14))))))])
-      (fresh (_.16 _.15)
+    (letrec ([append (lambda (xs ys)
+                       (lambda (_.1)
+                         (fresh
+                           (_.2 _.3 _.4 _.5 _.6 _.9 _.7 _.10 _.11 _.13 _.12
+                                _.14 _.8)
+                           (== (cons _.2 '()) (cons _.3 '()))
+                           (conde
+                             ((== '() _.2) (== #t _.4))
+                             ((=/= '() _.2) (== #f _.4)))
+                           (== xs _.3)
+                           (conde
+                             ((=/= #f _.4) (== ys _.1))
+                             ((== #f _.4)
+                               (== (cons _.5 (cons _.6 '()))
+                                   (cons _.7 (cons _.8 '())))
+                               (== (cons _.5 _.6) _.1)
+                               (== (cons (cons _.7 _.9) '())
+                                   (cons _.10 '()))
+                               (== xs _.10)
+                               (== (cons (cons _.11 _.12) '())
+                                   (cons _.13 '()))
+                               (== xs _.13) (== ys _.14)
+                               (callo
+                                 append
+                                 _.8
+                                 (cons _.12 (cons _.14 '()))))))))])
+      (fresh
+        (_.15 _.16)
         (== xs _.15)
         (== ys _.16)
-        (callo append _.0 _.15 _.16))))))
+        (callo append _.0 (cons _.15 (cons _.16 '()))))))))
 
 (test
  (gen 'ex-if '(x) '(if (null? x) 1 2))
@@ -203,7 +215,7 @@
                           (conde
                             ((=/= #f _.4) (== '1 _.1))
                             ((== #f _.4) (== '2 _.1))))))])
-      (fresh (_.5) (== x _.5) (callo ex-if _.0 _.5))))))
+      (fresh (_.5) (== x _.5) (callo ex-if _.0 (cons _.5 '())))))))
 (test (run* (q) (l== q 1) (l== q 2))
       '((_.0 !! ((== _.0 '1) (== _.0 '2)))))
 (test (run* (q) (conde [(l== q 1)] [(l== q 2)]))
@@ -365,14 +377,14 @@
     (run 1 (q) (e q))))
 
 (test
- (syn-hole
-  (lambda (q)
-    `(letrec ((append
-               (lambda (xs ys)
-                 (if (null? xs) ,q
-                     (cons (car xs) (append (cdr xs) ys))))))
-       (append '(1 2) '(3 4))))
-  '(1 2 3 4))
+    (syn-hole
+     (lambda (q)
+       `(letrec ((append
+                  (lambda (xs ys)
+                    (if (null? xs) ,q
+                        (cons (car xs) (append (cdr xs) ys))))))
+          (append '(1 2) '(3 4))))
+     '(1 2 3 4))
  '(ys))
 
 ;; mutually-recursive
@@ -418,7 +430,7 @@
                                      (== (cons (cons _.15 _.14) '())
                                          (cons _.16 '()))
                                      (== n _.16)
-                                     (callo odd? _.1 _.12))))))))]
+                                     (callo odd? _.1 (cons _.12 '())))))))))]
                 [odd? (lambda (n)
                         (lambda (_.17)
                           (fresh ()
@@ -446,14 +458,14 @@
                                     (== (cons (cons _.31 _.30) '())
                                         (cons _.32 '()))
                                     (== n _.32)
-                                    (callo even? _.17 _.28))))))))])
+                                    (callo even? _.17 (cons _.28 '())))))))))])
          (fresh
            ()
            (== _.33
                (cons
                  's
                  (cons (cons 's (cons (cons 's (cons 'z '())) '())) '())))
-           (callo even? _.0 _.33)))))))
+           (callo even? _.0 (cons _.33 '()))))))))
 
 (define (my-map f xs)
   (if (null? xs) '()
@@ -513,7 +525,7 @@
   (run* (q)
     (fresh (p)
       (curried-appendo '(a) p)
-      (callo p q '(b))))
+      (callo p q '((b)))))
   '((a b)))
 
 ;; the hard way is no longer necessary!
@@ -625,7 +637,7 @@
            'other-app]))))
 
 (test
- (run* (q) (ex-minimatchineqo '(1 1) q))
+    (run* (q) (ex-minimatchineqo '(1 1) q))
  '(num-app))
 
 (define ex-minimatcho
@@ -684,7 +696,7 @@
   '(#f))
 
 (test
-    (run 1 (q) (callo (lambda (x) (lambda (out) (== x out))) 1 q))
+    (run 1 (q) (callo (lambda (x) (lambda (out) (== x out))) 1 `(,q)))
   '(1))
 
 (define mb-scope
