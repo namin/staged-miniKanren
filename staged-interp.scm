@@ -36,20 +36,24 @@
          (== cfun `(closure ,clam ,cenv ,ccode))
          ;;(logo "callo lambda")
          (lambda (c)
-           (((maybe-apply (walk* ccode (c->S c)) cfun a*) val)
+           (((maybe-apply (walk* ccode (c->S c)) (walk* cfun (c->S c)) (walk* a* (c->S c))) val)
             c))))
       ((absento 'closure cfun)
        ;;(logo "callo f")
        ;;(logo "callo: ~a" cfun)
        (lambda (c)
-         (((maybe-apply (walk* cfun (c->S c)) cfun a*) val)
+         (((maybe-apply (walk* cfun (c->S c)) (walk* cfun (c->S c)) (walk* a* (c->S c))) val)
           c))))))
 
 (define maybe-apply
   (lambda (cfun whole a*)
     (lambda (val)
-      (if (procedure? cfun)
-          ((apply cfun a*) val)
+      (if (and (procedure? cfun) (list? a*))
+          (call/cc
+           (lambda (k)
+             (with-exception-handler
+              (lambda (_) (k fail))
+              (lambda () ((apply cfun a*) val)))))
           (conde
             ((fresh (clam cenv ccode x* body env^)
                (== whole `(closure ,clam ,cenv ,ccode))
