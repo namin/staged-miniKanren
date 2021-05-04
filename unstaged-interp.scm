@@ -18,7 +18,7 @@
 
     ((fresh (x body)
        (== `(lambda ,x ,body) expr)
-       (== `(closure (lambda ,x ,body) ,env) val)
+       (== `(closure (lambda ,x ,body) ,env UNCOMPILED) val)
        (conde
          ;; Variadic
          ((symbolo x))
@@ -26,22 +26,12 @@
          ((u-list-of-symbolso x)))
        (u-not-in-envo 'lambda env)))
     
-    ((fresh (rator x rands body env^ a* res)
+    ((fresh (rator x* rands body env^ a* cfun extra)
        (== `(,rator . ,rands) expr)
-       ;; variadic
-       (symbolo x)
-       (== `((,x . (val . ,a*)) . ,env^) res)
-       (u-eval-expo rator env `(closure (lambda ,x ,body) ,env^))
-       (u-eval-expo body res val)
-       (u-eval-listo rands env a*)))
-
-    ((fresh (rator x* rands body env^ a* res)
-       (== `(,rator . ,rands) expr)
-       ;; Multi-argument
-       (u-eval-expo rator env `(closure (lambda ,x* ,body) ,env^))
+       (u-eval-expo rator env cfun)
+       (== `(closure (lambda ,x* ,body) ,env^ ,extra) cfun)
        (u-eval-listo rands env a*)
-       (u-ext-env*o x* a* env^ res)
-       (u-eval-expo body res val)))
+       (callo cfun val a*)))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
@@ -79,9 +69,9 @@
       ((== x y)
        (conde
          ((== `(val . ,t) b))
-         ((fresh (lam-expr)
+         ((fresh (lam-expr extra)
             (== `(rec . ,lam-expr) b)
-            (== `(closure ,lam-expr ,env) t)))))
+            (== `(closure ,lam-expr ,env ,extra) t)))))
       ((=/= x y)
        (u-lookupo x rest t)))))
 
@@ -230,7 +220,7 @@
       ((=/= #f t) (u-eval-expo e2 env val))
       ((== #f t) (u-eval-expo e3 env val)))))
 
-(define u-initial-env `((list . (val . (closure (lambda x x) ,u-empty-env)))
+(define u-initial-env `((list . (val . (closure (lambda x x) ,u-empty-env (lambda x (lambda (out) (== x out))))))
                       (not . (val . (prim . not)))
                       (equal? . (val . (prim . equal?)))
                       (symbol? . (val . (prim . symbol?)))
