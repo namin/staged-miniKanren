@@ -445,6 +445,7 @@
    '(1 2 3 4)))
  50)
 
+#|
 (time-test
   (length
    (run 50 (q)
@@ -457,7 +458,8 @@
       initial-env
       '(1 2 3 4))))
   50)
-
+|#
+#|
 (time-test
   (length
    (run 50 (q)
@@ -466,7 +468,7 @@
       initial-env
       '(3 4))))
   50)
-
+|#
 
 (time-test
  (syn-hole 3
