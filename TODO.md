@@ -23,3 +23,36 @@
       Then add that `expand` call.
 
 - [ ] Devise a much more pleasant interface for running and staging than `gen`.
+
+Replacement for `gen`:
+
+```
+(define-staged-relation (appendo xs ys zs)
+ (eval-staged
+   `(letrec ((append
+               (lambda (xs ys))))
+       (append ',xs ',ys))
+   zs))
+(run* (q) (appendo q '(b) '(a b)))
+```
+
+```
+(define-relation (appendo xs ys zs)
+ (eval-staged
+   `(letrec ((append
+               (lambda (xs ys))))
+       (append ',xs ',ys))
+   zs))
+(run-staged* (q) (appendo q '(b) '(a b)))
+```
+
+```
+(run-staged 1 (q)
+ (evalo-staged
+   `(letrec ((append
+                 (lambda (xs ys)
+                   (if (null? xs) ,q
+                       (cons (car xs) (append (cdr xs) ys))))))
+         (append '(1 2) '(3 4)))
+  '(1 2 3 4)))
+```
