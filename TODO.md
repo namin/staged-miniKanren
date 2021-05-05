@@ -13,3 +13,6 @@
       Might require systematic `run*` instead of `run 1` in generator.
 
 - [ ] Unify representation of letrec-bound procedures and lambda-bound ones.
+
+- [ ] Collect and fix examples of divergence during code generation due to infinite answers.
+      Example: lambda arglist position could generate all number of arguments.
