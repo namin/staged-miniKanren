@@ -57,6 +57,8 @@
   (lambda (t)
     (car (fix-scope2 (fix-scope1 t) '()))))
 
+(define (maybe-remove-constraints r)
+  (if (eq? '$$ (cadr r)) (car r) r))
 ;; # Helpers for turning functional procedure into relational one
 (define res '())
 (define gen
@@ -75,13 +77,32 @@
         (if (null? r)
             (error 'gen "staging failed")
             (let ((r (car r)))
-              (set! res
-                    (fix-scope
-                     `(lambda (,@inputs out)
-                        (fresh ()
-                          (== ,(car r) out)
-                          . ,(caddr r)))))
+              (let ((r (maybe-remove-constraints r)))
+                (set! res
+                      (fix-scope
+                       `(lambda (,@inputs out)
+                          (fresh ()
+                            (== ,(car r) out)
+                            . ,(caddr r))))))
               res))))))
+
+(define (gen-hole query result)
+  (let ((r (run 1 (q)
+             (eval-expo #t
+                        (query q)
+                        initial-env
+                        result))))
+    (let ((r (car r)))
+      (let ((r (maybe-remove-constraints r)))
+        (fix-scope
+         `(lambda (,(car r)) (fresh () . ,(caddr r))))))))
+(define (syn-hole n query result . extra)
+  (printf "running first stage\n")
+  (let ((e (eval (gen-hole query result))))
+    (printf "running second stage\n")
+    (run n (q)
+      (if (null? extra) succeed ((car extra) q))
+      (e q))))
 
 (define ex
   (lambda (p-name inputs rhs)

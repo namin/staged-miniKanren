@@ -8,27 +8,6 @@
 
 (load "test-check.scm")
 
-(define (gen-hole query result)
-  (let ((r (run 1 (q)
-             (eval-expo #t
-                        (query q)
-                        initial-env
-                        result))))
-    (let ((r (car r)))
-      (fix-scope
-       `(lambda (,(car r)) (fresh () . ,(caddr r)))))))
-(define (syn-hole n query result)
-  (printf "running first stage\n")
-  (let ((e (eval (gen-hole query result))))
-    (printf "running second stage\n")
-    (run n (q) (e q))))
-(define (syn-hole-plus n query result extra)
-  (printf "running first stage\n")
-  (let ((e (eval (gen-hole query result))))
-    (printf "running second stage\n")
-    (run n (q) (extra q) (e q))))
-
-
 (time-test
  (syn-hole 1
    (lambda (q)
@@ -57,7 +36,7 @@
 
 
 (time-test
- (syn-hole-plus 1
+ (syn-hole 1
    (lambda (q)
      `(letrec ((map (lambda (f l)
                       (if (null? l)
@@ -305,6 +284,7 @@
 
 #|
 ;;; WEB Why does this fail??
+;;; namin This test is now slow instead of failing.
 (time-test
   (let ((e (eval (gen-hole
                   (lambda (q)

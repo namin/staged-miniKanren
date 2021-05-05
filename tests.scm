@@ -357,21 +357,9 @@
 
 ;; running with holes
 (load "unstaged-interp.scm")
-(define (gen-hole query result)
-  (let ((r (run 1 (q)
-             (eval-expo #t
-                        (query q)
-                        initial-env
-                        result))))
-    (let ((r (car r)))
-      (fix-scope
-       `(lambda (,(car r)) (fresh () . ,(caddr r)))))))
-(define (syn-hole query result)
-  (let ((e (eval (gen-hole query result))))
-    (run 1 (q) (e q))))
 
 (test
-    (syn-hole
+    (syn-hole 1
      (lambda (q)
        `(letrec ((append
                   (lambda (xs ys)
@@ -582,7 +570,7 @@
 (test
  (run 1 (q)
       (eval-expo #t q '() 1))
- '((_.0 !! ((u-eval-expo _.0 '() 1)))))
+ '((_.0 !! ((u-eval-expo _.0 '() '1)))))
 
 
 
@@ -701,3 +689,12 @@
 (test
     (run 1 (q) (mb-scope q))
   '((#f #t)))
+
+(test
+    (syn-hole 1
+              (lambda (q) `(,q 1))
+              '(1 . 1)
+              (lambda (q) (absento 1 q)))
+  '(((lambda _.0 (cons (car _.0) (car _.0)))
+   (=/= ((_.0 car)) ((_.0 cons)))
+   (sym _.0))))

@@ -61,7 +61,7 @@
                (conde
                  ((symbolo x*)
                   (== `((,x* . (val . ,a*)) . ,cenv) env^))
-                 ((ext-env*o x* a* cenv env^)))
+                 ((u-ext-env*o x* a* cenv env^)))
                (u-eval-expo body env^ val)))
             ((absento 'closure whole)
              ;;(logo "not a proc: ~a\n" cfun)
@@ -69,16 +69,18 @@
 
 (define (eval-expo stage? expr env val)
   (conde
-    ((== stage? #t) (varo expr)
+    ((varo expr)
      (lambda (c)
-       ((lift `(u-eval-expo ,expr ,(expand env) ,val))
+       ((lift `(u-eval-expo ,expr ,(expand env) ,(expand val)))
         c)))
     ((conde
        ((non-varo expr))
        ((== stage? #f)))
      (conde
-       ((fresh (v)
-          (== `(quote ,v) expr)
+       ((fresh (s v)
+          (== `(,s ,v) expr)
+          (non-varo s)
+          (== 'quote s)
           (absento 'closure v)
           (absento 'prim v)
           (not-in-envo 'quote env)
