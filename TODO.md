@@ -19,7 +19,7 @@
 
 - [ ] Use gensyms for expand/unexpand tags.
 
-- [ ] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
+- [x] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
       Then add that `expand` call.
 
 - [ ] Devise a much more pleasant interface for running and staging than `gen`.

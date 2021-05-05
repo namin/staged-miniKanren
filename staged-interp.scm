@@ -71,7 +71,7 @@
   (conde
     ((varo expr)
      (lambda (c)
-       ((lift `(u-eval-expo ,expr ,(expand env) ,(expand val)))
+       ((lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
         c)))
     ((conde
        ((non-varo expr))
