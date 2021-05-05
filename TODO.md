@@ -3,3 +3,10 @@
 
 - [x] Investigate how/if unstaged evalo should reenter staged code.
       Share closure representation and calling convention.
+
+- [ ] Figure out why lambdas got demoted in synthesis
+      because of the shared calling convention.
+
+- [ ] Make `syn-hole` robust to multiple results in the generator,
+      instead of sprinkling `non-varo`s.
+      Might require systematic `run*` instead of `run 1` in generator.
