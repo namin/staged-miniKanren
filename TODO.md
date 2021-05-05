@@ -4,8 +4,9 @@
 - [x] Investigate how/if unstaged evalo should reenter staged code.
       Share closure representation and calling convention.
 
-- [ ] Figure out why lambdas got demoted in synthesis
+- [x] Figure out why lambdas got demoted in synthesis
       because of the shared calling convention.
+      Findings: No demotion, instead `list` got promoted because its closure in `initial-env` now had the right shape.
 
 - [ ] Make `syn-hole` robust to multiple results in the generator,
       instead of sprinkling `non-varo`s.
