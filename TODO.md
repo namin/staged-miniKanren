@@ -10,3 +10,5 @@
 - [ ] Make `syn-hole` robust to multiple results in the generator,
       instead of sprinkling `non-varo`s.
       Might require systematic `run*` instead of `run 1` in generator.
+
+- [ ] Unify representation of letrec-bound procedures and lambda-bound ones.
