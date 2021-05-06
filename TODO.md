@@ -19,9 +19,9 @@
 - [ ] Collect and fix examples of divergence during code generation due to infinite answers.
       Example: lambda arglist position could generate all number of arguments.
 
-- [ ] Use `gensym`s for `expand`/`unexpand` tags.
+- [x] Use `gensym`s for `expand`/`unexpand` tags.
 
-- [ ] Also refactor `sym` to use `gensym`.
+- [x] Moot. Also refactor `sym` to use `gensym`.
 
 - [x] Refactor `sym` to use `unexpand` instead, since the code is so similar.
 
