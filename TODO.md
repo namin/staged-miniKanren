@@ -23,6 +23,8 @@
 
 - [ ] Also refactor `sym` to use `gensym`.
 
+- [ ] Refactor `sym` to use `unexpand` instead, since the code is so similar.
+
 - [x] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
       Then add that `expand` call.
 
