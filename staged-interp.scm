@@ -8,7 +8,7 @@
        (mapo fo xd yd)))))
 
 (define (make-list-of-symso xs ys)
-  (mapo (lambda (x y) (== y (cons 'sym x))) xs ys))
+  (mapo (lambda (x y) (== y (unexpand x))) xs ys))
 
 (define (varo x)
   (lambda (c)
@@ -102,7 +102,7 @@
           (not-in-envo 'lambda env)
           (conde
             ((symbolo x)
-             (== x^ (cons 'sym x))
+             (== x^ (unexpand x))
              (== `((,x . (val . ,x^)) . ,env) envt))
             ((list-of-symbolso x)
              (make-list-of-symso x x^)
@@ -175,7 +175,8 @@
             (== stage? #t)
             (== `(,rator . ,rands) expr)
             (symbolo rator)
-            (eval-expo #f rator env `(sym . ,p-name))
+            (eval-expo #f rator env (unexpand p-name))
+
             ;;(logo "app sym case ~a" rator)
             (eval-listo rands env a*)
             (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
@@ -184,7 +185,7 @@
             (== stage? #f)
             (== `(,rator . ,rands) expr)
             (symbolo rator)
-            (eval-expo #f rator env `(sym . ,p-name))
+            (eval-expo #f rator env (unexpand p-name))
             ;;(logo "app sym case (unstaged) ~a ~a" rator rands)
             (eval-listo rands env a*)
             (fresh (out)
@@ -230,7 +231,7 @@
        (letrec-bindings-evalo bs os env envt es)
        (conde
             ((symbolo x)
-             (== x^ (cons 'sym x))
+             (== x^ (unexpand x))
              (== `((,x . (val . ,x^)) . ,envt) res))
             ((list-of-symbolso x)
              (make-list-of-symso x x^)
