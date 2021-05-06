@@ -105,4 +105,4 @@ Voilà! This is enough to turn `append` into `appendo` automatically, turning th
 
 ## See Also
 
-- https://github.com/namin/faster-miniKanren/tree/staged -- a prototype of staged miniKanren based on faster-miniKanren
+- https://github.com/namin/faster-miniKanren/tree/staged -- a prototype of staged miniKanren based on faster-miniKanren that supercedes the local `staged-mk.scm` prototype.
