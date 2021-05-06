@@ -28,6 +28,8 @@
 - [x] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
       Then add that `expand` call.
 
+- [ ] Consider low-level optimizations in the generated code like getting rid of unnecesarry structures in unification.
+
 - [ ] Devise a much more pleasant interface for running and staging than `gen`.
 
 Replacement for `gen`:
