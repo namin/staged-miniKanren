@@ -19,7 +19,9 @@
 - [ ] Collect and fix examples of divergence during code generation due to infinite answers.
       Example: lambda arglist position could generate all number of arguments.
 
-- [ ] Use gensyms for expand/unexpand tags.
+- [ ] Use `gensym`s for `expand`/`unexpand` tags.
+
+- [ ] Also refactor `sym` to use `gensym`.
 
 - [x] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
       Then add that `expand` call.
