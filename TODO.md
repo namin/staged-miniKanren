@@ -8,6 +8,8 @@
       because of the shared calling convention.
       Findings: No demotion, instead `list` got promoted because its closure in `initial-env` now had the right shape.
 
+- [ ] @michaelballantyne will write a demo of syntactic lift.
+
 - [ ] Remember constraints in the generated code.
 
 - [ ] Make `syn-hole` robust to multiple results in the generator,
