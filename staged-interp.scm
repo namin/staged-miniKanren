@@ -95,22 +95,26 @@
           ;;(logo "closure case")
           ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
           (conde
-            ;; Variadic
-            ((symbolo x))
-            ;; Multi-argument
-            ((list-of-symbolso x)))
-          (not-in-envo 'lambda env)
-          (conde
-            ((symbolo x)
-             (== x^ (unexpand x))
-             (== `((,x . (val . ,x^)) . ,env) envt))
-            ((list-of-symbolso x)
-             (make-list-of-symso x x^)
-             (ext-env*o x x^ env envt)))
-          (lift-scope
-           (eval-expo #t body envt out)
-           c-body)
-          (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))
+            ((varo x)
+             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+            ((non-varo x)
+             (conde
+               ;; Variadic
+               ((symbolo x))
+               ;; Multi-argument
+               ((list-of-symbolso x)))
+             (not-in-envo 'lambda env)
+             (conde
+               ((symbolo x)
+                (== x^ (unexpand x))
+                (== `((,x . (val . ,x^)) . ,env) envt))
+               ((list-of-symbolso x)
+                (make-list-of-symso x x^)
+                (ext-env*o x x^ env envt)))
+             (lift-scope
+              (eval-expo #t body envt out)
+              c-body)
+             (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
 
        ((fresh (rator x rands body env^ a* res clo-code)
           (== `(,rator . ,rands) expr)
@@ -127,9 +131,16 @@
           ;; Multi-argument
           (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
           ;;(logo "app closure case (multi-arg) ~a" rator)
-          (eval-listo rands env a*)
-          (ext-env*o x* a* env^ res)
-          (eval-expo stage? body res val)))
+          (conde
+            ((conde
+               ((varo x*))
+               ((varo rands)))
+             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+            ((non-varo x*)
+             (non-varo rands)
+             (eval-listo rands env a*)
+             (ext-env*o x* a* env^ res)
+             (eval-expo stage? body res val)))))
 
        ((fresh (rator rands a* p-name)
           (== stage? #t)

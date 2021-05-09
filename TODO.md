@@ -22,8 +22,8 @@
 
 - [ ] Unify representation of letrec-bound procedures and lambda-bound ones.
 
-- [ ] Collect and fix examples of divergence during code generation due to infinite answers.
-      Example: lambda arglist position could generate all number of arguments.
+- [ ] Collect and fix examples of divergence during code generation due to infinite answers. In particular:
+      - [x] lambda arglist position could generate all number of arguments.
 
 - [x] Use `gensym`s for `expand`/`unexpand` tags.
 

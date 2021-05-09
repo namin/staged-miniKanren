@@ -709,3 +709,8 @@
           (e (eval g)))
       (run 1 (arg) (e arg 1)))
   '(('(1 . _.0) (absento (closure _.0) (prim _.0)))))
+
+;; shouldn't be twenty but less
+(length
+ (run 20 (params body args)
+   (eval-expo #t `((lambda ,params ,body) . ,args) initial-env 1)))
