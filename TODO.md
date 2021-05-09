@@ -32,6 +32,10 @@
 
 - [ ] Consider low-level optimizations in the generated code like getting rid of unnecesarry structures in unification.
 
+- [ ] Examine the `eval-expo #f` for rator evaluation.
+      Possible test: `(let ([f ,e]) (f 5))`.
+      Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
+
 - [ ] Devise a much more pleasant interface for running and staging than `gen`.
 
 Replacement for `gen`:
