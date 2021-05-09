@@ -716,7 +716,8 @@
        (eval-expo #t `(lambda ,params ,body) initial-env 1)))
   1)
 
-;; shouldn't be twenty but less
-(length
- (run 20 (params body args)
-   (eval-expo #t `((lambda ,params ,body) . ,args) initial-env 1)))
+(test
+    (length
+     (run 20 (params body args)
+       (eval-expo #t `((lambda ,params ,body) . ,args) initial-env 1)))
+  3)

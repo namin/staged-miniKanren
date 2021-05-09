@@ -121,8 +121,12 @@
           (== `((,x . (val . ,a*)) . ,env^) res)
           (eval-expo #f rator env `(closure (lambda ,x ,body) ,env^ ,clo-code))
           ;;(logo "app closure case ~a" rator)
-          (eval-expo stage? body res val)
-          (eval-listo rands env a*)))
+          (conde
+            ((varo rands)
+             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+            ((non-varo rands)
+             (eval-expo stage? body res val)
+             (eval-listo rands env a*)))))
 
        ((fresh (rator x* rands body env^ a* res clo-code)
           (== `(,rator . ,rands) expr)
