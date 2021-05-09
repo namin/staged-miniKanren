@@ -81,6 +81,7 @@
           (== 'quote s)
           (absento 'closure v)
           (absento 'prim v)
+          (absento 'call v) (absento 'dynamic v)
           (not-in-envo 'quote env)
           ((if stage? l== ==) val v)))
 
