@@ -1,3 +1,10 @@
+(define (not-tago v)
+  (fresh ()
+    (=/= 'closure v)
+    (=/= 'prim v)
+    (=/= 'call v)
+    (=/= 'dynamic v)))
+
 (define (mapo fo xs ys)
   (conde
     ((== xs '()) (== ys '()))
@@ -81,7 +88,8 @@
           (== 'quote s)
           (absento 'closure v)
           (absento 'prim v)
-          (absento 'call v) (absento 'dynamic v)
+          (absento 'call v)
+          (absento 'dynamic v)
           (not-in-envo 'quote env)
           ((if stage? l== ==) val v)))
 
@@ -305,11 +313,11 @@
     [(== prim-id 'car)
      (fresh (d)
        (l== `((,val . ,d)) a*)
-       (=/= 'closure val))]
+       (not-tago val))]
     [(== prim-id 'cdr)
      (fresh (a)
        (l== `((,a . ,val)) a*)
-       (=/= 'closure a))]
+       (not-tago a))]
     [(== prim-id 'not)
      (fresh (b)
        (l== `(,b) a*)
@@ -349,11 +357,15 @@
                ((fresh (a d)
                   (== `(,a . ,d) ,v)
                   (== #t ,val)
-                  (=/= a 'closure)))
+                  (not-tago a)))
                ((fresh (a d)
                   (== `(,a . ,d) ,v)
                   (== #f ,val)
-                  (== a 'closure))))))]
+                  (conde
+                    ((== a 'closure))
+                    ((== a 'prim))
+                    ((== a 'call))
+                    ((== a 'dynamic))))))))]
     [(== prim-id 'null?)
      (fresh (v)
        (l== `(,v) a*)
@@ -488,7 +500,7 @@
 (define (literalo t)
   (conde
     ((numbero t))
-    ((symbolo t) (=/= 'closure t))
+    ((symbolo t) (not-tago t))
     ((booleano t))
     ((== '() t))))
 
@@ -527,7 +539,7 @@
 (define (var-p-match var mval penv penv-out)
   (fresh (val)
     (symbolo var)
-    (=/= 'closure mval)
+    (not-tago mval)
     (l== mval val)
     (conde
       ((== penv penv-out)
@@ -619,7 +631,7 @@
        (literalo quasi-p))
       ((fresh (p)
          (== (list 'unquote p) quasi-p)
-         (=/= 'closure mval)
+         (not-tago mval)
          (p-no-match p mval penv penv-out)))
       ((fresh (a d v1 v2 penv^)
          (== `(,a . ,d) quasi-p)
