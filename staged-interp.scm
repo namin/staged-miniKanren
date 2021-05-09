@@ -5,6 +5,11 @@
     (=/= 'call v)
     (=/= 'dynamic v)))
 
+(define (absent-staged-tago v)
+  (fresh ()
+    (absento 'call v)
+    (absento 'dynamic v)))
+
 (define (mapo fo xs ys)
   (conde
     ((== xs '()) (== ys '()))
@@ -77,9 +82,8 @@
 (define (eval-expo stage? expr env val)
   (conde
     ((varo expr)
-     (lambda (c)
-       ((lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
-        c)))
+     (absent-staged-tago val)
+     (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
     ((non-varo expr)
      (conde
        ((fresh (s v)
@@ -103,6 +107,7 @@
           ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
           (conde
             ((varo x)
+             (absent-staged-tago val)
              (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
             ((non-varo x)
              (conde
@@ -128,6 +133,7 @@
           (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
           (conde
             ((varo rands)
+             (absent-staged-tago val)
              (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
             ((non-varo rands)
              (conde

@@ -690,25 +690,30 @@
     (run 1 (q) (mb-scope q))
   '((#f #t)))
 
-(todo "syn-hole-app"
+#|
+    (gen-hole
+              (lambda (q) `(,q 1))
+              '(1 . 1))
+
+(lambda (_.0)
+  (fresh
+    (_.2 _.1)
+    (u-eval-expo
+     _.0
+     ...
+     (cons 'call (cons _.1 '())))
+    (callo _.1 (cons '1 '1) (cons _.2 '()))))
+|#
+
+
+(test
     (syn-hole 1
               (lambda (q) `(,q 1))
               '(1 . 1)
               (lambda (q) (absento 1 q)))
-  ;; we used to get
-  ;; '(((lambda _.0 (cons (car _.0) (car _.0))) (=/= ((_.0 car)) ((_.0 cons))) (sym _.0)))
-  ;; now what we get seems wrong,
-  ;; and the test is much slower.
-  '(((cons
-      'call
-      (letrec ([_.0 (lambda _.1 (cons (car _.1) (car _.1)))])
-        (cons _.0 '())))
-     (=/= ((_.0 car)) ((_.0 cons)) ((_.0 quote)) ((_.1 car))
-          ((_.1 cons)))
-     (sym _.0 _.1)))
-  )
+  '(((lambda _.0 (cons (car _.0) (car _.0))) (=/= ((_.0 car)) ((_.0 cons))) (sym _.0))))
 
-(test
+(todo "expand"
     (let* ((g
            (let ((r (car (run 1 (arg val)
                            (fresh (expr)
