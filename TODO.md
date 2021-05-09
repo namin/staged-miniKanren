@@ -36,6 +36,10 @@
       Possible test: `(let ([f ,e]) (f 5))`.
       Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
 
+- [ ] Think about: Just as
+      staging is partial evaluation with manual annotations instead of heuristics,
+      relational staging is partial deduction with manual annotations instead of heuristics.
+
 - [ ] Consider this example. There is a blow up of spurious results in the second stage.
       Furthermore, we get non-determinism, which doesn't mesh well with `run 1`.
       Consider the work on partial deduction to get ideas to alleviate these issues.
