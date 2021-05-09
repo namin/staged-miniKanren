@@ -58,7 +58,11 @@
     (car (fix-scope2 (fix-scope1 t) '()))))
 
 (define (maybe-remove-constraints r)
-  (if (eq? '$$ (cadr r)) (car r) r))
+  (if (eq? '$$ (cadr r))
+      (begin
+        (printf "ignoring constraints: ~a\n" (cddr r))
+        (car r))
+      r))
 ;; # Helpers for turning functional procedure into relational one
 (define res '())
 (define gen
