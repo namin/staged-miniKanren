@@ -713,18 +713,6 @@
               (lambda (q) (absento 1 q)))
   '(((lambda _.0 (cons (car _.0) (car _.0))) (=/= ((_.0 car)) ((_.0 cons))) (sym _.0))))
 
-(todo "expand"
-    (let* ((g
-           (let ((r (car (run 1 (arg val)
-                           (fresh (expr)
-                             (eval-expo #t expr initial-env val)
-                             (== expr `(car ,arg)))))))
-             `(lambda ,(car r) ,(caaddr r))))
-          (e (eval g)))
-      (run 1 (arg) (e arg 1)))
-  '(('(1 . _.0) (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
-
-
 (test
     (length
      (run 20 (params body)
