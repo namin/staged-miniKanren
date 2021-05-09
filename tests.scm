@@ -690,22 +690,6 @@
     (run 1 (q) (mb-scope q))
   '((#f #t)))
 
-#|
-    (gen-hole
-              (lambda (q) `(,q 1))
-              '(1 . 1))
-
-(lambda (_.0)
-  (fresh
-    (_.2 _.1)
-    (u-eval-expo
-     _.0
-     ...
-     (cons 'call (cons _.1 '())))
-    (callo _.1 (cons '1 '1) (cons _.2 '()))))
-|#
-
-
 (test
     (syn-hole 1
               (lambda (q) `(,q 1))
