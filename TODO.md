@@ -38,6 +38,7 @@
 
 - [ ] Consider this example. There is a blow up of spurious results in the second stage.
       Consider the work on partial deduction to get ideas to alleviate this.
+      Or maybe a construct `conj-do-cartestian-product`.
 ```
 (define-relation (foo x y)
 (conj
