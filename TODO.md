@@ -36,6 +36,26 @@
       Possible test: `(let ([f ,e]) (f 5))`.
       Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
 
+- [ ] Consider this example. There is a blow up of spurious results in the second stage.
+      Consider the work on partial deduction to get ideas to alleviate this.
+```
+(define-relation (foo x y)
+(conj
+  (conde
+    [(== x 1)
+     (l== y 1)]
+    [(== x 1)
+     (l== y 2)]
+    [(== x 2)
+     (l== y 3)])
+  (conde
+    [(l== y 1)]
+    [(l== y 2)]
+    [(l== y 3)])))
+
+(foo 1 z)
+```
+
 - [ ] Devise a much more pleasant interface for running and staging than `gen`.
 
 Replacement for `gen`:
