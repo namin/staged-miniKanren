@@ -134,12 +134,9 @@
           (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
           ;;(logo "app closure case (multi-arg) ~a" rator)
           (conde
-            ((conde
-               ((varo x*))
-               ((varo rands)))
+            ((varo rands)
              (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-            ((non-varo x*)
-             (non-varo rands)
+            ((non-varo rands)
              (eval-listo rands env a*)
              (ext-env*o x* a* env^ res)
              (eval-expo stage? body res val)))))
