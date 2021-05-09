@@ -10,6 +10,10 @@
 
 - [ ] @michaelballantyne will write a demo of syntactic lift.
 
+- [ ] How can staged interpreter be as close as possible to unstaged interpreter?
+      In particular, the `letrec` and `lambda` cases are different.
+      For `letrec`, we might need tabling.
+
 - [ ] Remember constraints in the generated code.
 
 - [ ] Make `syn-hole` robust to multiple results in the generator,
