@@ -37,7 +37,8 @@
       Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
 
 - [ ] Consider this example. There is a blow up of spurious results in the second stage.
-      Consider the work on partial deduction to get ideas to alleviate this.
+      Furthermore, we get non-determinism, which doesn't mesh well with `run 1`.
+      Consider the work on partial deduction to get ideas to alleviate these issues.
       Or maybe a construct `conj-do-cartestian-product`.
 ```
 (define-relation (foo x y)
