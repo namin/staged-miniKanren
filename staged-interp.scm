@@ -73,9 +73,7 @@
      (lambda (c)
        ((lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
         c)))
-    ((conde
-       ((non-varo expr))
-       ((== stage? #f)))
+    ((non-varo expr)
      (conde
        ((fresh (s v)
           (== `(,s ,v) expr)
