@@ -717,7 +717,7 @@
              `(lambda ,(car r) ,(caaddr r))))
           (e (eval g)))
       (run 1 (arg) (e arg 1)))
-  '(('(1 . _.0) (absento (closure _.0) (prim _.0)))))
+  '(('(1 . _.0) (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
 
 
 (test

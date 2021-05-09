@@ -10,6 +10,9 @@
     ((== `(quote ,val) expr)
      (absento 'closure val)
      (absento 'prim val)
+     (absento 'call val)
+     (absento 'dynamic val)
+
      (u-not-in-envo 'quote env))
 
     ((numbero expr) (== expr val))
@@ -122,11 +125,11 @@
     [(== prim-id 'car)
      (fresh (d)
        (== `((,val . ,d)) a*)
-       (=/= 'closure val))]
+       (not-tago val))]
     [(== prim-id 'cdr)
      (fresh (a)
        (== `((,a . ,val)) a*)
-       (=/= 'closure a))]
+       (not-tago a))]
     [(== prim-id 'not)
      (fresh (b)
        (== `(,b) a*)
@@ -264,7 +267,7 @@
 (define (u-literalo t)
   (conde
     ((numbero t))
-    ((symbolo t) (=/= 'closure t))
+    ((symbolo t) (not-tago t))
     ((u-booleano t))
     ((== '() t))))
 
@@ -295,7 +298,7 @@
 (define (u-var-p-match var mval penv penv-out)
   (fresh (val)
     (symbolo var)
-    (=/= 'closure mval)
+    (not-tago mval)
     (conde
       ((== mval val)
        (== penv penv-out)
@@ -375,7 +378,7 @@
      (u-literalo quasi-p))
     ((fresh (p)
        (== (list 'unquote p) quasi-p)
-       (=/= 'closure mval)
+       (not-tago mval)
        (u-p-no-match p mval penv penv-out)))
     ((fresh (a d)
        (== `(,a . ,d) quasi-p)

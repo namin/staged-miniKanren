@@ -522,7 +522,7 @@
     (absento 'closure q)
     (eval-and-map-evalo `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
   '(((lambda (_.0) (cons _.0 _.0))
-     (=/= ((_.0 closure)) ((_.0 error)))
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
 (time-test
@@ -872,7 +872,7 @@
     (absento 'closure q)
     (quasi-quine-evalo q q))
   '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
-     (=/= ((_.0 closure)) ((_.0 error)))
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -903,7 +903,7 @@
     (ho-quine-interp-cons q q))
   '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
-     (=/= ((_.0 closure)) ((_.0 error)))
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -943,7 +943,7 @@
  '(error
    (((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
-    (=/= ((_.0 closure)))
+    (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
 #|
@@ -1133,7 +1133,7 @@
  (run 1 (q) (absento 'clo q) (double-evalo q q))
  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
-    (=/= ((_.0 clo)) ((_.0 closure)))
+    (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
 
@@ -1169,7 +1169,7 @@
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
-     (=/= ((_.0 clo)) ((_.0 closure)))
+     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -1207,7 +1207,7 @@
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
-     (=/= ((_.0 clo)) ((_.0 closure)))
+     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -1246,7 +1246,7 @@
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
-   (=/= ((_.0 clo)) ((_.0 closure)))
+   (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
    (sym _.0))))
 
 (define double-evalo-cons
@@ -1280,7 +1280,7 @@
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
-     (=/= ((_.0 clo)) ((_.0 closure)))
+     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
 
