@@ -722,10 +722,7 @@
          (eval-expo #t `((lambda x x) 1 . ,args) initial-env 1)))
   1)
 
-;; TODO: make it one
 (test (length
        (run 3 (param)
          (eval-expo #t `((lambda (x ,param) x) 1 2) initial-env 1)))
-  ;; the first answer is x x
-  ;; the second answer is x _.0
-  2)
+  1)
