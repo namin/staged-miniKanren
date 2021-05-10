@@ -8,23 +8,19 @@
       because of the shared calling convention.
       Findings: No demotion, instead `list` got promoted because its closure in `initial-env` now had the right shape.
 
-- [ ] Revive `staged-regexp` application.
-
-- [ ] Revive `fuzzing` application.
-
-- [ ] @michaelballantyne will write a demo of syntactic lift.
-
-- [ ] How can staged interpreter be as close as possible to unstaged interpreter?
-      In particular, the `letrec` and `lambda` cases are different.
-      For `letrec`, we might need tabling.
-
 - [x] Remember constraints in the generated code.
 
-- [ ] Make `syn-hole` robust to multiple results in the generator,
-      instead of sprinkling `non-varo`s.
-      Might require systematic `run*` instead of `run 1` in generator.
+- [x] Done only for staged cases.
+      Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
 
-- [ ] Unify representation of letrec-bound procedures and lambda-bound ones.
+- [x] Use `gensym`s for `expand`/`unexpand` tags.
+
+- [x] Moot. Also refactor `sym` to use `gensym`.
+
+- [x] Refactor `sym` to use `unexpand` instead, since the code is so similar.
+
+- [x] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
+      Then add that `expand` call.
 
 - [ ] Collect and fix examples of divergence during code generation due to infinite answers. In particular:
 
@@ -36,23 +32,6 @@
     + [x] Non-determinism when hole in application position.
           See todo "non-determinism" test in tests.
 
-- [x] Done only for staged cases.
-      Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
-
-- [ ] Consider whether refactoring of application cases should also be done for non-staged cases.
-      In general, probably need to make the result of deferred closures dynamic.
-
-- [x] Use `gensym`s for `expand`/`unexpand` tags.
-
-- [x] Moot. Also refactor `sym` to use `gensym`.
-
-- [x] Refactor `sym` to use `unexpand` instead, since the code is so similar.
-
-- [x] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
-      Then add that `expand` call.
-
-- [ ] Consider low-level optimizations in the generated code like getting rid of unnecesarry structures in unification.
-
 - [ ] Examine the `eval-expo #f` for rator evaluation.
       Possible test: `(let ([f ,e]) (f 5))`.
       Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
@@ -60,6 +39,27 @@
 - [ ] Think about: Just as
       staging is partial evaluation with manual annotations instead of heuristics,
       relational staging is partial deduction with manual annotations instead of heuristics.
+
+- [ ] @michaelballantyne will write a demo of syntactic lift.
+
+- [ ] Revive `staged-regexp` application.
+
+- [ ] Revive `fuzzing` application.
+
+- [ ] Unify representation of letrec-bound procedures and lambda-bound ones.
+
+- [ ] How can staged interpreter be as close as possible to unstaged interpreter?
+      In particular, the `letrec` and `lambda` cases are different.
+      For `letrec`, we might need tabling.
+
+- [ ] Make `syn-hole` robust to multiple results in the generator,
+      instead of sprinkling `non-varo`s.
+      Might require systematic `run*` instead of `run 1` in generator.
+
+- [ ] Consider whether refactoring of application cases should also be done for non-staged cases.
+      In general, probably need to make the result of deferred closures dynamic.
+
+- [ ] Consider low-level optimizations in the generated code like getting rid of unnecesarry structures in unification.
 
 - [ ] Consider this example. There is a blow up of spurious results in the second stage.
       Furthermore, we get non-determinism, which doesn't mesh well with `run 1`.
