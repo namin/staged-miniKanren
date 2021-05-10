@@ -36,6 +36,8 @@
       Possible test: `(let ([f ,e]) (f 5))`.
       Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
 
+- [ ] Debug last slow test of Will.
+
 - [ ] Think about: Just as
       staging is partial evaluation with manual annotations instead of heuristics,
       relational staging is partial deduction with manual annotations instead of heuristics.
