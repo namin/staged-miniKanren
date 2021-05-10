@@ -123,6 +123,8 @@
   (let ((r (unique-result r)))
       (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
+        (when (not (and (pair? r) (pair? (cdr r)) (eq? '!! (cadr r))))
+            (error 'gen-func "no code generated" r))
         (set! res
               (fix-scope
                `(lambda (,@inputs out)
