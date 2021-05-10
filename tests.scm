@@ -708,3 +708,9 @@
      (run 20 (params body args)
        (eval-expo #t `((lambda ,params ,body) . ,args) initial-env 1)))
   1)
+
+(test
+    (length
+     (run 1 (args)
+       (eval-expo #t `(letrec ((f (lambda x x))) (f . ,args)) initial-env 1)))
+  1)
