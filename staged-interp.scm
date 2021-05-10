@@ -162,10 +162,13 @@
        ((fresh (rator rands)
           (== `(,rator . ,rands) expr)
           (conde
-            ((not-ground-spineo rands)
+            ((conde
+               ((varo rator))
+               ((non-varo rator) (not-ground-spineo rands)))
              (absent-staged-tago val)
              (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
             ((ground-spineo rands)
+             (non-varo rator)
              (conde
                ((fresh (x* body env^ a* res clo-code)
                   (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
@@ -185,24 +188,28 @@
                         (eval-expo stage? body res val)))))))
                ((fresh (a* p-name)
                   (== stage? #t)
-                  (== `(,rator . ,rands) expr)
                   (eval-expo #f rator env `(call ,p-name))
                   (eval-listo rands env a*)
                   (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
                ((fresh (a* p-name)
                   (== stage? #t)
-                  (== `(,rator . ,rands) expr)
                   (eval-expo #f rator env `(dynamic ,p-name))
                   (eval-listo rands env a*)
                   (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
                ((fresh (a* p-name)
                   (== stage? #t)
-                  (== `(,rator . ,rands) expr)
                   (symbolo rator)
                   (eval-expo #f rator env (unexpand p-name))
                   (eval-listo rands env a*)
                   (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
+               ((fresh (prim-id a*)
+                  (eval-expo #f rator env `(prim . ,prim-id))
+                  (eval-primo prim-id a* val)
+                  (eval-listo rands env a*)))
+               ((prim-expo expr env val))
                )))))
+
+       ((boolean-primo expr env val))
 
        ((fresh (rator rands a* p-name)
           (== stage? #f)
@@ -232,12 +239,6 @@
               (lift `(callo ,p-name ,(expand out) ,(expand a*)))
               (== val `(call out)))))
 
-       ((fresh (rator x* rands a* prim-id)
-          (== `(,rator . ,rands) expr)
-          (eval-expo #f rator env `(prim . ,prim-id))
-          (eval-primo prim-id a* val)
-          (eval-listo rands env a*)))
-
        ((handle-matcho expr env val))
 
        ((fresh (bindings* letrec-body out-bindings* env^)
@@ -255,7 +256,7 @@
             (lift `(letrec ,out-bindings*
                      (fresh () . ,c-letrec-body))))))
 
-       ((prim-expo expr env val))))))
+       ))))
 
 (define (letrec-bindings-evalo bindings* out-bindings* env envt env^)
   (conde

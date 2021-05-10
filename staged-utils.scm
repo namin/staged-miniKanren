@@ -64,6 +64,8 @@
     ((not (null? (cdr r)))
      (printf "first result: ~a\n" (car r))
      (printf "second result: ~a\n" (cadr r))
+     (if (not (null? (cddr r)))
+         (printf "third result: ~a\n" (caddr r)))
      (error 'gen "staging non-deterministic"))
     (else (car r))))
 (define (maybe-remove-constraints r)
@@ -77,7 +79,7 @@
 (define gen
   (lambda (p-name inputs rhs . contexts)
     (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
-      (let ((r (run 2 (q)
+      (let ((r (run 3 (q)
                   (fresh (env inputs^)
                     (ext-env*o inputs inputs^ initial-env env)
                     (make-list-of-symso inputs inputs^)
@@ -98,7 +100,7 @@
           res)))))
 
 (define (gen-hole query result)
-  (let ((r (run 2 (q)
+  (let ((r (run 3 (q)
              (eval-expo #t
                         (query q)
                         initial-env

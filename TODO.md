@@ -33,7 +33,7 @@
     + [x] Define `ground-spineo` and use it instead of `varo` for `rands` case.
     + [x] Define `ground-paramso` for lambda parameter case.
           Need fully ground because we want `lookupo` to be deterministic.
-    + [ ] Non-determinism when hole in application position.
+    + [x] Non-determinism when hole in application position.
           See todo "non-determinism" test in tests.
 
 - [x] Done only for staged cases.
