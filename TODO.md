@@ -27,6 +27,8 @@
     + [x] lambda arglist position could generate all number of arguments.
     + [ ] Pattern matching.
     + [ ] Define `fully-ground-spineo` and use it instead of `varo` for `rands` case.
+    + [ ] Define `fully-groundo` for lambda parameter case.
+          Need fully ground because we want `lookupo` to be deterministic.
 
 - [x] Done only for staged cases.
       Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
