@@ -308,25 +308,25 @@
 ;; WEB I got bored of waiting for this test to return after ~1 minute.
 ;; WEB This is a very tough test, due to the nested `map`!
 (time-test
-  (let ((e (eval (gen-hole
-                  (lambda (q)
-                    `(letrec ((map (lambda (f l)
+  (syn-hole 1
+            (lambda (q)
+              `(letrec ((map (lambda (f l)
                                      (if (null? l)
                                          '()
                                          (cons (f ,q)
                                                (map f (cdr l)))))))
-                       (map (lambda (l) (map (lambda (y) (cons y y)) l)) '((a) (b c) (d e f)))))
-                  '(((a . a))
-                    ((b . b) (c . c))
-                    ((d . d) (e . e) (f . f)))))))
-    (run 1 (q)
-      (absento 'a q)
-      (absento 'b q)
-      (absento 'c q)
-      (absento 'd q)
-      (absento 'e q)
-      (absento 'f q)
-      (e q)))
+                 (map (lambda (l) (map (lambda (y) (cons y y)) l)) '((a) (b c) (d e f)))))
+            '(((a . a))
+              ((b . b) (c . c))
+              ((d . d) (e . e) (f . f)))
+            (lambda (q)
+              (absento 'a q)
+              (absento 'b q)
+              (absento 'c q)
+              (absento 'd q)
+              (absento 'e q)
+              (absento 'f q)))
+
   '(((match l
        (`(,_.0) _.0)
        (`(,_.1 . ,_.2) _.1)
@@ -336,6 +336,7 @@
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
 |#
+
 (time-test
   (let ((e (eval (gen-hole
                   (lambda (q)
