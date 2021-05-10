@@ -32,8 +32,8 @@
     + [x] Non-determinism when hole in application position.
           See todo "non-determinism" test in tests.
     + [ ] `letrec` (clauses, bindings, lambda formals).
-    + [ ] Variadic `and`.
-    + [ ] Variadic `or`.
+    + [x] (Already done by app consolidation.) Variadic `and`.
+    + [x] (Ditto.) Variadic `or`.
     + [ ] Make `match` ground checking less crude.
           Scrutinies need to be ground.
           Spine of clause list needs to be ground.

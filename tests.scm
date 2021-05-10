@@ -733,6 +733,16 @@
                     initial-env 1)))
   1)
 
+(test (length
+       (run 3 (params)
+         (eval-expo #t `(and . ,params) initial-env #t)))
+  1)
+
+(test (length
+       (run 3 (params)
+         (eval-expo #t `(or . ,params) initial-env #t)))
+  1)
+
 (test
     (syn-hole 1
               (lambda (q) `(match 1 [,q 1]))
