@@ -99,7 +99,7 @@ Replacement for `gen`:
 
 ```
 (define-staged-relation (appendo xs ys zs)
- (eval-staged
+ (evalo-staged
    `(letrec ((append
                (lambda (xs ys))))
        (append ',xs ',ys))
@@ -109,7 +109,7 @@ Replacement for `gen`:
 
 ```
 (define-relation (appendo xs ys zs)
- (eval-staged
+ (evalo-staged
    `(letrec ((append
                (lambda (xs ys))))
        (append ',xs ',ys))
@@ -126,4 +126,17 @@ Replacement for `gen`:
                        (cons (car xs) (append (cdr xs) ys))))))
          (append '(1 2) '(3 4)))
   '(1 2 3 4)))
+```
+
+```
+(define-staged-relation (test e)
+ (staged-evalo `(cons ,e '()) '(5)))
+(run 1 (e) (test e))
+```
+The `define-staged-relation` should generate
+```
+(define-relation (test e)
+ (fresh (v)
+   (== `(,v) '(5))
+   (u-eval-expo e initial-environment v)))
 ```
