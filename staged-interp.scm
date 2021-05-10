@@ -128,7 +128,7 @@
               c-body)
              (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
 
-       ((fresh (rator x* rands body env^ a* res clo-code)
+       ((fresh (rator rands)
           (== `(,rator . ,rands) expr)
           (conde
             ((varo rands)
@@ -136,17 +136,18 @@
              (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
             ((non-varo rands)
              (conde
-               ((eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
-                (conde
-                  ;; Variadic
-                  ((symbolo x*)
-                   (== `((,x* . (val . ,a*)) . ,env^) res)
-                   (eval-expo stage? body res val)
-                   (eval-listo rands env a*))
-                  ;; Multi-argument
-                  ((eval-listo rands env a*)
-                   (ext-env*o x* a* env^ res)
-                   (eval-expo stage? body res val)))))))))
+               ((fresh (x* body env^ a* res clo-code)
+                  (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
+                  (conde
+                    ;; Variadic
+                    ((symbolo x*)
+                     (== `((,x* . (val . ,a*)) . ,env^) res)
+                     (eval-expo stage? body res val)
+                     (eval-listo rands env a*))
+                    ;; Multi-argument
+                    ((eval-listo rands env a*)
+                     (ext-env*o x* a* env^ res)
+                     (eval-expo stage? body res val))))))))))
 
        ((fresh (rator rands a* p-name)
           (== stage? #t)
