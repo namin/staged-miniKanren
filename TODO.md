@@ -8,6 +8,10 @@
       because of the shared calling convention.
       Findings: No demotion, instead `list` got promoted because its closure in `initial-env` now had the right shape.
 
+- [ ] Revive `staged-regexp` application.
+
+- [ ] Revive `fuzzing` application.
+
 - [ ] @michaelballantyne will write a demo of syntactic lift.
 
 - [ ] How can staged interpreter be as close as possible to unstaged interpreter?
