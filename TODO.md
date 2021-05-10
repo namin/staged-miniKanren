@@ -31,6 +31,11 @@
           Need fully ground because we want `lookupo` to be deterministic.
     + [x] Non-determinism when hole in application position.
           See todo "non-determinism" test in tests.
+    + [ ] `letrec` (clauses, bindings, lambda formals).
+    + [ ] variadic `and`.
+    + [ ] variadic `or`.
+
+- [ ] Shake the generator by sampling `u-eval-expo`.
 
 - [ ] Examine the `eval-expo #f` for rator evaluation.
       Possible test: `(let ([f ,e]) (f 5))`.
