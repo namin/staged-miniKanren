@@ -690,7 +690,7 @@
     (run 1 (q) (mb-scope q))
   '((#f #t)))
 
-(test
+(todo "non-deterministic"
     (syn-hole 1
               (lambda (q) `(,q 1))
               '(1 . 1)

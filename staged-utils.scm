@@ -57,6 +57,15 @@
   (lambda (t)
     (car (fix-scope2 (fix-scope1 t) '()))))
 
+(define (unique-result r)
+  (cond
+    ((null? r)
+     (error 'gen "staging failed"))
+    ((not (null? (cdr r)))
+     (printf "first result: ~a\n" (car r))
+     (printf "second result: ~a\n" (cadr r))
+     (error 'gen "staging non-deterministic"))
+    (else (car r))))
 (define (maybe-remove-constraints r)
   (if (eq? '$$ (cadr r))
       (begin
@@ -78,27 +87,25 @@
                                    (,p-name . ,inputs)))
                                env
                                q)))))
-        (if (null? r)
-            (error 'gen "staging failed")
-            (if (not (null? (cdr r)))
-                (error 'gen "staging non-deterministic")
-                (let ((r (car r)))
-                  (let ((r (maybe-remove-constraints r)))
-                    (set! res
-                          (fix-scope
-                           `(lambda (,@inputs out)
-                              (fresh ()
-                                (== ,(car r) out)
-                                . ,(caddr r))))))
-                  res)))))))
+        (let ((r (unique-result r)))
+          (let ((r (maybe-remove-constraints r)))
+            (set! res
+                  (fix-scope
+                   `(lambda (,@inputs out)
+                      (fresh ()
+                        (== ,(car r) out)
+                            . ,(caddr r))))))
+          res)))))
 
 (define (gen-hole query result)
-  (let ((r (run 1 (q)
+  (let ((r (run 2 (q)
              (eval-expo #t
                         (query q)
                         initial-env
                         result))))
-    (let ((r (car r)))
+    (let ((r ;;(car r)
+             (unique-result r)
+           ))
       (let ((r (maybe-remove-constraints r)))
         (fix-scope
          `(lambda (,(car r)) (fresh () . ,(caddr r))))))))
