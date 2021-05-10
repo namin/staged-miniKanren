@@ -29,7 +29,7 @@
 - [ ] Collect and fix examples of divergence during code generation due to infinite answers. In particular:
 
     + [x] lambda arglist position could generate all number of arguments.
-    + [ ] Pattern matching.
+    + [x] (Crudely.) Pattern matching.
     + [x] Define `ground-spineo` and use it instead of `varo` for `rands` case.
     + [x] Define `ground-paramso` for lambda parameter case.
           Need fully ground because we want `lookupo` to be deterministic.

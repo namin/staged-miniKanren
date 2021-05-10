@@ -1,3 +1,28 @@
+(define (groundo x)
+  (fresh ()
+    (non-varo x)
+    (conde
+      ((== #t x))
+      ((== #f x))
+      ((symbolo x))
+      ((numbero x))
+      ((== x '()))
+      ((fresh (a d)
+         (== (cons a d) x)
+         (groundo a)
+         (groundo d))))))
+
+(define (not-groundo x)
+  (conde
+    ((varo x))
+    ((non-varo x)
+     (fresh (a d)
+       (== (cons a d) x)
+       (conde
+         ((not-groundo a))
+         ((groundo a)
+          (not-groundo d)))))))
+
 (define (not-ground-spineo xs)
   (conde
     ((varo xs))
@@ -499,11 +524,18 @@
 
 (define handle-matcho
   (lambda  (expr env val)
-    (fresh (against-expr mval clause clauses)
-      (== `(match ,against-expr ,clause . ,clauses) expr)
-      (not-in-envo 'match env)
-      (eval-expo #t against-expr env mval)
-      (match-clauses mval `(,clause . ,clauses) env val))))
+    (conde
+      ((fresh (against-expr clause clauses)
+         (not-groundo expr)
+         (== `(match ,against-expr ,clause . ,clauses) expr)
+         (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
+         ))
+      ((fresh (against-expr clause clauses mval)
+         (groundo expr)
+         (== `(match ,against-expr ,clause . ,clauses) expr)
+         (not-in-envo 'match env)
+         (eval-expo #t against-expr env mval)
+         (match-clauses mval `(,clause . ,clauses) env val))))))
 
 (define (not-symbolo t)
   (conde
