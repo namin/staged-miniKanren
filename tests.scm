@@ -724,3 +724,11 @@
        (run 3 (param)
          (eval-expo #t `((lambda (x ,param) x) 1 2) initial-env 1)))
   1)
+
+(test (length
+       (run 3 (clause)
+         (eval-expo #t
+                    `(match 1
+                       [,clause 1])
+                    initial-env 1)))
+  3) ;; TODO
