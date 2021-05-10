@@ -70,10 +70,43 @@
     (else (car r))))
 (define (maybe-remove-constraints r)
   (if (eq? '$$ (cadr r))
-      (begin
-        (printf "ignoring constraints: ~a\n" (cddr r))
-        (car r))
+      (car r)
       r))
+(define (convert-constraints r)
+  (cond
+    ((eq? '$$ (cadr r))
+     (printf "processing constraints: ~a\n" (cddr r))
+     (process-constraints (cddr r)))
+    (else '())))
+(define (process-constraints cs)
+  (cond
+    ((null? cs) '())
+    (else (append (process-constraint (car cs))
+                  (process-constraints (cdr cs))))))
+(define (process-constraint c)
+  (printf "processing constraint: ~a\n" c)
+  (cond
+    ((eq? (car c) '=/=)
+     (map (lambda (x) (cons '=/=
+                       (list (miniexpand (caar x)) (miniexpand (cadar x)))))
+          (cdr c)))
+    ((eq? (car c) 'absento)
+     (map (lambda (x) (cons 'absento
+                       (list (miniexpand (car x)) (miniexpand (cadr x)))))
+          (cdr c)))
+    ((eq? (car c) 'sym)
+     (list `(symbolo ,(cadr c))))
+    ((eq? (car c) 'num)
+     (list `(numbero ,(cadr c))))
+    (else (error 'process-constraint "unexpected constraint" c))))
+(define (miniexpand x)
+  (cond
+    ((and (symbol? x)
+          (let ((chars (string->list (symbol->string x))))
+            (and (char=? #\_ (car chars))
+                 (char=? #\. (cadr chars)))))
+     x)
+    (else `(quote ,x))))
 ;; # Helpers for turning functional procedure into relational one
 (define res '())
 (define gen
@@ -90,11 +123,13 @@
                                env
                                q)))))
         (let ((r (unique-result r)))
-          (let ((r (maybe-remove-constraints r)))
+          (let ((cs (convert-constraints r))
+                (r (maybe-remove-constraints r)))
             (set! res
                   (fix-scope
                    `(lambda (,@inputs out)
                       (fresh ()
+                        ,@cs
                         (== ,(car r) out)
                             . ,(caddr r))))))
           res)))))
@@ -107,9 +142,10 @@
                         initial-env
                         result))))
     (let ((r (unique-result r)))
-      (let ((r (maybe-remove-constraints r)))
+      (let ((cs (convert-constraints r))
+            (r (maybe-remove-constraints r)))
         (fix-scope
-         `(lambda (,(car r)) (fresh () . ,(caddr r))))))))
+         `(lambda (,(car r)) (fresh () ,@cs . ,(caddr r))))))))
 (define (syn-hole n query result . extra)
   (printf "running first stage\n")
   (let ((e (eval (apply gen-hole query result

@@ -18,7 +18,7 @@
       In particular, the `letrec` and `lambda` cases are different.
       For `letrec`, we might need tabling.
 
-- [ ] Remember constraints in the generated code.
+- [x] Remember constraints in the generated code.
 
 - [ ] Make `syn-hole` robust to multiple results in the generator,
       instead of sprinkling `non-varo`s.

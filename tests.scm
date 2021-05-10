@@ -745,7 +745,31 @@
               1
               (lambda (q) succeed)
               (lambda (q) (symbolo q)))
-  '(1)) ;; TODO: should be x
+  '(x))
+
+(test
+    (syn-hole 1
+              (lambda (q) `((lambda (x) ,q) 1))
+              1
+              (lambda (q) succeed)
+              (lambda (q) (fresh () (absento 1 q) (absento 2 q))))
+  '(x))
+
+(test
+    (syn-hole 1
+              (lambda (q) `((lambda (x) ,q) 1))
+              1
+              (lambda (q) succeed)
+              (lambda (q) (fresh () (=/= 1 q) (=/= 2 q))))
+  '(x))
+
+(test
+    (syn-hole 1
+              (lambda (q) `(quote ,q))
+              'x
+              (lambda (q) succeed)
+              (lambda (q) (numbero q)))
+  '())
 
 (test (run* (q) (groundo q)) '())
 (test (run* (q) (not-groundo q)) '(_.0))
