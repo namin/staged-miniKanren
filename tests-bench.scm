@@ -282,9 +282,6 @@
       (e q)))
   '(l))
 
-#|
-;;; WEB Why does this fail??
-;;; namin This test is now slow instead of failing.
 (time-test
   (let ((e (eval (gen-hole
                   (lambda (q)
@@ -306,7 +303,6 @@
       (absento 'f q)
       (e q)))
   '(car))
-|#
 
 #|
 ;; WEB I got bored of waiting for this test to return after ~1 minute.
