@@ -37,8 +37,10 @@
     + [x] Make `match` ground checking less crude.
           Scrutinies need to be ground.
           Spine of clause list needs to be ground.
-    + [ ] Fix the "non-determinism" test.
+    + [x] Fix the "non-determinism" test.
           Somehow, we're getting true divergence on application with two arguments and unground function.
+          Was due to `prim-id` being a variable.
+          Not true divergence, but n=10.
 
 - [ ] Shake the generator by sampling `u-eval-expo`.
 

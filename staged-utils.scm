@@ -121,7 +121,7 @@
 (define gen
   (lambda (p-name inputs rhs . contexts)
     (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
-      (let ((r (run 10 (q)
+      (let ((r (run 100 (q)
                   (fresh (env inputs^)
                     (ext-env*o inputs inputs^ initial-env env)
                     (make-list-of-symso inputs inputs^)
@@ -144,7 +144,7 @@
           res)))))
 
 (define (gen-hole query result . extra)
-  (let ((r (run 10 (q)
+  (let ((r (run 100 (q)
              (if (null? extra) succeed ((car extra) q))
              (eval-expo #t
                         (query q)

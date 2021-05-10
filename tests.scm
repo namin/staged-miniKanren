@@ -704,8 +704,8 @@
               (lambda (q) (absento 1 q)))
   '(cons))
 
-(todo "non-determinism"
-    (gen-hole
+(test
+    (syn-hole 1
               (lambda (q) `((,q x 1)))
               1)
   '(lambda))

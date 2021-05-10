@@ -286,6 +286,7 @@
                   (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
                ((fresh (prim-id a*)
                   (eval-expo #f rator env `(prim . ,prim-id))
+                  (non-varo prim-id)
                   (eval-primo prim-id a* val)
                   (eval-listo rands env a*)))
                ((handle-matcho expr env val))
