@@ -143,18 +143,20 @@
                             . ,(caddr r))))))
           res)))))
 
-(define (gen-hole query result . extra)
-  (let ((r (run 100 (q)
-             (if (null? extra) succeed ((car extra) q))
-             (eval-expo #t
-                        (query q)
-                        initial-env
-                        result))))
-    (let ((r (unique-result r)))
+(define (gen-func r)
+  (let ((r (unique-result r)))
       (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
         (fix-scope
-         `(lambda (,(car r)) (fresh () ,@cs . ,(caddr r))))))))
+         `(lambda (out) (fresh () ,@cs (== ,(car r) out) . ,(caddr r)))))))
+(define (gen-hole query result . extra)
+  (gen-func
+   (run 100 (q)
+     (if (null? extra) succeed ((car extra) q))
+     (eval-expo #t
+                (query q)
+                initial-env
+                result))))
 (define (syn-hole n query result . extra)
   (printf "running first stage\n")
   (let ((e (eval (apply gen-hole query result
