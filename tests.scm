@@ -698,6 +698,19 @@
   '(((lambda (_.0) (cons _.0 _.0)) (=/= ((_.0 cons))) (sym _.0))))
 
 (test
+    (syn-hole 1
+              (lambda (q) `(,q 1 1))
+              '(1 . 1)
+              (lambda (q) (absento 1 q)))
+  '(cons))
+
+(todo "non-determinism"
+    (gen-hole
+              (lambda (q) `((,q x 1)))
+              1)
+  '(lambda))
+
+(test
     (length
      (run 20 (params body)
        (eval-expo #t `(lambda ,params ,body) initial-env 1)))

@@ -57,15 +57,24 @@
   (lambda (t)
     (car (fix-scope2 (fix-scope1 t) '()))))
 
+(define (range start stop . step)
+  (let ((step (if (null? step) 1 (car step))))
+    (if (or (and (> step 0)
+                 (>= start stop))
+            (and (<= step 0)
+                 (<= start stop)))
+        '()
+        (cons start (range (+ start step) stop step)))))
+
 (define (unique-result r)
   (cond
     ((null? r)
      (error 'gen "staging failed"))
     ((not (null? (cdr r)))
-     (printf "first result: ~a\n" (car r))
-     (printf "second result: ~a\n" (cadr r))
-     (if (not (null? (cddr r)))
-         (printf "third result: ~a\n" (caddr r)))
+     (for-each
+       (lambda (i x) (printf "result ~a: ~a\n" i x))
+       (range 1 (+ 1 (length r)))
+       r)
      (error 'gen "staging non-deterministic"))
     (else (car r))))
 (define (maybe-remove-constraints r)
@@ -112,7 +121,7 @@
 (define gen
   (lambda (p-name inputs rhs . contexts)
     (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
-      (let ((r (run 3 (q)
+      (let ((r (run 10 (q)
                   (fresh (env inputs^)
                     (ext-env*o inputs inputs^ initial-env env)
                     (make-list-of-symso inputs inputs^)
@@ -135,7 +144,7 @@
           res)))))
 
 (define (gen-hole query result . extra)
-  (let ((r (run 3 (q)
+  (let ((r (run 10 (q)
              (if (null? extra) succeed ((car extra) q))
              (eval-expo #t
                         (query q)

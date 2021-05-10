@@ -204,46 +204,9 @@
      (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
     ((non-varo expr)
      (conde
-       ((fresh (s v)
-          (== `(,s ,v) expr)
-          (non-varo s)
-          (== 'quote s)
-          (absento 'closure v)
-          (absento 'prim v)
-          (absento 'call v)
-          (absento 'dynamic v)
-          (not-in-envo 'quote env)
-          ((if stage? l== ==) val v)))
-
        ((numbero expr) ((if stage? l== ==) expr val))
 
        ((symbolo expr) (lookupo stage? expr env val))
-
-       ((fresh (x body clo-code envt out c-body x^)
-          (== `(lambda ,x ,body) expr)
-          ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
-          (conde
-            ((not-ground-paramso x)
-             (absent-staged-tago val)
-             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-            ((ground-paramso x)
-             (conde
-               ;; Variadic
-               ((symbolo x))
-               ;; Multi-argument
-               ((list-of-symbolso x)))
-             (not-in-envo 'lambda env)
-             (conde
-               ((symbolo x)
-                (== x^ (unexpand x))
-                (== `((,x . (val . ,x^)) . ,env) envt))
-               ((list-of-symbolso x)
-                (make-list-of-symso x x^)
-                (ext-env*o x x^ env envt)))
-             (lift-scope
-              (eval-expo #t body envt out)
-              c-body)
-             (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
 
        ((fresh (rator rands)
           (== `(,rator . ,rands) expr)
@@ -256,6 +219,39 @@
             ((ground-spineo rands)
              (non-varo rator)
              (conde
+               ((fresh (v)
+                  (== `(quote ,v) expr)
+                  (absento 'closure v)
+                  (absento 'prim v)
+                  (absento 'call v)
+                  (absento 'dynamic v)
+                  (not-in-envo 'quote env)
+                  ((if stage? l== ==) val v)))
+               ((fresh (x body clo-code envt out c-body x^)
+                  (== `(lambda ,x ,body) expr)
+                  ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
+                  (conde
+                    ((not-ground-paramso x)
+                     (absent-staged-tago val)
+                     (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+                    ((ground-paramso x)
+                     (conde
+                       ;; Variadic
+                       ((symbolo x))
+                       ;; Multi-argument
+                       ((list-of-symbolso x)))
+                     (not-in-envo 'lambda env)
+                     (conde
+                       ((symbolo x)
+                        (== x^ (unexpand x))
+                        (== `((,x . (val . ,x^)) . ,env) envt))
+                       ((list-of-symbolso x)
+                        (make-list-of-symso x x^)
+                        (ext-env*o x x^ env envt)))
+                     (lift-scope
+                      (eval-expo #t body envt out)
+                      c-body)
+                     (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
                ((fresh (x* body env^ a* res clo-code)
                   (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))
                   (conde
@@ -292,6 +288,25 @@
                   (eval-expo #f rator env `(prim . ,prim-id))
                   (eval-primo prim-id a* val)
                   (eval-listo rands env a*)))
+               ((handle-matcho expr env val))
+               ((fresh (bindings* letrec-body out-bindings* env^)
+                  ;; single-function variadic letrec version
+                  (== `(letrec ,bindings*
+                         ,letrec-body)
+                      expr)
+                  (conde
+                    ((not-letrec-bindings-checko bindings*)
+                     (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+                    ((letrec-bindings-checko bindings*)
+                     (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
+                     (not-in-envo 'letrec env)
+                     (== stage? #t)
+                     (fresh (c-letrec-body)
+                       (lift-scope
+                        (eval-expo #t letrec-body env^ val)
+                        c-letrec-body)
+                       (lift `(letrec ,out-bindings*
+                                (fresh () . ,c-letrec-body))))))))
                ((prim-expo expr env val))
                )))))
 
@@ -324,27 +339,6 @@
             (fresh (out)
               (lift `(callo ,p-name ,(expand out) ,(expand a*)))
               (== val `(call out)))))
-
-       ((handle-matcho expr env val))
-
-       ((fresh (bindings* letrec-body out-bindings* env^)
-          ;; single-function variadic letrec version
-          (== `(letrec ,bindings*
-                 ,letrec-body)
-              expr)
-          (conde
-            ((not-letrec-bindings-checko bindings*)
-             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-            ((letrec-bindings-checko bindings*)
-             (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
-             (not-in-envo 'letrec env)
-             (== stage? #t)
-             (fresh (c-letrec-body)
-               (lift-scope
-                (eval-expo #t letrec-body env^ val)
-                c-letrec-body)
-               (lift `(letrec ,out-bindings*
-                        (fresh () . ,c-letrec-body))))))))
 
        ))))
 
