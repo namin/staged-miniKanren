@@ -87,6 +87,41 @@
          (ground-paramso (cons p-name x))
          (letrec-bindings-checko bs))))))
 
+(define (match-checko clauses)
+  (fresh ()
+    (non-varo clauses)
+    (conde
+      ((== '() clauses))
+      ((fresh (c cs)
+         (== (cons c cs) clauses)
+         (match-clause-checko c)
+         (match-checko cs))))))
+
+(define (match-clause-checko clause)
+  (fresh (scrutiny body)
+    (non-varo clause)
+    (== (list scrutiny body) clause)
+    (groundo scrutiny)))
+
+(define (not-match-checko clauses)
+  (conde
+    ((varo clauses))
+    ((non-varo clauses)
+     (fresh (c cs)
+       (== (cons c cs) clauses)
+       (conde
+         ((not-match-clause-checko c))
+         ((match-clause-checko c)
+          (not-match-checko cs)))))))
+
+(define (not-match-clause-checko clause)
+  (conde
+    ((varo clause))
+    ((non-varo clause)
+     (fresh (scrutiny body)
+       (== (list scrutiny body) clause)
+       (not-groundo scrutiny)))))
+
 (define (not-tago v)
   (fresh ()
     (=/= 'closure v)
@@ -554,18 +589,16 @@
 
 (define handle-matcho
   (lambda  (expr env val)
-    (conde
-      ((fresh (against-expr clause clauses)
-         (not-groundo expr)
-         (== `(match ,against-expr ,clause . ,clauses) expr)
-         (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
-         ))
-      ((fresh (against-expr clause clauses mval)
-         (groundo expr)
-         (== `(match ,against-expr ,clause . ,clauses) expr)
-         (not-in-envo 'match env)
-         (eval-expo #t against-expr env mval)
-         (match-clauses mval `(,clause . ,clauses) env val))))))
+    (fresh (against-expr clause clauses)
+      (== `(match ,against-expr ,clause . ,clauses) expr)
+      (conde
+        ((not-match-checko (cons clause clauses))
+         (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+        ((match-checko (cons clause clauses))
+         (fresh (mval)
+           (not-in-envo 'match env)
+           (eval-expo #t against-expr env mval)
+           (match-clauses mval `(,clause . ,clauses) env val)))))))
 
 (define (not-symbolo t)
   (conde

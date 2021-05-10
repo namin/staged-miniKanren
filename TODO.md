@@ -34,7 +34,7 @@
     + [x] `letrec` (clauses, bindings, lambda formals).
     + [x] (Already done by app consolidation.) Variadic `and`.
     + [x] (Ditto.) Variadic `or`.
-    + [ ] Make `match` ground checking less crude.
+    + [x] Make `match` ground checking less crude.
           Scrutinies need to be ground.
           Spine of clause list needs to be ground.
 
