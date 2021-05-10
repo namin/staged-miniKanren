@@ -32,8 +32,11 @@
     + [x] Non-determinism when hole in application position.
           See todo "non-determinism" test in tests.
     + [ ] `letrec` (clauses, bindings, lambda formals).
-    + [ ] variadic `and`.
-    + [ ] variadic `or`.
+    + [ ] Variadic `and`.
+    + [ ] Variadic `or`.
+    + [ ] Make `match` ground checking less crude.
+          Scrutinies need to be ground.
+          Spine of clause list needs to be ground.
 
 - [ ] Shake the generator by sampling `u-eval-expo`.
 
