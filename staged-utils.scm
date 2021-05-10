@@ -118,37 +118,33 @@
     (else `(quote ,x))))
 ;; # Helpers for turning functional procedure into relational one
 (define res '())
-(define gen
-  (lambda (p-name inputs rhs . contexts)
-    (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
-      (let ((r (run 100 (q)
-                  (fresh (env inputs^)
-                    (ext-env*o inputs inputs^ initial-env env)
-                    (make-list-of-symso inputs inputs^)
-                    (eval-expo #t
-                               (context
-                                `(letrec ((,p-name (lambda ,inputs ,rhs)))
-                                   (,p-name . ,inputs)))
-                               env
-                               q)))))
-        (let ((r (unique-result r)))
-          (let ((cs (convert-constraints r))
-                (r (maybe-remove-constraints r)))
-            (set! res
-                  (fix-scope
-                   `(lambda (,@inputs out)
-                      (fresh ()
-                        ,@cs
-                        (== ,(car r) out)
-                            . ,(caddr r))))))
-          res)))))
 
-(define (gen-func r)
+(define (gen-func r . inputs)
   (let ((r (unique-result r)))
       (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
-        (fix-scope
-         `(lambda (out) (fresh () ,@cs (== ,(car r) out) . ,(caddr r)))))))
+        (set! res
+              (fix-scope
+               `(lambda (,@inputs out)
+                  (fresh () ,@cs (== ,(car r) out) . ,(caddr r)))))
+        res)))
+
+(define gen
+  (lambda (p-name inputs rhs . contexts)
+    (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
+      (apply gen-func
+       (run 100 (q)
+         (fresh (env inputs^)
+           (ext-env*o inputs inputs^ initial-env env)
+           (make-list-of-symso inputs inputs^)
+           (eval-expo #t
+                      (context
+                       `(letrec ((,p-name (lambda ,inputs ,rhs)))
+                          (,p-name . ,inputs)))
+                      env
+                      q)))
+       inputs))))
+
 (define (gen-hole query result . extra)
   (gen-func
    (run 100 (q)
