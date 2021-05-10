@@ -68,7 +68,7 @@
 (define gen
   (lambda (p-name inputs rhs . contexts)
     (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
-      (let ((r (run 1 (q)
+      (let ((r (run 2 (q)
                   (fresh (env inputs^)
                     (ext-env*o inputs inputs^ initial-env env)
                     (make-list-of-symso inputs inputs^)
@@ -80,15 +80,17 @@
                                q)))))
         (if (null? r)
             (error 'gen "staging failed")
-            (let ((r (car r)))
-              (let ((r (maybe-remove-constraints r)))
-                (set! res
-                      (fix-scope
-                       `(lambda (,@inputs out)
-                          (fresh ()
-                            (== ,(car r) out)
-                            . ,(caddr r))))))
-              res))))))
+            (if (not (null? (cdr r)))
+                (error 'gen "staging non-deterministic")
+                (let ((r (car r)))
+                  (let ((r (maybe-remove-constraints r)))
+                    (set! res
+                          (fix-scope
+                           `(lambda (,@inputs out)
+                              (fresh ()
+                                (== ,(car r) out)
+                                . ,(caddr r))))))
+                  res)))))))
 
 (define (gen-hole query result)
   (let ((r (run 1 (q)
