@@ -34,6 +34,7 @@
       Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
 
 - [ ] Consider whether refactoring of application cases should also be done for non-staged cases.
+      In general, probably need to make the result of deferred closures dynamic.
 
 - [x] Use `gensym`s for `expand`/`unexpand` tags.
 
