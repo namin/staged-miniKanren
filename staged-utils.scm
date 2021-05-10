@@ -106,9 +106,7 @@
                         (query q)
                         initial-env
                         result))))
-    (let ((r ;;(car r)
-             (unique-result r)
-           ))
+    (let ((r (unique-result r)))
       (let ((r (maybe-remove-constraints r)))
         (fix-scope
          `(lambda (,(car r)) (fresh () . ,(caddr r))))))))
