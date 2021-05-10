@@ -42,6 +42,14 @@
           Was due to `prim-id` being a variable.
           Not true divergence, but n=10.
 
+- [ ] This example should not fail.
+      It fails because of the `non-varo` on `prim-id` to solve the non-determinism above.
+```
+(run-staged 1 (q)
+ (staged-evalo `(,q (list 1 2)) 1)
+ (lift (== q 'car)
+```
+
 - [ ] Shake the generator by sampling `u-eval-expo`.
 
 - [ ] Examine the `eval-expo #f` for rator evaluation.
