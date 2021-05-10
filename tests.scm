@@ -739,6 +739,14 @@
               1)
   '(1))
 
+(test
+    (syn-hole 1
+              (lambda (q) `((lambda (x) ,q) 1))
+              1
+              (lambda (q) succeed)
+              (lambda (q) (symbolo q)))
+  '(1)) ;; TODO: should be x
+
 (test (run* (q) (groundo q)) '())
 (test (run* (q) (not-groundo q)) '(_.0))
 (test (run* (q) (groundo '(1 2 (3 4)))) '(_.0))

@@ -99,8 +99,9 @@
                             . ,(caddr r))))))
           res)))))
 
-(define (gen-hole query result)
+(define (gen-hole query result . extra)
   (let ((r (run 3 (q)
+             (if (null? extra) succeed ((car extra) q))
              (eval-expo #t
                         (query q)
                         initial-env
@@ -113,7 +114,8 @@
          `(lambda (,(car r)) (fresh () . ,(caddr r))))))))
 (define (syn-hole n query result . extra)
   (printf "running first stage\n")
-  (let ((e (eval (gen-hole query result))))
+  (let ((e (eval (apply gen-hole query result
+                        (if (null? extra) '() (cdr extra))))))
     (printf "running second stage\n")
     (run n (q)
       (if (null? extra) succeed ((car extra) q))
