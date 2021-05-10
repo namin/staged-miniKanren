@@ -15,6 +15,27 @@
            (== (cons xa xd) xs)
            (ground-spineo xd)))))))
 
+(define (not-ground-paramso xs)
+  (conde
+    ((varo xs))
+    ((non-varo xs)
+     (fresh (xa xd)
+       (== (cons xa xd) xs)
+       (conde
+         ((varo xa))
+         ((not-ground-paramso xd)))))))
+
+(define (ground-paramso xs)
+  (conde
+    ((non-varo xs)
+     (conde
+       ((symbolo xs))
+       ((== xs '()))
+       ((fresh (xa xd)
+          (== (cons xa xd) xs)
+          (non-varo xa)
+          (ground-paramso xd)))))))
+
 (define (not-tago v)
   (fresh ()
     (=/= 'closure v)
@@ -123,10 +144,10 @@
           ;;(logo "closure case")
           ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
           (conde
-            ((varo x)
+            ((not-ground-paramso x)
              (absent-staged-tago val)
              (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-            ((non-varo x)
+            ((ground-paramso x)
              (conde
                ;; Variadic
                ((symbolo x))
