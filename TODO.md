@@ -27,7 +27,10 @@
     + [x] lambda arglist position could generate all number of arguments.
     + [ ] Pattern matching.
 
-- [ ] Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
+- [x] Done only for staged cases.
+      Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
+
+- [ ] Consider whether refactoring of application cases should also be done for non-staged cases.
 
 - [x] Use `gensym`s for `expand`/`unexpand` tags.
 
