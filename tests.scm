@@ -695,7 +695,9 @@
               (lambda (q) `(,q 1))
               '(1 . 1)
               (lambda (q) (absento 1 q)))
-  '(((lambda _.0 (cons (car _.0) (car _.0))) (=/= ((_.0 car)) ((_.0 cons))) (sym _.0))))
+  '(((lambda (_.0) (cons _.0 _.0)) (=/= ((_.0 cons))) (sym _.0)))
+  ;;'(((lambda _.0 (cons (car _.0) (car _.0))) (=/= ((_.0 car)) ((_.0 cons))) (sym _.0)))
+  )
 
 (test
     (length
