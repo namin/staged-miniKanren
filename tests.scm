@@ -787,3 +787,6 @@
 (test (run* (q) (not-groundo `(1 2 (,q 4)))) '(_.0))
 (test (run* (q) (groundo '(#t 2 (3 4)))) '(_.0))
 (test (run* (q) (not-groundo `(#t 1 2 (,q 4)))) '(_.0))
+
+(test (run* (q) (letrec-bindings-checko '((t (lambda (x) x))))) '(_.0))
+(test (run* (q) (not-letrec-bindings-checko '((t (lambda (x) x))))) '())

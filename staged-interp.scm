@@ -61,6 +61,32 @@
           (non-varo xa)
           (ground-paramso xd)))))))
 
+(define (not-letrec-bindings-checko bindings)
+  (conde
+    ((varo bindings))
+    ((non-varo bindings)
+     (fresh (b bs p-name x body)
+       (== (cons b bs) bindings)
+       (conde
+         ((varo b))
+         ((non-varo b)
+          (== b `(,p-name (lambda ,x ,body)))
+          (conde
+            ((not-ground-paramso (cons p-name x)))
+            ((ground-paramso (cons p-name x))
+             (not-letrec-bindings-checko bs)))))))))
+
+(define (letrec-bindings-checko bindings)
+  (fresh ()
+    (non-varo bindings)
+    (conde
+      ((== '()  bindings))
+      ((fresh (b bs p-name x body)
+         (== (cons b bs) bindings)
+         (== b `(,p-name (lambda ,x ,body)))
+         (ground-paramso (cons p-name x))
+         (letrec-bindings-checko bs))))))
+
 (define (not-tago v)
   (fresh ()
     (=/= 'closure v)
@@ -271,15 +297,19 @@
           (== `(letrec ,bindings*
                  ,letrec-body)
               expr)
-          (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
-          (not-in-envo 'letrec env)
-          (== stage? #t)
-          (fresh (c-letrec-body)
-            (lift-scope
-             (eval-expo #t letrec-body env^ val)
-             c-letrec-body)
-            (lift `(letrec ,out-bindings*
-                     (fresh () . ,c-letrec-body))))))
+          (conde
+            ((not-letrec-bindings-checko bindings*)
+             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+            ((letrec-bindings-checko bindings*)
+             (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
+             (not-in-envo 'letrec env)
+             (== stage? #t)
+             (fresh (c-letrec-body)
+               (lift-scope
+                (eval-expo #t letrec-body env^ val)
+                c-letrec-body)
+               (lift `(letrec ,out-bindings*
+                        (fresh () . ,c-letrec-body))))))))
 
        ))))
 

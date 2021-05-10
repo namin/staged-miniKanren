@@ -31,7 +31,7 @@
           Need fully ground because we want `lookupo` to be deterministic.
     + [x] Non-determinism when hole in application position.
           See todo "non-determinism" test in tests.
-    + [ ] `letrec` (clauses, bindings, lambda formals).
+    + [x] `letrec` (clauses, bindings, lambda formals).
     + [x] (Already done by app consolidation.) Variadic `and`.
     + [x] (Ditto.) Variadic `or`.
     + [ ] Make `match` ground checking less crude.
