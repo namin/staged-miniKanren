@@ -1,3 +1,20 @@
+(define (not-ground-spineo xs)
+  (conde
+    ((varo xs))
+    ((non-varo xs)
+     (fresh (xa xd)
+       (== (cons xa xd) xs)
+       (not-ground-spineo xd)))))
+
+(define (ground-spineo xs)
+  (conde
+    ((non-varo xs)
+     (conde
+       ((== xs '()))
+       ((fresh (xa xd)
+           (== (cons xa xd) xs)
+           (ground-spineo xd)))))))
+
 (define (not-tago v)
   (fresh ()
     (=/= 'closure v)
@@ -131,10 +148,10 @@
        ((fresh (rator rands)
           (== `(,rator . ,rands) expr)
           (conde
-            ((varo rands)
+            ((not-ground-spineo rands)
              (absent-staged-tago val)
              (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-            ((non-varo rands)
+            ((ground-spineo rands)
              (conde
                ((fresh (x* body env^ a* res clo-code)
                   (eval-expo #f rator env `(closure (lambda ,x* ,body) ,env^ ,clo-code))

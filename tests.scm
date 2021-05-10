@@ -713,6 +713,11 @@
 
 (test
     (length
-     (run 1 (args)
+     (run 2 (args)
        (eval-expo #t `(letrec ((f (lambda x x))) (f . ,args)) initial-env 1)))
+  1)
+
+(test (length
+       (run 2 (args)
+         (eval-expo #t `((lambda x x) 1 . ,args) initial-env 1)))
   1)
