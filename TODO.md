@@ -26,8 +26,8 @@
 
     + [x] lambda arglist position could generate all number of arguments.
     + [ ] Pattern matching.
-
-- [ ] Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
+    + [ ] Define `fully-ground-spineo` and use it instead of `varo` for `rands` case.
+    + [ ] Refactor the application cases to be consolidated into one, and check the `varo rands` only once.
 
 - [x] Use `gensym`s for `expand`/`unexpand` tags.
 
