@@ -5,7 +5,7 @@
   (syntax-rules ()
     ((_ n (q) g0 g ...)
      (printf "running first stage\n")
-     (let* ((f (gen-func (run 100 (q) (fresh () g0 g ...))))
+     (let* ((f (gen-func (run 100 (q) g0 g ...)))
             (e (eval f)))
        (printf "running second stage\n")
        (run n (q) (e q))))
@@ -28,4 +28,5 @@
 (define-syntax define-staged-relation
   (syntax-rules ()
     ((_ (name x ...) g0 g ...)
-     'TODO)))
+     (let* ((f (run-staged 100 (x ...) g0 g ...)))
+       f))))
