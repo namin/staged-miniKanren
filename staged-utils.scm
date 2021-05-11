@@ -114,13 +114,22 @@
     ((eq? (car c) 'num)
      (list `(numbero ,(cadr c))))
     (else (error 'process-constraint "unexpected constraint" c))))
+(define (reified-var? x)
+  (and (symbol? x)
+       (let ((chars (string->list (symbol->string x))))
+         (and (char=? #\_ (car chars))
+              (char=? #\. (cadr chars))))))
 (define (miniexpand x)
   (cond
-    ((and (symbol? x)
-          (let ((chars (string->list (symbol->string x))))
-            (and (char=? #\_ (car chars))
-                 (char=? #\. (cadr chars)))))
-     x)
+    ((reified-var? x) x)
+    (else `(quote ,x))))
+(define (reified-expand x)
+  (cond
+    ((reified-var? x) x)
+    ((pair? x)
+     (list 'cons
+           (reified-expand (car x))
+           (reified-expand (cdr x))))
     (else `(quote ,x))))
 ;; # Helpers for turning functional procedure into relational one
 (define res '())
@@ -135,6 +144,18 @@
               (fix-scope
                `(lambda (,@inputs out)
                   (fresh () ,@cs (== ,(car r) out) . ,(caddr r)))))
+        res)))
+
+(define (gen-func-rel r . inputs)
+  (let ((r (unique-result r)))
+      (let ((cs (convert-constraints r))
+            (r (maybe-remove-constraints r)))
+        (unless (code-layer? r)
+            (error 'gen-func "no code generated" r))
+        (set! res
+              (fix-scope
+               `(lambda (,@inputs)
+                  (fresh () ,@cs (== ,(reified-expand (car r)) (list ,@inputs)) . ,(caddr r)))))
         res)))
 
 (define gen

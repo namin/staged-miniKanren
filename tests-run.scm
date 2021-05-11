@@ -55,9 +55,10 @@
       (appendo xs ys '(a b c)))
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
 
-(define-staged-relation (test e) (evalo-staged `(cons ,e '()) '(5)))
+(define-staged-relation (test e)
+  (evalo-staged `(cons (input ,e) '()) '(5)))
 
-(define-staged-relation (appendo xs ys zs)
+(define-staged-relation (appendo-staged xs ys zs)
   (evalo-staged
    `(letrec ((append
               (lambda (xs ys)
@@ -67,4 +68,6 @@
                           (append (cdr xs) ys))))))
       (append ',xs ',ys))
    zs))
-(run* (q) (appendo q '(b) '(a b)))
+;; these are wrong
+(run* (x) (appendo-staged x '(b) '(a b)))
+(run* (x y) (appendo-staged x y '(a b)))

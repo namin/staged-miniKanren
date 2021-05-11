@@ -27,6 +27,8 @@
 
 (define-syntax define-staged-relation
   (syntax-rules ()
-    ((_ (name x ...) g0 g ...)
-     (let* ((f (run-staged 100 (x ...) g0 g ...)))
-       f))))
+    ((_ (name x0 x ...) g0 g ...)
+     (define name
+       (eval (gen-func-rel
+              (run 100 (x0 x ...) g0 g ...)
+              'x0 'x ...))))))
