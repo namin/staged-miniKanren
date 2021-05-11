@@ -56,7 +56,7 @@
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
 
 (define-staged-relation (test e)
-  (evalo-staged `(cons (input ,e) '()) '(5)))
+  (evalo-staged `(cons ,e '()) '(5)))
 
 (define-staged-relation (appendo-staged xs ys zs)
   (evalo-staged
