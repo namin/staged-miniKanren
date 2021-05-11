@@ -18,3 +18,14 @@
 (define-syntax run-staged*
   (syntax-rules ()
     ((_ (q0 q ...) g0 g ...) (run-staged #f (q0 q ...) g0 g ...))))
+
+(define-syntax define-relation
+  (syntax-rules ()
+    ((_ (name x ...) g0 g ...)
+     (define (name x ...)
+       (fresh () g0 g ...)))))
+
+(define-syntax define-staged-relation
+  (syntax-rules ()
+    ((_ (name x ...) g0 g ...)
+     'TODO)))
