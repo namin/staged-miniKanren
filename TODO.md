@@ -112,6 +112,15 @@
     + [x] `run-stage` with multiple query variables.
     + [x] `run-staged*`.
     + [ ] `defined-staged-relaion`.
+        * ```(define-staged-relation (test e) (staged-evalo `(cons ,e '()) '(5)))```
+        * it'd do the query ```(run 100 (e) (staged-evalo `(cons ,e '()) '(5)))```
+        * you get back some answer for e, call it <ans>
+        * then you compile to ```(define-relation (test e) (== e <ans>) <the-generated-code>)```
+        * `gen` knew about the evaluator and its environment
+        * `define-staged-relation` is not meant to know about that at all!
+           deals with arbitrary staged-mk goals in its body
+           knows nothing of evalo
+
 
 Replacement for `gen`:
 
