@@ -111,7 +111,7 @@
     + [x] `run-staged`.
     + [x] `run-stage` with multiple query variables.
     + [x] `run-staged*`.
-    + [ ] `defined-staged-relaion`.
+    + [x] `defined-staged-relaion`.
         * ```(define-staged-relation (test e) (staged-evalo `(cons ,e '()) '(5)))```
         * it'd do the query ```(run 100 (e) (staged-evalo `(cons ,e '()) '(5)))```
         * you get back some answer for e, call it <ans>
@@ -120,50 +120,3 @@
         * `define-staged-relation` is not meant to know about that at all!
            deals with arbitrary staged-mk goals in its body
            knows nothing of evalo
-
-
-Replacement for `gen`:
-
-```
-(define-staged-relation (appendo xs ys zs)
- (evalo-staged
-   `(letrec ((append
-               (lambda (xs ys))))
-       (append ',xs ',ys))
-   zs))
-(run* (q) (appendo q '(b) '(a b)))
-```
-
-```
-(define-relation (appendo xs ys zs)
- (evalo-staged
-   `(letrec ((append
-               (lambda (xs ys))))
-       (append ',xs ',ys))
-   zs))
-(run-staged* (q) (appendo q '(b) '(a b)))
-```
-
-```
-(run-staged 1 (q)
- (evalo-staged
-   `(letrec ((append
-                 (lambda (xs ys)
-                   (if (null? xs) ,q
-                       (cons (car xs) (append (cdr xs) ys))))))
-         (append '(1 2) '(3 4)))
-  '(1 2 3 4)))
-```
-
-```
-(define-staged-relation (test e)
- (staged-evalo `(cons ,e '()) '(5)))
-(run 1 (e) (test e))
-```
-The `define-staged-relation` should generate
-```
-(define-relation (test e)
- (fresh (v)
-   (== `(,v) '(5))
-   (u-eval-expo e initial-environment v)))
-```
