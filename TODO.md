@@ -120,3 +120,7 @@
         * `define-staged-relation` is not meant to know about that at all!
            deals with arbitrary staged-mk goals in its body
            knows nothing of evalo
+
+- [ ] Make `evalo` stage polymorphic so that it can be instantiated to `evalo-staged` or `evalo-unstaged` (`u-evalo`).
+
+- [ ] Compose with pink.
