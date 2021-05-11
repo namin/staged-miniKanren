@@ -72,3 +72,10 @@
     (run* (xs ys)
       (appendo-staged xs ys '(a b c)))
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged `((,q) (cons 1 2)) 1)
+      (l== q '(lambda () car))
+      )
+  '((lambda () car)))
