@@ -19,3 +19,8 @@
        '(1 2 3 4)))
   '(ys))
 
+(test
+    (run-staged 1 (q)
+      (evalo-staged `(,q (list 1 2)) 1)
+      (l== q 'car))
+  '(car))
