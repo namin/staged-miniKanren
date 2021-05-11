@@ -109,7 +109,8 @@
 
 - [ ] Devise a much more pleasant interface for running and staging than `gen`.
     + [x] `run-staged`.
-    + [ ] `run-staged*`.
+    + [x] `run-stage` with multiple query variables.
+    + [x] `run-staged*`.
     + [ ] `defined-staged-relaion`.
 
 Replacement for `gen`:

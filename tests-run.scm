@@ -24,3 +24,21 @@
       (evalo-staged `(,q (list 1 2)) 1)
       (l== q 'car))
   '(car))
+
+(test
+    (run-staged* (q)
+      (l== q 'car)
+      (evalo-staged `(,q (list 1 2)) 1))
+  '(car))
+
+(test
+    (run-staged 1 (q)
+      (fresh (q1 q2)
+        (l== q `(,q1 ,q2))
+        (evalo-staged `(,q1 (list ,q2 2)) q2)))
+  '((not #f)))
+
+(test
+    (run-staged 1 (q1 q2)
+      (evalo-staged `(,q1 (list ,q2 2)) q2))
+  '((not #f)))
