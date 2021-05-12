@@ -42,7 +42,7 @@
           Was due to `prim-id` being a variable.
           Not true divergence, but n=10.
 
-- [ ] This example should not fail.
+- [x] This example should not fail.
       It fails because of the `non-varo` on `prim-id` to solve the non-determinism above.
       It seems like there should be a cut to `dynamic` at the point where eval of `rator` doesn't constraint the `rator` value.
       [x] This example already works.
@@ -65,6 +65,9 @@
       relational staging is partial deduction with manual annotations instead of heuristics.
 
 - [ ] @michaelballantyne will write a demo of syntactic lift.
+
+- [ ] For showing off synthesis it would be interesting to have some examples that use really big ground contexts;
+      lots of helpers, say.
 
 - [ ] Revive `staged-regexp` application.
 
