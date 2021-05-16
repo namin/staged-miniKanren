@@ -121,8 +121,9 @@
         * then you compile to ```(define-relation (test e) (== e <ans>) <the-generated-code>)```
         * `gen` knew about the evaluator and its environment
         * `define-staged-relation` is not meant to know about that at all!
-           deals with arbitrary staged-mk goals in its body
-           knows nothing of evalo
+          deals with arbitrary staged-mk goals in its body
+          knows nothing of evalo
+    + [ ] Convert some of the bench tests to use the new interface.
 
 - [ ] Make `evalo` stage polymorphic so that it can be instantiated to `evalo-staged` or `evalo-unstaged` (`u-evalo`).
 
