@@ -54,6 +54,8 @@
 
 - [ ] Shake the generator by sampling `u-eval-expo`.
 
+- [ ] Run proper benchmarks comparing staged and unstaged programs.
+
 - [ ] Examine the `eval-expo #f` for rator evaluation.
       Possible test: `(let ([f ,e]) (f 5))`.
       Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
