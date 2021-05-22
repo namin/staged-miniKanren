@@ -45,7 +45,7 @@
 - [x] This example should not fail.
       It fails because of the `non-varo` on `prim-id` to solve the non-determinism above.
       It seems like there should be a cut to `dynamic` at the point where eval of `rator` doesn't constraint the `rator` value.
-      [x] This example already works.
+    + [x] This example already works.
 ```
 (run-staged 1 (q)
  (staged-evalo `(,q (list 1 2)) 1)
@@ -55,6 +55,10 @@
 - [ ] Shake the generator by sampling `u-eval-expo`.
 
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
+    + [x] Have basic benchmarks.
+    + [ ] Write script to generate CSV file.
+    + [ ] Convert more tests into benchmarks.
+    + [ ] Devise new benchmarks.
 
 - [ ] Examine the `eval-expo #f` for rator evaluation.
       Possible test: `(let ([f ,e]) (f 5))`.
@@ -112,7 +116,7 @@
 (foo 1 z)
 ```
 
-- [ ] Devise a much more pleasant interface for running and staging than `gen`.
+- [x] Devise a much more pleasant interface for running and staging than `gen`.
     + [x] `run-staged`.
     + [x] `run-stage` with multiple query variables.
     + [x] `run-staged*`.
@@ -125,7 +129,7 @@
         * `define-staged-relation` is not meant to know about that at all!
           deals with arbitrary staged-mk goals in its body
           knows nothing of evalo
-    + [ ] Convert some of the bench tests to use the new interface.
+    + [x] Convert some of the bench tests to use the new interface.
 
 - [ ] Make `evalo` stage polymorphic so that it can be instantiated to `evalo-staged` or `evalo-unstaged` (`u-evalo`).
 
