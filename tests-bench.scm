@@ -3,21 +3,22 @@
 
 (load "staged-interp.scm")
 (load "staged-utils.scm")
+(load "staged-run.scm")
 
 (load "unstaged-interp.scm")
 
 (load "test-check.scm")
 
 (time-test
- (syn-hole 1
-   (lambda (q)
-     `(letrec ((map (lambda (f l)
-                      (if (null? l)
-                          '()
-                          (cons (f (car l))
-                                (map f (cdr l)))))))
-        (map (lambda (x) ,q) '(a b c))))
-   '((a . a) (b . b) (c . c)))
+ (run-staged 1 (q)
+   (evalo-staged
+    `(letrec ((map (lambda (f l)
+                     (if (null? l)
+                         '()
+                         (cons (f (car l))
+                               (map f (cdr l)))))))
+       (map (lambda (x) ,q) '(a b c)))
+    '((a . a) (b . b) (c . c))))
  '((cons x x)))
 
 ;; u-eval-expo seems 50% faster than the syn-hole version
@@ -89,6 +90,32 @@
   '(_.0))
 
 ;;; WEB I would have expected (car l) to be generated...
+(time-test
+ (run-staged 1 (q)
+   (absento 'a q)
+   (absento 'b q)
+   (absento 'c q)
+   (evalo-staged
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f ,q)
+                                (map f (cdr l))))))
+               (foo (lambda (f l1 l2)
+                      (cons (map f l1)
+                            (cons (map f l2)
+                                  '())))))
+        (foo (lambda (y) (cons y y)) '(a) '(b c)))
+     '(((a . a)) ((b . b) (c . c)))))
+  '(((match l
+       (`(,_.0) _.0)
+       (`(,_.1 unquote _.2) _.1)
+       .
+       _.3)
+     (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.2 a)) ((_.2 b)) ((_.2 c)))
+     (sym _.0 _.1 _.2)
+     (absento (a _.3) (b _.3) (c _.3)))))
+
 (time-test
   (let ((e (eval (gen-hole
                   (lambda (q)
@@ -475,43 +502,43 @@
 
 
 
-(define eval-and-map-evalo
-  (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([map (lambda (f l)
-                         (if (null? l)
-                             '()
-                             (cons (f (car l))
-                                   (map f (cdr l)))))])
-           (letrec ([eval-expr
-                     (lambda (expr env)
-                       (match expr
-                         [`(quote ,datum) datum]
-                         [`(null? ,e)
-                          (null? (eval-expr e env))]
-                         [`(car ,e)
-                          (car (eval-expr e env))]
-                         [`(cdr ,e)
-                          (cdr (eval-expr e env))]
-                         [`(cons ,e1 ,e2)
-                          (cons (eval-expr e1 env)
-                                (eval-expr e2 env))]
-                         [`(if ,e1 ,e2 ,e3)
-                          (if (eval-expr e1 env)
-                              (eval-expr e2 env)
-                              (eval-expr e3 env))]                       
-                         [`(lambda (,(? symbol? x)) ,body)
-                          (lambda (a)
-                            (eval-expr body (lambda (y)
-                                              (if (equal? x y)
-                                                  a
-                                                  (env y)))))]
-                         [(? symbol? x) (env x)]
-                         [`(map ,e1 ,e2)
-                          (map (eval-expr e1 env) (eval-expr e2 env))]
-                         [`(,rator ,rand)
-                          ((eval-expr rator env) (eval-expr rand env))]))])
-             (eval-expr expr (lambda (y) 'error)))))))
+(define-staged-relation (eval-and-map-evalo expr val)
+  (evalo-staged
+   `(letrec ([map (lambda (f l)
+                    (if (null? l)
+                        '()
+                        (cons (f (car l))
+                              (map f (cdr l)))))])
+      (letrec ([eval-expr
+                (lambda (expr env)
+                  (match expr
+                    [`(quote ,datum) datum]
+                    [`(null? ,e)
+                     (null? (eval-expr e env))]
+                    [`(car ,e)
+                     (car (eval-expr e env))]
+                    [`(cdr ,e)
+                     (cdr (eval-expr e env))]
+                    [`(cons ,e1 ,e2)
+                     (cons (eval-expr e1 env)
+                           (eval-expr e2 env))]
+                    [`(if ,e1 ,e2 ,e3)
+                     (if (eval-expr e1 env)
+                         (eval-expr e2 env)
+                         (eval-expr e3 env))]                       
+                    [`(lambda (,(? symbol? x)) ,body)
+                     (lambda (a)
+                       (eval-expr body (lambda (y)
+                                         (if (equal? x y)
+                                             a
+                                             (env y)))))]
+                    [(? symbol? x) (env x)]
+                    [`(map ,e1 ,e2)
+                     (map (eval-expr e1 env) (eval-expr e2 env))]
+                    [`(,rator ,rand)
+                     ((eval-expr rator env) (eval-expr rand env))]))])
+        (eval-expr ',expr (lambda (y) 'error))))
+   val))
 
 (time-test
   (run 1 (q)
