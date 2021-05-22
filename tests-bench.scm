@@ -1204,6 +1204,28 @@
        #t)))
   ex-proof2)
 
+(record-bench 'staged 'proofo 3)
+(time-test
+ (length
+  (run 1 (prf)
+    (fresh (body)
+      (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
+      (proofo prf #t))))
+  1)
+
+#| doesn't come back
+(record-bench 'unstaged 'proofo 3)
+(time-test
+ (length
+  (run 1 (prf)
+    (fresh (body)
+      (== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
+      (u-evalo
+       (prover prf)
+       #t))))
+  1)
+|#
+
 (record-bench 'staging 'double-evalo)
 (define double-evalo
   (eval (time
