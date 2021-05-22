@@ -55,6 +55,10 @@
 - [ ] Shake the generator by sampling `u-eval-expo`.
 
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
+    + [x] Have basic benchmarks.
+    + [ ] Write script to generate CSV file.
+    + [ ] Convert more tests into benchmarks.
+    + [ ] Devise new benchmarks.
 
 - [ ] Examine the `eval-expo #f` for rator evaluation.
       Possible test: `(let ([f ,e]) (f 5))`.
