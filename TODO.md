@@ -112,7 +112,7 @@
 (foo 1 z)
 ```
 
-- [ ] Devise a much more pleasant interface for running and staging than `gen`.
+- [x] Devise a much more pleasant interface for running and staging than `gen`.
     + [x] `run-staged`.
     + [x] `run-stage` with multiple query variables.
     + [x] `run-staged*`.
@@ -125,7 +125,7 @@
         * `define-staged-relation` is not meant to know about that at all!
           deals with arbitrary staged-mk goals in its body
           knows nothing of evalo
-    + [ ] Convert some of the bench tests to use the new interface.
+    + [x] Convert some of the bench tests to use the new interface.
 
 - [ ] Make `evalo` stage polymorphic so that it can be instantiated to `evalo-staged` or `evalo-unstaged` (`u-evalo`).
 
