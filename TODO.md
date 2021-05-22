@@ -22,7 +22,7 @@
 - [x] Find a test case that breaks the lack of expansion on the expr in the `u-eval-expo` `varo` case in the staged interpreter.
       Then add that `expand` call.
 
-- [ ] Collect and fix examples of divergence during code generation due to infinite answers. In particular:
+- [x] Collect and fix examples of divergence during code generation due to infinite answers, and non-determinism in general. In particular:
 
     + [x] lambda arglist position could generate all number of arguments.
     + [x] (Crudely.) Pattern matching.
