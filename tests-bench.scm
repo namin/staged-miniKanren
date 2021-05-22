@@ -21,7 +21,7 @@
     '((a . a) (b . b) (c . c))))
  '((cons x x)))
 
-;; u-eval-expo seems 50% faster than the syn-hole version
+;; u-eval-expo seems 50% faster than the staged version
 (time-test
   (run 1 (q)
     (u-eval-expo
