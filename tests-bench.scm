@@ -30,7 +30,7 @@
                           '()
                           (cons (f (car l))
                                 (map f (cdr l)))))))
-        (map (lambda (x) ,q) '(a b c)))    
+        (map (lambda (x) ,q) '(a b c)))
      initial-env
      '((a . a) (b . b) (c . c))))
   '((cons x x)))
@@ -58,7 +58,7 @@
                           '()
                           (cons (f (car l))
                                 (map f (cdr l)))))))
-        (map (lambda (x) ,q) '(a b c)))    
+        (map (lambda (x) ,q) '(a b c)))
      initial-env
      '((a (a) a) (b (b) b) (c (c) c))))
   '((cons x (cons (cons x '()) (cons x '())))))
@@ -279,7 +279,7 @@
                           '()
                           (cons (f (car ,q))
                                 (map f (cdr l)))))))
-        (map (lambda (l) (map (lambda (y) (cons y y)) l)) '((a) (b c) (d e f))))    
+        (map (lambda (l) (map (lambda (y) (cons y y)) l)) '((a) (b c) (d e f))))
      initial-env
      '(((a . a))
        ((b . b) (c . c))
@@ -428,7 +428,7 @@
                (lambda (xs ys)
                  (if (null? xs) ys
                      (cons (car xs) (append (cdr xs) ys))))))
-       (append '(1 2) ,q))    
+       (append '(1 2) ,q))
     initial-env
     '(1 2 3 4)))
  '('(3 4)
@@ -458,7 +458,7 @@
                  (lambda (xs ys)
                    (if (null? xs) ys
                        (cons (car xs) (append (cdr xs) ys))))))
-         (append '(1 2) ,q))    
+         (append '(1 2) ,q))
       initial-env
       '(1 2 3 4))))
   50)
@@ -468,7 +468,7 @@
   (length
    (run 50 (q)
      (u-eval-expo
-      q    
+      q
       initial-env
       '(3 4))))
   50)
@@ -496,7 +496,7 @@
                (lambda (xs ys)
                  (if (null? xs) ys
                      (cons (car xs) (append (cdr xs) ys))))))
-       (append ,q '(3 4)))    
+       (append ,q '(3 4)))
     initial-env
     '(1 2 3 4))))
 
@@ -525,7 +525,7 @@
                     [`(if ,e1 ,e2 ,e3)
                      (if (eval-expr e1 env)
                          (eval-expr e2 env)
-                         (eval-expr e3 env))]                       
+                         (eval-expr e3 env))]
                     [`(lambda (,(? symbol? x)) ,body)
                      (lambda (a)
                        (eval-expr body (lambda (y)
@@ -650,7 +650,7 @@
     (absento 'c q)
     (absento 'd q)
     (absento 'e q)
-    (absento 'f q)    
+    (absento 'f q)
     (u-eval-expo
      `(letrec ([map (lambda (f l)
                       (if (null? l)
@@ -673,7 +673,7 @@
                       [`(if ,e1 ,e2 ,e3)
                        (if (eval-expr e1 env)
                            (eval-expr e2 env)
-                           (eval-expr e3 env))]                       
+                           (eval-expr e3 env))]
                       [`(lambda (,(? symbol? x)) ,body)
                        (lambda (a)
                          (eval-expr body (lambda (y)
@@ -691,7 +691,7 @@
                                      (cons (map proc '(b c))
                                            (cons (map proc '(d e f))
                                                  '())))))
-                       (lambda (x) ,q)) (lambda (y) 'error))))    
+                       (lambda (x) ,q)) (lambda (y) 'error))))
      initial-env
      '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
@@ -720,7 +720,7 @@
                          [`(if ,e1 ,e2 ,e3)
                           (if (eval-expr e1 env)
                               (eval-expr e2 env)
-                              (eval-expr e3 env))]                       
+                              (eval-expr e3 env))]
                          [`(lambda (,(? symbol? x)) ,body)
                           (lambda (a)
                             (eval-expr body (lambda (y)
@@ -800,7 +800,7 @@
                          [`(if ,e1 ,e2 ,e3)
                           (if (eval-expr e1 env)
                               (eval-expr e2 env)
-                              (eval-expr e3 env))]                       
+                              (eval-expr e3 env))]
                          [`(lambda (,(? symbol? x)) ,body)
                           (lambda (a)
                             (eval-expr body (lambda (y)
