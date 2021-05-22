@@ -1190,7 +1190,7 @@
       (u-evalo
        (prover prf)
        #t)))
-  ex-proof1)
+  ex-proof2)
 
 (define double-evalo
   (eval
