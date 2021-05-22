@@ -56,7 +56,7 @@
 
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
     + [x] Have basic benchmarks.
-    + [ ] Write script to generate CSV file.
+    + [x] Write script to generate TeX file.
     + [ ] Convert more tests into benchmarks.
     + [ ] Devise new benchmarks.
 
