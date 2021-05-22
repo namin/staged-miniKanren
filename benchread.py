@@ -38,6 +38,8 @@ for line in open('bench-log-ex.txt'):
 for name in all_names:
     for id in all_ids:
         s = name
+        if id:
+            s += ' (%s)' % id
         times = []
         for phase in all_phases:
             s += ' & '
