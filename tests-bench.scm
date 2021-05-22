@@ -1224,6 +1224,39 @@
     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
+(time-test
+  (run 1 (q)
+    (fresh (expr)
+      (absento 'clo expr)
+      (== q expr)
+      (u-evalo
+       `(letrec ([lookup
+                  (lambda (x env)
+                    (match env
+                      [`((,y . ,v) . ,renv)
+                       (if (equal? x y)
+                           v
+                           (lookup x renv))]))])
+          (letrec ([eval-expr
+                    (lambda (expr env)
+                      (match expr
+                        [`(quote ,datum) datum]
+                        [`(lambda (,(? symbol? x)) ,body)
+                         (list 'clo x body env)]
+                        [`(list ,e1 ,e2)
+                         (list (eval-expr e1 env) (eval-expr e2 env))]
+                        [(? symbol? x) (lookup x env)]
+                        [`(,rator ,rand)
+                         (match (eval-expr rator env)
+                           [`(clo ,x ,body ,clo-env)
+                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
+            (eval-expr ',expr '())))
+       q)))
+  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))))
+
 
 (define double-evalo-variadic-list-fo
   (eval
@@ -1371,80 +1404,3 @@
      (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#!eof
-
-
-(format #t "\n\n -- UNSTAGED --\n\n")
-(load "full-interp.scm")
-
-(time-test
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(C (A (A => B) (B => C)) . ,body))
-      (evalo
-       `(letrec ([member?
-                  (lambda (x ls)
-                    (if (null? ls) #f
-                        (if (equal? (car ls) x) #t
-                            (member? x (cdr ls)))))])
-          (letrec ([proof?
-                    (lambda (proof)
-                      (match proof
-                        [`(,A ,assms assumption ()) (member? A assms)]
-                        [`(,B ,assms modus-ponens
-                              (((,A => ,B) ,assms ,r1 ,ants1)
-                               (,A ,assms ,r2 ,ants2)))
-                         (and (proof? (list (list A '=> B) assms r1 ants1))
-                              (proof? (list A assms r2 ants2)))]
-                        [`((,A => ,B) ,assms conditional
-                           ((,B (,A . ,assms) ,rule ,ants)))
-                         (proof? (list B (cons A assms) rule ants))]
-                        ))])
-            (proof? ',prf)))
-       #t)))
-  '((C (A (A => B) (B => C))
-       modus-ponens
-       (((B => C) (A (A => B) (B => C)) assumption ())
-        (B (A (A => B) (B => C))
-           modus-ponens
-           (((A => B) (A (A => B) (B => C)) assumption ())
-            (A (A (A => B) (B => C)) assumption ())))))))
-
-
-(time-test
-  (run 1 (q)
-    (fresh (expr)
-      (absento 'clo expr)
-      (== q expr)
-      (evalo
-       `(letrec ([lookup
-                  (lambda (x env)
-                    (match env
-                      [`((,y . ,v) . ,renv)
-                       (if (equal? x y)
-                           v
-                           (lookup x renv))]))])
-          (letrec ([eval-expr
-                    (lambda (expr env)
-                      (match expr
-                        [`(quote ,datum) datum]
-                        [`(lambda (,(? symbol? x)) ,body)
-                         (list 'clo x body env)]
-                        [`(list ,e1 ,e2)
-                         (list (eval-expr e1 env) (eval-expr e2 env))]
-                        [(? symbol? x) (lookup x env)]
-                        [`(,rator ,rand)
-                         (match (eval-expr rator env)
-                           [`(clo ,x ,body ,clo-env)
-                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-            (eval-expr ',expr '())))
-       q)))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
-      '(lambda (_.0) (list _.0 (list 'quote _.0))))
-     (=/= ((_.0 clo)) ((_.0 closure)) ((_.0 prim)))
-     (sym _.0))))
