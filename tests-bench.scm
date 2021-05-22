@@ -9,6 +9,12 @@
 
 (load "test-check.scm")
 
+(define (record-bench phase name . args)
+  (if (null? args)
+      (printf "BENCH ~a ~a\n" phase name)
+      (printf "BENCH ~a ~a ~a\n" phase name (car args))))
+
+(record-bench 'run-staged 'map-hole)
 (time-test
  (run-staged 1 (q)
    (evalo-staged
@@ -22,6 +28,7 @@
  '((cons x x)))
 
 ;; u-eval-expo seems 50% faster than the staged version
+(record-bench 'unstaged 'map-hole)
 (time-test
   (run 1 (q)
     (u-eval-expo
@@ -1091,8 +1098,9 @@
     (map-in-double-eval expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
+(record-bench 'staging 'proofo)
 (define proofo
-  (eval
+  (eval (time
    (gen 'proof? '(proof)
         '(letrec ([member?
                    (lambda (x ls)
@@ -1111,7 +1119,7 @@
                        [`((,A => ,B) ,assms conditional
                           ((,B (,A . ,assms) ,rule ,ants)))
                         (proof? (list B (cons A assms) rule ants))]))])
-           (proof? proof)))))
+           (proof? proof))))))
 
 (define ex-proof1
   '((C (A (A => B) (B => C))
@@ -1121,6 +1129,7 @@
            modus-ponens
            (((A => B) (A (A => B) (B => C)) assumption ())
             (A (A (A => B) (B => C)) assumption ())))))))
+(record-bench 'staged 'proofo 1)
 (time-test
   (run 1 (prf)
     (fresh (body)
@@ -1149,6 +1158,7 @@
                    ))])
        (proof? ',prf))))
 
+(record-bench 'unstaged 'proofo 1)
 (time-test
   (run 1 (prf)
     (fresh (body)
@@ -1176,6 +1186,7 @@
                  (((A => B) (A (B => C) (A => B)) assumption ())
                   (A (A (B => C) (A => B)) assumption ())))))))))))))
 
+(record-bench 'staged 'proofo 2)
 (time-test
   (run 1 (prf)
     (fresh (body)
@@ -1183,6 +1194,7 @@
       (proofo prf #t)))
   ex-proof2)
 
+(record-bench 'unstaged 'proofo 2)
 (time-test
   (run 1 (prf)
     (fresh (body)
@@ -1192,8 +1204,9 @@
        #t)))
   ex-proof2)
 
+(record-bench 'staging 'double-evalo)
 (define double-evalo
-  (eval
+  (eval (time
    (gen 'eval-expr '(expr)
         `(letrec ([lookup
                    (lambda (x env)
@@ -1215,8 +1228,9 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '())))))
+           (eval-expr expr '()))))))
 
+(record-bench 'staged 'double-evalo)
 (time-test
  (run 1 (q) (absento 'clo q) (double-evalo q q))
  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
@@ -1224,6 +1238,7 @@
     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
+(record-bench 'unstaged 'double-evalo)
 (time-test
   (run 1 (q)
     (fresh (expr)
