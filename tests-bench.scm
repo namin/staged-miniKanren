@@ -444,6 +444,7 @@
     (=/= ((_.0 quote)))
     (sym _.1))))
 
+(record-bench 'run-staged 'appendo-tail)
 (time-test
  (length
   (syn-hole 50
@@ -456,7 +457,7 @@
    '(1 2 3 4)))
  50)
 
-#|
+(record-bench 'unstaged 'appendo-tail)
 (time-test
   (length
    (run 50 (q)
@@ -469,7 +470,7 @@
       initial-env
       '(1 2 3 4))))
   50)
-|#
+
 #|
 (time-test
   (length
