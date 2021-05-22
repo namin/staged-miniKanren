@@ -45,7 +45,7 @@
 - [x] This example should not fail.
       It fails because of the `non-varo` on `prim-id` to solve the non-determinism above.
       It seems like there should be a cut to `dynamic` at the point where eval of `rator` doesn't constraint the `rator` value.
-      [x] This example already works.
+    + [x] This example already works.
 ```
 (run-staged 1 (q)
  (staged-evalo `(,q (list 1 2)) 1)
