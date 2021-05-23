@@ -10,10 +10,12 @@
 
 (define is-reified-var?
   (lambda (x)
-    (let ((s (symbol->string x)))
-      (and (> (string-length s) 2)
-           (char=? (string-ref s 0) #\_)
-           (char=? (string-ref s 1) #\.)))))
+    (and
+     (symbol? x)
+     (let ((s (symbol->string x)))
+       (and (> (string-length s) 2)
+            (char=? (string-ref s 0) #\_)
+            (char=? (string-ref s 1) #\.))))))
 
 (define fix-scope1
   (lambda (t . in-cdr)
