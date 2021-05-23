@@ -81,6 +81,7 @@
         (map ,q '(a b c))))
    '((a . a) (b . b) (c . c)))
  '(((lambda (_.0) (cons _.0 _.0))
+    $$
     (=/= ((_.0 cons)))
     (sym _.0))))
 
@@ -119,6 +120,7 @@
        (`(,_.1 unquote _.2) _.1)
        .
        _.3)
+     $$
      (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.2 a)) ((_.2 b)) ((_.2 c)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3)))))
@@ -148,6 +150,7 @@
        (`(,_.1 unquote _.2) _.1)
        .
        _.3)
+     $$
      (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.2 a)) ((_.2 b)) ((_.2 c)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3)))))
@@ -182,6 +185,7 @@
        (`(,_.1 . ,_.2) _.1)
        .
        _.3)
+     $$
      (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.0 d)) ((_.0 e)) ((_.0 f)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.1 d)) ((_.1 e)) ((_.1 f)) ((_.2 a)) ((_.2 b)) ((_.2 c)) ((_.2 d)) ((_.2 e)) ((_.2 f)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
@@ -216,6 +220,7 @@
        (`(,_.1 . ,_.2) _.1)
        .
        _.3)
+     $$
      (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.0 d)) ((_.0 e)) ((_.0 f)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.1 d)) ((_.1 e)) ((_.1 f)) ((_.2 a)) ((_.2 b)) ((_.2 c)) ((_.2 d)) ((_.2 e)) ((_.2 f)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
@@ -250,6 +255,7 @@
        (`(,_.1 . ,_.2) _.1)
        .
        _.3)
+     $$
      (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.0 d)) ((_.0 e)) ((_.0 f)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.1 d)) ((_.1 e)) ((_.1 f)) ((_.2 a)) ((_.2 b)) ((_.2 c)) ((_.2 d)) ((_.2 e)) ((_.2 f)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
@@ -366,6 +372,7 @@
        (`(,_.1 . ,_.2) _.1)
        .
        _.3)
+     $$
      (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.0 d)) ((_.0 e)) ((_.0 f)) ((_.1 _.2)) ((_.1 a)) ((_.1 b)) ((_.1 c)) ((_.1 d)) ((_.1 e)) ((_.1 f)) ((_.2 a)) ((_.2 b)) ((_.2 c)) ((_.2 d)) ((_.2 e)) ((_.2 f)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
@@ -387,6 +394,7 @@
       (absento 'c q)
       (e q)))
   '((_.0
+     $$
      (absento (a _.0) (b _.0) (c _.0)))))
 
 (test
@@ -426,7 +434,7 @@
                       (cons (car xs) (append (cdr xs) ys))))))
         (append '(1 2) ,q)))
    '(1 2 3 4))
- '('(3 4) (list 3 4) ((letrec ((_.0 (lambda _.1 _.2))) '(3 4)) (=/= ((_.0 quote))) (sym _.1))))
+ '('(3 4) (list 3 4) ((letrec ((_.0 (lambda _.1 _.2))) '(3 4)) $$ (=/= ((_.0 quote))) (sym _.1))))
 
 (time-test
  (run 3 (q)
@@ -441,6 +449,7 @@
  '('(3 4)
   (list 3 4)
   ((letrec ([_.0 (lambda _.1 _.2)]) '(3 4))
+   $$
     (=/= ((_.0 quote)))
     (sym _.1))))
 
@@ -494,6 +503,7 @@
  '('(1 2)
    (list 1 2)
    ((letrec ([_.0 (lambda _.1 _.2)]) '(1 2))
+    $$
     (=/= ((_.0 quote)))
     (sym _.1))))
 
@@ -554,6 +564,7 @@
     (absento 'closure q)
     (eval-and-map-evalo `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
   '(((lambda (_.0) (cons _.0 _.0))
+     $$
      (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
@@ -649,6 +660,7 @@
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
 
+(record-bench 'unstaged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -704,8 +716,9 @@
      '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
 
+(record-bench 'staging 'eval-and-map-and-list-evalo)
 (define eval-and-map-and-list-evalo
-  (eval
+  (eval (time
    (gen 'eval-expr '(expr)
         `(letrec ([map (lambda (f l)
                          (if (null? l)
@@ -742,8 +755,9 @@
                           (map (lambda (e) (eval-expr e env)) e*)]
                          [`(,rator ,rand)
                           ((eval-expr rator env) (eval-expr rand env))]))])
-             (eval-expr expr (lambda (y) 'error)))))))
+             (eval-expr expr (lambda (y) 'error))))))))
 
+(record-bench 'staged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -904,6 +918,7 @@
     (absento 'closure q)
     (quasi-quine-evalo q q))
   '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
+     $$
      (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
@@ -935,6 +950,7 @@
     (ho-quine-interp-cons q q))
   '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
+     $$
      (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
@@ -975,6 +991,7 @@
  '(error
    (((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+    $$
     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
@@ -1257,7 +1274,8 @@
 (time-test
  (run 1 (q) (absento 'clo q) (double-evalo q q))
  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
-    '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     '(lambda (_.0) (list _.0 (list 'quote _.0))))
+    $$
     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
@@ -1292,6 +1310,7 @@
        q)))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     $$
      (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
@@ -1328,6 +1347,7 @@
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     $$
      (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
@@ -1366,6 +1386,7 @@
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     $$
      (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
@@ -1404,7 +1425,8 @@
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
-    '(lambda (_.0) (list _.0 (list 'quote _.0))))
+      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+   $$
    (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
    (sym _.0))))
 
@@ -1439,6 +1461,7 @@
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
+     $$
      (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 

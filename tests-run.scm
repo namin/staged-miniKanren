@@ -84,4 +84,4 @@
     (run-staged 1 (q)
       (evalo-staged `((,q) (cons 1 2)) 1)
       )
-  '(((lambda _.0 car) (=/= ((_.0 car))) (sym _.0))))
+  '(((lambda _.0 car) $$ (=/= ((_.0 car))) (sym _.0))))
