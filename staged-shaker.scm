@@ -42,9 +42,9 @@
        (constraints2goal cs)
        (== (car t) expr)
        (evalo-staged expr val)
-       ;; if at all,
-       ;; comparing vals should be done at a later stage
-       ;;(== (cadr t) val)
+       ;; TODO: figure out why == leads to error
+       ;; in Shake 344
+       (l== (cadr t) val)
        ))))
 
 (define (to-vars-map m x)
