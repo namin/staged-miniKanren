@@ -48,6 +48,8 @@
        ;; TODO: figure out why == leads to error
        ;; in Shake 344
        ;;(l== (cadr t) val)
+       ;; We can't compare values because values are not the same
+       ;; e.g. for letrec Shake 125
        ))))
 
 (define (to-vars-map m x)
