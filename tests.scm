@@ -4,6 +4,7 @@
 
 (load "staged-interp.scm")
 (load "staged-utils.scm")
+(load "staged-run.scm")
 
 (load "test-check.scm")
 
