@@ -59,23 +59,14 @@
   (lambda (t)
     (car (fix-scope2 (fix-scope1 t) '()))))
 
-(define (range start stop . step)
-  (let ((step (if (null? step) 1 (car step))))
-    (if (or (and (> step 0)
-                 (>= start stop))
-            (and (<= step 0)
-                 (<= start stop)))
-        '()
-        (cons start (range (+ start step) stop step)))))
-
 (define (unique-result r)
   (cond
     ((null? r)
      (error 'gen "staging failed"))
     ((not (null? (cdr r)))
      (for-each
-       (lambda (i x) (printf "result ~a: ~a\n" i x))
-       (range 1 (+ 1 (length r)))
+       (lambda (i x) (printf "result ~a: ~a\n" (+ 1 i) x))
+       (iota (length r))
        r)
      (error 'gen "staging non-deterministic"))
     (else (car r))))
