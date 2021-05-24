@@ -14,11 +14,14 @@
         (car gs)
         (conjunction-of (cdr gs)))))
 
-(define (constraints2goal cs)
-  (let ((goals (apply append (map constraint2goals cs))))
+(define (constraints2goal m cs)
+  (let ((goals (apply append (map (lambda (c) (constraint2goals m c)) cs))))
     (conjunction-of goals)))
 
-(define (constraint2goals c)
+(define (to-sym x)
+  (string->symbol (string-append "x" (symbol->string x))))
+
+(define (constraint2goals m c)
   (cond
     ((eq? (car c) '=/=)
      (map (lambda (x) (=/= (caar x) (cadar x)))
@@ -27,7 +30,7 @@
      (map (lambda (x) (absento (car x) (cadr x)))
           (cdr c)))
     ((eq? (car c) 'sym)
-     (map (lambda (x) (symbolo x)) (cdr c)))
+     (map (lambda (x) (== x (to-sym (cdr (assoc x m))))) (cdr c)))
     ((eq? (car c) 'num)
      (map (lambda (x) (numbero x)) (cdr c)))
     (else (error 'constraint2goals "unexpected constraint" c))))
@@ -39,12 +42,12 @@
          (t (maybe-remove-constraints t)))
     (unique-result
      (run-staged 2 (expr val)
-       (constraints2goal cs)
+       (constraints2goal (map (lambda (kv) (cons (cdr kv) (car kv))) m) cs)
        (== (car t) expr)
        (evalo-staged expr val)
        ;; TODO: figure out why == leads to error
        ;; in Shake 344
-       (l== (cadr t) val)
+       ;;(l== (cadr t) val)
        ))))
 
 (define (to-vars-map m x)
