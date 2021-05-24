@@ -71,7 +71,7 @@ run-staged 1 ()
     + [x] Specializing happened too early for lambda closures inside of variadic outer lambda because the rands are not yet evaluated.
            Solution: switch the order to be like non-variadic case.
            Long-term solution: see below, consider doing reification at once at the end, even when lifting scopes.
-      + [ ] `or` is poorly translated, leading to non-determinism.
+      + [x] `or` is poorly translated, leading to non-determinism.
             `(or '#f _.0)`.
 
 - [ ] Consider doing reification at once at the end, even when lifting scopes.

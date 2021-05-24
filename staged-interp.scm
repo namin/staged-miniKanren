@@ -539,15 +539,17 @@
     ((fresh (e)
        (== `(,e) e*)
        (eval-expo #t e env val)))
-    ((fresh (e1 e2 e-rest v)
+    ((fresh (e1 e2 e-rest v c)
        (== `(,e1 ,e2 . ,e-rest) e*)
-       (conde
-         ((=/= #f v)
-          (== v val)
-          (eval-expo #t e1 env v))
-         ((== #f v)
-          (eval-expo #t e1 env v)
-          (oro `(,e2 . ,e-rest) env val)))))))
+       (eval-expo #t e1 env v)
+       (lift-scope
+        (oro `(,e2 . ,e-rest) env val)
+        c)
+       (lift `(conde
+                ((=/= #f ,v)
+                 (== ,v ,val))
+                ((== #f ,v)
+                 . ,c)))))))
 
 (define (if-primo expr env val)
   (fresh (e1 e2 e3 t c2 c3)
