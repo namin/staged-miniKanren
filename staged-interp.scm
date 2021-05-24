@@ -272,8 +272,10 @@
                                 (== `((,x* . (val . ,a*)) . ,env^) res)
                                 ;; re-ordered compared to vanilla because of
                                 ;; closure code not being specialized
-                                (eval-listo rands env a*)
-                                (eval-expo stage? body res val))
+                                ;; restoring original order due to hanging
+                                ;; in benchmarks
+                                (eval-expo stage? body res val)
+                                (eval-listo rands env a*))
                                ;; Multi-argument
                                ((eval-listo rands env a*)
                                 (ext-env*o x* a* env^ res)
