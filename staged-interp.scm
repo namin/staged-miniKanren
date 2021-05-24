@@ -440,45 +440,45 @@
      (fresh (b)
        (l== `(,b) a*)
        (lift `(conde
-               ((=/= #f ,b) (== #f ,val))
-               ((== #f ,b) (== #t ,val)))))]
+                ((=/= #f ,(expand b)) (== #f ,(expand val)))
+                ((== #f ,(expand b)) (== #t ,(expand val))))))]
     [(== prim-id 'equal?)
      (fresh (v1 v2)
        (l== `(,v1 ,v2) a*)
        (lift `(conde
-               ((== ,v1 ,v2) (== #t ,val))
-               ((=/= ,v1 ,v2) (== #f ,val)))))]
+                ((== ,(expand v1) ,(expand v2)) (== #t ,(expand val)))
+                ((=/= ,(expand v1) ,(expand v2)) (== #f ,(expand val))))))]
     [(== prim-id 'symbol?)
      (fresh (v)
        (l== `(,v) a*)
        (lift `(conde
-               ((symbolo ,v) (== #t ,val))
-               ((numbero ,v) (== #f ,val))
+                ((symbolo ,(expand v)) (== #t ,(expand val)))
+                ((numbero ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
-                  (== `(,a . ,d) ,v)
-                  (== #f ,val))))))]
+                  (== `(,(expand a) . ,(expand d)) ,(expand v))
+                  (== #f ,(expand val)))))))]
     [(== prim-id 'number?)
      (fresh (v)
        (l== `(,v) a*)
        (lift `(conde
-         ((numbero ,v) (== #t ,val))
-         ((symbolo ,v) (== #f ,val))
-         ((fresh (a d)
-            (== `(,a . ,d) ,v)
-            (== #f ,val))))))]
+                ((numbero ,(expand v)) (== #t ,(expand val)))
+                ((symbolo ,(expand v)) (== #f ,(expand val)))
+                ((fresh (a d)
+                   (== `(,(expand a) . ,(expand d)) ,(expand v))
+                   (== #f ,(expand val)))))))]
     [(== prim-id 'pair?)
      (fresh (v)
        (l== `(,v) a*)
        (lift `(conde
-               ((symbolo ,v) (== #f ,val))
-               ((numbero ,v) (== #f ,val))
+                ((symbolo ,(expand v)) (== #f ,(expand val)))
+                ((numbero ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
-                  (== `(,a . ,d) ,v)
-                  (== #t ,val)
+                  (== `(,(expand a) . ,(expand d)) ,(expand v))
+                  (== #t ,(expand val))
                   (not-tago a)))
                ((fresh (a d)
-                  (== `(,a . ,d) ,v)
-                  (== #f ,val)
+                  (== `(,(expand a) . ,(expand d)) ,(expand v))
+                  (== #f ,(expand val))
                   (conde
                     ((== a 'closure))
                     ((== a 'prim))
@@ -488,8 +488,8 @@
      (fresh (v)
        (l== `(,v) a*)
        (lift `(conde
-               ((== '() ,v) (== #t ,val))
-               ((=/= '() ,v) (== #f ,val)))))]))
+                ((== '() ,(expand v)) (== #t ,(expand val)))
+                ((=/= '() ,(expand v)) (== #f ,(expand val))))))]))
 
 (define (prim-expo expr env val)
   (conde
@@ -524,9 +524,9 @@
         (ando `(,e2 . ,e-rest) env val)
         c)
        (lift `(conde
-                ((== #f ,v)
-                 (== #f ,val))
-                ((=/= #f ,v)
+                ((== #f ,(expand v))
+                 (== #f ,(expand val)))
+                ((=/= #f ,(expand v))
                  . ,c)))))))
 
 (define (or-primo expr env val)
@@ -548,9 +548,9 @@
         (oro `(,e2 . ,e-rest) env val)
         c)
        (lift `(conde
-                ((=/= #f ,v)
-                 (== ,v ,val))
-                ((== #f ,v)
+                ((=/= #f ,(expand v))
+                 (== ,(expand v) ,(expand val)))
+                ((== #f ,(expand v))
                  . ,c)))))))
 
 (define (if-primo expr env val)
@@ -561,8 +561,8 @@
     (lift-scope (eval-expo #t e2 env val) c2)
     (lift-scope (eval-expo #t e3 env val) c3)
     (lift `(conde
-            ((=/= #f ,t) . ,c2)
-            ((== #f ,t) . ,c3)))))
+             ((=/= #f ,(expand t)) . ,c2)
+             ((== #f ,(expand t)) . ,c3)))))
 
 (define (choice-primo expr env val)
   (fresh (e2 e3 c2 c3)
@@ -693,9 +693,9 @@
       (== `(? ,pred ,var) p)
       (conde
         ((== 'symbol? pred)
-         (lift `(symbolo ,mval)))
+         (lift `(symbolo ,(expand mval))))
         ((== 'number? pred)
-         (lift `(numbero ,mval))))
+         (lift `(numbero ,(expand mval)))))
       (var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
@@ -716,18 +716,18 @@
           (fresh (z1 z2)
             (lift-scope
              (fresh ()
-               (lift `(not-symbolo ,mval)))
+               (lift `(not-symbolo ,(expand mval))))
              z1)
             (lift-scope
              (fresh ()
-               (lift `(symbolo ,mval))
+               (lift `(symbolo ,(expand mval)))
                (var-p-no-match var mval penv penv-out))
              z2)
             (lift `(conde ,z1 ,z2))))
          ((== 'number? pred) ;; TODO: same pattern as symbol? above
           (conde
-            ((lift `(not-numbero ,mval)))
-            ((lift `(numbero ,mval))
+            ((lift `(not-numbero ,(expand mval))))
+            ((lift `(numbero ,(expand mval)))
              (var-p-no-match var mval penv penv-out)))))))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
@@ -765,7 +765,7 @@
            (lift-scope
             (fresh ()
               (== penv penv-out)
-              (lift `(literalo ,mval)))
+              (lift `(literalo ,(expand mval))))
             z1)
            (lift-scope
             (fresh ()

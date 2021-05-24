@@ -77,7 +77,7 @@ run-staged 1 ()
 - [ ] Consider doing reification at once at the end, even when lifting scopes.
       This would avoid specializing being order dependent.
 
-- [ ] Check all explicit `lift`s in `staged-interp` and make sure unifications are properly expanded.
+- [x] Check all explicit `lift`s in `staged-interp` and make sure unifications are properly expanded.
 
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
     + [x] Have basic benchmarks.

@@ -829,3 +829,13 @@
         (evalo-staged expr val)))
      )
   1)
+
+;; at least, not a syntax error
+(test
+    (run-staged 1
+        (x val)
+      (evalo-staged `(symbol? ,x) val)
+      (== x '(cons 1 2))
+      (== val '())
+      )
+  '())
