@@ -1,5 +1,5 @@
 (define ts
-  (run 15 (expr val)
+  (run 20 (expr val)
     (evalo-unstaged expr val)))
 
 (define (maybe-constraints t)
@@ -41,7 +41,8 @@
      (run-staged 2 (expr val)
        (constraints2goal cs)
        (== (car t) expr)
-       (evalo-staged expr val)))))
+       (evalo-staged expr val)
+       (== (cadr t) val)))))
 
 (define (to-vars-map m x)
   (cond
@@ -63,14 +64,15 @@
 
 (define (nth xs n)
   (car (last-pair (list-head xs (+ 1 n)))))
-
+#|
 (for-each
   (lambda (t i)
     (printf "Shake ~a\n" i)
     (test
-        (maybe-remove-constraints t)
-      (maybe-remove-constraints (shake1 t))))
+      (maybe-remove-constraints (shake1 t))
+      (maybe-remove-constraints t)))
   ts (iota (length ts)))
+|#
 
 (define rs
   (map
@@ -78,6 +80,8 @@
       (shake1 t))
    ts (iota (length ts))))
 
+#|
 (test
   rs
   ts)
+|#
