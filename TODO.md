@@ -79,6 +79,9 @@ run-staged 1 ()
 
 - [x] Check all explicit `lift`s in `staged-interp` and make sure unifications are properly expanded.
 
+- [ ] Fix predicate primitives to consider nil and booleans in addition to symbol, number and pair.
+      Fix in original faster-mk full interp, in unstated-interp, in staged-interp.
+
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
     + [x] Have basic benchmarks.
     + [x] Write script to generate TeX file.
