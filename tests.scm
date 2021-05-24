@@ -803,3 +803,14 @@
 
 (test (run* (q) (letrec-bindings-checko '((t (lambda (x) x))))) '(_.0))
 (test (run* (q) (not-letrec-bindings-checko '((t (lambda (x) x))))) '())
+
+(test
+    (length
+     (run-staged*
+      (expr val)
+      (fresh (_.0 _.1 _.2 _.3)
+        (symbolo _.0)
+        (symbolo _.1)
+        (== expr (list 'lambda (list _.0 _.1) _.2))
+        (evalo-staged expr val))))
+  1)

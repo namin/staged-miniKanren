@@ -48,7 +48,8 @@
        (== (cons xa xd) xs)
        (conde
          ((varo xa))
-         ((not-ground-paramso xd)))))))
+         ((non-varo xa)
+          (not-ground-paramso xd)))))))
 
 (define (ground-paramso xs)
   (conde

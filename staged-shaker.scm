@@ -2,15 +2,6 @@
   (run 20 (expr val)
     (evalo-unstaged expr val)))
 
-;; real non-determinism found at index 18
-(run-staged*
- (expr val)
- (fresh (_.0 _.1 _.2 _.3)
-   (symbolo _.0)
-   (symbolo _.1)
-   (== expr (list 'lambda (list _.0 _.1) _.2))
-   (evalo-staged expr val)))
-
 (define (maybe-constraints t)
   (if (constraint-layer? t)
       (cddr t)
