@@ -69,7 +69,10 @@ run-staged 1 ()
     + [x] `not-ground-paramso` was not deterministic, missing a `non-varo` constraint in the `else` clause.
     + [x] Processing constraints was cutting off constraints over 1 for `symbolo` and `numbero` due to a format misunderstanding.
     + [x] Specializing happened too early for lambda closures inside of variadic outer lambda because the rands are not yet evaluated.
-           Solution: switch the order to be like non-variadic case. Long-term solution: see below, consider doing reification at once at the end, even when lifting scopes.
+           Solution: switch the order to be like non-variadic case.
+           Long-term solution: see below, consider doing reification at once at the end, even when lifting scopes.
+      + [ ] `or` is poorly translated, leading to non-determinism.
+            `(or '#f _.0)`.
 
 - [ ] Consider doing reification at once at the end, even when lifting scopes.
       This would avoid specializing being order dependent.
