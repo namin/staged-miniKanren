@@ -814,3 +814,19 @@
         (== expr (list 'lambda (list _.0 _.1) _.2))
         (evalo-staged expr val))))
   1)
+
+#|
+The num constraint on _.2 is forgotten.
+(test
+    (length
+     (run-staged 3
+      (expr val)
+      (fresh (_.0 _.1 _.2)
+        (symbolo _.0)
+        (numbero _.1)
+        (numbero _.2)
+        (== expr `((lambda ,_.0 ,_.1) ,_.2))
+        (evalo-staged expr val)))
+     )
+  1)
+|#
