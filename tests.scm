@@ -815,8 +815,7 @@
         (evalo-staged expr val))))
   1)
 
-#|
-The num constraint on _.2 is forgotten.
+
 (test
     (length
      (run-staged 3
@@ -829,4 +828,3 @@ The num constraint on _.2 is forgotten.
         (evalo-staged expr val)))
      )
   1)
-|#
