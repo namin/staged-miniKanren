@@ -1,5 +1,5 @@
 (define ts
-  (run 20 (expr val)
+  (run 200 (expr val)
     (evalo-unstaged expr val)))
 
 (define (maybe-constraints t)
@@ -27,9 +27,9 @@
      (map (lambda (x) (absento (car x) (cadr x)))
           (cdr c)))
     ((eq? (car c) 'sym)
-     (list (symbolo (cadr c))))
+     (map (lambda (x) (symbolo x)) (cdr c)))
     ((eq? (car c) 'num)
-     (list (numbero (cadr c))))
+     (map (lambda (x) (numbero x)) (cdr c)))
     (else (error 'constraint2goals "unexpected constraint" c))))
 
 (define (shake1 t)
