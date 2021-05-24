@@ -270,8 +270,10 @@
                                ;; Variadic
                                ((symbolo x*)
                                 (== `((,x* . (val . ,a*)) . ,env^) res)
-                                (eval-expo stage? body res val)
-                                (eval-listo rands env a*))
+                                ;; re-ordered compared to vanilla because of
+                                ;; closure code not being specialized
+                                (eval-listo rands env a*)
+                                (eval-expo stage? body res val))
                                ;; Multi-argument
                                ((eval-listo rands env a*)
                                 (ext-env*o x* a* env^ res)
