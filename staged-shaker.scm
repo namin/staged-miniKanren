@@ -42,7 +42,10 @@
        (constraints2goal cs)
        (== (car t) expr)
        (evalo-staged expr val)
-       (== (cadr t) val)))))
+       ;; if at all,
+       ;; comparing vals should be done at a later stage
+       ;;(== (cadr t) val)
+       ))))
 
 (define (to-vars-map m x)
   (cond
