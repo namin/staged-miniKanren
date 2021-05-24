@@ -54,7 +54,7 @@
 
 - [ ] Shake the generator by sampling `u-eval-expo`.
     + [x] Develop basic system.
-    + [ ] Ground symbols to exercise lambdas.
+    + [x] Ground symbols to exercise lambdas.
     + [ ] Pull out parts and make then runtime-staged.
 ```
 run-staged 1 ()
@@ -64,6 +64,15 @@ run-staged 1 ()
      (l== a 'quote)))
 ;; from an evalo-unstaged answer of (quote 5) => 5
 ```
+
+- [ ] Document bugs found thanks to shaker.
+    + [x] `not-ground-paramso` was not deterministic, missing a `non-varo` constraint in the `else` clause.
+    + [x] Processing constraints was cutting off constraints over 1 for `symbolo` and `numbero` due to a format misunderstanding.
+    + [x] Specializing happened too early for lambda closures inside of variadic outer lambda because the rands are not yet evaluated.
+           Solution: switch the order to be like non-variadic case. Long-term solution: see below, consider doing reification at once at the end, even when lifting scopes.
+
+- [ ] Consider doing reification at once at the end, even when lifting scopes.
+      This would avoid specializing being order dependent.
 
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
     + [x] Have basic benchmarks.
