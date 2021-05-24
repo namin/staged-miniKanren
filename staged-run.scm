@@ -2,7 +2,7 @@
   (eval-expo #t expr initial-env val))
 
 (define (evalo-unstaged expr val)
-  (u-eval-expo expr u-initial-env val))
+  (u-eval-expo expr initial-env val))
 
 (define-syntax run-staged
   (syntax-rules ()
