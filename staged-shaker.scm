@@ -2,21 +2,44 @@
   (run 10 (expr val)
     (evalo-unstaged expr val)))
 
-(run-staged* (expr val)
-  (fresh (x)
-    (absento 'call x)
-    (absento 'closure x)
-    (absento 'dynamic x)
-    (absento 'prim x)
-    (== expr `(quote ,x))
-    (evalo-staged expr val)))
+(define (maybe-constraints t)
+  (if (constraint-layer? t)
+      (cddr t)
+      '()))
+
+(define (conjunction-of gs)
+  (if (null? gs)
+      succeed
+      (fresh ()
+        (car gs)
+        (conjunction-of (cdr gs)))))
+
+(define (constraints2goal cs)
+  (let ((goals (apply append (map constraint2goals cs))))
+    (conjunction-of goals)))
+
+(define (constraint2goals c)
+  (cond
+    ((eq? (car c) '=/=)
+     (map (lambda (x) (=/= (caar x) (cadar x)))
+          (cdr c)))
+    ((eq? (car c) 'absento)
+     (map (lambda (x) (absento (car x) (cadr x)))
+          (cdr c)))
+    ((eq? (car c) 'sym)
+     (list (symbolo (cadr c))))
+    ((eq? (car c) 'num)
+     (list (numbero (cadr c))))
+    (else (error 'constraint2goals "unexpected constraint" c))))
 
 (define (shake1 t)
   (let* ((m (to-vars-map '() t))
-         (t (maybe-remove-constraints t))
-         (t (to-vars m t)))
-    (car
-     (run-staged 1 (expr val)
+         (t (to-vars m t))
+         (cs (maybe-constraints t))
+         (t (maybe-remove-constraints t)))
+    (unique-result
+     (run-staged 2 (expr val)
+       (constraints2goal cs)
        (== t (list expr val))
        (evalo-staged expr val)))))
 
@@ -39,3 +62,7 @@
     (else x)))
 
 (define rs (map shake1 ts))
+
+(test
+  rs
+  ts)
