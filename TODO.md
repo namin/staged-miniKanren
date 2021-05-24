@@ -53,6 +53,17 @@
 ```
 
 - [ ] Shake the generator by sampling `u-eval-expo`.
+    + [x] Develop basic system.
+    + [ ] Ground symbols to exercise lambdas.
+    + [ ] Pull out parts and make then runtime-staged.
+```
+run-staged 1 ()
+  (fresh (e a)
+     (== e `(,a 5))
+     (staged-evalo e 5)
+     (l== a 'quote)))
+;; from an evalo-unstaged answer of (quote 5) => 5
+```
 
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
     + [x] Have basic benchmarks.
