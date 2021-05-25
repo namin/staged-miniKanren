@@ -127,7 +127,7 @@ run-staged 1 ()
 - [ ] Consider this example. There is a blow up of spurious results in the second stage.
       Furthermore, we get non-determinism, which doesn't mesh well with `run 1`.
       Consider the work on partial deduction to get ideas to alleviate these issues.
-      Or maybe a construct `conj-do-cartestian-product`.
+      Or maybe a construct `conj-do-cartesian-product`.
 ```
 (define-relation (foo x y)
 (conj
