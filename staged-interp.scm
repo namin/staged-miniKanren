@@ -451,7 +451,7 @@
                 ((symbolo ,(expand v)) (== #t ,(expand val)))
                 ((numbero ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
-                  (== `(,(expand a) . ,(expand d)) ,(expand v))
+                  (== `(,a . ,d) ,(expand v))
                   (== #f ,(expand val)))))))]
     [(== prim-id 'number?)
      (fresh (v)
@@ -460,7 +460,7 @@
                 ((numbero ,(expand v)) (== #t ,(expand val)))
                 ((symbolo ,(expand v)) (== #f ,(expand val)))
                 ((fresh (a d)
-                   (== `(,(expand a) . ,(expand d)) ,(expand v))
+                   (== `(,a . ,d) ,(expand v))
                    (== #f ,(expand val)))))))]
     [(== prim-id 'pair?)
      (fresh (v)
@@ -469,11 +469,11 @@
                 ((symbolo ,(expand v)) (== #f ,(expand val)))
                 ((numbero ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
-                  (== `(,(expand a) . ,(expand d)) ,(expand v))
+                  (== `(,a . ,d) ,(expand v))
                   (== #t ,(expand val))
                   (not-tago a)))
                ((fresh (a d)
-                  (== `(,(expand a) . ,(expand d)) ,(expand v))
+                  (== `(,a . ,d) ,(expand v))
                   (== #f ,(expand val))
                   (conde
                     ((== a 'closure))
