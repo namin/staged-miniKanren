@@ -839,3 +839,10 @@
       (== val '())
       )
   '())
+
+(test
+    (length
+     (run-staged 1
+         (val)
+       (evalo-staged '((lambda x (lambda y 1))) val)))
+  1)

@@ -1,5 +1,5 @@
 (define ts
-  (run 200 (expr val)
+  (run 300 (expr val)
     (evalo-unstaged expr val)))
 
 (define (maybe-constraints t)

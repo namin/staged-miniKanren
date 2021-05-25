@@ -74,7 +74,7 @@ run-staged 1 ()
       + [x] `or` is poorly translated, leading to non-determinism.
             `(or '#f _.0)`.
 
-- [ ] Consider doing reification at once at the end, even when lifting scopes.
+- [x] Consider doing reification at once at the end, even when lifting scopes.
       This would avoid specializing being order dependent.
 
 - [x] Check all explicit `lift`s in `staged-interp` and make sure unifications are properly expanded.

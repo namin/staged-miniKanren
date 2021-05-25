@@ -270,10 +270,6 @@
                                ;; Variadic
                                ((symbolo x*)
                                 (== `((,x* . (val . ,a*)) . ,env^) res)
-                                ;; re-ordered compared to vanilla because of
-                                ;; closure code not being specialized
-                                ;; restoring original order due to hanging
-                                ;; in benchmarks
                                 (eval-expo stage? body res val)
                                 (eval-listo rands env a*))
                                ;; Multi-argument
