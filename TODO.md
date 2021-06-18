@@ -166,3 +166,5 @@ run-staged 1 ()
 - [ ] Make `evalo` stage polymorphic so that it can be instantiated to `evalo-staged` or `evalo-unstaged` (`u-evalo`).
 
 - [ ] Compose with pink.
+
+- [ ] Support the exact same language in `evalo-staged` and `evalo-unstaged`.
