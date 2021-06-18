@@ -150,7 +150,7 @@ run-staged 1 ()
 
 - [x] Devise a much more pleasant interface for running and staging than `gen`.
     + [x] `run-staged`.
-    + [x] `run-stage` with multiple query variables.
+    + [x] `run-staged` with multiple query variables.
     + [x] `run-staged*`.
     + [x] `defined-staged-relaion`.
         * ```(define-staged-relation (test e) (staged-evalo `(cons ,e '()) '(5)))```
