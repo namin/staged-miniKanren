@@ -923,6 +923,47 @@
      (sym _.0))))
 
 
+
+(define-staged-relation (quasi-quine-evalo2 expr val)
+  (evalo-staged
+   `(letrec ([eval-quasi (lambda (q eval)
+                           (match q
+                             [(? symbol? x) x]
+                             [`() '()]
+                             [`(,`unquote ,exp) (eval exp)]
+                             [`(quasiquote ,datum) 'error]
+                             ;; ('error) in the 2017 ICFP Pearl, but
+                             ;; the code generator rejects this erroneous code!
+                             [`(,a . ,d)
+                              (cons (eval-quasi a eval) (eval-quasi d eval))]))]
+             [eval-expr
+              (lambda (expr env)
+                (match expr
+                  [`(quote ,datum) datum]
+                  [`(lambda (,(? symbol? x)) ,body)
+                   (lambda (a)
+                     (eval-expr body (lambda (y)
+                                       (if (equal? x y)
+                                           a
+                                           (env y)))))]
+                  [(? symbol? x) (env x)]
+                  [`(quasiquote ,datum)
+                   (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
+                  [`(,rator ,rand)
+                   ((eval-expr rator env) (eval-expr rand env))]))])
+      (eval-expr ',expr (lambda (y) 'error)))
+   val))
+
+(test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (quasi-quine-evalo2 q q))
+  '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
+     $$
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     (sym _.0))))
+
 (define ho-quine-interp-cons
   (eval
    (gen 'eval-expr '(expr)
