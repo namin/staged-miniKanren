@@ -10,6 +10,26 @@
 
 (test
     (run-staged 1 (q)
+      (l== q 1))
+  '(1))
+
+#|
+;; not deterministic
+(run-staged 2 (q)
+  (conde
+    ((l== q 1))
+    ((l== q 2))))
+|#
+
+(test
+    (run-staged 2 (q)
+      (lift `(conde
+               ((== ,q 1))
+               ((== ,q 2)))))
+  '(1 2))
+
+(test
+    (run-staged 1 (q)
       (evalo-staged
        `(letrec ((append
                   (lambda (xs ys)
