@@ -71,10 +71,10 @@ run-staged 1 ()
     + [x] Specializing happened too early for lambda closures inside of variadic outer lambda because the rands are not yet evaluated.
            Solution: switch the order to be like non-variadic case. Reverted: not acceptable due to performance regression in benchmarks.
            Long-term solution: see below, consider doing reification at once at the end, even when lifting scopes.
-      + [x] `or` is poorly translated, leading to non-determinism.
-            `(or '#f _.0)`.
-      + [x] Over-done expansion in `symbol?` and other primitives.
-            `(symbol? equal?)` should evaluate to `#f`.
+    + [x] `or` is poorly translated, leading to non-determinism.
+          `(or '#f _.0)`.
+    + [x] Over-done expansion in `symbol?` and other primitives.
+          `(symbol? equal?)` should evaluate to `#f`.
 
 - [x] Consider doing reification at once at the end, even when lifting scopes.
       This would avoid specializing being order dependent.
