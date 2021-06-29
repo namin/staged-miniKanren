@@ -14,6 +14,51 @@
       (printf "BENCH ~a ~a\n" phase name)
       (printf "BENCH ~a ~a ~a\n" phase name (car args))))
 
+(record-bench 'run-staged 'appendo-synth-1)
+(time-test
+  (run-staged 1 (q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons ,q (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '((car xs)))
+
+;; WEB: this seems very slow!
+(record-bench 'unstaged 'appendo-synth-1)
+(time-test
+  (run 1 (q)
+    (evalo-unstaged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons ,q (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '((car xs)))
+
+
+
+
+
+
+
+
+
+
+
+
+
 (record-bench 'run-staged 'appendo-tail)
 (time-test
  (length
