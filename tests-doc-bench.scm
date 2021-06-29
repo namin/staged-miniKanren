@@ -14,6 +14,8 @@
       (printf "BENCH ~a ~a\n" phase name)
       (printf "BENCH ~a ~a ~a\n" phase name (car args))))
 
+
+
 ;; Synthesizes a 'match'-based version of 'null?'
 (record-bench 'run-staged 'appendo-synth-0)
 (time-test
@@ -103,15 +105,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
 (record-bench 'run-staged 'appendo-tail)
 (time-test
  (length
@@ -165,6 +158,4 @@
      '(1 2 3 4)))
   '((3 4)))
 
-
-#!eof
 
