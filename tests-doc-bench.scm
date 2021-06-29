@@ -14,6 +14,57 @@
       (printf "BENCH ~a ~a\n" phase name)
       (printf "BENCH ~a ~a ~a\n" phase name (car args))))
 
+;; Synthesizes a 'match'-based version of 'null?'
+(record-bench 'run-staged 'appendo-synth-0)
+(time-test
+  (run-staged 1 (q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if ,q ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '(((match xs
+       [`() _.0]
+       [_.1 '#f]
+       .
+       _.2)
+     $$
+     (=/= ((_.1 quote)))
+     (num _.0)
+     (sym _.1))))
+
+(record-bench 'run-unstaged 'appendo-synth-0)
+(time-test
+  (run 1 (q)
+    (evalo-unstaged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if ,q ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '(((match xs
+       [`() _.0]
+       [_.1 '#f]
+       .
+       _.2)
+     $$
+     (=/= ((_.1 quote)))
+     (num _.0)
+     (sym _.1))))
+
+
+
 (record-bench 'run-staged 'appendo-synth-1)
 (time-test
   (run-staged 1 (q)
@@ -30,7 +81,9 @@
        (c d e f))))
   '((car xs)))
 
-;; WEB: this seems very slow!
+;; WEB: this seems very slow!  I'm surprised.
+;;
+;; We really need to be sure the staged and unstaged interpreters are identical, as much as possible.
 (record-bench 'unstaged 'appendo-synth-1)
 (time-test
   (run 1 (q)
