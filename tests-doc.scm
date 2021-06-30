@@ -48,8 +48,8 @@
 (test
     (run-staged 5 (q)
       (evalo-staged
-       
-       q))
+       q
+       '(I love staged evaluation)))
   '('(I love staged evaluation)
     (((lambda _.0 '(I love staged evaluation))) $$ (=/= ((_.0 quote))) (sym _.0))
     ((car '((I love staged evaluation) . _.0)) $$ (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))
