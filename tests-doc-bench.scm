@@ -66,6 +66,100 @@
      (sym _.1))))
 
 
+;; WEB: Much slower to come up with the `equal?` equivalent of `(null? xs)`, if `match` is disallowed.
+(record-bench 'run-staged 'appendo-synth-0b)
+(time-test
+  (run-staged 1 (q)
+    (absento 'match q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if ,q ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '((equal? xs '())))
+
+
+;; WEB: Even slower to generate the `null?` version of the test, if `match` and `equal?` are disallowed.
+(record-bench 'run-staged 'appendo-synth-0c)
+(time-test
+  (run-staged 1 (q)
+    (absento 'match q)
+    (absento 'equal? q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if ,q ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '((null? xs)))
+
+;; WEB: if we don't exclude `match`, variants of `match` will be generated with a `run 3`, rather than `null?`
+(record-bench 'run-staged 'appendo-synth-0d)
+(time-test
+  (run-staged 3 (q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if ,q ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '(((match xs
+       (`() _.0)
+       (_.1 '#f)
+       .
+       _.2)
+     $$
+     (=/= ((_.1 quote))) (num _.0) (sym _.1))
+    ((match xs
+       (`() _.0)
+       (`,_.1 '#f)
+       .
+       _.2)
+     $$
+     (=/= ((_.1 quote))) (num _.0) (sym _.1))
+    ((match xs
+       (`() _.0)
+       (_.1 _.2)
+       (_.3 '#f)
+       .
+       _.4)
+     $$
+     (=/= ((_.3 quote))) (num _.0 _.1) (sym _.3))))
+
+
+(record-bench 'run-unstaged 'appendo-synth-0)
+(time-test
+  (run 1 (q)
+    (evalo-unstaged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if ,q ys
+                      (cons (car xs) (append (cdr xs) ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '???)
+
+
 
 (record-bench 'run-staged 'appendo-synth-1)
 (time-test
@@ -203,6 +297,40 @@
           ((_.2 f)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
+
+
+
+(record-bench 'run-staged 'appendo-synth-2b)
+(time-test
+  (run-staged 1 (q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (absento 'g q)
+    (absento 'h q)
+    (absento 'i q)
+    (absento 'j q)
+    (absento 'k q)
+    (absento 'l q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (match xs
+                    [`() ys]
+                    [`(,x . ,rest) (cons x ,q)]))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))
+              (append '(g h i) '(j k l))))
+     '(()
+       (a b)
+       (c d e f)
+       (g h i j k l))))
+  '???)
+
 
 
 ;;; WEB: didn't return after several minutes
