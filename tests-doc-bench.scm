@@ -184,6 +184,7 @@
 ;; WEB: this seems very slow!  I'm surprised.
 ;;
 ;; We really need to be sure the staged and unstaged interpreters are identical, as much as possible.
+#|
 (record-bench 'unstaged 'appendo-synth-1)
 (time-test
   (run 1 (q)
@@ -199,7 +200,7 @@
        (a b)
        (c d e f))))
   '((car xs)))
-
+|#
 
 ;; WEB Seems like the evaluator biases towards using `match` rather than using `cdr`.
 ;; `(cdr xs)` was the code that was removed.  The synthesized `match` also works, however.
@@ -253,6 +254,7 @@
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
 
 ;; WEB: hopelessly slow
+#|
 (record-bench 'unstaged 'appendo-synth-2)
 (time-test
   (run 1 (q)
@@ -301,7 +303,7 @@
           ((_.2 f)))
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
-
+|#
 
 
 (record-bench 'run-staged 'appendo-synth-2b)
