@@ -103,6 +103,139 @@
   '((car xs)))
 
 
+;; WEB Seems like the evaluator biases towards using `match` rather than using `cdr`.
+;; `(cdr xs)` was the code that was removed.  The synthesized `match` also works, however.
+(record-bench 'run-staged 'appendo-synth-2)
+(time-test
+  (run-staged 1 (q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons (car xs) (append ,q ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '(((match xs
+       (`(,_.0) '())
+       (`(,_.1 . ,_.2) _.2)
+       .
+       _.3)
+     $$
+     (=/= ((_.0 a))
+          ((_.0 b))
+          ((_.0 c))
+          ((_.0 d))
+          ((_.0 e))
+          ((_.0 f))
+          ((_.0 quote))
+          ((_.1 _.2))
+          ((_.1 a))
+          ((_.1 b))
+          ((_.1 c))
+          ((_.1 d))
+          ((_.1 e))
+          ((_.1 f))
+          ((_.2 a))
+          ((_.2 b))
+          ((_.2 c))
+          ((_.2 d))
+          ((_.2 e))
+          ((_.2 f)))
+     (sym _.0 _.1 _.2)
+     (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
+
+;; WEB: hopelessly slow
+(record-bench 'unstaged 'appendo-synth-2)
+(time-test
+  (run 1 (q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (evalo-unstaged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons (car xs) (append ,q ys))))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))))
+     '(()
+       (a b)
+       (c d e f))))
+  '(((match xs
+       (`(,_.0) '())
+       (`(,_.1 . ,_.2) _.2)
+       .
+       _.3)
+     $$
+     (=/= ((_.0 a))
+          ((_.0 b))
+          ((_.0 c))
+          ((_.0 d))
+          ((_.0 e))
+          ((_.0 f))
+          ((_.0 quote))
+          ((_.1 _.2))
+          ((_.1 a))
+          ((_.1 b))
+          ((_.1 c))
+          ((_.1 d))
+          ((_.1 e))
+          ((_.1 f))
+          ((_.2 a))
+          ((_.2 b))
+          ((_.2 c))
+          ((_.2 d))
+          ((_.2 e))
+          ((_.2 f)))
+     (sym _.0 _.1 _.2)
+     (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
+
+
+;;; WEB: didn't return after several minutes
+(record-bench 'run-staged 'appendo-synth-3)
+(time-test
+  (run-staged 1 (q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (absento 'g q)
+    (absento 'h q)
+    (absento 'i q)
+    (absento 'j q)
+    (absento 'k q)
+    (absento 'l q)
+    (evalo-staged
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs) ys
+                      (cons (car xs) ,q)))))
+        (list (append '() '())
+              (append '(a) '(b))
+              (append '(c d) '(e f))
+              (append '(g h i) '(j k l))))
+     '(()
+       (a b)
+       (c d e f)
+       (g h i j k l))))
+  '((append (cdr xs) ys)))
+
 
 
 (record-bench 'run-staged 'appendo-tail)
