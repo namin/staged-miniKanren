@@ -339,6 +339,17 @@
             (lift `(callo ,p-name ,(expand out) ,(expand a*)))
             (== val `(dynamic ,out)))))
 
+       ((fresh (rator rands a* p-name)
+          (== stage? #f)
+          (== `(,rator . ,rands) expr)
+          (symbolo rator)
+          (eval-expo #f rator env (unexpand p-name))
+          (non-varo p-name)
+          (eval-listo rands env a*)
+          (fresh (out)
+            (lift `(callo ,p-name ,(expand out) ,(expand a*)))
+            (== val `(call ,out)))))
+
        ))))
 
 (define (letrec-bindings-evalo bindings* out-bindings* env envt env^)

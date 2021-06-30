@@ -1,4 +1,4 @@
-- [ ] Understand why [this crufy case](https://github.com/namin/staged-miniKanren/commit/3bf251d748713f65334e635011948ce012bbd13f#diff-31c94764bb6feaa595931c5cfd6a0bbc3cbcd54382fe692366fe4b7f99451f02) is needed for staging microKanren.
+- [x] Understand why [this crufy case](https://github.com/namin/staged-miniKanren/commit/3bf251d748713f65334e635011948ce012bbd13f#diff-31c94764bb6feaa595931c5cfd6a0bbc3cbcd54382fe692366fe4b7f99451f02) is needed for staging microKanren.
 
 - [ ] Make the staged and unstaged interpreter cover exactly the same language.
    + [ ] same primitives
