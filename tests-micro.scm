@@ -106,21 +106,16 @@
 
      ))
 
-(define (gen-micro x)
-  (let ((r
-         (run 1 (q)
-           (eval-expo
-            #t
-            (micro x)
-            initial-env
-            q))))
-    (let ((r (car r)))
-      (fix-scope
-       `(lambda (out)
-          (fresh ()
-            (== ,(car r) out)
-            . ,(caddr r)))))))
+(test
+    (run-staged 1 (q v)
+      (evalo-staged
+       (micro '((=== 5 5) (empty-state)))
+       v))
+  '((_.0 ((() . z)))))
 
-(define g1 (gen-micro 1))
-(define t1 (eval g1))
-(time-test (run 2 (q) (t1 q)) '(1))
+#|
+(run-staged 1 (q v)
+  (evalo-staged
+   (micro '((call/fresh (lambda (q) (=== q 5))) empty-state))
+   v)) 
+|#
