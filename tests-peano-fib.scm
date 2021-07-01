@@ -74,37 +74,99 @@
               ,query
               ))))))))))))))
 
-(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
+(time
+ (eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))))
 
-(test
+(time
+ (test
     (run-staged #f (v)
       (evalo-staged
        (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
        v))
-  '((s s s s s s s s . z)))
+  '((s s s s s s s s . z))))
 
-(test
-    (run* (v)
-      (evalo-unstaged
-       (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
-       v))
-  '((s s s s s s s s . z)))
+(time
+ (test
+     (run* (v)
+       (evalo-unstaged
+        (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
+        v))
+   '((s s s s s s s s . z))))
 
-(test
-    (run-staged 1 (q)
-      (evalo-staged
-       (peano-fib `(fib-aps ',q 'z '(s . z)))
-       '(s s s s s s s s . z)))
-  '((s s s s s s . z)))
 
-(test
-    (run 1 (q)
-      (evalo-unstaged
-       (peano-fib `(fib-aps ',q 'z '(s . z)))
-       '(s s s s s s s s . z)))
-  '((s s s s s s . z)))
 
-#eof
+(time
+ (test
+     (run-staged 1 (q)
+       (evalo-staged
+        (peano-fib `(fib-aps ',q 'z '(s . z)))
+        '(s s s s s s s s . z)))
+   '((s s s s s s . z))))
+
+(time
+ (test
+     (run 1 (q)
+       (evalo-unstaged
+        (peano-fib `(fib-aps ',q 'z '(s . z)))
+        '(s s s s s s s s . z)))
+   '((s s s s s s . z))))
+
+
+
+(time
+ (test
+     (run-staged 1 (q)
+       (evalo-staged
+        (peano-fib `(fib-aps ',q 'z '(s . z)))
+        '(s s s s s s s s s s s s s . z)))
+   '((s s s s s s s . z))))
+
+(time
+ (test
+     (run 1 (q)
+       (evalo-unstaged
+        (peano-fib `(fib-aps ',q 'z '(s . z)))
+        '(s s s s s s s s s s s s s . z)))
+   '((s s s s s s s . z))))
+
+
+
+(time
+ (test
+     (run-staged 5 (q)
+       (evalo-staged
+        (peano-fib `(fib-aps ,q 'z '(s . z)))
+        '(s s s s s s s s s s s s s . z)))
+   '('(s s s s s s s . z)
+     ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
+      $$
+      (=/= ((_.0 quote)))
+      (sym _.1))
+     ((match _.0 [_.0 '(s s s s s s s . z)] . _.1) $$ (num _.0))
+     (and '(s s s s s s s . z))
+     ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
+      $$
+      (=/= ((_.0 quote)))))))
+
+(time
+ (test
+     (run 5 (q)
+       (evalo-unstaged
+        (peano-fib `(fib-aps ,q 'z '(s . z)))
+        '(s s s s s s s s s s s s s . z)))
+   '('(s s s s s s s . z)
+     ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
+      $$
+      (=/= ((_.0 quote)))
+      (sym _.1))
+     ((match _.0 [_.0 '(s s s s s s s . z)] . _.1) $$ (num _.0))
+     (and '(s s s s s s s . z))
+     ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
+      $$
+      (=/= ((_.0 quote)))))))
+
+
+#!eof
 
 (define (peano-fib query)
   `(letrec ((zero?
