@@ -131,7 +131,7 @@
 
 #|
 This generates answers that are not valid microKanren programs.
-(run-staged 1 (q)
+(run-staged 3 (q)
   (evalo-staged
    (micro `(,q (empty-state)))
    '((() . z))))
