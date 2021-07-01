@@ -129,10 +129,27 @@
 
 (micro-unstaged 'unit)
 
+;; This generates answers that are not valid microKanren programs.
+(test
+    (run-staged 3 (q)
+      (evalo-staged
+       (micro `(,q (empty-state)))
+       '((() . z))))
+  '(unit list ((lambda _.0 _.0) $$ (sym _.0)))
+)
+
 #|
-This generates answers that are not valid microKanren programs.
-(run-staged 3 (q)
-  (evalo-staged
-   (micro `(,q (empty-state)))
-   '((() . z))))
+(define (micro-interp query)
+  (micro
+   `(letrec
+        ((eval (lambda (ge)
+                 (match ge
+                   [`(=== ,t1 ,t2) (=== t1 t2)]
+                   [`(conj ,ge1 ,ge2) (conj (eval ge1) (eval ge2))]
+                   [`(disj ,ge1 ,ge2) (disj (eval ge1) (eval ge2))]
+                   [`(call/fresh (lambda (q) ))]))))
+      (eval ,query))))
+
+(define-staged-relation (microo query)
+  (micro-interp query))
 |#
