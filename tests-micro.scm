@@ -110,23 +110,28 @@
      ))
 
 (test
-    (run-staged 1 (q v)
+    (run-staged 1 (v)
       (evalo-staged
        (micro '((=== 5 5) (empty-state)))
        v))
-  '((_.0 ((() . z)))))
+  '(((() . z))))
 
 
 (test
-    (run-staged 1 (q v)
+    (run-staged 1 (v)
       (evalo-staged
        (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
        v))
-  '((_.0 (((((var . z) . 5)) s . z)))))
+  '((((((var . z) . 5)) s . z))))
+
+(define (micro-unstaged query)
+  (eval (micro `(,query (empty-state)))))
+
+(micro-unstaged 'unit)
 
 #|
 This generates answers that are not valid microKanren programs.
-(run-staged 3 (q v)
+(run-staged 1 (q)
   (evalo-staged
    (micro `(,q (empty-state)))
    '((() . z))))
