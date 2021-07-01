@@ -84,8 +84,22 @@
   '((s s s s s s s s . z)))
 
 (test
+    (run* (v)
+      (evalo-unstaged
+       (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
+       v))
+  '((s s s s s s s s . z)))
+
+(test
     (run-staged 1 (q)
       (evalo-staged
+       (peano-fib `(fib-aps ',q 'z '(s . z)))
+       '(s s s s s s s s . z)))
+  '((s s s s s s . z)))
+
+(test
+    (run 1 (q)
+      (evalo-unstaged
        (peano-fib `(fib-aps ',q 'z '(s . z)))
        '(s s s s s s s s . z)))
   '((s s s s s s . z)))
