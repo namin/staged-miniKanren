@@ -41,7 +41,7 @@
      (num _.0)
      (sym _.1))))
 
-(record-bench 'run-unstaged 'appendo-synth-0)
+(record-bench 'unstaged 'appendo-synth-0)
 (time-test
   (run 1 (q)
     (evalo-unstaged
@@ -143,7 +143,7 @@
      (=/= ((_.3 quote))) (num _.0 _.1) (sym _.3))))
 
 
-(record-bench 'run-unstaged 'appendo-synth-0)
+(record-bench 'unstaged 'appendo-synth-0d)
 (time-test
   (run 1 (q)
     (evalo-unstaged

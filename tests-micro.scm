@@ -117,5 +117,5 @@
 (run-staged 1 (q v)
   (evalo-staged
    (micro '((call/fresh (lambda (q) (=== q 5))) empty-state))
-   v)) 
+   v))
 |#
