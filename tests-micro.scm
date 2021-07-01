@@ -123,3 +123,11 @@
        (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
        v))
   '((_.0 (((((var . z) . 5)) s . z)))))
+
+#|
+This generates answers that are not valid microKanren programs.
+(run-staged 3 (q v)
+  (evalo-staged
+   (micro `(,q (empty-state)))
+   '((() . z))))
+|#
