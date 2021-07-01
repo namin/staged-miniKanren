@@ -116,9 +116,10 @@
        v))
   '((_.0 ((() . z)))))
 
-#|
-(run-staged 1 (q v)
-  (evalo-staged
-   (micro '((call/fresh (lambda (q) (=== q 5))) empty-state))
-   v))
-|#
+
+(test
+    (run-staged 1 (q v)
+      (evalo-staged
+       (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
+       v))
+  '((_.0 (((((var . z) . 5)) s . z)))))
