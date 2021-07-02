@@ -11,6 +11,9 @@ cd faster-miniKanren
 git checkout staged
 rm -rf .git
 cd ..
+
+cp ../benchread.py staged-miniKanren/
+
 cp ../staged-run.scm staged-miniKanren/
 cp ../staged-utils.scm staged-miniKanren/
 cp ../staged-interp.scm staged-miniKanren/
