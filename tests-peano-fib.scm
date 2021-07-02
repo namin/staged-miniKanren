@@ -41,43 +41,43 @@
                            #f
                            (= (sub1 n) (sub1 m))))))))
      (letrec ((+
-             (lambda (n m)
-               (if (zero? n)
-                   m
-                   (add1 (+ (sub1 n) m))))))
+               (lambda (n m)
+                 (if (zero? n)
+                     m
+                     (add1 (+ (sub1 n) m))))))
       (letrec ((-
-             (lambda (n m)
-               (if (zero? m)
-                   n
-                   (sub1 (- n (sub1 m)))))))
+                (lambda (n m)
+                  (if (zero? m)
+                      n
+                      (sub1 (- n (sub1 m)))))))
        (letrec ((*
-             (lambda (n m)
-               (if (zero? n)
-                   (zero)
-                   (+ (* (sub1 n) m) m)))))
+                 (lambda (n m)
+                   (if (zero? n)
+                       (zero)
+                       (+ (* (sub1 n) m) m)))))
          (letrec ((one
-             (lambda ()
-               (add1 (zero)))))
+                   (lambda ()
+                     (add1 (zero)))))
          (letrec ((two
-             (lambda ()
-               (add1 (add1 (zero))))))
+                   (lambda ()
+                     (add1 (add1 (zero))))))
           (letrec ((!
-             (lambda (n)
-               (if (zero? n)
-                   (one)
-                   (* n (! (sub1 n)))))))
+                    (lambda (n)
+                      (if (zero? n)
+                          (one)
+                          (* n (! (sub1 n)))))))
           (letrec ((!-aps
-             (lambda (n a)
-               (if (zero? n)
-                   a
-                   (!-aps (sub1 n) (* n a))))))
+                    (lambda (n a)
+                      (if (zero? n)
+                          a
+                          (!-aps (sub1 n) (* n a))))))
             (letrec ((fib-aps
-             (lambda (n a1 a2)
-               (if (zero? n)
-                   a1
-                   (if (zero? (sub1 n))
-                       a2
-                       (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
+                      (lambda (n a1 a2)
+                        (if (zero? n)
+                            a1
+                            (if (zero? (sub1 n))
+                                a2
+                                (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
               ,query
               ))))))))))))))
 
