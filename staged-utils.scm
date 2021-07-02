@@ -136,7 +136,7 @@
         (set! res
               (fix-scope
                `(lambda (,@inputs out)
-                  (fresh () ,@cs (== ,(car r) out) . ,(caddr r)))))
+                  (fresh () ,@cs (== ,(reified-expand (car r)) out) . ,(caddr r)))))
         res)))
 
 (define (gen-func-rel r . inputs)
