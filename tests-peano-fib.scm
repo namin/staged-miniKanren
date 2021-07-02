@@ -18,6 +18,9 @@
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 
+;; Attempt to synthesize part of the definition of fib-aps.
+;; Can try to synthesize the initial accumulator arguments as well.
+
 (define (peano-synth-fib fib-aps-skeleton ACC1 ACC2)
   `(letrec ((zero?
              (lambda (n)
