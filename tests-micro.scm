@@ -217,12 +217,6 @@
   '((=== '5 '5)))
 |#
 
-;;;  I don't understand this error:
-;
-; running first stage
-; running second stage
-; Exception: variable === is not bound
-#|
 (test
     (run-staged 1 (ge)
       (== '(=== '5 '5) ge)
@@ -233,8 +227,6 @@
        (valid-ge? ge)
        #t))
   '((=== '5 '5)))
-|#
-
 
 
 (test
