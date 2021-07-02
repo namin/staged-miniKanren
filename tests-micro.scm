@@ -138,6 +138,216 @@
   '(unit list ((lambda _.0 _.0) $$ (sym _.0)))
 )
 
+
+(define (valid-ge? ge)
+  `(letrec
+       ((valid-te? (lambda (te)
+                     (match te
+                       ;; All literals must be quoted
+                       [`(quote ,datum) #t]
+                       [`(cons ,te1 ,te2)
+                        (and (valid-te? te1) (valid-te? te2))]
+                       [`,else #f]))))
+     (letrec ((valid-ge? (lambda (ge)
+                           (match ge
+                             [`(=== ,t1 ,t2) (and (valid-te? t1) (valid-te? t2))]
+                             [`(conj ,ge1 ,ge2) (and (valid-ge? ge1) (valid-ge? ge2))]
+                             [`(disj ,ge1 ,ge2) (and (valid-ge? ge1) (valid-ge? ge2))]
+                             [`(call/fresh (lambda (,x) ,ge)) (valid-ge? ge)]
+                             [`,else #f]))))
+       (valid-ge? ',ge))))
+
+
+
+(test
+    (run-staged #f (v)
+      (evalo-staged
+       (valid-ge? `(=== '5 '5))
+       #t)
+      (evalo-staged
+       (micro `((=== '5 '5) (empty-state)))
+       v))
+  '(((() . z))))
+
+(test
+    (run-staged #f (ge v)
+      (== `(=== '5 '5) ge)
+      (evalo-staged
+       (valid-ge? ge)
+       #t)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       v))
+  '(((=== '5 '5) ((() . z)))))
+
+(test
+    (run-staged #f (ge v)
+      (== `(=== '5 '5) ge)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       v)
+      (evalo-staged
+       (valid-ge? ge)
+       #t))
+  '(((=== '5 '5) ((() . z)))))
+
+
+;;; WEB: doesn't come back after a minute
+#|
+(test
+    (run-staged 1 (ge)
+      (evalo-staged
+       (valid-ge? ge)
+       #t)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       '((() . z))))
+  '((=== '5 '5)))
+|#
+
+;;; WEB: doesn't come back after a minute
+#|
+(test
+    (run-staged 1 (ge)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       '((() . z)))
+      (evalo-staged
+       (valid-ge? ge)
+       #t))
+  '((=== '5 '5)))
+|#
+
+;;; WEB: I don't understand this error:
+;
+; running first stage
+; running second stage
+; Exception: variable === is not bound
+#|
+(test
+    (run-staged 1 (ge)
+      (== '(=== '5 '5) ge)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       '((() . z)))
+      (evalo-staged
+       (valid-ge? ge)
+       #t))
+  '((=== '5 '5)))
+|#
+
+
+
+(test
+    (run-staged #f (v)
+      (evalo-staged
+       (valid-ge? `(=== '5 '5))
+       v))
+  '(#t))
+
+(test
+    (run* (v)
+      (evalo-unstaged
+       (valid-ge? `(=== '5 '5))
+       v))
+  '(#t))
+
+
+(test
+    (run-staged #f (v)
+      (evalo-staged
+       (valid-ge? `(=== 5 '5))
+       v))
+  '(#f))
+
+(test
+    (run* (v)
+      (evalo-unstaged
+       (valid-ge? `(=== 5 '5))
+       v))
+  '(#f))
+
+
+(test
+    (run-staged 10 (q)
+      (evalo-staged
+       (valid-ge? q)
+       #t))
+  '((=== '_.0 '_.1)
+    (=== '_.0 (cons '_.1 '_.2))
+    (=== (cons '_.0 '_.1) '_.2)
+    (call/fresh (lambda (_.0) (=== '_.1 '_.2)))
+    (conj (=== '_.0 '_.1) (=== '_.2 '_.3))
+    (=== (cons '_.0 '_.1) (cons '_.2 '_.3))
+    (=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
+    (=== '_.0 (cons (cons '_.1 '_.2) '_.3))
+    (disj (=== '_.0 '_.1) (=== '_.2 '_.3))
+    (=== (cons '_.0 (cons '_.1 '_.2)) '_.3)))
+
+;;; WEB: why does the unstaged version have reified constraints, but not the staged version?
+(test
+    (run 10 (q)
+      (evalo-unstaged
+       (valid-ge? q)
+       #t))
+  '(((=== '_.0 '_.1)
+     $$
+     (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
+              (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
+    ((=== '_.0 (cons '_.1 '_.2))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+    ((=== (cons '_.0 '_.1) '_.2)
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+    ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((call/fresh (lambda (_.0) (=== '_.1 '_.2)))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+    ((=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((disj (=== '_.0 '_.1) (=== '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))))
+
+
+
 #|
 (define (micro-interp query)
   (micro
