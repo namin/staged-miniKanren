@@ -53,9 +53,8 @@
 
 
 
-#|
-;;; WEB: Weird!  Get back (#<procedure>); Assume it is the closure issue.
-;;; Everything is ground---why doesn't this work?
+
+
 (record-bench 'run-staged 'peano-synth-fib-direct-1)
 (time-test
   (run-staged #f (fib-direct)
@@ -74,13 +73,12 @@
        (s s . z)
        (s s s . z)                   
        (s s s s s . z))))
-  '(((lambda (n)
+  '((lambda (n)
        (if (zero? n)
            'z
            (if (zero? (sub1 n))
                '(s . z)
-               (+ (fib (sub1 n)) (fib (sub1 (sub1 n))))))))))
-|#
+               (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))))
 
 (record-bench 'run-unstaged 'peano-synth-fib-direct-1)
 (time-test
@@ -100,12 +98,12 @@
        (s s . z)
        (s s s . z)                   
        (s s s s s . z))))
-  '(((lambda (n)
+  '((lambda (n)
        (if (zero? n)
            'z
            (if (zero? (sub1 n))
                '(s . z)
-               (+ (fib (sub1 n)) (fib (sub1 (sub1 n))))))))))
+               (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))))
 
 
 ;; Attempt to synthesize part of the definition of fib-aps.
@@ -234,9 +232,7 @@
      (s . z))))
 |#
 
-#|
-;;; WEB: Weird!  Get back (#<procedure>); Assume it is the closure issue.
-;;; Everything is ground---why doesn't this work?
+
 (record-bench 'run-staged 'peano-synth-fib-aps-3)
 (time-test
   (run-staged #f (fib-acc)
@@ -261,7 +257,7 @@
           (if (zero? (sub1 n))
               a2
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
-|#
+
 
 (record-bench 'run-unstaged 'peano-synth-fib-aps-3)
 (time-test
