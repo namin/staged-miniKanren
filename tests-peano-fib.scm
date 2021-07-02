@@ -9,12 +9,6 @@
 
 (load "test-check.scm")
 
-(define (record-bench phase name . args)
-  (if (null? args)
-      (printf "BENCH ~a ~a\n" phase name)
-      (printf "BENCH ~a ~a ~a\n" phase name (car args))))
-
-
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 

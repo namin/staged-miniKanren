@@ -1,3 +1,8 @@
+(define (record-bench phase name . args)
+  (if (null? args)
+      (printf "BENCH ~a ~a\n" phase name)
+      (printf "BENCH ~a ~a ~a\n" phase name (car args))))
+
 (define test-failed #f)
 
 (define-syntax test
