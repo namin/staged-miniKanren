@@ -1,4 +1,3 @@
-;; using namin/faster-miniKaren branch staged -- essential for this example
 (load "../faster-miniKanren/mk-vicare.scm")
 (load "../faster-miniKanren/mk.scm")
 
@@ -192,7 +191,7 @@
   '(((=== '5 '5) ((() . z)))))
 
 
-;;; WEB: doesn't come back after a minute
+;;;  doesn't come back after a minute
 #|
 (test
     (run-staged 1 (ge)
@@ -205,7 +204,7 @@
   '((=== '5 '5)))
 |#
 
-;;; WEB: doesn't come back after a minute
+;;;  doesn't come back after a minute
 #|
 (test
     (run-staged 1 (ge)
@@ -218,7 +217,7 @@
   '((=== '5 '5)))
 |#
 
-;;; WEB: I don't understand this error:
+;;;  I don't understand this error:
 ;
 ; running first stage
 ; running second stage
@@ -284,7 +283,7 @@
     (disj (=== '_.0 '_.1) (=== '_.2 '_.3))
     (=== (cons '_.0 (cons '_.1 '_.2)) '_.3)))
 
-;;; WEB: why does the unstaged version have reified constraints, but not the staged version?
+;;;  why does the unstaged version have reified constraints, but not the staged version?
 (test
     (run 10 (q)
       (evalo-unstaged

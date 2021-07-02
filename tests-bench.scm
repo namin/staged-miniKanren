@@ -9,11 +9,6 @@
 
 (load "test-check.scm")
 
-(define (record-bench phase name . args)
-  (if (null? args)
-      (printf "BENCH ~a ~a\n" phase name)
-      (printf "BENCH ~a ~a ~a\n" phase name (car args))))
-
 (record-bench 'run-staged 'map-hole)
 (time-test
  (run-staged 1 (q)

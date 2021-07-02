@@ -9,12 +9,6 @@
 
 (load "test-check.scm")
 
-(define (record-bench phase name . args)
-  (if (null? args)
-      (printf "BENCH ~a ~a\n" phase name)
-      (printf "BENCH ~a ~a ~a\n" phase name (car args))))
-
-
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 
@@ -170,7 +164,7 @@
      (s . z))))
 
 #|
-;;; WEB Seems super slow---didn't return after a minute or so
+;;;  Seems super slow---didn't return after a minute or so
 (record-bench 'run-unstaged 'peano-synth-fib-aps-1)
 (time-test
   (run #f (fib-acc ACC1 ACC2)
@@ -200,7 +194,7 @@
 |#
 
 
-;; WEB seems very slow, even with the symbolo hint
+;;  seems very slow, even with the symbolo hint
 #|
 (record-bench 'run-staged 'peano-synth-fib-aps-2)
 (time-test
