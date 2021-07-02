@@ -15,6 +15,8 @@
       (printf "BENCH ~a ~a ~a\n" phase name (car args))))
 
 
+;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
+;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 
 (define (peano-fib query)
   `(letrec ((zero?
