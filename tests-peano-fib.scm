@@ -18,10 +18,100 @@
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 
+(define (peano-synth-fib-direct fib-skeleton)
+  `(letrec ((zero?
+             (lambda (n)
+               (equal? 'z n))))
+
+   (letrec ((add1
+             (lambda (n)
+               (cons 's n))))
+   (letrec ((sub1
+             (lambda (n)
+               (and (equal? (car n) 's)
+                    (cdr n)))))
+   (letrec ((+
+             (lambda (n m)
+               (if (zero? n)
+                   m
+                   (add1 (+ (sub1 n) m))))))
+   (letrec ((-
+             (lambda (n m)
+               (if (zero? m)
+                   n
+                   (sub1 (- n (sub1 m)))))))
+
+   (letrec ((fib ,fib-skeleton))
+     (list
+       (fib 'z)
+       (fib '(s . z))
+       (fib '(s s . z))
+       (fib '(s s s . z))
+       (fib '(s s s s . z))
+       (fib '(s s s s s . z)))
+     )))))))
+
+
+
+#|
+;;; WEB: Weird!  Get back (#<procedure>); Assume it is the closure issue.
+;;; Everything is ground---why doesn't this work?
+(record-bench 'run-staged 'peano-synth-fib-direct-1)
+(time-test
+  (run-staged #f (fib-direct)
+    (== `(lambda (n)
+           (if (zero? n)
+               'z
+               (if (zero? (sub1 n))
+                   '(s . z)
+                   (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
+        fib-direct)
+    (evalo-staged
+     (peano-synth-fib-direct fib-direct)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '(((lambda (n)
+       (if (zero? n)
+           'z
+           (if (zero? (sub1 n))
+               '(s . z)
+               (+ (fib (sub1 n)) (fib (sub1 (sub1 n))))))))))
+|#
+
+(record-bench 'run-unstaged 'peano-synth-fib-direct-1)
+(time-test
+  (run #f (fib-direct)
+    (== `(lambda (n)
+           (if (zero? n)
+               'z
+               (if (zero? (sub1 n))
+                   '(s . z)
+                   (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
+        fib-direct)
+    (evalo-unstaged
+     (peano-synth-fib-direct fib-direct)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '(((lambda (n)
+       (if (zero? n)
+           'z
+           (if (zero? (sub1 n))
+               '(s . z)
+               (+ (fib (sub1 n)) (fib (sub1 (sub1 n))))))))))
+
+
 ;; Attempt to synthesize part of the definition of fib-aps.
 ;; Can try to synthesize the initial accumulator arguments as well.
 
-(define (peano-synth-fib fib-aps-skeleton ACC1 ACC2)
+(define (peano-synth-fib-aps fib-aps-skeleton ACC1 ACC2)
   `(letrec ((zero?
              (lambda (n)
                (equal? 'z n))))
@@ -54,7 +144,7 @@
        (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
      )))))))
 
-(record-bench 'run-staged 'peano-synth-fib-1)
+(record-bench 'run-staged 'peano-synth-fib-aps-1)
 (time-test
   (run-staged #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -65,7 +155,7 @@
                    (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
         fib-acc)
     (evalo-staged
-     (peano-synth-fib fib-acc ACC1 ACC2)
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
      '(z
        (s . z)
        (s . z)
@@ -83,7 +173,7 @@
 
 #|
 ;;; WEB Seems super slow---didn't return after a minute or so
-(record-bench 'run-unstaged 'peano-synth-fib-1)
+(record-bench 'run-unstaged 'peano-synth-fib-aps-1)
 (time-test
   (run #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -94,7 +184,7 @@
                    (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
         fib-acc)
     (evalo-unstaged
-     (peano-synth-fib fib-acc ACC1 ACC2)
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
      '(z
        (s . z)
        (s . z)
@@ -114,7 +204,7 @@
 
 ;; WEB seems very slow, even with the symbolo hint
 #|
-(record-bench 'run-staged 'peano-synth-fib-2)
+(record-bench 'run-staged 'peano-synth-fib-aps-2)
 (time-test
   (run-staged #f (fib-acc ACC1 ACC2)
     (fresh (A B)
@@ -127,7 +217,7 @@
                      (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
           fib-acc))
     (evalo-staged
-     (peano-synth-fib fib-acc ACC1 ACC2)
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
      '(z
        (s . z)
        (s . z)
@@ -147,7 +237,7 @@
 #|
 ;;; WEB: Weird!  Get back (#<procedure>); Assume it is the closure issue.
 ;;; Everything is ground---why doesn't this work?
-(record-bench 'run-staged 'peano-synth-fib-3)
+(record-bench 'run-staged 'peano-synth-fib-aps-3)
 (time-test
   (run-staged #f (fib-acc)
     (== `(lambda (n a1 a2)
@@ -158,7 +248,7 @@
                    (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
         fib-acc)
     (evalo-staged
-     (peano-synth-fib fib-acc 'z '(s . z))
+     (peano-synth-fib-aps fib-acc 'z '(s . z))
      '(z
        (s . z)
        (s . z)
@@ -173,7 +263,7 @@
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
 |#
 
-(record-bench 'run-unstaged 'peano-synth-fib-3)
+(record-bench 'run-unstaged 'peano-synth-fib-aps-3)
 (time-test
   (run #f (fib-acc)
     (== `(lambda (n a1 a2)
@@ -184,7 +274,7 @@
                    (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
         fib-acc)
     (evalo-unstaged
-     (peano-synth-fib fib-acc 'z '(s . z))
+     (peano-synth-fib-aps fib-acc 'z '(s . z))
      '(z
        (s . z)
        (s . z)
