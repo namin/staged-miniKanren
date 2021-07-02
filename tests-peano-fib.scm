@@ -18,6 +18,189 @@
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 
+(define (peano-synth-fib fib-aps-skeleton ACC1 ACC2)
+  `(letrec ((zero?
+             (lambda (n)
+               (equal? 'z n))))
+
+   (letrec ((add1
+             (lambda (n)
+               (cons 's n))))
+   (letrec ((sub1
+             (lambda (n)
+               (and (equal? (car n) 's)
+                    (cdr n)))))
+   (letrec ((+
+             (lambda (n m)
+               (if (zero? n)
+                   m
+                   (add1 (+ (sub1 n) m))))))
+   (letrec ((-
+             (lambda (n m)
+               (if (zero? m)
+                   n
+                   (sub1 (- n (sub1 m)))))))
+
+   (letrec ((fib-aps ,fib-aps-skeleton))
+     (list
+       (fib-aps 'z ',ACC1 ',ACC2)
+       (fib-aps '(s . z) ',ACC1 ',ACC2)
+       (fib-aps '(s s . z) ',ACC1 ',ACC2)
+       (fib-aps '(s s s . z) ',ACC1 ',ACC2)
+       (fib-aps '(s s s s . z) ',ACC1 ',ACC2)
+       (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
+     )))))))
+
+(record-bench 'run-staged 'peano-synth-fib-1)
+(time-test
+  (run-staged #f (fib-acc ACC1 ACC2)
+    (== `(lambda (n a1 a2)
+           (if (zero? n)
+               a1
+               (if (zero? (sub1 n))
+                   a2
+                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+        fib-acc)
+    (evalo-staged
+     (peano-synth-fib fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
+
+#|
+;;; WEB Seems super slow---didn't return after a minute or so
+(record-bench 'run-unstaged 'peano-synth-fib-1)
+(time-test
+  (run #f (fib-acc ACC1 ACC2)
+    (== `(lambda (n a1 a2)
+           (if (zero? n)
+               a1
+               (if (zero? (sub1 n))
+                   a2
+                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+        fib-acc)
+    (evalo-unstaged
+     (peano-synth-fib fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
+|#
+
+
+;; WEB seems very slow, even with the symbolo hint
+#|
+(record-bench 'run-staged 'peano-synth-fib-2)
+(time-test
+  (run-staged #f (fib-acc ACC1 ACC2)
+    (fresh (A B)
+      (symbolo B)
+      (== `(lambda (n a1 a2)
+             (if (zero? n)
+                 a1
+                 (if (zero? (sub1 n))
+                     ,B
+                     (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+          fib-acc))
+    (evalo-staged
+     (peano-synth-fib fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
+|#
+
+#|
+;;; WEB: Weird!  Get back (#<procedure>); Assume it is the closure issue.
+;;; Everything is ground---why doesn't this work?
+(record-bench 'run-staged 'peano-synth-fib-3)
+(time-test
+  (run-staged #f (fib-acc)
+    (== `(lambda (n a1 a2)
+           (if (zero? n)
+               a1
+               (if (zero? (sub1 n))
+                   a2
+                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+        fib-acc)
+    (evalo-staged
+     (peano-synth-fib fib-acc 'z '(s . z))
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '((lambda (n a1 a2)
+      (if (zero? n)
+          a1
+          (if (zero? (sub1 n))
+              a2
+              (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
+|#
+
+(record-bench 'run-unstaged 'peano-synth-fib-3)
+(time-test
+  (run #f (fib-acc)
+    (== `(lambda (n a1 a2)
+           (if (zero? n)
+               a1
+               (if (zero? (sub1 n))
+                   a2
+                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+        fib-acc)
+    (evalo-unstaged
+     (peano-synth-fib fib-acc 'z '(s . z))
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '((lambda (n a1 a2)
+      (if (zero? n)
+          a1
+          (if (zero? (sub1 n))
+              a2
+              (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
+
+
+
+#!eof
+
+
+
 (define (peano-fib query)
   `(letrec ((zero?
              (lambda (n)
@@ -139,70 +322,5 @@
      (=/= ((_.0 quote))))))
 
 
-#!eof
 
-(define (peano-fib query)
-  `(letrec ((zero?
-             (lambda (n)
-               (equal? 'z n)))
-            (add1
-             (lambda (n)
-               (cons 's n)))
-            (sub1
-             (lambda (n)
-               (and (equal? (car n) 's)
-                    (cdr n))))
-            (=
-             (lambda (n m)
-               (if (and (zero? n) (zero? m))
-                   #t
-                   (if (zero? n)
-                       #f
-                       (if (zero? m)
-                           #f
-                           (= (sub1 n) (sub1 m)))))))
-            (+
-             (lambda (n m)
-               (if (zero? n)
-                   m
-                   (add1 (+ (sub1 n) m)))))
-            (-
-             (lambda (n m)
-               (if (zero? m)
-                   n
-                   (sub1 (- n (sub1 m))))))
-            (*
-             (lambda (n m)
-               (if (zero? n)
-                   (zero)
-                   (+ (* (sub1 n) m) m))))
-            (zero
-             (lambda ()
-               'z))
-            (one
-             (lambda ()
-               (add1 (zero))))
-            (two
-             (lambda ()
-               (add1 (add1 (zero)))))
-            (!
-             (lambda (n)
-               (if (zero? n)
-                   (one)
-                   (* n (! (sub1 n))))))
-            (!-aps
-             (lambda (n a)
-               (if (zero? n)
-                   a
-                   (!-aps (sub1 n) (* n a)))))
-            (fib-aps
-             (lambda (n a1 a2)
-               (if (zero? n)
-                   a1
-                   (if (zero? (sub1 n))
-                       a2
-                       (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
-     
-     ,query
 
-     ))
