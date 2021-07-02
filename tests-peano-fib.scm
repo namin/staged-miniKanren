@@ -9,6 +9,13 @@
 
 (load "test-check.scm")
 
+(define (record-bench phase name . args)
+  (if (null? args)
+      (printf "BENCH ~a ~a\n" phase name)
+      (printf "BENCH ~a ~a ~a\n" phase name (car args))))
+
+
+
 (define (peano-fib query)
   `(letrec ((zero?
              (lambda (n)
@@ -74,96 +81,92 @@
               ,query
               ))))))))))))))
 
-(time
- (eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))))
+(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
 
-(time
- (test
-    (run-staged #f (v)
-      (evalo-staged
-       (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
-       v))
-  '((s s s s s s s s . z))))
+(record-bench 'run-staged 'peano-fib-1)
+(time-test
+  (run-staged #f (v)
+    (evalo-staged
+     (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
+     v))
+  '((s s s s s s s s . z)))
 
-(time
- (test
-     (run* (v)
-       (evalo-unstaged
-        (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
-        v))
-   '((s s s s s s s s . z))))
-
+(record-bench 'unstaged 'peano-fib-1)
+(time-test
+  (run* (v)
+    (evalo-unstaged
+     (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
+     v))
+  '((s s s s s s s s . z)))
 
 
-(time
- (test
-     (run-staged 1 (q)
-       (evalo-staged
-        (peano-fib `(fib-aps ',q 'z '(s . z)))
-        '(s s s s s s s s . z)))
-   '((s s s s s s . z))))
+(record-bench 'run-staged 'peano-fib-2)
+(time-test
+  (run-staged 1 (q)
+    (evalo-staged
+     (peano-fib `(fib-aps ',q 'z '(s . z)))
+     '(s s s s s s s s . z)))
+  '((s s s s s s . z)))
 
-(time
- (test
-     (run 1 (q)
-       (evalo-unstaged
-        (peano-fib `(fib-aps ',q 'z '(s . z)))
-        '(s s s s s s s s . z)))
-   '((s s s s s s . z))))
-
-
-
-(time
- (test
-     (run-staged 1 (q)
-       (evalo-staged
-        (peano-fib `(fib-aps ',q 'z '(s . z)))
-        '(s s s s s s s s s s s s s . z)))
-   '((s s s s s s s . z))))
-
-(time
- (test
-     (run 1 (q)
-       (evalo-unstaged
-        (peano-fib `(fib-aps ',q 'z '(s . z)))
-        '(s s s s s s s s s s s s s . z)))
-   '((s s s s s s s . z))))
+(record-bench 'unstaged 'peano-fib-2)
+(time-test
+  (run 1 (q)
+    (evalo-unstaged
+     (peano-fib `(fib-aps ',q 'z '(s . z)))
+     '(s s s s s s s s . z)))
+  '((s s s s s s . z)))
 
 
+(record-bench 'run-staged 'peano-fib-3)
+(time-test
+  (run-staged 1 (q)
+    (evalo-staged
+     (peano-fib `(fib-aps ',q 'z '(s . z)))
+     '(s s s s s s s s s s s s s . z)))
+  '((s s s s s s s . z)))
 
-(time
- (test
-     (run-staged 5 (q)
-       (evalo-staged
-        (peano-fib `(fib-aps ,q 'z '(s . z)))
-        '(s s s s s s s s s s s s s . z)))
-   '('(s s s s s s s . z)
-     ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
-      $$
-      (=/= ((_.0 quote)))
-      (sym _.1))
-     ((match _.0 [_.0 '(s s s s s s s . z)] . _.1) $$ (num _.0))
-     (and '(s s s s s s s . z))
-     ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
-      $$
-      (=/= ((_.0 quote)))))))
+(record-bench 'unstaged 'peano-fib-3)
+(time-test
+  (run 1 (q)
+    (evalo-unstaged
+     (peano-fib `(fib-aps ',q 'z '(s . z)))
+     '(s s s s s s s s s s s s s . z)))
+  '((s s s s s s s . z)))
 
-(time
- (test
-     (run 5 (q)
-       (evalo-unstaged
-        (peano-fib `(fib-aps ,q 'z '(s . z)))
-        '(s s s s s s s s s s s s s . z)))
-   '('(s s s s s s s . z)
-     ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
-      $$
-      (=/= ((_.0 quote)))
-      (sym _.1))
-     ((match _.0 [_.0 '(s s s s s s s . z)] . _.1) $$ (num _.0))
-     (and '(s s s s s s s . z))
-     ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
-      $$
-      (=/= ((_.0 quote)))))))
+
+(record-bench 'run-staged 'peano-fib-4)
+(time-test
+  (run-staged 5 (q)
+    (evalo-staged
+     (peano-fib `(fib-aps ,q 'z '(s . z)))
+     '(s s s s s s s s s s s s s . z)))
+  '('(s s s s s s s . z)
+    ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
+     $$
+     (=/= ((_.0 quote)))
+     (sym _.1))
+    ((match _.0 [_.0 '(s s s s s s s . z)] . _.1) $$ (num _.0))
+    (and '(s s s s s s s . z))
+    ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
+     $$
+     (=/= ((_.0 quote))))))
+
+(record-bench 'unstaged 'peano-fib-4)
+(time-test
+  (run 5 (q)
+    (evalo-unstaged
+     (peano-fib `(fib-aps ,q 'z '(s . z)))
+     '(s s s s s s s s s s s s s . z)))
+  '('(s s s s s s s . z)
+    ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
+     $$
+     (=/= ((_.0 quote)))
+     (sym _.1))
+    ((match _.0 [_.0 '(s s s s s s s . z)] . _.1) $$ (num _.0))
+    (and '(s s s s s s s . z))
+    ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
+     $$
+     (=/= ((_.0 quote))))))
 
 
 #!eof
