@@ -86,7 +86,7 @@
 
 
 
-(record-bench 'run-unstaged 'nnf-0a)
+(record-bench 'unstaged 'nnf-0a)
 (time-test
   (run 10 (concept)
     (evalo-unstaged
@@ -137,7 +137,7 @@
 
 
 
-(record-bench 'run-unstaged 'nnf-0b)
+(record-bench 'unstaged 'nnf-0b)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -154,7 +154,7 @@
   '((Not Top)))
 
 
-(record-bench 'run-unstaged 'nnf-0c)
+(record-bench 'unstaged 'nnf-0c)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -164,7 +164,7 @@
 
 
 
-(record-bench 'run-unstaged 'nnf-0d)
+(record-bench 'unstaged 'nnf-0d)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged

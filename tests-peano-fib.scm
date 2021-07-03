@@ -74,7 +74,7 @@
                '(s . z)
                (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))))
 
-(record-bench 'run-unstaged 'peano-synth-fib-direct-1)
+(record-bench 'unstaged 'peano-synth-fib-direct-1)
 (time-test
   (run #f (fib-direct)
     (== `(lambda (n)
@@ -165,7 +165,7 @@
 
 #|
 ;;;  Seems super slow---didn't return after a minute or so
-(record-bench 'run-unstaged 'peano-synth-fib-aps-1)
+(record-bench 'unstaged 'peano-synth-fib-aps-1)
 (time-test
   (run #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -253,7 +253,7 @@
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
 
 
-(record-bench 'run-unstaged 'peano-synth-fib-aps-3)
+(record-bench 'unstaged 'peano-synth-fib-aps-3)
 (time-test
   (run #f (fib-acc)
     (== `(lambda (n a1 a2)
