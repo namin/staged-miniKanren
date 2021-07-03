@@ -651,6 +651,10 @@
 
 (define (match-clauses mval clauses env val)
   (conde
+    ; a match fails if no clause matches; in
+    ; unstaged this happens when reaching
+    ; match-clauses with an empty list of clauses.
+    ; in staged, defer to runtime.
     ((== clauses '())
      (lift 'fail))
     ((fresh (p result-expr d penv c-yes c-no)
@@ -680,15 +684,20 @@
        (not-in-envo var penv)))))
 
 (define (var-p-no-match var mval penv penv-out)
-  (fresh (val)
-    (symbolo var)
-    (l=/= mval val)
-    (== penv penv-out)
-    ;; This lookup is for linear pattern matching
-    ;; which is not supported by staging,
-    ;; since penv is not reified.
-    ;;(lookupo #t var penv val)
-    ))
+  (conde
+    ; a variable pattern cannot fail when it is
+    ; the first occurence of the name. unstaged
+    ; fails by failure of the lookupo below; in
+    ; staged we need to defer this failure to
+    ; runtime.
+    ((symbolo var)
+     (not-in-envo var penv)
+     (lift 'fail))
+    ((fresh (val)
+       (symbolo var)
+       (l=/= mval val)
+       (== penv penv-out)
+       (lookupo #t var penv val)))))
 
 (define (p-match p mval penv penv-out)
   (conde
@@ -731,11 +740,18 @@
                (var-p-no-match var mval penv penv-out))
              z2)
             (lift `(conde ,z1 ,z2))))
-         ((== 'number? pred) ;; TODO: same pattern as symbol? above
-          (conde
-            ((lift `(not-numbero ,(expand mval))))
-            ((lift `(numbero ,(expand mval)))
-             (var-p-no-match var mval penv penv-out)))))))
+         ((== 'number? pred)
+          (fresh (z1 z2)
+            (lift-scope
+             (fresh ()
+               (lift `(not-numbero ,(expand mval))))
+             z1)
+            (lift-scope
+             (fresh ()
+               (lift `(numbero ,(expand mval)))
+               (var-p-no-match var mval penv penv-out))
+             z2)
+            (lift `(conde ,z1 ,z2)))))))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
       (quasi-p-no-match quasi-p mval penv penv-out)))))
@@ -765,21 +781,29 @@
          (== (list 'unquote p) quasi-p)
          (not-tago mval)
          (p-no-match p mval penv penv-out)))
-      ((fresh (a d v1 v2 penv^)
+      ((fresh (a d)
          (== `(,a . ,d) quasi-p)
          (=/= 'unquote a)
          (fresh (z1 z2)
            (lift-scope
-            (fresh ()
-              (== penv penv-out)
-              (lift `(literalo ,(expand mval))))
-            z1)
+             (fresh ()
+               (== penv penv-out)
+               (lift `(literalo ,(expand mval))))
+             z1)
            (lift-scope
-            (fresh ()
-              (l== `(,v1 . ,v2) mval)
-              (conde
-                ((quasi-p-no-match a v1 penv penv^))
-                ((quasi-p-match a v1 penv penv^)
-                 (quasi-p-no-match d v2 penv^ penv-out))))
-            z2)
-           (lift `(conde ,z1 ,z2))))))))
+             (fresh (penv^ v1 v2)
+               (l== `(,v1 . ,v2) mval)
+               (fresh (z3 z4)
+                 (lift-scope
+                   (fresh ()
+                     (quasi-p-no-match a v1 penv penv-out))
+                   z3)
+                 (lift-scope
+                   (fresh ()
+                     (quasi-p-match a v1 penv penv^)
+                     (quasi-p-no-match d v2 penv^ penv-out))
+                   z4)
+                 (lift `(conde ,z3 ,z4))))
+             z2)
+           (lift `(conde ,z1 ,z2)))
+         )))))

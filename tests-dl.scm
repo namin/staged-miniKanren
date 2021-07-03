@@ -94,15 +94,6 @@
      nnf-concept))
   '((Not Top)))
 
-(record-bench 'run-staged 'nnf-0)
-(time-test
-  (run #f (nnf-concept)
-    (evalo-staged
-     (nnf '(Not (AtLeast z hasChild)))
-     nnf-concept))
-  '((Not Top)))
-
-
 
 (record-bench 'run-unstaged 'nnf-0)
 (time-test

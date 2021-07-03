@@ -390,6 +390,6 @@
        (=/= 'unquote a)
        (== `(,v1 . ,v2) mval)
        (conde
-         ((u-quasi-p-no-match a v1 penv penv^))
+         ((u-quasi-p-no-match a v1 penv penv-out))
          ((u-quasi-p-match a v1 penv penv^)
           (u-quasi-p-no-match d v2 penv^ penv-out)))))))
