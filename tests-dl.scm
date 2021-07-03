@@ -31,25 +31,23 @@
                           (list 'Or (nnf (list 'Not c1)) (nnf (list 'Not c2)))]
                          [`(Not (Or ,c1 ,c2))
                           (list 'And (nnf (list 'Not c1)) (nnf (list 'Not c2)))]
-                         [`(Not (Exists ,r ,c))
+                         [`(Not (Exists ,(? symbol? r) ,c))
                           (list 'All r (nnf (list 'Not c)))]
-                         [`(Not (All ,r ,c))
+                         [`(Not (All ,(? symbol? r) ,c))
                           (list 'Exists r (nnf (list 'Not c)))]
-                         [`(Not (AtMost ,k ,r))
-                          ;; TODO: enforce that r is a symbol
+                         [`(Not (AtMost ,k ,(? symbol? r)))
                           (list 'AtLeast (add1 k) r)]
-                         [`(Not (AtLeast ,k ,r))
-                          ;; TODO: enforce that r is a symbol
+                         [`(Not (AtLeast ,k ,(? symbol? r)))
                           (if (positive? k)
                               (list 'AtMost (sub1 k) r)
-                              (list 'Not 'Top))]                    
+                              (list 'Not 'Top))]    
                          [`(And ,c1 ,c2)
                           (list 'And (nnf c1) (nnf c2))]
                          [`(Or ,c1 ,c2)
                           (list 'Or (nnf c1) (nnf c2))]
-                         [`(Exists ,r ,c)
+                         [`(Exists ,(? symbol? r) ,c)
                           (list 'Exists r (nnf c))]
-                         [`(All ,r ,c)
+                         [`(All ,(? symbol? r) ,c)
                           (list 'All r (nnf c))]
                          [concept concept]))))
              (nnf ',concept)))))))
@@ -69,11 +67,13 @@
     (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))
     ((Not (AtLeast z _.0))
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))
     (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
     ((Not (Not (Not (AtLeast z _.0))))
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))
     (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))))))
 
 ;; Note the difference in order w.r.t. the unstaged version.
@@ -85,13 +85,21 @@
      '(Not Top)))
   '((Not Top)
     (Not (Not (Not Top)))
-    (Not (AtLeast z _.0))
+    ((Not (AtLeast z _.0))
+     $$
+     (sym _.0))
     (Not (Not (Not (Not (Not Top)))))
-    (Not (Not (Not (AtLeast z _.0))))
+    ((Not (Not (Not (AtLeast z _.0))))
+     $$
+     (sym _.0))
     (Not (Not (Not (Not (Not (Not (Not Top)))))))
-    (Not (Not (Not (Not (Not (AtLeast z _.0))))))
+    ((Not (Not (Not (Not (Not (AtLeast z _.0))))))
+     $$
+     (sym _.0))
     (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))
-    (Not (Not (Not (Not (Not (Not (Not (AtLeast z _.0))))))))
+    ((Not (Not (Not (Not (Not (Not (Not (AtLeast z _.0))))))))
+     $$
+     (sym _.0))
     (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
 
 
