@@ -105,3 +105,9 @@
       (evalo-staged `((,q) (cons 1 2)) 1)
       )
   '(((lambda _.0 car) $$ (=/= ((_.0 car))) (sym _.0))))
+
+(test
+    (run-staged 1 (q)
+      (symbolo q)
+      (lift `(numbero ,q)))
+  '())
