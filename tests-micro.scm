@@ -260,20 +260,19 @@
 
 
 (test
-    (run-staged 10 (q)
+    (run-staged 11 (q)
       (evalo-staged
        (valid-ge? q)
        #t))
-  '((=== '_.0 '_.1)
-    (=== '_.0 (cons '_.1 '_.2))
-    (=== (cons '_.0 '_.1) '_.2)
-    (call/fresh (lambda (_.0) (=== '_.1 '_.2)))
+  '((=== '_.0 '_.1) (=== '_.0 (cons '_.1 '_.2)) (=== (cons '_.0 '_.1) '_.2)
     (conj (=== '_.0 '_.1) (=== '_.2 '_.3))
     (=== (cons '_.0 '_.1) (cons '_.2 '_.3))
     (=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
     (=== '_.0 (cons (cons '_.1 '_.2) '_.3))
     (disj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    (=== (cons '_.0 (cons '_.1 '_.2)) '_.3)))
+    (=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
+    (=== '_.0 (cons (cons '_.1 '_.2) (cons '_.3 '_.4)))
+    (call/fresh (lambda (_.0) (=== '_.1 '_.2)))))
 
 ;;;  why does the unstaged version have reified constraints, but not the staged version?
 (test
