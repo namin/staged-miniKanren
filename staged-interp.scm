@@ -651,6 +651,10 @@
 
 (define (match-clauses mval clauses env val)
   (conde
+    ; a match fails if no clause matches; in
+    ; unstaged this happens when reaching
+    ; match-clauses with an empty list of clauses.
+    ; in staged, defer to runtime.
     ((== clauses '())
      (lift 'fail))
     ((fresh (p result-expr d penv c-yes c-no)
@@ -681,6 +685,11 @@
 
 (define (var-p-no-match var mval penv penv-out)
   (conde
+    ; a variable pattern cannot fail when it is
+    ; the first occurence of the name. unstaged
+    ; fails by failure of the lookupo below; in
+    ; staged we need to defer this failure to
+    ; runtime.
     ((symbolo var)
      (not-in-envo var penv)
      (lift 'fail))
@@ -688,13 +697,6 @@
        (symbolo var)
        (l=/= mval val)
        (== penv penv-out)
-       ;; This lookup is for linear pattern matching
-       ;; which is not supported by staging,
-       ;; since penv is not reified.
-       ;(lambda (st)
-       ;(display (walk* penv (state-S st)))
-       ;(display "\n")
-       ;st)
        (lookupo #t var penv val)))))
 
 (define (p-match p mval penv penv-out)
