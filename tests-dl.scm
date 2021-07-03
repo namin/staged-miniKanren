@@ -56,6 +56,42 @@
                          [concept concept]))))
              (nnf ',concept)))))))
 
+(define-staged-relation (nnfo concept nnf-concept)
+  (evalo-staged
+   (nnf concept)
+   nnf-concept))
+
+#|
+result 99: ((Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (AtLeast z _.0)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) $$ (sym _.0))
+result 100: (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+Exception in gen: staging non-deterministic
+|#
+#|
+;; What did I do wrong???
+(record-bench 'run-staged 'nnfo-0a)
+(time-test
+  (run-staged 10 (concept)
+    (nnfo concept '(Not Top)))
+  '((Not Top)
+    (Not (Not (Not Top)))
+    ((Not (AtLeast z _.0))
+     $$
+     (sym _.0))
+    (Not (Not (Not (Not (Not Top)))))
+    ((Not (Not (Not (AtLeast z _.0))))
+     $$
+     (sym _.0))
+    (Not (Not (Not (Not (Not (Not (Not Top)))))))
+    ((Not (Not (Not (Not (Not (AtLeast z _.0))))))
+     $$
+     (sym _.0))
+    (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))
+    ((Not (Not (Not (Not (Not (Not (Not (AtLeast z _.0))))))))
+     $$
+     (sym _.0))
+    (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
+|#
+
 
 (record-bench 'run-unstaged 'nnf-0a)
 (time-test
@@ -105,6 +141,7 @@
      $$
      (sym _.0))
     (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
+
 
 
 (record-bench 'run-unstaged 'nnf-0b)
