@@ -12,6 +12,7 @@ git checkout staged
 rm -rf .git
 cd ..
 
+cp ../RUN.md README.md
 cp ../benchread.py staged-miniKanren/
 
 cp ../staged-run.scm staged-miniKanren/
