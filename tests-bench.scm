@@ -448,7 +448,7 @@
     (=/= ((_.0 quote)))
     (sym _.1))))
 
-(record-bench 'run-staged 'appendo-tail)
+;;(record-bench 'run-staged 'appendo-tail)
 (time-test
  (length
   (syn-hole 50
@@ -461,7 +461,7 @@
    '(1 2 3 4)))
  50)
 
-(record-bench 'unstaged 'appendo-tail)
+;;(record-bench 'unstaged 'appendo-tail)
 (time-test
   (length
    (run 50 (q)
@@ -789,7 +789,7 @@
                                            (map proc '(d e f))))
                                    (lambda (x) ,q))
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
-  '((list x (cons x '()) x)))
+  '((cons x (cons (cons x '()) (cons x '())))))
 
 #|
 ;;; WEB Painfully slow to generate this code!  Does it even terminate?

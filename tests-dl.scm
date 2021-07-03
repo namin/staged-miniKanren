@@ -55,7 +55,7 @@
              (nnf ',concept)))))))
 
 
-(record-bench 'run-unstaged 'nnf-0)
+(record-bench 'run-unstaged 'nnf-0a)
 (time-test
   (run 10 (concept)
     (evalo-unstaged
@@ -77,7 +77,7 @@
     (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))))))
 
 
-(record-bench 'run-unstaged 'nnf-0)
+(record-bench 'run-unstaged 'nnf-0b)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -86,7 +86,7 @@
   '((Not Top)))
 
 ;; why does the staged version fail, when the unstaged version succeeds?
-(record-bench 'run-staged 'nnf-0)
+(record-bench 'run-staged 'nnf-0b)
 (time-test
   (run-staged #f (nnf-concept)
     (evalo-staged
@@ -95,7 +95,7 @@
   '((Not Top)))
 
 
-(record-bench 'run-unstaged 'nnf-0)
+(record-bench 'run-unstaged 'nnf-0c)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -105,7 +105,7 @@
 
 
 
-(record-bench 'run-unstaged 'nnf-0)
+(record-bench 'run-unstaged 'nnf-0d)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -113,8 +113,7 @@
      nnf-concept))
   '((AtMost (s s . z) hasChild)))
 
-;; this fails, even though the unstaged version succeeds!
-(record-bench 'run-staged 'nnf-0)
+(record-bench 'run-staged 'nnf-0d)
 (time-test
   (run-staged #f (nnf-concept)
     (evalo-staged
@@ -123,7 +122,7 @@
 
 
 
-(record-bench 'run-unstaged 'nnf-0)
+(record-bench 'run-unstaged 'nnf-0e)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -171,7 +170,7 @@
   '((AtMost (s s . z) hasChild)))
 
 
-(record-bench 'run-unstaged 'nnf-0)
+(record-bench 'run-unstaged 'nnf-0f)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -282,7 +281,7 @@
 
 
 
-(record-bench 'run-unstaged 'nnf-1)
+(record-bench 'run-unstaged 'nnf-1b)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -309,7 +308,7 @@
      nnf-concept))
   '(Top))
 
-(record-bench 'run-staged 'nnf-1)
+(record-bench 'run-staged 'nnf-1b)
 (time-test
   (run-staged #f (nnf-concept)
     (evalo-staged
