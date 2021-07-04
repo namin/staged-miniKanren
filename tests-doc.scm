@@ -8,6 +8,70 @@
 
 (load "test-check.scm")
 
+;; # Background
+
+;; ## miniKanren
+
+(test
+    (run* (q) (== q 5))
+  '(5))
+
+(test
+    (run* (q) (== 5 6))
+  '())
+
+(test
+    (run* (q) (== 5 5))
+  '(_.0))
+
+(test
+    (run* (q) (fresh (x y) (== q `(,x ,y))))
+  '((_.0 _.1)))
+
+(test
+    (run* (q) (fresh (x y) (== q `(,x ,y)) (== x 5)))
+  '((5 _.0)))
+
+(test
+    (run* (q)
+      (conde
+        ((== q 5))
+        ((== q 6))))
+  '(5 6))
+
+(test
+    (run 1 (q)
+      (conde
+        ((== q 5))
+        ((== q 6))))
+  '(5))
+
+(define (appendo xs ys zs)
+  (conde
+    ((== xs '()) (== ys zs))
+    ((fresh (xa xd zd)
+       (== xs (cons xa xd))
+       (== zs (cons xa zd))
+       (appendo xd ys zd)))))
+
+(test
+    (run* (q) (appendo '(a b) '(c d e) q))
+  '((a b c d e)))
+
+(test
+    (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+  '(
+    (() (a b c d e))
+    ((a) (b c d e))
+    ((a b) (c d e))
+    ((a b c) (d e))
+    ((a b c d) (e))
+    ((a b c d e) ())
+    ))
+
+(test
+    (run* (x y z) (appendo `(a  . ,x) `(,y e) `(a b c d ,z)))
+  '(((b c) d e)))
 
 (define-staged-relation (appendo xs ys zs)
   (evalo-staged
@@ -34,12 +98,6 @@
     ((a b c d) (e))
     ((a b c d e) ())
     ))
-
-(test
-    (run* (x y z) (appendo `(a  . ,x) `(,y e) `(a b c d ,z)))
-  '(((b c) d e)))
-
-;; Theorem
 
 (test
     (run-staged 1 (q)
