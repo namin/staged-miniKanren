@@ -55,9 +55,12 @@ for name in all_names:
         if times:
             min_time = min(times.get('staged', MAX_TIME),
                            times.get('run-staged', MAX_TIME))
-            if min_time < MAX_TIME and 'unstaged' in times:
-                gain = times['unstaged'] / min_time
-                s += '$%.3f$' % gain
+            if min_time < MAX_TIME:
+                if 'unstaged' in times:
+                    gain = times['unstaged'] / min_time
+                    s += '$%.3f$' % gain
+                else:
+                    s += '$\infty$'
             s += '\\\\'
             print(s)
             print('\\hline')
