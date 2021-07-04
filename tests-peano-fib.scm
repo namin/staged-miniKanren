@@ -310,6 +310,18 @@
 
 (eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
 
+(record-bench 'staging 'peano-fib)
+(define-staged-relation (fib-apso n a1 a2 result)
+  (evalo-staged
+   (peano-fib `(fib-aps ',n ',a1 ',a2))
+   result))
+
+(record-bench 'staged 'peano-fib-1)
+(time-test
+ (run* (v)
+   (fib-apso '(s s s s s s . z) 'z '(s . z) v))
+  '((s s s s s s s s . z)))
+
 (record-bench 'run-staged 'peano-fib-1)
 (time-test
   (run-staged #f (v)
@@ -327,6 +339,13 @@
   '((s s s s s s s s . z)))
 
 
+(record-bench 'staged 'peano-fib-2)
+(time-test
+  (run 1 (q)
+    (fib-apso q 'z '(s . z)
+              '(s s s s s s s s . z)))
+  '((s s s s s s . z)))
+
 (record-bench 'run-staged 'peano-fib-2)
 (time-test
   (run-staged 1 (q)
@@ -343,6 +362,13 @@
      '(s s s s s s s s . z)))
   '((s s s s s s . z)))
 
+
+(record-bench 'staged 'peano-fib-3)
+(time-test
+  (run 1 (q)
+    (fib-apso q 'z '(s . z)
+              '(s s s s s s s s s s s s s . z)))
+  '((s s s s s s s . z)))
 
 (record-bench 'run-staged 'peano-fib-3)
 (time-test
@@ -394,7 +420,3 @@
     ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
      $$
      (=/= ((_.0 quote))))))
-
-
-
-
