@@ -176,7 +176,34 @@
                 ((== ,(expand q) 2)))))
   '(1 2))
 
-;; REST
+;; ## Staged Relational Interpreter
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `(letrec ((map (lambda (f l)
+                        (if (null? l)
+                            '()
+                            (cons (f (car l))
+                                  (map f (cdr l)))))))
+          (map (lambda (x) ,q) '(a b c)))
+       '((a . a) (b . b) (c . c))))
+  '((cons x x)))
+
+(test
+    (run 1 (q)
+      (evalo-unstaged
+       `(letrec ((map (lambda (f l)
+                        (if (null? l)
+                            '()
+                            (cons (f (car l))
+                                  (map f (cdr l)))))))
+          (map (lambda (x) ,q) '(a b c)))
+       '((a . a) (b . b) (c . c))))
+  '((cons x x)))
+
+
+;; ### `appendo` as a staged relation
 
 (define-staged-relation (appendo xs ys zs)
   (evalo-staged
@@ -203,6 +230,8 @@
     ((a b c d) (e))
     ((a b c d e) ())
     ))
+
+;; ###
 
 (test
     (run-staged 1 (q)
