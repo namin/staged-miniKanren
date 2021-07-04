@@ -37,6 +37,6 @@ cp ../tests.scm staged-miniKanren/
 cd staged-miniKanren
 chez --script tests-all.scm
 
-cd ../
+cd ..
 
 egrep "namin|WEB" */*
