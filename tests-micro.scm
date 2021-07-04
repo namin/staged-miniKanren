@@ -264,17 +264,71 @@
       (evalo-staged
        (valid-ge? q)
        #t))
-  '((=== '_.0 '_.1) (=== '_.0 (cons '_.1 '_.2)) (=== (cons '_.0 '_.1) '_.2)
-    (conj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    (=== (cons '_.0 '_.1) (cons '_.2 '_.3))
-    (=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
-    (=== '_.0 (cons (cons '_.1 '_.2) '_.3))
-    (disj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    (=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
-    (=== '_.0 (cons (cons '_.1 '_.2) (cons '_.3 '_.4)))
-    (call/fresh (lambda (_.0) (=== '_.1 '_.2)))))
+  '(((=== '_.0 '_.1)
+   $$
+   (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
+     (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
+  ((=== '_.0 (cons '_.1 '_.2))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+  ((=== (cons '_.0 '_.1) '_.2)
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+  ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+      (prim _.1) (prim _.2) (prim _.3)))
+  ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+      (prim _.1) (prim _.2) (prim _.3)))
+  ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+      (prim _.1) (prim _.2) (prim _.3)))
+  ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+      (prim _.1) (prim _.2) (prim _.3)))
+  ((disj (=== '_.0 '_.1) (=== '_.2 '_.3))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+      (prim _.1) (prim _.2) (prim _.3)))
+  ((=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+      (prim _.1) (prim _.2) (prim _.3)))
+  ((=== '_.0 (cons (cons '_.1 '_.2) (cons '_.3 '_.4)))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (call _.3)
+     (call _.4) (closure _.0) (closure _.1) (closure _.2)
+     (closure _.3) (closure _.4) (dynamic _.0) (dynamic _.1)
+     (dynamic _.2) (dynamic _.3) (dynamic _.4) (prim _.0)
+     (prim _.1) (prim _.2) (prim _.3) (prim _.4)))
+  ((call/fresh (lambda (_.0) (=== '_.1 '_.2)))
+    $$
+    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2))))
+ )
 
-;;;  why does the unstaged version have reified constraints, but not the staged version?
+;; why are the constraints not identical?
 (test
     (run 10 (q)
       (evalo-unstaged
