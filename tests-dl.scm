@@ -172,6 +172,12 @@
      nnf-concept))
   '((Not Top)))
 
+(record-bench 'staged 'nnf 1)
+(time-test
+  (run* (nnf-concept)
+    (nnfo '(Not (AtLeast z hasChild)) nnf-concept))
+  '((Not Top)))
+
 
 (record-bench 'unstaged 'nnf 2)
 (time-test
@@ -190,6 +196,12 @@
      nnf-concept))
   '((AtLeast (s s . z) hasChild)))
 
+(record-bench 'staged 'nnf 2)
+(time-test
+  (run* (nnf-concept)
+    (nnfo '(Not (AtMost (s . z) hasChild)) nnf-concept))
+  '((AtLeast (s s . z) hasChild)))
+
 
 (record-bench 'unstaged 'nnf 3)
 (time-test
@@ -204,4 +216,10 @@
   (run-staged #f (nnf-concept)
     (evalo-staged
      (nnf '(Not (AtLeast (s s s . z) hasChild))) nnf-concept))
+  '((AtMost (s s . z) hasChild)))
+
+(record-bench 'staged 'nnf 3)
+(time-test
+  (run* (nnf-concept)
+    (nnfo '(Not (AtLeast (s s s . z) hasChild)) nnf-concept))
   '((AtMost (s s . z) hasChild)))
