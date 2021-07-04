@@ -5,12 +5,11 @@ set -e
 rm -rf release
 mkdir release
 mkdir release/staged-miniKanren
+mkdir release/faster-miniKanren
 cd release
-git clone https://github.com/namin/faster-miniKanren.git
-cd faster-miniKanren
-git checkout staged
-rm -rf .git
-cd ..
+
+cp ../../faster-miniKanren/mk-vicare.scm faster-miniKanren/
+cp ../../faster-miniKanren/mk.scm faster-miniKanren/
 
 cp ../RUN.md README.md
 cp ../benchread.py staged-miniKanren/
