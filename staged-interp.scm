@@ -1,3 +1,8 @@
+(define (booleano x)
+  (conde
+    ((== x #t))
+    ((== x #f))))
+
 (define (groundo x)
   (fresh ()
     (non-varo x)
@@ -463,7 +468,8 @@
                 ((numbero ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
                   (== `(,a . ,d) ,(expand v))
-                  (== #f ,(expand val)))))))]
+                  (== #f ,(expand val))))
+               ((booleano ,(expand v)) (== #f ,(expand val))))))]
     [(== prim-id 'number?)
      (fresh (v)
        (l== `(,v) a*)
@@ -472,13 +478,15 @@
                 ((symbolo ,(expand v)) (== #f ,(expand val)))
                 ((fresh (a d)
                    (== `(,a . ,d) ,(expand v))
-                   (== #f ,(expand val)))))))]
+                   (== #f ,(expand val))))
+                ((booleano ,(expand v)) (== #f ,(expand val))))))]
     [(== prim-id 'pair?)
      (fresh (v)
        (l== `(,v) a*)
        (later `(conde
                 ((symbolo ,(expand v)) (== #f ,(expand val)))
                 ((numbero ,(expand v)) (== #f ,(expand val)))
+                ((booleano ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
                   (== `(,a . ,d) ,(expand v))
                   (== #t ,(expand val))

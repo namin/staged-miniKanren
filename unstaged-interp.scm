@@ -150,7 +150,8 @@
          ((numbero v) (== #f val))
          ((fresh (a d)
             (== `(,a . ,d) v)
-            (== #f val)))))]
+            (== #f val)))
+         ((booleano v) (== #f val))))]
     [(== prim-id 'number?)
      (fresh (v)
        (== `(,v) a*)
@@ -159,13 +160,15 @@
          ((symbolo v) (== #f val))
          ((fresh (a d)
             (== `(,a . ,d) v)
-            (== #f val)))))]
+            (== #f val)))
+         ((booleano v) (== #f val))))]
     [(== prim-id 'pair?)
      (fresh (v)
        (== `(,v) a*)
        (conde
          ((symbolo v) (== #f val))
          ((numbero v) (== #f val))
+         ((booleano v) (== #f val))
          ((fresh (a d)
             (== `(,a . ,d) v)
             (== #t val)
