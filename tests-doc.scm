@@ -151,6 +151,31 @@
     (run* (q) (later `(== ,(expand q) ,(expand 1))))
   '((_.0 !! ((== _.0 '1)))))
 
+;; ### run-staged
+
+(test
+    (run-staged 1 (q)
+      (l== q 1))
+  '(1))
+
+#|
+(run-staged 2 (q)
+  (conde
+    ((l== q 1))
+    ((l== q 2))))
+;; running first stage
+;; result 1: (_.0 !! ((== _.0 '1)))
+;; result 2: (_.0 !! ((== _.0 '2)))
+;; Exception: staging non-deterministic
+|#
+
+(test
+    (run-staged 2 (q)
+      (later `(conde
+                ((== ,(expand q) 1))
+                ((== ,(expand q) 2)))))
+  '(1 2))
+
 ;; REST
 
 (define-staged-relation (appendo xs ys zs)
