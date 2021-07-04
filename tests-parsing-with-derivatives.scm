@@ -160,6 +160,45 @@
 
 
 
+
+(record-bench 'run-staged 'parse-2)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+      (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
+      parse-result))
+  '((alt bar (rep baz))))
+
+(record-bench 'run-staged 'parse-3)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+     (parse '(regex-match '(seq foo (rep bar)) 
+                          '(foo bar bar bar)))
+     parse-result))
+  '(#t))
+
+(record-bench 'run-staged 'parse-4)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+     (parse '(regex-match '(seq foo (rep bar)) 
+                          '(foo bar baz bar bar)))
+     parse-result))
+  '(#f))
+
+(record-bench 'run-staged 'parse-5)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+     (parse '(regex-match '(seq foo (rep (alt bar baz))) 
+                          '(foo bar baz bar bar)))
+     parse-result))
+  '(#t))
+
+
+
+
 ;; What am I doing wrong?
 
 ;; works
