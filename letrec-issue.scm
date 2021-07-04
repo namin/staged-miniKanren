@@ -14,7 +14,7 @@
 (test
     (run-staged 1 (q)
       (fresh (v)
-        (lift `(u-eval-expo
+        (later `(u-eval-expo
                 '(f 1)
                 `((f . (val . ,,(expand v))) . ,initial-env)
                 1))
@@ -41,7 +41,7 @@
 #|
 (run-staged 1 (q)
   (fresh (v)
-    (lift `(u-eval-expo
+    (later `(u-eval-expo
              '(f 1)
              `((f . (val . ,,(expand v))) . ,initial-env)
              1))

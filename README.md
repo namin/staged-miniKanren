@@ -15,14 +15,14 @@ These are the sorts of questions we want to answer.
 
 Our starting point is [the canonical miniKanren](https://github.com/miniKanren/miniKanren), which supports logical operators `==`, `fresh`, `conde`, interface operators `run`, `run*` and constraint operators `=/=`, `symbolo`, `numbero`, `absento`.
 
-We extend miniKanren with staging operators `lift`, `lift-scope` and `dynamic`. `lift` records some term for later, `lift-scope` takes a goal and a variable and runs the goal accumulating all lifted terms into the variable and discarding the local context. A variable `x` marked `dynamic` with `(dynamic x)` has all unifications with it automatically lifted.
+We extend miniKanren with staging operators `later`, `later-scope` and `dynamic`. `later` records some term for later, `later-scope` takes a goal and a variable and runs the goal accumulating all latered terms into the variable and discarding the local context. A variable `x` marked `dynamic` with `(dynamic x)` has all unifications with it automatically latered.
 
 ### Tests
 
 Our starting point is [a full interpreter in miniKanren for a subset of Racket](https://github.com/webyrd/faster-miniKanren/blob/master/full-interp.scm).
 We [stage this interpreter](staged-interp.scm), and observe via [example runs](tests.scm) whether we can reasonably turn functional programs into relational programs without interpretation overhead.
 
-We use the `lift` operator to defer unifications so that the generated program can perform all necessary constraints. We use `lift-scope` so that we can generate code for `if`/`conde` branches. We want to keep the generated relational code first-order, and so a good strategy is to not lift functions and applications. For recursively defined functions, we use explicit folding. For convenience, we change the interface of the interpreter so that the eval and lookup functions, `eval-expo` and `lookupo`, take an extra first parameter `stage?` which allows us to control whether we want/expect lifted or unlifted values.
+We use the `later` operator to defer unifications so that the generated program can perform all necessary constraints. We use `later-scope` so that we can generate code for `if`/`conde` branches. We want to keep the generated relational code first-order, and so a good strategy is to not later functions and applications. For recursively defined functions, we use explicit folding. For convenience, we change the interface of the interpreter so that the eval and lookup functions, `eval-expo` and `lookupo`, take an extra first parameter `stage?` which allows us to control whether we want/expect latered or unlatered values.
 
 Currently, we fix the scope of intermediary fresh variables after the fact... the current algorithm simply assigns a free variable to the closest enclosing fresh capturing all of its occurrences.
 

@@ -214,7 +214,7 @@
       '((_.0 !! ((== _.0 '1) (== _.0 '2)))))
 (test (run* (q) (conde [(l== q 1)] [(l== q 2)]))
       '((_.0 !! ((== _.0 '1))) (_.0 !! ((== _.0 '2)))))
-(test (run* (q) (lift `(conde [(== ,q 1)] [(== ,q 2)])))
+(test (run* (q) (later `(conde [(== ,q 1)] [(== ,q 2)])))
       '((_.0 !! ((conde ((== _.0 1)) ((== _.0 2)))))))
 (define fake-evalo (lambda (q n)
                      (fresh ()
@@ -223,9 +223,9 @@
 (test
  (run* (q)
        (fresh (c1 c2)
-              (lift-scope (fake-evalo q 1) c1)
-              (lift-scope (fake-evalo q 2) c2)
-              (lift `(conde ,c1 ,c2))))
+              (later-scope (fake-evalo q 1) c1)
+              (later-scope (fake-evalo q 2) c2)
+              (later `(conde ,c1 ,c2))))
  '((_.0 !!
         ((conde
           ((== _.0 '1) (== '1 '1))

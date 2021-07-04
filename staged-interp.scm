@@ -202,7 +202,7 @@
   (conde
     ((varo expr)
      (absent-staged-tago val)
-     (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+     (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
     ((non-varo expr)
      (conde
        ((numbero expr) ((if stage? l== ==) expr val))
@@ -216,7 +216,7 @@
                ((varo rator))
                ((non-varo rator) (not-ground-spineo rands)))
              (absent-staged-tago val)
-             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+             (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
             ((ground-spineo rands)
              (non-varo rator)
              (conde
@@ -234,7 +234,7 @@
                   (conde
                     ((not-ground-paramso x)
                      (absent-staged-tago val)
-                     (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+                     (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((ground-paramso x)
                      (conde
                        ;; Variadic
@@ -249,7 +249,7 @@
                        ((list-of-symbolso x)
                         (make-list-of-symso x x^)
                         (ext-env*o x x^ env envt)))
-                     (lift-scope
+                     (later-scope
                       (eval-expo #t body envt out)
                       c-body)
                      (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
@@ -257,14 +257,14 @@
                   (eval-expo #f rator env proc)
                   (conde
                     ((varo proc)
-                     (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+                     (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((non-varo proc)
                      (conde
                        ((fresh (x* body env^ a* res clo-code)
                           (== proc `(closure (lambda ,x* ,body) ,env^ ,clo-code))
                           (conde
                             ((not-ground-paramso x*)
-                             (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+                             (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                             ((ground-paramso x*)
                              (conde
                                ;; Variadic
@@ -280,18 +280,18 @@
                           (== stage? #t)
                           (== proc `(call ,p-name))
                           (eval-listo rands env a*)
-                          (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
+                          (later `(callo ,p-name ,(expand val) ,(expand a*)))))
                        ((fresh (a* p-name)
                           (== stage? #t)
                           (== proc `(dynamic ,p-name))
                           (eval-listo rands env a*)
-                          (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
+                          (later `(callo ,p-name ,(expand val) ,(expand a*)))))
                        ((fresh (a* p-name)
                           (== stage? #t)
                           (symbolo rator)
                           (== proc (unexpand p-name))
                           (eval-listo rands env a*)
-                          (lift `(callo ,p-name ,(expand val) ,(expand a*)))))
+                          (later `(callo ,p-name ,(expand val) ,(expand a*)))))
                        ((fresh (prim-id a*)
                           (== proc `(prim . ,prim-id))
                           (non-varo prim-id)
@@ -305,16 +305,16 @@
                       expr)
                   (conde
                     ((not-letrec-bindings-checko bindings*)
-                     (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+                     (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((letrec-bindings-checko bindings*)
                      (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
                      (not-in-envo 'letrec env)
                      (== stage? #t)
                      (fresh (c-letrec-body)
-                       (lift-scope
+                       (later-scope
                         (eval-expo #t letrec-body env^ val)
                         c-letrec-body)
-                       (lift `(letrec ,out-bindings*
+                       (later `(letrec ,out-bindings*
                                 (fresh () . ,c-letrec-body))))))))
                ((prim-expo expr env val))
                )))))
@@ -327,7 +327,7 @@
           (eval-expo #f rator env `(call ,p-name))
           (eval-listo rands env a*)
           (fresh (out)
-            (lift `(callo ,p-name ,(expand out) ,(expand a*)))
+            (later `(callo ,p-name ,(expand out) ,(expand a*)))
             (== val `(dynamic ,out)))))
 
        ((fresh (rator rands a* p-name)
@@ -336,7 +336,7 @@
           (eval-expo #f rator env `(dynamic ,p-name))
           (eval-listo rands env a*)
           (fresh (out)
-            (lift `(callo ,p-name ,(expand out) ,(expand a*)))
+            (later `(callo ,p-name ,(expand out) ,(expand a*)))
             (== val `(dynamic ,out)))))
 
        ((fresh (rator rands a* p-name)
@@ -347,7 +347,7 @@
           (non-varo p-name)
           (eval-listo rands env a*)
           (fresh (out)
-            (lift `(callo ,p-name ,(expand out) ,(expand a*)))
+            (later `(callo ,p-name ,(expand out) ,(expand a*)))
             (== val `(call ,out)))))
 
        ))))
@@ -371,7 +371,7 @@
             ((list-of-symbolso x)
              (make-list-of-symso x x^)
              (ext-env*o x x^ envt res)))
-       (lift-scope
+       (later-scope
         (eval-expo #t body res out)
         c-body)
        (== o `(,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
@@ -446,19 +446,19 @@
     [(== prim-id 'not)
      (fresh (b)
        (l== `(,b) a*)
-       (lift `(conde
+       (later `(conde
                 ((=/= #f ,(expand b)) (== #f ,(expand val)))
                 ((== #f ,(expand b)) (== #t ,(expand val))))))]
     [(== prim-id 'equal?)
      (fresh (v1 v2)
        (l== `(,v1 ,v2) a*)
-       (lift `(conde
+       (later `(conde
                 ((== ,(expand v1) ,(expand v2)) (== #t ,(expand val)))
                 ((=/= ,(expand v1) ,(expand v2)) (== #f ,(expand val))))))]
     [(== prim-id 'symbol?)
      (fresh (v)
        (l== `(,v) a*)
-       (lift `(conde
+       (later `(conde
                 ((symbolo ,(expand v)) (== #t ,(expand val)))
                 ((numbero ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
@@ -467,7 +467,7 @@
     [(== prim-id 'number?)
      (fresh (v)
        (l== `(,v) a*)
-       (lift `(conde
+       (later `(conde
                 ((numbero ,(expand v)) (== #t ,(expand val)))
                 ((symbolo ,(expand v)) (== #f ,(expand val)))
                 ((fresh (a d)
@@ -476,7 +476,7 @@
     [(== prim-id 'pair?)
      (fresh (v)
        (l== `(,v) a*)
-       (lift `(conde
+       (later `(conde
                 ((symbolo ,(expand v)) (== #f ,(expand val)))
                 ((numbero ,(expand v)) (== #f ,(expand val)))
                ((fresh (a d)
@@ -494,7 +494,7 @@
     [(== prim-id 'null?)
      (fresh (v)
        (l== `(,v) a*)
-       (lift `(conde
+       (later `(conde
                 ((== '() ,(expand v)) (== #t ,(expand val)))
                 ((=/= '() ,(expand v)) (== #f ,(expand val))))))]))
 
@@ -527,10 +527,10 @@
     ((fresh (e1 e2 e-rest v c)
        (== `(,e1 ,e2 . ,e-rest) e*)
        (eval-expo #t e1 env v)
-       (lift-scope
+       (later-scope
         (ando `(,e2 . ,e-rest) env val)
         c)
-       (lift `(conde
+       (later `(conde
                 ((== #f ,(expand v))
                  (== #f ,(expand val)))
                 ((=/= #f ,(expand v))
@@ -551,10 +551,10 @@
     ((fresh (e1 e2 e-rest v c)
        (== `(,e1 ,e2 . ,e-rest) e*)
        (eval-expo #t e1 env v)
-       (lift-scope
+       (later-scope
         (oro `(,e2 . ,e-rest) env val)
         c)
-       (lift `(conde
+       (later `(conde
                 ((=/= #f ,(expand v))
                  (== ,(expand v) ,(expand val)))
                 ((== #f ,(expand v))
@@ -565,9 +565,9 @@
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
     (eval-expo #t e1 env t)
-    (lift-scope (eval-expo #t e2 env val) c2)
-    (lift-scope (eval-expo #t e3 env val) c3)
-    (lift `(conde
+    (later-scope (eval-expo #t e2 env val) c2)
+    (later-scope (eval-expo #t e3 env val) c3)
+    (later `(conde
              ((=/= #f ,(expand t)) . ,c2)
              ((== #f ,(expand t)) . ,c3)))))
 
@@ -575,9 +575,9 @@
   (fresh (e2 e3 c2 c3)
     (== `(choice ,e2 ,e3) expr)
     (not-in-envo 'choice env)
-    (lift-scope (eval-expo #t e2 env val) c2)
-    (lift-scope (eval-expo #t e3 env val) c3)
-    (lift `(conde
+    (later-scope (eval-expo #t e2 env val) c2)
+    (later-scope (eval-expo #t e3 env val) c3)
+    (later `(conde
             ,c2
             ,c3))))
 
@@ -599,7 +599,7 @@
       (== `(match ,against-expr ,clause . ,clauses) expr)
       (conde
         ((not-match-checko (cons clause clauses))
-         (lift `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+         (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
         ((match-checko (cons clause clauses))
          (fresh (mval)
            (not-in-envo 'match env)
@@ -656,21 +656,21 @@
     ; match-clauses with an empty list of clauses.
     ; in staged, defer to runtime.
     ((== clauses '())
-     (lift 'fail))
+     (later 'fail))
     ((fresh (p result-expr d penv c-yes c-no)
        (== `((,p ,result-expr) . ,d) clauses)
-       (lift-scope
+       (later-scope
         (fresh (env^)
           (p-match p mval '() penv)
           (regular-env-appendo penv env env^)
           (eval-expo #t result-expr env^ val))
         c-yes)
-       (lift-scope
+       (later-scope
         (fresh ()
           (p-no-match p mval '() penv)
           (match-clauses mval d env val))
         c-no)
-       (lift `(conde ,c-yes ,c-no))))))
+       (later `(conde ,c-yes ,c-no))))))
 
 (define (var-p-match var mval penv penv-out)
   (fresh (val)
@@ -692,7 +692,7 @@
     ; runtime.
     ((symbolo var)
      (not-in-envo var penv)
-     (lift 'fail))
+     (later 'fail))
     ((fresh (val)
        (symbolo var)
        (l=/= mval val)
@@ -709,9 +709,9 @@
       (== `(? ,pred ,var) p)
       (conde
         ((== 'symbol? pred)
-         (lift `(symbolo ,(expand mval))))
+         (later `(symbolo ,(expand mval))))
         ((== 'number? pred)
-         (lift `(numbero ,(expand mval)))))
+         (later `(numbero ,(expand mval)))))
       (var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
@@ -730,28 +730,28 @@
        (conde
          ((== 'symbol? pred)
           (fresh (z1 z2)
-            (lift-scope
+            (later-scope
              (fresh ()
-               (lift `(not-symbolo ,(expand mval))))
+               (later `(not-symbolo ,(expand mval))))
              z1)
-            (lift-scope
+            (later-scope
              (fresh ()
-               (lift `(symbolo ,(expand mval)))
+               (later `(symbolo ,(expand mval)))
                (var-p-no-match var mval penv penv-out))
              z2)
-            (lift `(conde ,z1 ,z2))))
+            (later `(conde ,z1 ,z2))))
          ((== 'number? pred)
           (fresh (z1 z2)
-            (lift-scope
+            (later-scope
              (fresh ()
-               (lift `(not-numbero ,(expand mval))))
+               (later `(not-numbero ,(expand mval))))
              z1)
-            (lift-scope
+            (later-scope
              (fresh ()
-               (lift `(numbero ,(expand mval)))
+               (later `(numbero ,(expand mval)))
                (var-p-no-match var mval penv penv-out))
              z2)
-            (lift `(conde ,z1 ,z2)))))))
+            (later `(conde ,z1 ,z2)))))))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
       (quasi-p-no-match quasi-p mval penv penv-out)))))
@@ -785,25 +785,25 @@
          (== `(,a . ,d) quasi-p)
          (=/= 'unquote a)
          (fresh (z1 z2)
-           (lift-scope
+           (later-scope
              (fresh ()
                (== penv penv-out)
-               (lift `(literalo ,(expand mval))))
+               (later `(literalo ,(expand mval))))
              z1)
-           (lift-scope
+           (later-scope
              (fresh (penv^ v1 v2)
                (l== `(,v1 . ,v2) mval)
                (fresh (z3 z4)
-                 (lift-scope
+                 (later-scope
                    (fresh ()
                      (quasi-p-no-match a v1 penv penv-out))
                    z3)
-                 (lift-scope
+                 (later-scope
                    (fresh ()
                      (quasi-p-match a v1 penv penv^)
                      (quasi-p-no-match d v2 penv^ penv-out))
                    z4)
-                 (lift `(conde ,z3 ,z4))))
+                 (later `(conde ,z3 ,z4))))
              z2)
-           (lift `(conde ,z1 ,z2)))
+           (later `(conde ,z1 ,z2)))
          )))))

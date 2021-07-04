@@ -23,7 +23,7 @@
 
 (test
     (run-staged 2 (q)
-      (lift `(conde
+      (later `(conde
                ((== ,q 1))
                ((== ,q 2)))))
   '(1 2))
@@ -109,5 +109,5 @@
 (test
     (run-staged 1 (q)
       (symbolo q)
-      (lift `(numbero ,q)))
+      (later `(numbero ,q)))
   '())

@@ -55,7 +55,7 @@
        (== `(,rator . ,rands) expr)
        (eval-expo #f rator env `(call ,p-name))
        (eval-listo rands env a*)
-       (lift `((,p-name . ,a*) ,val))))
+       (later `((,p-name . ,a*) ,val))))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
@@ -88,13 +88,13 @@
          ((== stage? #t)
           (fresh (out c-body c-letrec-body)
             (dynamic out)
-            (lift-scope
+            (later-scope
              (eval-expo #t body res out)
              c-body)
-            (lift-scope
+            (later-scope
              (eval-expo #t letrec-body env^ val)
              c-letrec-body)
-            (lift `(letrec ((,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
+            (later `(letrec ((,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))
                      (fresh () . ,c-letrec-body))))
           )
          ((== stage? #f)

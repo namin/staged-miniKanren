@@ -7,7 +7,7 @@
    + [ ] add multiple letrec bindings to unstaged interpreter
 
 - [x] Use a reify tag for quasi instead of ad-hoc knowledge for each construct.
-      Then `l==` becomes `(lift (== ,(reify a) ,(reify b)))`.
+      Then `l==` becomes `(later (== ,(reify a) ,(reify b)))`.
 
 - [x] Investigate how/if unstaged evalo should reenter staged code.
       Share closure representation and calling convention.
@@ -78,16 +78,16 @@ run-staged 1 ()
     + [x] Processing constraints was cutting off constraints over 1 for `symbolo` and `numbero` due to a format misunderstanding.
     + [x] Specializing happened too early for lambda closures inside of variadic outer lambda because the rands are not yet evaluated.
            Solution: switch the order to be like non-variadic case. Reverted: not acceptable due to performance regression in benchmarks.
-           Long-term solution: see below, consider doing reification at once at the end, even when lifting scopes.
+           Long-term solution: see below, consider doing reification at once at the end, even when latering scopes.
     + [x] `or` is poorly translated, leading to non-determinism.
           `(or '#f _.0)`.
     + [x] Over-done expansion in `symbol?` and other primitives.
           `(symbol? equal?)` should evaluate to `#f`.
 
-- [x] Consider doing reification at once at the end, even when lifting scopes.
+- [x] Consider doing reification at once at the end, even when latering scopes.
       This would avoid specializing being order dependent.
 
-- [x] Check all explicit `lift`s in `staged-interp` and make sure unifications are properly expanded.
+- [x] Check all explicit `later`s in `staged-interp` and make sure unifications are properly expanded.
 
 - [ ] Fix predicate primitives to consider nil and booleans in addition to symbol, number and pair.
       Fix in original faster-mk full interp, in unstated-interp, in staged-interp.
@@ -102,7 +102,7 @@ run-staged 1 ()
 
 - [ ] Examine the `eval-expo #f` for rator evaluation.
       Possible test: `(let ([f ,e]) (f 5))`.
-      Also re-consider whether `stage?` should be `#t` when lifting to `u-eval-expo` when `varo`.
+      Also re-consider whether `stage?` should be `#t` when latering to `u-eval-expo` when `varo`.
 
 - [ ] Debug last slow test of Will.
 
@@ -110,7 +110,7 @@ run-staged 1 ()
       staging is partial evaluation with manual annotations instead of heuristics,
       relational staging is partial deduction with manual annotations instead of heuristics.
 
-- [ ] @michaelballantyne will write a demo of syntactic lift.
+- [ ] @michaelballantyne will write a demo of syntactic later.
 
 - [ ] For showing off synthesis it would be interesting to have some examples that use really big ground contexts;
       lots of helpers, say.

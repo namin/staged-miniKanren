@@ -134,7 +134,7 @@
        (let ((r (let ((c2 `(,S ,D ,A ,T () ,L)))
                   (append (all-of (bind* (g0 c2) g ...))
                           (all-of (bind* (g1 c2) g^ ...)) ...))))
-         ((lift `(conde ,@(map (lambda (c3) (walk-lift (c->C c3) (c->S c3))) r))) c))))))
+         ((later `(conde ,@(map (lambda (c3) (walk-later (c->C c3) (c->S c3))) r))) c))))))
 
 (define-syntax mplus*
   (syntax-rules ()
@@ -631,7 +631,7 @@
       (let ((S (c->S c)) (D (c->D c))
             (A (c->A c)) (T (c->T c))
             (C (c->C c)))
-        (let ((v (list (walk* x S) '!! (walk-lift C S))))
+        (let ((v (list (walk* x S) '!! (walk-later C S))))
           (let ((S (reify-S v '())))
             (reify+ v S
               (let ((D (remp
@@ -855,26 +855,26 @@
       ((null? t) ''())
       (else (list 'quote t)))))
 
-(define walk-lift
+(define walk-later
   (lambda (C S)
     (map fix-l== (walk* (reverse C) S))))
 
-(define lift
+(define later
   (lambda (x)
     (lambdag@ (c : S D A T C L)
       `(,S ,D ,A ,T ,(cons x C) ,L))))
 
-(define lift-scope
+(define later-scope
   (lambda (g out)
     (lambdag@ (c : S D A T C L)
       (bind*
        (g `(,S ,D ,A ,T () ,L))
        (lambdag@ (c2 : S2 D2 A2 T2 C2 L2)
          ((fresh ()
-            (== out (walk-lift C2 S2)))
+            (== out (walk-later C2 S2)))
           `(,S ,D ,A ,T ,C ,L)))))))
 
-(define l== (lambda (e1 e2) (fresh () (lift `(== ,e1 ,e2)))))
+(define l== (lambda (e1 e2) (fresh () (later `(== ,e1 ,e2)))))
 
 (define dynamic
   (lambda xs
