@@ -40,7 +40,7 @@
 
 
 
-(record-bench 'run-staged 'peano-synth-fib-direct-1)
+(record-bench 'run-staged 'peano-synth-fib-direct 1)
 (time-test
   (run-staged #f (fib-direct)
     (== `(lambda (n)
@@ -65,7 +65,7 @@
                '(s . z)
                (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))))
 
-(record-bench 'unstaged 'peano-synth-fib-direct-1)
+(record-bench 'unstaged 'peano-synth-fib-direct 1)
 (time-test
   (run #f (fib-direct)
     (== `(lambda (n)
@@ -127,7 +127,7 @@
        (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
      )))))))
 
-(record-bench 'run-staged 'peano-synth-fib-aps-1)
+(record-bench 'run-staged 'peano-synth-fib-aps 1)
 (time-test
   (run-staged #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -156,7 +156,7 @@
 
 #|
 ;;;  Seems super slow---didn't return after a minute or so
-(record-bench 'unstaged 'peano-synth-fib-aps-1)
+(record-bench 'unstaged 'peano-synth-fib-aps 1)
 (time-test
   (run #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -187,7 +187,7 @@
 
 ;;  seems very slow, even with the symbolo hint
 #|
-(record-bench 'run-staged 'peano-synth-fib-aps-2)
+(record-bench 'run-staged 'peano-synth-fib-aps 2)
 (time-test
   (run-staged #f (fib-acc ACC1 ACC2)
     (fresh (A B)
@@ -218,7 +218,7 @@
 |#
 
 
-(record-bench 'run-staged 'peano-synth-fib-aps-3)
+(record-bench 'run-staged 'peano-synth-fib-aps 3)
 (time-test
   (run-staged #f (fib-acc)
     (== `(lambda (n a1 a2)
@@ -244,7 +244,7 @@
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
 
 
-(record-bench 'unstaged 'peano-synth-fib-aps-3)
+(record-bench 'unstaged 'peano-synth-fib-aps 3)
 (time-test
   (run #f (fib-acc)
     (== `(lambda (n a1 a2)
@@ -316,13 +316,13 @@
    (peano-fib `(fib-aps ',n ',a1 ',a2))
    result))
 
-(record-bench 'staged 'peano-fib-1)
+(record-bench 'staged 'peano-fib 1)
 (time-test
  (run* (v)
    (fib-apso '(s s s s s s . z) 'z '(s . z) v))
   '((s s s s s s s s . z)))
 
-(record-bench 'run-staged 'peano-fib-1)
+(record-bench 'run-staged 'peano-fib 1)
 (time-test
   (run-staged #f (v)
     (evalo-staged
@@ -330,7 +330,7 @@
      v))
   '((s s s s s s s s . z)))
 
-(record-bench 'unstaged 'peano-fib-1)
+(record-bench 'unstaged 'peano-fib 1)
 (time-test
   (run* (v)
     (evalo-unstaged
@@ -339,14 +339,14 @@
   '((s s s s s s s s . z)))
 
 
-(record-bench 'staged 'peano-fib-2)
+(record-bench 'staged 'peano-fib 2)
 (time-test
   (run 1 (q)
     (fib-apso q 'z '(s . z)
               '(s s s s s s s s . z)))
   '((s s s s s s . z)))
 
-(record-bench 'run-staged 'peano-fib-2)
+(record-bench 'run-staged 'peano-fib 2)
 (time-test
   (run-staged 1 (q)
     (evalo-staged
@@ -354,7 +354,7 @@
      '(s s s s s s s s . z)))
   '((s s s s s s . z)))
 
-(record-bench 'unstaged 'peano-fib-2)
+(record-bench 'unstaged 'peano-fib 2)
 (time-test
   (run 1 (q)
     (evalo-unstaged
@@ -363,14 +363,14 @@
   '((s s s s s s . z)))
 
 
-(record-bench 'staged 'peano-fib-3)
+(record-bench 'staged 'peano-fib 3)
 (time-test
   (run 1 (q)
     (fib-apso q 'z '(s . z)
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'run-staged 'peano-fib-3)
+(record-bench 'run-staged 'peano-fib 3)
 (time-test
   (run-staged 1 (q)
     (evalo-staged
@@ -378,7 +378,7 @@
      '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'unstaged 'peano-fib-3)
+(record-bench 'unstaged 'peano-fib 3)
 (time-test
   (run 1 (q)
     (evalo-unstaged
@@ -387,7 +387,7 @@
   '((s s s s s s s . z)))
 
 
-(record-bench 'run-staged 'peano-fib-4)
+(record-bench 'run-staged 'peano-fib 4)
 (time-test
   (run-staged 5 (q)
     (evalo-staged
@@ -404,7 +404,7 @@
      $$
      (=/= ((_.0 quote))))))
 
-(record-bench 'unstaged 'peano-fib-4)
+(record-bench 'unstaged 'peano-fib 4)
 (time-test
   (run 5 (q)
     (evalo-unstaged
