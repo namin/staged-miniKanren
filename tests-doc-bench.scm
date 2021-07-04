@@ -79,8 +79,8 @@
 
 
 ;; WEB: Even slower to generate the `null?` version of the test, if `match` and `equal?` are disallowed.
-(record-bench 'run-staged 'appendo-synth-0c)
-(time-test
+;;(record-bench 'run-staged 'appendo-synth-0c)
+(todo "appendo-synth-0 too slow";;time-test
   (run-staged 1 (q)
     (absento 'match q)
     (absento 'equal? q)
