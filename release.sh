@@ -39,5 +39,4 @@ chez --script tests-all.scm
 
 cd ..
 
-egrep "namin" */*
-egrep "WEB" */*
+egrep "namin|WEB" */*

@@ -141,14 +141,6 @@
     (parseo '(d/dc 'baz 'f) parse-result))
   '(#f))
 
-(record-bench 'unstaged 'parse-0)
-(time-test
-  (run #f (parse-result)
-    (evalo-unstaged
-      (parse '(d/dc 'baz 'f))
-      parse-result))
-  '(#f))
-
 (record-bench 'run-staged 'parse-0)
 (time-test
   (run-staged #f (parse-result)
@@ -157,51 +149,22 @@
       parse-result))
   '(#f))
 
-
-
-
-
-(record-bench 'run-staged 'parse-2)
+(record-bench 'unstaged 'parse-0)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
-      (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
+  (run #f (parse-result)
+    (evalo-unstaged
+      (parse '(d/dc 'baz 'f))
       parse-result))
-  '((alt bar (rep baz))))
-
-(record-bench 'run-staged 'parse-3)
-(time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
-     (parse '(regex-match '(seq foo (rep bar)) 
-                          '(foo bar bar bar)))
-     parse-result))
-  '(#t))
-
-(record-bench 'run-staged 'parse-4)
-(time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
-     (parse '(regex-match '(seq foo (rep bar)) 
-                          '(foo bar baz bar bar)))
-     parse-result))
   '(#f))
 
-(record-bench 'run-staged 'parse-5)
+
+
+(record-bench 'staged 'parse-1)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
-     (parse '(regex-match '(seq foo (rep (alt bar baz))) 
-                          '(foo bar baz bar bar)))
-     parse-result))
-  '(#t))
+  (run #f (parse-result)
+    (parseo '(d/dc '(seq foo barn) 'foo) parse-result))
+  '(barn))
 
-
-
-
-;; What am I doing wrong?
-
-;; works
 (record-bench 'run-staged 'parse-1)
 (time-test
   (run-staged #f (parse-result)
@@ -212,31 +175,39 @@
 
 (record-bench 'unstaged 'parse-1)
 (time-test
-  (run 1 (parse-result)
+  (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc '(seq foo barn) 'foo))
       parse-result))
   '(barn))
 
-(record-bench 'staged 'parse-1)
-(time-test
-  (run 1 (parse-result)
-    (parseo '(d/dc '(seq foo barn) 'foo) parse-result))
-  '(barn))
 
-
-
-
-
-
-#!eof
 
 
 (record-bench 'staged 'parse-2)
 (time-test
-  (run 1 (parse-result)
+  (run #f (parse-result)
     (parseo '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo) parse-result))
-  '???)
+  '((alt bar (rep baz))))
+
+(record-bench 'run-staged 'parse-2)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+      (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
+      parse-result))
+  '((alt bar (rep baz))))
+
+(record-bench 'unstaged 'parse-2)
+(time-test
+  (run #f (parse-result)
+    (evalo-unstaged
+      (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
+      parse-result))
+  '((alt bar (rep baz))))
+
+
+
 
 (record-bench 'staged 'parse-3)
 (time-test
@@ -244,7 +215,27 @@
     (parseo '(regex-match '(seq foo (rep bar)) 
                           '(foo bar bar bar))
             parse-result))
-  '???)
+  '(#t))
+
+(record-bench 'run-staged 'parse-3)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+     (parse '(regex-match '(seq foo (rep bar)) 
+                          '(foo bar bar bar)))
+     parse-result))
+  '(#t))
+
+(record-bench 'unstaged 'parse-3)
+(time-test
+  (run #f (parse-result)
+    (evalo-unstaged
+      (parse '(regex-match '(seq foo (rep bar)) 
+                           '(foo bar bar bar)))
+      parse-result))
+  '(#t))
+
+
 
 (record-bench 'staged 'parse-4)
 (time-test
@@ -252,7 +243,28 @@
     (parseo '(regex-match '(seq foo (rep bar)) 
                           '(foo bar baz bar bar))
             parse-result))
-  '???)
+  '(#f))
+
+(record-bench 'run-staged 'parse-4)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+     (parse '(regex-match '(seq foo (rep bar)) 
+                          '(foo bar baz bar bar)))
+     parse-result))
+  '(#f))
+
+(record-bench 'unstaged 'parse-4)
+(time-test
+  (run #f (parse-result)
+    (evalo-unstaged
+      (parse '(regex-match '(seq foo (rep bar)) 
+                          '(foo bar baz bar bar)))
+      parse-result))
+  '(#f))
+
+
+
 
 (record-bench 'staged 'parse-5)
 (time-test
@@ -260,51 +272,22 @@
     (parseo '(regex-match '(seq foo (rep (alt bar baz))) 
                           '(foo bar baz bar bar))
             parse-result))
-  '???)
+  '(#t))
 
+(record-bench 'run-staged 'parse-5)
+(time-test
+  (run-staged #f (parse-result)
+    (evalo-staged
+     (parse '(regex-match '(seq foo (rep (alt bar baz))) 
+                          '(foo bar baz bar bar)))
+     parse-result))
+  '(#t))
 
-
-
-
-(parse '(d/dc 'baz 'f))
-
-(parse '(d/dc '(seq foo barn) 'foo))
-
-(parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
-
-(parse '(regex-match '(seq foo (rep bar)) 
-                     '(foo bar bar bar)))
-
-(parse '(regex-match '(seq foo (rep bar)) 
-                     '(foo bar baz bar bar)))
-
-
-
-#|
-(check-expect
- (d/dc 'baz 'f)
- #f)
-
-(check-expect
- (d/dc '(seq foo barn) 'foo)
- 'barn)
-
-(check-expect
- (d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo)
- '(alt bar (rep baz)))
-
-(check-expect
- (regex-match '(seq foo (rep bar)) 
-              '(foo bar bar bar))
- #t)
-
-(check-expect
- (regex-match '(seq foo (rep bar)) 
-              '(foo bar baz bar bar))
- #f)
-
-(check-expect
- (regex-match '(seq foo (rep (alt bar baz))) 
-              '(foo bar baz bar bar))
- #t)
-|#
+(record-bench 'unstaged 'parse-4)
+(time-test
+  (run #f (parse-result)
+    (evalo-unstaged
+     (parse '(regex-match '(seq foo (rep (alt bar baz))) 
+                          '(foo bar baz bar bar)))
+      parse-result))
+  '(#t))

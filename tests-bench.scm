@@ -92,7 +92,7 @@
     '(d e))
   '(_.0))
 
-;;; WEB I would have expected (car l) to be generated...
+;;;  I would have expected (car l) to be generated...
 (time-test
  (run-staged 1 (q)
    (absento 'a q)
@@ -255,7 +255,7 @@
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
 
-;; WEB Tricky test, due to the nested map
+;;  Tricky test, due to the nested map
 (time-test
   (let ((e (eval (gen-hole
                   (lambda (q)
@@ -278,7 +278,7 @@
       (e q)))
   '(l))
 
-;; WEB Runs faster than the staged version
+;;  Runs faster than the staged version
 (time-test
   (run 1 (q)
     (u-eval-expo
@@ -340,8 +340,8 @@
   '(car))
 
 #|
-;; WEB I got bored of waiting for this test to return after ~1 minute.
-;; WEB This is a very tough test, due to the nested `map`!
+;;  I got bored of waiting for this test to return after ~1 minute.
+;;  This is a very tough test, due to the nested `map`!
 (time-test
   (syn-hole 1
             (lambda (q)
@@ -792,7 +792,7 @@
   '((cons x (cons (cons x '()) (cons x '())))))
 
 #|
-;;; WEB Painfully slow to generate this code!  Does it even terminate?
+;;;  Painfully slow to generate this code!  Does it even terminate?
 (define eval-and-map-and-list-and-let-evalo
   (eval
    (gen 'eval-expr '(expr)

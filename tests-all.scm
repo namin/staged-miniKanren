@@ -2,4 +2,3 @@
 (load "tests-run.scm")
 (load "tests-doc.scm")
 (load "tests-micro.scm")
-(load "tests-parsing-with-derivatives.scm")

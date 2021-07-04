@@ -59,7 +59,7 @@
      (sym _.1))))
 
 
-;; WEB: Much slower to come up with the `equal?` equivalent of `(null? xs)`, if `match` is disallowed.
+;;  Much slower to come up with the `equal?` equivalent of `(null? xs)`, if `match` is disallowed.
 (record-bench 'run-staged 'appendo-synth-0b)
 (time-test
   (run-staged 1 (q)
@@ -78,7 +78,7 @@
   '((equal? xs '())))
 
 
-;; WEB: Even slower to generate the `null?` version of the test, if `match` and `equal?` are disallowed.
+;;  Even slower to generate the `null?` version of the test, if `match` and `equal?` are disallowed.
 ;;(record-bench 'run-staged 'appendo-synth-0c)
 (todo "appendo-synth-0 too slow";;time-test
   (run-staged 1 (q)
@@ -97,7 +97,7 @@
        (c d e f))))
   '((null? xs)))
 
-;; WEB: if we don't exclude `match`, variants of `match` will be generated with a `run 3`, rather than `null?`
+;;  if we don't exclude `match`, variants of `match` will be generated with a `run 3`, rather than `null?`
 (record-bench 'run-staged 'appendo-synth-0d)
 (time-test
   (run-staged 3 (q)
@@ -174,7 +174,7 @@
        (c d e f))))
   '((car xs)))
 
-;; WEB: this seems very slow!  I'm surprised.
+;;  this seems very slow!  I'm surprised.
 ;;
 ;; We really need to be sure the staged and unstaged interpreters are identical, as much as possible.
 #|
@@ -195,7 +195,7 @@
   '((car xs)))
 |#
 
-;; WEB Seems like the evaluator biases towards using `match` rather than using `cdr`.
+;;  Seems like the evaluator biases towards using `match` rather than using `cdr`.
 ;; `(cdr xs)` was the code that was removed.  The synthesized `match` also works, however.
 (record-bench 'run-staged 'appendo-synth-2)
 (time-test
@@ -246,7 +246,7 @@
      (sym _.0 _.1 _.2)
      (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)))))
 
-;; WEB: hopelessly slow
+;;  hopelessly slow
 #|
 (record-bench 'unstaged 'appendo-synth-2)
 (time-test
@@ -350,7 +350,7 @@
 
 
 
-;;; WEB: didn't return after several minutes
+;;;  didn't return after several minutes
 #|
 (record-bench 'run-staged 'appendo-synth-3)
 (time-test
