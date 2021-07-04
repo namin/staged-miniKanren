@@ -296,14 +296,15 @@
      $$
      (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
 
-;; TODO -- reified answer should contain constaints
 (record-bench 'run-staged 'parse-backwards-0)
 (time-test
   (run-staged 1 (regex)
     (evalo-staged
       (parse `(d/dc ',regex 'f))
       '(#f)))
-  '((seq f (#f) . _.0)))
+  '(((seq f (#f) . _.0)
+     $$
+     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
 
 (record-bench 'unstaged 'parse-backwards-0)
 (time-test
@@ -325,14 +326,15 @@
      $$
      (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
 
-;; TODO -- reified answer should contain constaints
 (record-bench 'run-staged 'parse-backwards-1)
 (time-test
   (run-staged 1 (regex)
     (evalo-staged
       (parse `(d/dc ',regex 'foo))
       'barn))
-  '((seq foo barn . _.0)))
+  '(((seq foo barn . _.0)
+     $$
+     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
 
 (record-bench 'unstaged 'parse-backwards-1)
 (time-test
@@ -358,14 +360,19 @@
   '???)
 |#
 
-;; TODO -- reified answer should contain constaints
 (record-bench 'run-staged 'parse-backwards-2)
 (time-test
   (run-staged 1 (regex)
     (evalo-staged
       (parse `(d/dc ',regex 'foo))
       '(alt bar (rep baz))))
-  '((seq foo (alt bar (rep baz)) . _.0)))
+  '(((seq foo (alt bar (rep baz)) . _.0)
+   $$
+   (absento
+     (call _.0)
+     (closure _.0)
+     (dynamic _.0)
+     (prim _.0)))))
 
 ;; didn't come back after 5+ minutes
 #|
