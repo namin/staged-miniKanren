@@ -3,6 +3,8 @@ import re
 re_bench = re.compile(r'^BENCH (?P<phase>\S+) (?P<name>\S+)( (?P<id>\S+))?$')
 re_time = re.compile(r'\s*(?P<time>\d+\.\d+)s elapsed cpu time')
 
+MAX_TIME = 100000.0
+
 all_phases = ['staging', 'staged', 'run-staged', 'unstaged']
 all_times = {}
 all_names = []
@@ -41,22 +43,20 @@ for name in all_names:
         s = name
         if id:
             s += ' (%s)' % id
-        times = []
+        times = {}
         for phase in all_phases:
             s += ' & '
             key = (name, phase, id)
             if key in all_times:
                 time = all_times[key]
-                times.append(time)
+                times[phase] = time
                 s += '$%.5f$s' % time
-        if times != []:
-            s += ' & '
-            if len(times) >= 2:
-                gain = times[-1]/times[-2]
-                s += '$%.2f$' % gain
+        s += ' & '
+        min_time = min(times.get('staged', MAX_TIME),
+                       times.get('run-staged', MAX_TIME))
+        if min_time < MAX_TIME and 'unstaged' in times:
+            gain = times['unstaged'] / min_time
+            s += '$%.3f$' % gain
             s += '\\\\'
             print(s)
             print('\\hline')
-        
-    
-        
