@@ -121,6 +121,36 @@
     ((a b c d e) ())
     ))
 
+;; # New Ground
+
+;; ## Staging
+
+(test
+    (run* (q) (l== q 1))
+  '((_.0 !! ((== _.0 '1)))))
+
+(test
+    (run* (q) (== q 1))
+  '(1))
+
+(test
+    (run* (q) (l== (list 1) (list q)))
+  '((_.0 !! ((== (cons '1 '()) (cons _.0 '())))))
+  ;; not simplified to ((_.0 !! ((== '1 _.0))))
+  )
+
+(test
+    (run* (q) (l== 1 2))
+  '((_.0 !! ((== '1 '2)))))
+
+(test
+    (run* (q) (fresh (x) (l== (cons x x) q)))
+  '((_.0 !! ((== (cons _.1 _.1) _.0)))))
+
+(test
+    (run* (q) (later `(== ,(expand q) ,(expand 1))))
+  '((_.0 !! ((== _.0 '1)))))
+
 ;; REST
 
 (define-staged-relation (appendo xs ys zs)
