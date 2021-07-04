@@ -282,3 +282,98 @@
                           '(foo bar baz bar bar)))
       parse-result))
   '(#t))
+
+
+
+;; Running backwards
+;;
+;; the orginal regex running forward was the symbol 'baz'
+(record-bench 'staged 'parse-backwards-0)
+(time-test
+  (run 1 (regex)
+    (parseo `(d/dc ',regex 'f) '(#f)))
+  '(((seq f (#f) . _.0)
+     $$
+     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+
+;; TODO -- reified answer should contain constaints
+(record-bench 'run-staged 'parse-backwards-0)
+(time-test
+  (run-staged 1 (regex)
+    (evalo-staged
+      (parse `(d/dc ',regex 'f))
+      '(#f)))
+  '((seq f (#f) . _.0)))
+
+(record-bench 'unstaged 'parse-backwards-0)
+(time-test
+  (run 1 (regex)
+    (evalo-unstaged
+      (parse `(d/dc ',regex 'f))
+      '(#f)))
+  '(((seq f (#f) . _.0)
+     $$
+     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+
+
+;; the orginal regex running forward was '(seq foo barn)'
+(record-bench 'staged 'parse-backwards-1)
+(time-test
+  (run 1 (regex)
+    (parseo `(d/dc ',regex 'foo) 'barn))
+  '(((seq foo barn . _.0)
+     $$
+     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+
+;; TODO -- reified answer should contain constaints
+(record-bench 'run-staged 'parse-backwards-1)
+(time-test
+  (run-staged 1 (regex)
+    (evalo-staged
+      (parse `(d/dc ',regex 'foo))
+      'barn))
+  '((seq foo barn . _.0)))
+
+(record-bench 'unstaged 'parse-backwards-1)
+(time-test
+  (run 1 (regex)
+    (evalo-unstaged
+      (parse `(d/dc ',regex 'foo))
+      'barn))
+  '(((seq foo barn . _.0)
+     $$
+     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+
+
+
+
+
+;; the orginal regex running forward was '(alt (seq foo bar) (seq foo (rep baz)))'
+;; didn't come back after 5+ minutes
+#|
+(record-bench 'staged 'parse-backwards-2)
+(time-test
+  (run 1 (regex)
+    (parseo `(d/dc ',regex 'foo) '(alt bar (rep baz))))
+  '???)
+|#
+
+;; TODO -- reified answer should contain constaints
+(record-bench 'run-staged 'parse-backwards-2)
+(time-test
+  (run-staged 1 (regex)
+    (evalo-staged
+      (parse `(d/dc ',regex 'foo))
+      '(alt bar (rep baz))))
+  '((seq foo (alt bar (rep baz)) . _.0)))
+
+;; didn't come back after 5+ minutes
+#|
+(record-bench 'unstaged 'parse-backwards-2)
+(time-test
+  (run 1 (regex)
+    (evalo-unstaged
+      (parse `(d/dc ',regex 'foo))
+      '(alt bar (rep baz))))
+  '???)
+|#
