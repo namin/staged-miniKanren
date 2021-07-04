@@ -1,11 +1,4 @@
-(load "../faster-miniKanren/mk-vicare.scm")
-(load "../faster-miniKanren/mk.scm")
-
-(load "staged-interp.scm")
-(load "staged-utils.scm")
-(load "staged-run.scm")
-
-(load "test-check.scm")
+(load "staged-load.scm")
 
 (test (ex 't '(x) 'x) '(x))
 (test
@@ -354,9 +347,6 @@
                           assumption
                           ())))))))))))))))
 
-
-;; running with holes
-(load "unstaged-interp.scm")
 
 (test
     (syn-hole 1

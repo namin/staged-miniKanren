@@ -1,13 +1,4 @@
-(load "../faster-miniKanren/mk-vicare.scm")
-(load "../faster-miniKanren/mk.scm")
-
-(load "staged-interp.scm")
-(load "staged-utils.scm")
-(load "staged-run.scm")
-
-(load "unstaged-interp.scm")
-
-(load "test-check.scm")
+(load "staged-load.scm")
 
 ;; Synthesizes a 'match'-based version of 'null?'
 (record-bench 'run-staged 'appendo-synth-0)

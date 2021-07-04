@@ -1,14 +1,4 @@
-(load "../faster-miniKanren/mk-vicare.scm")
-(load "../faster-miniKanren/mk.scm")
-
-(load "staged-interp.scm")
-(load "staged-utils.scm")
-(load "staged-run.scm")
-
-(load "unstaged-interp.scm")
-
-(load "test-check.scm")
-
+(load "staged-load.scm")
 
 ;; Adapted from the nnf code in 'The Semantic Web Explained' by Péter
 ;; Szeredi, Gergely Lukácsy, and Tamás Benkő. Cambridge University
