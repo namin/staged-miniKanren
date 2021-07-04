@@ -65,24 +65,39 @@
 (time-test
   (run 10 (concept)
     (nnfo concept '(Not Top)))
-  '((Not Top)
-    (Not (Not (Not Top)))
-    ((Not (AtLeast z _.0))
-     $$
-     (sym _.0))
-    (Not (Not (Not (Not (Not Top)))))
-    ((Not (Not (Not (AtLeast z _.0))))
-     $$
-     (sym _.0))
-    (Not (Not (Not (Not (Not (Not (Not Top)))))))
-    ((Not (Not (Not (Not (Not (AtLeast z _.0))))))
-     $$
-     (sym _.0))
-    (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))
-    ((Not (Not (Not (Not (Not (Not (Not (AtLeast z _.0))))))))
-     $$
-     (sym _.0))
-    (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
+  '((Not Top) (Not (Not (Not Top)))
+  ((Not (AtLeast z _.0))
+    $$
+    (=/= ((_.0 call))
+         ((_.0 closure))
+         ((_.0 dynamic))
+         ((_.0 prim)))
+    (sym _.0))
+  (Not (Not (Not (Not (Not Top)))))
+  ((Not (Not (Not (AtLeast z _.0))))
+    $$
+    (=/= ((_.0 call))
+         ((_.0 closure))
+         ((_.0 dynamic))
+         ((_.0 prim)))
+    (sym _.0))
+  (Not (Not (Not (Not (Not (Not (Not Top)))))))
+  ((Not (Not (Not (Not (Not (AtLeast z _.0))))))
+    $$
+    (=/= ((_.0 call))
+         ((_.0 closure))
+         ((_.0 dynamic))
+         ((_.0 prim)))
+    (sym _.0))
+  (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))
+  ((Not (Not (Not (Not (Not (Not (Not (AtLeast z _.0))))))))
+    $$
+    (=/= ((_.0 call))
+         ((_.0 closure))
+         ((_.0 dynamic))
+         ((_.0 prim)))
+    (sym _.0))
+  (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
 
 
 
