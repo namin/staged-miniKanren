@@ -210,7 +210,6 @@
       parse-result))
   '(barn))
 
-;; returns () instead of (barn)
 (record-bench 'unstaged 'parse-1)
 (time-test
   (run 1 (parse-result)
@@ -219,7 +218,6 @@
       parse-result))
   '(barn))
 
-;; returns () instead of (barn)
 (record-bench 'staged 'parse-1)
 (time-test
   (run 1 (parse-result)
