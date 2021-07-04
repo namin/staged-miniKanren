@@ -35,7 +35,9 @@
   (syntax-rules ()
     ((_ (name x0 x ...) g0 g ...)
      (define name
-       (eval (gen-func-rel
-              (parameterize ((staging-time? #t))
-                (run 100 (x0 x ...) g0 g ...))
-              'x0 'x ...))))))
+       (eval
+        (time
+         (gen-func-rel
+          (parameterize ((staging-time? #t))
+            (run 100 (x0 x ...) g0 g ...))
+          'x0 'x ...)))))))
