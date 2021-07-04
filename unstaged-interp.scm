@@ -151,6 +151,33 @@
          ((fresh (a d)
             (== `(,a . ,d) v)
             (== #f val)))))]
+    [(== prim-id 'number?)
+     (fresh (v)
+       (== `(,v) a*)
+       (conde
+         ((numbero v) (== #t val))
+         ((symbolo v) (== #f val))
+         ((fresh (a d)
+            (== `(,a . ,d) v)
+            (== #f val)))))]
+    [(== prim-id 'pair?)
+     (fresh (v)
+       (== `(,v) a*)
+       (conde
+         ((symbolo v) (== #f val))
+         ((numbero v) (== #f val))
+         ((fresh (a d)
+            (== `(,a . ,d) v)
+            (== #t val)
+            (not-tago a)))
+         ((fresh (a d)
+            (== `(,a . ,d) v)
+            (== #f val)
+            (conde
+              ((== a 'closure))
+              ((== a 'prim))
+              ((== a 'call))
+              ((== a 'dynamic)))))))]
     [(== prim-id 'null?)
      (fresh (v)
        (== `(,v) a*)
@@ -227,6 +254,8 @@
                       (not . (val . (prim . not)))
                       (equal? . (val . (prim . equal?)))
                       (symbol? . (val . (prim . symbol?)))
+                      (number? . (val . (prim . number?)))
+                      (pair? . (val . (prim . pair?)))
                       (cons . (val . (prim . cons)))
                       (null? . (val . (prim . null?)))
                       (car . (val . (prim . car)))
