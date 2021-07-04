@@ -14,9 +14,7 @@ cp ../../faster-miniKanren/mk.scm faster-miniKanren/
 cp ../RUN.md README.md
 cp ../benchread.py staged-miniKanren/
 
-cp ../staged-load0.scm staged-miniKanren/
 cp ../staged-load.scm staged-miniKanren/
-
 cp ../staged-run.scm staged-miniKanren/
 cp ../staged-utils.scm staged-miniKanren/
 cp ../staged-interp.scm staged-miniKanren/
