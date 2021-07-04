@@ -9,7 +9,9 @@
     ((_ n (q) g0 g ...)
      (begin
        (printf "running first stage\n")
-       (let* ((f (gen-func (run 100 (q) g0 g ...)))
+       (let* ((f (gen-func
+                  (parameterize ((staging-time? #t))
+                    (run 100 (q) g0 g ...))))
               (e (eval f)))
          (printf "running second stage\n")
          (run n (q) (e q)))))
@@ -34,5 +36,6 @@
     ((_ (name x0 x ...) g0 g ...)
      (define name
        (eval (gen-func-rel
-              (run 100 (x0 x ...) g0 g ...)
+              (parameterize ((staging-time? #t))
+                (run 100 (x0 x ...) g0 g ...))
               'x0 'x ...))))))
