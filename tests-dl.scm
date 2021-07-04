@@ -46,12 +46,13 @@
                          [concept concept]))))
              (nnf ',concept)))))))
 
+(record-bench 'staging 'nnf)
 (define-staged-relation (nnfo concept nnf-concept)
   (evalo-staged
    (nnf concept)
    nnf-concept))
 
-(record-bench 'staged 'nnfo-0a)
+(record-bench 'staged 'nnf 0)
 (time-test
   (run 10 (concept)
     (nnfo concept '(Not Top)))
@@ -89,9 +90,7 @@
     (sym _.0))
   (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
 
-
-
-(record-bench 'unstaged 'nnf-0a)
+(record-bench 'unstaged 'nnf 0)
 (time-test
   (run 10 (concept)
     (evalo-unstaged
@@ -115,7 +114,7 @@
     (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))))))
 
 ;; Note the difference in order w.r.t. the unstaged version.
-(record-bench 'run-staged 'nnf-0a)
+(record-bench 'run-staged 'nnf 0)
 (time-test
   (run-staged 10 (concept)
     (evalo-staged
@@ -157,7 +156,7 @@
 
 
 
-(record-bench 'unstaged 'nnf-0b)
+(record-bench 'unstaged 'nnf 1)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -165,7 +164,7 @@
      nnf-concept))
   '((Not Top)))
 
-(record-bench 'run-staged 'nnf-0b)
+(record-bench 'run-staged 'nnf 1)
 (time-test
   (run-staged #f (nnf-concept)
     (evalo-staged
@@ -174,7 +173,7 @@
   '((Not Top)))
 
 
-(record-bench 'unstaged 'nnf-0c)
+(record-bench 'unstaged 'nnf 2)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -183,8 +182,16 @@
   '((AtLeast (s s . z) hasChild)))
 
 
+(record-bench 'run-staged 'nnf 2)
+(time-test
+  (run-staged #f (nnf-concept)
+    (evalo-staged
+     (nnf '(Not (AtMost (s . z) hasChild)))
+     nnf-concept))
+  '((AtLeast (s s . z) hasChild)))
 
-(record-bench 'unstaged 'nnf-0d)
+
+(record-bench 'unstaged 'nnf 3)
 (time-test
   (run* (nnf-concept)
     (evalo-unstaged
@@ -192,7 +199,7 @@
      nnf-concept))
   '((AtMost (s s . z) hasChild)))
 
-(record-bench 'run-staged 'nnf-0d)
+(record-bench 'run-staged 'nnf 3)
 (time-test
   (run-staged #f (nnf-concept)
     (evalo-staged
