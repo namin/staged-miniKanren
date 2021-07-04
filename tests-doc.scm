@@ -75,6 +75,18 @@
     (run* (x y z) (appendo `(a  . ,x) `(,y e) `(a b c d ,z)))
   '(((b c) d e)))
 
+(test
+    (run* (q)
+      (numbero q)
+      (=/= 'foo q))
+  '((_.0 $$ (num _.0))))
+
+(test
+    (run* (q)
+      (symbolo q)
+      (=/= 'foo q))
+  '((_.0 $$ (=/= ((_.0 foo))) (sym _.0))))
+
 ;; ## Relational Interpreters
 
 (test
