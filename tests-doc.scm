@@ -8,6 +8,8 @@
 
 (load "test-check.scm")
 
+(define evalo evalo-unstaged)
+
 ;; # Background
 
 ;; ## miniKanren
@@ -72,6 +74,54 @@
 (test
     (run* (x y z) (appendo `(a  . ,x) `(,y e) `(a b c d ,z)))
   '(((b c) d e)))
+
+;; ## Relational Interpreters
+
+(test
+    (run* (q) (evalo 1 q))
+  '(1))
+
+(test
+    (run* (q) (evalo (car '(1 2)) q))
+  '(1))
+
+(todo "too slow in this version of evalo"
+    (run 4 (q) (evalo q q))
+  '((_.0 (num _.0))
+   #t
+   #f
+   (((lambda (_.0) (list _.0 (list 'quote _.0)))
+     '(lambda (_.0) (list _.0 (list 'quote _.0))))
+    (=/= ((_.0 closure))
+         ((_.0 list))
+         ((_.0 prim))
+         ((_.0 quote)))
+    (sym _.0))))
+
+(test
+    ((lambda (x) (list x (list 'quote x)))
+     '(lambda (x) (list x (list 'quote x))))
+  '((lambda (x) (list x (list 'quote x)))
+    '(lambda (x) (list x (list 'quote x)))))
+
+(test
+    (run* (x y)
+      (evalo
+       `(letrec ((append (lambda (xs ys)
+                           (if (null? xs) ys
+                               (cons (car xs) (append (cdr xs) ys))))))
+          (append ',x ',y))
+       '(a b c d e)))
+  '(
+    (() (a b c d e))
+    ((a) (b c d e))
+    ((a b) (c d e))
+    ((a b c) (d e))
+    ((a b c d) (e))
+    ((a b c d e) ())
+    ))
+
+;; REST
 
 (define-staged-relation (appendo xs ys zs)
   (evalo-staged
