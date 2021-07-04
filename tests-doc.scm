@@ -341,6 +341,14 @@
        q))
   '((1 2 3 4)))
 
+;; # Implementation: Staged Relational Interpreter
+
+(test
+    (run-staged 1 (q)
+      (symbolo q)
+      (later `(numbero ,q)))
+  '())
+
 ;; # Synthesis
 
 (test
