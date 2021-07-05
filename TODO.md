@@ -92,7 +92,7 @@ run-staged 1 ()
 - [ ] Fix predicate primitives to consider nil and booleans in addition to symbol, number and pair.
       Fix in original faster-mk full interp, in unstated-interp, in staged-interp.
 
-- [ ] Lifting in scope should probably preserve constraints.
+- [x] Lifting in scope should probably preserve constraints.
 
 - [ ] Run proper benchmarks comparing staged and unstaged programs.
     + [x] Have basic benchmarks.
