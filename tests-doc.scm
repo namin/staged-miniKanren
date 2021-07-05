@@ -255,6 +255,39 @@ res
     (run* (q) (context-appendo `(append '(a b) '(c d e)) q))
     '((a b c d e)))
 
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `(letrec ((append
+                  (lambda (xs ys)
+                    (if (null? xs) ys
+                        (cons (car xs) (append (cdr xs) ys))))))
+          (append '(1 2) '(3 4)))
+       q))
+  '((1 2 3 4)))
+
+(test
+    (run-staged 2 (q)
+      (evalo-staged
+       `(letrec ((append
+                  (lambda (xs ys)
+                    (if (null? xs) ys
+                        (cons (car xs) (append (cdr xs) ys))))))
+          (append ,q '(3 4)))
+       '(1 2 3 4)))
+  '('(1 2) (list 1 2)))
+
+(test
+    (run 2 (q)
+      (evalo-unstaged
+       `(letrec ((append
+                  (lambda (xs ys)
+                    (if (null? xs) ys
+                        (cons (car xs) (append (cdr xs) ys))))))
+          (append ,q '(3 4)))
+       '(1 2 3 4)))
+  '('(1 2) (list 1 2)))
+
 ;; ### Theorem checker turned prover
 
 (define-staged-relation (proofo proof truth)
