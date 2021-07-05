@@ -1,6 +1,6 @@
 (load "staged-load.scm")
 
-(define (micro query)
+(define (micro0 query)
      `(letrec
        ((assp
          (lambda (p l)
@@ -98,6 +98,100 @@
 
      ))
 
+(define (micro query)
+     `(letrec
+       ((assp
+         (lambda (p l)
+           (if (null? l) #f
+               (if (p (car (car l))) (car l)
+                   (assp p (cdr l)))))))
+
+       (letrec ((var
+         (lambda (c) (cons 'var c))))
+         (letrec ((var?
+                   (lambda (x) (and (pair? x) (equal? (car x) 'var)))))
+           (letrec ((var=?
+                     (lambda (x1 x2) (equal? (cdr x1) (cdr x2)))))
+             (letrec ((walk
+                       (lambda (u s)
+                         ((lambda (pr) (if pr (walk (cdr pr) s) u))
+                          (and (var? u) (assp (lambda (v) (var=? u v)) s))))))
+               (letrec ((ext-s
+                         (lambda (x v s)
+                           (cons (cons x v) s))))
+                 (letrec ((mzero
+                             (lambda ()
+                               '())))
+                   (letrec ((unit
+                             (lambda (s/c)
+                               (cons s/c (mzero)))))
+                     (letrec ((unify
+                               (lambda (u v s)
+                                 ((lambda (u v)
+                                    (if (and (var? u) (var? v) (var=? u v)) s
+                                        (if (var? u) (ext-s u v s)
+                                            (if (var? v) (ext-s v u s)
+                                                (if (and (pair? u) (pair? v))
+                                                    ((lambda (s) (and s (unify (cdr u) (cdr v) s)))
+                                                     (unify (car u) (car v) s))
+                                                    (and (equal? u v) s))))))
+                                  (walk u s) (walk v s)))))
+                       (letrec ((===
+                                 (lambda (u v)
+                                   (lambda (s/c)
+                                     ((lambda (s) (if s (unit (cons s (cdr s/c))) (mzero)))
+                                      (unify u v (car s/c)))))))
+                         (letrec ((call/fresh
+                                   (lambda (f)
+                                     (lambda (s/c)
+                                       ((lambda (c) ((f (var c)) (cons (car s/c) (cons 's c))))
+                                        (cdr s/c))))))
+                           (letrec ((mplus
+                                     (lambda ($1 $2)
+                                       (if (null? $1) $2
+                                           (if (pair? $1) (cons (car $1) (mplus (cdr $1) $2))
+                                               (lambda () (mplus $2 ($1))))))))
+
+                             (letrec ((bind
+                                       (lambda ($ g)
+                                         (if (null? $) (mzero)
+                                             (if (pair? $) (mplus (g (car $)) (bind (cdr $) g))
+                                                 (lambda () (bind ($) g)))))))
+
+                               (letrec ((disj
+                                         (lambda (g1 g2)
+                                           (lambda (s/c) (mplus (g1 s/c) (g2 s/c))))))
+                                 (letrec ((conj
+                                           (lambda (g1 g2)
+                                             (lambda (s/c) (bind (g1 s/c) g2)))))
+                                   (letrec ((empty-state
+                                             (lambda ()
+                                               '(() . z))))
+
+                                     (letrec ((pull
+                                               (lambda ($)
+                                                 (if (or (null? $) (pair? $)) $ (pull ($))))))
+                                       (letrec ((take-all
+                                                 (lambda ($)
+                                                   ((lambda ($) (if (null? $) '() (cons (car $) (take-all (cdr $)))))
+                                                    (pull $)))))
+
+                                         (letrec ((take
+                                                   (lambda (n $)
+                                                     (if (equal? n 'z) '()
+                                                         ((lambda ($) (if (null? $) '() (cons (car $) (take (cdr n) (cdr $)))))
+                                                          (pull $))))))
+
+                                         ,query
+
+                                         ))))))))))))))))))))
+
+
+(define (micro-unstaged query)
+  (eval (micro `(,query (empty-state)))))
+
+(micro-unstaged 'unit)
+
 (test
     (run-staged 1 (v)
       (evalo-staged
@@ -113,11 +207,6 @@
        v))
   '((((((var . z) . 5)) s . z))))
 
-(define (micro-unstaged query)
-  (eval (micro `(,query (empty-state)))))
-
-(micro-unstaged 'unit)
-
 ;; This generates answers that are not valid microKanren programs.
 (test
     (run-staged 3 (q)
@@ -127,6 +216,12 @@
   '(unit list ((lambda _.0 _.0) $$ (sym _.0)))
 )
 
+(test
+    (run 3 (q)
+      (evalo-unstaged
+       (micro `(,q (empty-state)))
+       '((() . z))))
+  '(unit list ((lambda _.0 _.0) $$ (sym _.0))))
 
 (define (valid-ge? ge)
   `(letrec
