@@ -220,6 +220,8 @@
       (append ',xs ',ys))
    zs))
 
+res ;; contains the generated code
+
 (test
     (run* (q) (appendo '(a b) '(c d e) q))
     '((a b c d e)))
@@ -234,6 +236,24 @@
     ((a b c d) (e))
     ((a b c d e) ())
     ))
+
+
+(define-staged-relation (context-appendo e res)
+  (evalo-staged
+   `(letrec ((append
+              (lambda (xs ys)
+                (if (null? xs)
+                    ys
+                    (cons (car xs)
+                          (append (cdr xs) ys))))))
+      ,e)
+   res))
+
+res
+
+(test
+    (run* (q) (context-appendo `(append '(a b) '(c d e)) q))
+    '((a b c d e)))
 
 ;; ### Theorem checker turned prover
 
