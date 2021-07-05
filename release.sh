@@ -24,13 +24,14 @@ cp ../staged-shaker.scm staged-miniKanren/
 cp ../test-check.scm staged-miniKanren/
 cp ../tests-all.scm staged-miniKanren/
 cp ../tests-all-bench.scm staged-miniKanren/
-cp ../tests-bench.scm staged-miniKanren/
 cp ../tests-doc-bench.scm staged-miniKanren/
 cp ../tests-doc.scm staged-miniKanren/
 cp ../tests-dl.scm staged-miniKanren/
+cp ../tests-double-eval.scm staged-miniKanren/
 cp ../tests-micro.scm staged-miniKanren/
 cp ../tests-peano-fib.scm staged-miniKanren/
 cp ../tests-parsing-with-derivatives.scm staged-miniKanren/
+cp ../tests-proof.scm staged-miniKanren/
 cp ../tests-run.scm staged-miniKanren/
 cp ../tests.scm staged-miniKanren/
 

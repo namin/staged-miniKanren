@@ -427,3 +427,60 @@
         (append '(1 2) ',q))
      '(1 2 3 4)))
   '((3 4)))
+
+(record-bench 'run-staged 'map-hole 0)
+(time-test
+ (run-staged 1 (q)
+   (evalo-staged
+    `(letrec ((map (lambda (f l)
+                     (if (null? l)
+                         '()
+                         (cons (f (car l))
+                               (map f (cdr l)))))))
+       (map (lambda (x) ,q) '(a b c)))
+    '((a . a) (b . b) (c . c))))
+ '((cons x x)))
+
+;; u-eval-expo seems 50% faster than the staged version
+(record-bench 'unstaged 'map-hole 0)
+(time-test
+  (run 1 (q)
+    (u-eval-expo
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map (lambda (x) ,q) '(a b c)))
+     initial-env
+     '((a . a) (b . b) (c . c))))
+  '((cons x x)))
+
+(record-bench 'run-staged 'map-hole 1)
+(time-test
+ (syn-hole 1
+   (lambda (q)
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map (lambda (x) ,q) '(a b c))))
+   '((a (a) a) (b (b) b) (c (c) c))
+   (lambda (q) (absento 'a q)))
+ '((cons x (cons (cons x '()) (cons x '())))))
+
+(record-bench 'unstaged 'map-hole 1)
+(time-test
+  (run 1 (q)
+    (absento 'a q)
+    (u-eval-expo
+     `(letrec ((map (lambda (f l)
+                      (if (null? l)
+                          '()
+                          (cons (f (car l))
+                                (map f (cdr l)))))))
+        (map (lambda (x) ,q) '(a b c)))
+     initial-env
+     '((a (a) a) (b (b) b) (c (c) c))))
+  '((cons x (cons (cons x '()) (cons x '())))))
