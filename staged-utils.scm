@@ -129,26 +129,26 @@
 
 (define (gen-func r . inputs)
   (let ((r (unique-result r)))
-      (let (;;(cs (convert-constraints r))
+      (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
         (unless (code-layer? r)
             (error 'gen-func "no code generated" r))
         (set! res
               (fix-scope
                `(lambda (,@inputs out)
-                  (fresh () #|,@cs|# (== ,(reified-expand (car r)) out) . ,(caddr r)))))
+                  (fresh () ,@cs (== ,(reified-expand (car r)) out) . ,(caddr r)))))
         res)))
 
 (define (gen-func-rel r . inputs)
   (let ((r (unique-result r)))
-      (let (;;(cs (convert-constraints r))
+      (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
         (unless (code-layer? r)
             (error 'gen-func "no code generated" r))
         (set! res
               (fix-scope
                `(lambda (,@inputs)
-                  (fresh () #|,@cs|# (== ,(reified-expand (car r)) (list ,@inputs)) . ,(caddr r)))))
+                  (fresh () ,@cs (== ,(reified-expand (car r)) (list ,@inputs)) . ,(caddr r)))))
         res)))
 
 (define gen
@@ -169,13 +169,12 @@
 
 (define (gen-hole query result . extra)
   (gen-func
-   (parameterize ((staging-time? #t))
-     (run 100 (q)
-       (if (null? extra) succeed ((car extra) q))
-       (eval-expo #t
-                  (query q)
-                  initial-env
-                  result)))))
+   (run 100 (q)
+     (if (null? extra) succeed ((car extra) q))
+     (eval-expo #t
+                (query q)
+                initial-env
+                result))))
 (define (syn-hole n query result . extra)
   (printf "running first stage\n")
   (let ((e (eval (apply gen-hole query result
