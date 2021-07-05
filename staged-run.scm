@@ -34,8 +34,8 @@
   (syntax-rules ()
     ((_ (name x0 x ...) g0 g ...)
      (define name
-       (eval
-        (time
+       (time
+        (eval
          (gen-func-rel
             (run 100 (x0 x ...) g0 g ...)
           'x0 'x ...)))))))

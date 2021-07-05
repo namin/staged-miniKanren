@@ -198,7 +198,7 @@
 
 (record-bench 'staging 'eval-and-map-and-list-evalo)
 (define eval-and-map-and-list-evalo
-  (eval (time
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([map (lambda (f l)
                          (if (null? l)
@@ -624,7 +624,7 @@
 
 (record-bench 'staging 'double-evalo)
 (define double-evalo
-  (eval (time
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([lookup
                    (lambda (x env)
