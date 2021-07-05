@@ -67,9 +67,7 @@
         (map ,q '(a b c))))
    '((a . a) (b . b) (c . c)))
  '(((lambda (_.0) (cons _.0 _.0))
-    $$
-    (=/= ((_.0 cons)))
-    (sym _.0))))
+    $$ (=/= ((_.0 call)) ((_.0 cons)) ((_.0 dynamic))) (sym _.0))))
 
 (time-test
   (syn-hole 1
