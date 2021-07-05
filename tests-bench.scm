@@ -741,7 +741,6 @@
                           ((eval-expr rator env) (eval-expr rand env))]))])
              (eval-expr expr (lambda (y) 'error))))))))
 
-(record-bench 'staged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -761,6 +760,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
+(record-bench 'staged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
