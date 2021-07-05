@@ -1,3 +1,5 @@
+(load "staged-load.scm")
+
 (record-bench 'staging 'proofo)
 (define proofo
   (eval (time

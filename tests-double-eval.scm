@@ -1,3 +1,5 @@
+(load "staged-load.scm")
+
 (define-staged-relation (eval-and-map-evalo expr val)
   (evalo-staged
    `(letrec ([map (lambda (f l)

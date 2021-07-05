@@ -24,6 +24,7 @@ cp ../staged-shaker.scm staged-miniKanren/
 cp ../test-check.scm staged-miniKanren/
 cp ../tests-all.scm staged-miniKanren/
 cp ../tests-all-bench.scm staged-miniKanren/
+cp ../tests-bench-rel.scm staged-miniKanren/
 cp ../tests-doc-bench.scm staged-miniKanren/
 cp ../tests-doc.scm staged-miniKanren/
 cp ../tests-dl.scm staged-miniKanren/

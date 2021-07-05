@@ -1,5 +1,17 @@
 import re
 
+header = """
+\\begin{tabular}{|l|r|r|r|r|r|}
+\\hline
+{\\it name} & {\\it staging} & {\\it staged} & {\\it run-staged} & {\\it unstaged} & {\\it gain}\\\\
+\\hline
+
+"""
+
+footer = """
+\\end{tabular}
+"""
+
 re_bench = re.compile(r'^BENCH (?P<phase>\S+) (?P<name>\S+)( (?P<id>\S+))?$')
 re_time = re.compile(r'\s*(?P<time>\d+\.\d+)s elapsed cpu time')
 
@@ -12,6 +24,8 @@ all_ids = []
 cur_phase = None
 cur_name = None
 cur_id = None
+
+print(header)
 
 for line in open('bench-log-ex.txt'):
     m = re_bench.match(line)
@@ -64,3 +78,5 @@ for name in all_names:
             s += '\\\\'
             print(s)
             print('\\hline')
+
+print(footer)
