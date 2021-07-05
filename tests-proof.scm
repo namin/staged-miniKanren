@@ -131,7 +131,7 @@
  (length
   (run 1 (prf)
     (fresh (body)
-      (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
+      (== prf `(((A => B) => ((B => C) => ((C => D) => ((D => E) => (A => E))))) () . ,body))
       (proofo prf #t))))
   1)
 
