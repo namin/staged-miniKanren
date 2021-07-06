@@ -65,6 +65,10 @@ for name in all_names:
                 time = all_times[key]
                 times[phase] = time
                 s += '$%.5f$s' % time
+            elif (phase == 'unstaged' and (
+                  (name, 'staged', id) in all_times or
+                  (name, 'run-staged', id) in all_times)):
+                s += '\\timeout{$>5$ min}'
         s += ' & '
         if times:
             min_time = min(times.get('staged', MAX_TIME),
@@ -74,7 +78,8 @@ for name in all_names:
                     gain = times['unstaged'] / min_time
                     s += '$%.3f$' % gain
                 else:
-                    s += '$\infty$'
+                    gain = 5*60 / min_time
+                    s += '\\timeout{>$%.3f$}' % gain
             s += '\\\\'
             print(s)
             print('\\hline')
