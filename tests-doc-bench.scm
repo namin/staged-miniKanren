@@ -319,25 +319,7 @@
        (a b)
        (c d e f)
        (g h i j k l))))
-  '(((match rest
-    [`() ys]
-    [`(,_.0) (cons _.0 ys)]
-    [`(,_.1 ,_.2) (cons _.1 (cons _.2 ys))]
-    .
-    _.3)
-   $$
-   (=/= ((_.0 a)) ((_.0 b)) ((_.0 c)) ((_.0 cons)) ((_.0 d))
-    ((_.0 e)) ((_.0 f)) ((_.0 g)) ((_.0 h)) ((_.0 i)) ((_.0 j))
-    ((_.0 k)) ((_.0 l)) ((_.0 ys)) ((_.1 _.2)) ((_.1 a))
-    ((_.1 b)) ((_.1 c)) ((_.1 cons)) ((_.1 d)) ((_.1 e))
-    ((_.1 f)) ((_.1 g)) ((_.1 h)) ((_.1 i)) ((_.1 j)) ((_.1 k))
-    ((_.1 l)) ((_.1 ys)) ((_.2 a)) ((_.2 b)) ((_.2 c))
-    ((_.2 cons)) ((_.2 d)) ((_.2 e)) ((_.2 f)) ((_.2 g))
-    ((_.2 h)) ((_.2 i)) ((_.2 j)) ((_.2 k)) ((_.2 l))
-    ((_.2 ys)))
-   (sym _.0 _.1 _.2)
-   (absento (a _.3) (b _.3) (c _.3) (d _.3) (e _.3) (f _.3)
-     (g _.3) (h _.3) (i _.3) (j _.3) (k _.3) (l _.3)))))
+  '((append rest ys)))
 
 
 
@@ -468,7 +450,7 @@
         (map (lambda (x) ,q) '(a b c))))
    '((a (a) a) (b (b) b) (c (c) c))
    (lambda (q) (absento 'a q)))
- '((cons x (cons (cons x '()) (cons x '())))))
+ '((cons x (cons (list x) (list x)))))
 
 (record-bench 'unstaged 'map-hole 1)
 (time-test
@@ -483,4 +465,4 @@
         (map (lambda (x) ,q) '(a b c)))
      initial-env
      '((a (a) a) (b (b) b) (c (c) c))))
-  '((cons x (cons (cons x '()) (cons x '())))))
+  '((cons x (cons (list x) (list x)))))
