@@ -133,7 +133,8 @@
     (=/= 'closure v)
     (=/= 'prim v)
     (=/= 'call v)
-    (=/= 'dynamic v)))
+    (=/= 'dynamic v)
+    (=/= 'call-code v)))
 
 (define (absent-staged-tago v)
   (fresh ()

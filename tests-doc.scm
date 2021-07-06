@@ -278,6 +278,11 @@ res
     '((a b c d e)))
 
 (test
+    (length (run* (q) (context-appendo 'append q)))
+  ;; ((call-code #<procedure append>))
+  1)
+
+(test
     (run-staged 1 (q)
       (evalo-staged
        `(letrec ((append
@@ -387,7 +392,7 @@ res
   '((((lambda (_.0) `(,_.0 ',_.0))
       '(lambda (_.0) `(,_.0 ',_.0)))
      $$
-     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic))
           ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
@@ -436,19 +441,20 @@ res
        q
        '(I love staged evaluation)))
   '('(I love staged evaluation)
-    ((car '((I love staged evaluation) . _.0))
-     $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))
-    (cons 'I '(love staged evaluation))
-    (((lambda _.0 '(I love staged evaluation)))
-     $$
-     (=/= ((_.0 quote)))
-     (sym _.0))
-    ((letrec ([_.0 (lambda _.1 _.2)])
+  ((car '((I love staged evaluation) . _.0))
+    $$
+    (absento (call _.0) (call-code _.0) (closure _.0)
+      (dynamic _.0) (prim _.0)))
+  (cons 'I '(love staged evaluation))
+  (((lambda _.0 '(I love staged evaluation)))
+    $$
+    (=/= ((_.0 quote)))
+    (sym _.0))
+  ((letrec ([_.0 (lambda _.1 _.2)])
      '(I love staged evaluation))
-     $$
-     (=/= ((_.0 quote)))
-     (sym _.1))))
+    $$
+    (=/= ((_.0 quote)))
+    (sym _.1))))
 
 (test
     (run 5 (q)
@@ -456,17 +462,18 @@ res
        q
        '(I love staged evaluation)))
   '('(I love staged evaluation)
-    ((car '((I love staged evaluation) . _.0))
-     $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))
-    (cons 'I '(love staged evaluation))
-    (((lambda _.0 '(I love staged evaluation)))
-     $$
-     (=/= ((_.0 quote)))
-     (sym _.0))
-    ((letrec ([_.0 (lambda _.1 _.2)])
-     '(I love staged evaluation))
-     $$
-     (=/= ((_.0 quote)))
-     (sym _.1))))
+     ((car '((I love staged evaluation) . _.0))
+      $$
+      (absento (call _.0) (call-code _.0) (closure _.0)
+               (dynamic _.0) (prim _.0)))
+     (cons 'I '(love staged evaluation))
+     (((lambda _.0 '(I love staged evaluation)))
+      $$
+      (=/= ((_.0 quote)))
+      (sym _.0))
+     ((letrec ([_.0 (lambda _.1 _.2)])
+        '(I love staged evaluation))
+      $$
+      (=/= ((_.0 quote)))
+      (sym _.1))))
 

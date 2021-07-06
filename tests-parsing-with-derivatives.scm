@@ -308,7 +308,7 @@
       '(#f)))
   '(((seq f (#f) . _.0)
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     (absento (call _.0) (call-code _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
 
 
 ;; the orginal regex running forward was '(seq foo barn)'
@@ -338,7 +338,7 @@
       'barn))
   '(((seq foo barn . _.0)
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     (absento (call _.0) (call-code _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
 
 
 

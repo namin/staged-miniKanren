@@ -103,3 +103,21 @@
       (symbolo q)
       (later `(numbero ,q)))
   '())
+
+(define-staged-relation (bogus-appendo xs ys zs)
+  (evalo-staged
+   `(letrec ((append
+              (lambda (xs ys)
+                (if (null? xs)
+                    ys
+                    (cons (car xs)
+                          (append (cdr xs) ys))))))
+      append)
+   zs))
+
+;; TODO: is this weird?
+;;       it's not understood by evalo-unstaged
+(test
+    (run* (q)
+      (bogus-appendo '(1 2) '(3 4) q))
+  '((call append)))

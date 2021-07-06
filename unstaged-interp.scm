@@ -12,6 +12,7 @@
      (absento 'prim val)
      (absento 'call val)
      (absento 'dynamic val)
+     (absento 'call-code val)
 
      (u-not-in-envo 'quote env))
 
@@ -36,7 +37,7 @@
          ((== `(closure (lambda ,x* ,body) ,env^ ,extra) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*))
-         ((== `(call ,proc) cfun)
+         ((== `(call-code ,proc) cfun)
           (u-eval-listo rands env a*)
           (callo proc val a*)))))
 
@@ -81,7 +82,7 @@
             (== `(closure ,lam-expr ,env ,extra) t)))
          ((fresh (lam-expr code-expr)
             (== `(staged-rec ,lam-expr ,code-expr) b)
-            (== `(call ,code-expr) t)))))
+            (== `(call-code ,code-expr) t)))))
       ((=/= x y)
        (u-lookupo x rest t)))))
 
@@ -187,7 +188,8 @@
               ((== a 'closure))
               ((== a 'prim))
               ((== a 'call))
-              ((== a 'dynamic)))))))]
+              ((== a 'dynamic))
+              ((== a 'call-code)))))))]
     [(== prim-id 'null?)
      (fresh (v)
        (== `(,v) a*)

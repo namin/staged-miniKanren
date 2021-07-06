@@ -45,7 +45,7 @@
     (eval-and-map-evalo `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
   '(((lambda (_.0) (cons _.0 _.0))
      $$
-     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
 (time-test
@@ -402,7 +402,7 @@
     (quasi-quine-evalo q q))
   '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
      $$
-     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
 (record-bench 'run-staged 'quasi-quine-evalo)
@@ -413,19 +413,20 @@
     (evalo-staged (quasi-quine-eval q) q))
   '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
      $$
-     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
 (record-bench 'unstaged 'quasi-quine-evalo)
-(time-test
-  (run 1 (q)
-    (absento 'error q)
-    (absento 'closure q)
-    (evalo-unstaged (quasi-quine-eval q) q))
-  '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
-     $$
-     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
-     (sym _.0))))
+(;;todo "unstaged quasi-quine-evalo"
+ time-test
+ (run 1 (q)
+   (absento 'error q)
+   (absento 'closure q)
+   (evalo-unstaged (quasi-quine-eval q) q))
+ '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
+    $$
+    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+    (sym _.0))))
 
 
 (define ho-quine-interp-cons
@@ -456,7 +457,7 @@
   '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -497,7 +498,7 @@
    (((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
     $$
-    (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
 #|
@@ -654,7 +655,7 @@
  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
     $$
-    (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo)
@@ -689,7 +690,7 @@
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -726,7 +727,7 @@
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -765,7 +766,7 @@
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
 
@@ -805,7 +806,7 @@
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
-   (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
    (sym _.0))))
 
 (define double-evalo-cons
@@ -840,5 +841,5 @@
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     (=/= ((_.0 call)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
