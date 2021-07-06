@@ -48,12 +48,12 @@
       (fresh (q1 q2)
         (l== q `(,q1 ,q2))
         (evalo-staged `(,q1 (list ,q2 2)) q2)))
-  '((((lambda _.0 _.1) _.1) $$ (num _.1) (sym _.0))))
+  '((not #f)))
 
 (test
     (run-staged 1 (q1 q2)
       (evalo-staged `(,q1 (list ,q2 2)) q2))
-  '((((lambda _.0 _.1) _.1) $$ (num _.1) (sym _.0))))
+  '((not #f)))
 
 (define-relation (appendo xs ys zs)
   (conde

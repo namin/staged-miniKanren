@@ -247,15 +247,13 @@
 
 
 ;; This generates answers that are not valid microKanren programs.
-;; TODO: we lost unit
 (test
     (run-staged 3 (q)
       (evalo-staged
        (micro `(,q (empty-state)))
        '((() . z))))
-  '(list
-    ((lambda _.0 _.0) $$ (sym _.0))
-    ((lambda _.0 '((() . z))) $$ (=/= ((_.0 quote))) (sym _.0))))
+  '(unit list ((lambda _.0 _.0) $$ (sym _.0)))
+)
 
 (test
     (run 3 (q)
@@ -499,64 +497,65 @@
        (valid-ge? q)
        #t))
   '(((=== '_.0 '_.1)
-   $$
-   (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
-     (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
-  ((=== '_.0 (cons '_.1 '_.2))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
-  ((=== (cons '_.0 '_.1) '_.2)
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
-  ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((call/fresh (lambda (_.0) (=== '_.1 '_.2)))
-    $$
-    (=/= ((_.0 call))
-         ((_.0 closure))
-         ((_.0 dynamic))
-         ((_.0 prim)))
-    (sym _.0)
-    (absento (call _.1) (call _.2) (closure _.1) (closure _.2)
-      (dynamic _.1) (dynamic _.2) (prim _.1) (prim _.2)))
-  ((=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((disj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))))
+     $$
+     (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
+              (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
+    ((=== '_.0 (cons '_.1 '_.2))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+    ((=== (cons '_.0 '_.1) '_.2)
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+    ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((call/fresh (lambda (_.0) (=== '_.1 '_.2)))
+     $$
+     (=/= ((_.0 call))
+          ((_.0 closure))
+          ((_.0 dynamic))
+          ((_.0 prim)))
+     (sym _.0)
+     (absento (call _.1) (call _.2) (closure _.1) (closure _.2)
+              (dynamic _.1) (dynamic _.2) (prim _.1) (prim _.2)))
+    ((=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((disj (=== '_.0 '_.1) (=== '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3))))
+  )
 
 
 
