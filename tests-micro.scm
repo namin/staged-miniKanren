@@ -192,20 +192,39 @@
 
 (micro-unstaged 'unit)
 
-(test
-    (run-staged 1 (v)
-      (evalo-staged
-       (micro '((=== 5 5) (empty-state)))
-       v))
+(record-bench 'run-staged 'micro 0)
+(time-test
+  (run-staged 1 (v)
+    (evalo-staged
+     (micro '((=== 5 5) (empty-state)))
+     v))
+  '(((() . z))))
+
+(record-bench 'unstaged 'micro 0)
+(time-test
+  (run 1 (v)
+    (evalo-unstaged
+     (micro '((=== 5 5) (empty-state)))
+     v))
   '(((() . z))))
 
 
-(test
-    (run-staged 1 (v)
-      (evalo-staged
-       (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
-       v))
+(record-bench 'run-staged 'micro 1)
+(time-test
+  (run-staged 1 (v)
+    (evalo-staged
+     (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
+     v))
   '((((((var . z) . 5)) s . z))))
+
+(record-bench 'unstaged 'micro 1)
+(time-test
+  (run 1 (v)
+    (evalo-unstaged
+     (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
+     v))
+  '((((((var . z) . 5)) s . z))))
+
 
 ;; This generates answers that are not valid microKanren programs.
 (test
@@ -222,6 +241,7 @@
        (micro `(,q (empty-state)))
        '((() . z))))
   '(unit list ((lambda _.0 _.0) $$ (sym _.0))))
+
 
 (define (valid-ge? ge)
   `(letrec
@@ -240,6 +260,49 @@
                              [`(call/fresh (lambda (,x) ,ge)) (valid-ge? ge)]
                              [`,else #f]))))
        (valid-ge? ',ge))))
+
+
+(record-bench 'run-staged 'micro 2)
+(time-test
+  (run-staged 1 (ge)
+    (evalo-staged
+     (valid-ge? ge)
+     #t)
+    (evalo-staged
+     (micro `(,ge (empty-state)))
+     '((() . z))))
+  '(((=== '_.0 '_.0)
+     $$
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))))
+
+(record-bench 'unstaged 'micro 2)
+(time-test
+  (run 1 (ge)
+    (evalo-unstaged
+     (valid-ge? ge)
+     #t)
+    (evalo-unstaged
+     (micro `(,ge (empty-state)))
+     '((() . z))))
+  '(((=== '_.0 '_.0)
+     $$
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))))
+
+
+;;;  doesn't come back after a minute
+#|
+(test
+    (run-staged 1 (ge)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       '((() . z)))
+      (evalo-staged
+       (valid-ge? ge)
+       #t))
+  '((=== '5 '5)))
+|#
 
 
 
@@ -276,31 +339,6 @@
   '(((=== '5 '5) ((() . z)))))
 
 
-;;;  doesn't come back after a minute
-#|
-(test
-    (run-staged 1 (ge)
-      (evalo-staged
-       (valid-ge? ge)
-       #t)
-      (evalo-staged
-       (micro `(,ge (empty-state)))
-       '((() . z))))
-  '((=== '5 '5)))
-|#
-
-;;;  doesn't come back after a minute
-#|
-(test
-    (run-staged 1 (ge)
-      (evalo-staged
-       (micro `(,ge (empty-state)))
-       '((() . z)))
-      (evalo-staged
-       (valid-ge? ge)
-       #t))
-  '((=== '5 '5)))
-|#
 
 (test
     (run-staged 1 (ge)
