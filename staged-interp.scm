@@ -366,7 +366,7 @@
        (== (cons b bs) bindings*)
        (== b `(,p-name (lambda ,x ,body)))
        (== (cons e es) env^)
-       (== e `(,p-name . (rec . (lambda ,x ,body))))
+       (== e `(,p-name . (staged-rec (lambda ,x ,body) ,(unexpand p-name))))
        (== (cons o os) out-bindings*)
        (letrec-bindings-evalo bs os env envt es)
        (conde
@@ -390,8 +390,8 @@
       ((== x y)
        (conde
          ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) v t)))
-         ((fresh (lam-expr)
-            (== `(rec . ,lam-expr) b)
+         ((fresh (lam-expr code-expr)
+            (== `(staged-rec ,lam-expr ,code-expr) b)
             ((if stage? l== ==) `(call ,x) t)))))
       ((=/= x y)
        (lookupo stage? x rest t)))))

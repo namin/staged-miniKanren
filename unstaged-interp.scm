@@ -36,6 +36,13 @@
        (u-eval-listo rands env a*)
        (callo cfun val a*)))
 
+    ((fresh (rator x* rands a* cfun proc)
+       (== `(,rator . ,rands) expr)
+       (u-eval-expo rator env cfun)
+       (== `(call ,proc) cfun)
+       (u-eval-listo rands env a*)
+       (callo proc val a*)))
+
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
        (u-eval-expo rator env `(prim . ,prim-id))
@@ -74,7 +81,10 @@
          ((== `(val . ,t) b))
          ((fresh (lam-expr extra)
             (== `(rec . ,lam-expr) b)
-            (== `(closure ,lam-expr ,env ,extra) t)))))
+            (== `(closure ,lam-expr ,env ,extra) t)))
+         ((fresh (lam-expr code-expr)
+            (== `(staged-rec ,lam-expr ,code-expr) b)
+            (== `(call ,code-expr) t)))))
       ((=/= x y)
        (u-lookupo x rest t)))))
 
