@@ -186,6 +186,7 @@
 
 
 
+#|
 (time-test
   (run #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -211,6 +212,7 @@
                (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
      z
      (s . z))))
+|#
 
 
 
