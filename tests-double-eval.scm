@@ -429,8 +429,9 @@
     (sym _.0))))
 
 
+(record-bench 'staging 'ho-quine-interp-cons)
 (define ho-quine-interp-cons
-  (eval
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([eval-expr
                    (lambda (expr env)
@@ -447,8 +448,9 @@
                         (cons (eval-expr e1 env) (eval-expr e2 env))]
                        [`(,rator ,rand)
                         ((eval-expr rator env) (eval-expr rand env))]))])
-           (eval-expr expr (lambda (y) 'error))))))
+           (eval-expr expr (lambda (y) 'error)))))))
 
+(record-bench 'staged 'ho-quine-interp-cons)
 (time-test
   (run 1 (q)
     (absento 'error q)
@@ -460,7 +462,7 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
-
+(record-bench 'staging 'ho-double-evalo)
 (define ho-double-evalo
   (eval
    (gen 'eval-expr '(expr)
@@ -492,6 +494,7 @@
   (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
   '(hello))
 
+(record-bench 'staged 'ho-double-evalo)
 (time-test
  (run 2 (q) (absento 'closure q) (ho-double-evalo q q))
  '(error
@@ -693,9 +696,9 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-
+(record-bench 'staging 'double-evalo-variadic-list-fo)
 (define double-evalo-variadic-list-fo
-  (eval
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([lookup
                    (lambda (x env)
@@ -720,8 +723,9 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '())))))
+           (eval-expr expr '()))))))
 
+(record-bench 'staged 'double-evalo-variadic-list-fo)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
@@ -730,9 +734,9 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-
+(record-bench 'staging 'double-evalo-variadic-list-fo-better)
 (define double-evalo-variadic-list-fo-less-ridiculous
-  (eval
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([lookup
                    (lambda (x env)
@@ -759,8 +763,9 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '())))))
+           (eval-expr expr '()))))))
 
+(record-bench 'staged 'double-evalo-variadic-list-fo-better)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
@@ -769,9 +774,9 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-
+(record-bench 'staging 'double-evalo-variadic-list-ho)
 (define double-evalo-variadic-list-ho
-  (eval
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([lookup
                    (lambda (x env)
@@ -799,8 +804,9 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '())))))
+           (eval-expr expr '()))))))
 
+(record-bench 'staged 'double-evalo-variadic-list-ho)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
@@ -809,8 +815,9 @@
    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
    (sym _.0))))
 
+(record-bench 'staging 'double-evalo-cons)
 (define double-evalo-cons
-  (eval
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([lookup
                    (lambda (x env)
@@ -832,8 +839,9 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '())))))
+           (eval-expr expr '()))))))
 
+(record-bench 'staged 'double-evalo-cons)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-cons q q))
   '((((lambda (_.0)
