@@ -156,7 +156,7 @@
 
 ;; run 1 returns    run 2 is either very slow, or diverges
 #|
-(record-bench 'run-unstaged 'peano-synth-fib-aps 1)
+(record-bench 'unstaged 'peano-synth-fib-aps 1)
 (time-test
   (run #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -301,7 +301,7 @@
      z
      (s . z))))
 
-(record-bench 'run-unstaged 'peano-synth-fib-aps 2)
+(record-bench 'unstaged 'peano-synth-fib-aps 2)
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B)
