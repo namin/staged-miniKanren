@@ -192,20 +192,59 @@
 
 (micro-unstaged 'unit)
 
-(test
-    (run-staged 1 (v)
-      (evalo-staged
-       (micro '((=== 5 5) (empty-state)))
-       v))
-  '(((() . z))))
+(record-bench 'run-staged 'micro 0)
+(time-test
+  (run-staged #f (v)
+    (evalo-staged
+     (micro '((=== 5 5) (empty-state)))
+     v))
+  '(((() . z) . ())))
+
+(record-bench 'unstaged 'micro 0)
+(time-test
+  (run #f (v)
+    (evalo-unstaged
+     (micro '((=== 5 5) (empty-state)))
+     v))
+  '(((() . z) . ())))
 
 
-(test
-    (run-staged 1 (v)
-      (evalo-staged
-       (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
-       v))
-  '((((((var . z) . 5)) s . z))))
+(record-bench 'run-staged 'micro 1)
+(time-test
+  (run-staged #f (v)
+    (evalo-staged
+     (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
+     v))
+  '((((((var . z) . 5)) . (s . z)))))
+
+(record-bench 'unstaged 'micro 1)
+(time-test
+  (run #f (v)
+    (evalo-unstaged
+     (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
+     v))
+  '((((((var . z) . 5)) . (s . z)))))
+
+
+(record-bench 'run-staged 'micro 2)
+(time-test
+  (run-staged #f (v)
+    (evalo-staged
+     (micro '((call/fresh (lambda (q) (disj (=== q 5) (=== q 6)))) (empty-state)))
+     v))
+  '((((((var . z) . 5)) . (s . z))
+     ((((var . z) . 6)) . (s . z)))))
+
+(record-bench 'unstaged 'micro 2)
+(time-test
+  (run #f (v)
+    (evalo-unstaged
+     (micro '((call/fresh (lambda (q) (disj (=== q 5) (=== q 6)))) (empty-state)))
+     v))
+  '((((((var . z) . 5)) . (s . z))
+     ((((var . z) . 6)) . (s . z)))))
+
+
 
 ;; This generates answers that are not valid microKanren programs.
 (test
@@ -223,11 +262,12 @@
        '((() . z))))
   '(unit list ((lambda _.0 _.0) $$ (sym _.0))))
 
+
 (define (valid-ge? ge)
   `(letrec
        ((valid-te? (lambda (te)
                      (match te
-                       ;; All literals must be quoted
+                       ;; symbols, numbers, and booleans must be quoted
                        [`(quote ,datum) #t]
                        [`(cons ,te1 ,te2)
                         (and (valid-te? te1) (valid-te? te2))]
@@ -237,9 +277,68 @@
                              [`(=== ,t1 ,t2) (and (valid-te? t1) (valid-te? t2))]
                              [`(conj ,ge1 ,ge2) (and (valid-ge? ge1) (valid-ge? ge2))]
                              [`(disj ,ge1 ,ge2) (and (valid-ge? ge1) (valid-ge? ge2))]
-                             [`(call/fresh (lambda (,x) ,ge)) (valid-ge? ge)]
+                             [`(call/fresh (lambda (,(? symbol? x)) ,ge)) (valid-ge? ge)]
                              [`,else #f]))))
        (valid-ge? ',ge))))
+
+
+(record-bench 'run-staged 'micro 3)
+(time-test
+  (run-staged 1 (ge)
+    (evalo-staged
+     (valid-ge? ge)
+     #t)
+    (evalo-staged
+     (micro `(,ge (empty-state)))
+     '((() . z) . ())))
+  '(((=== '_.0 '_.0)
+     $$
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))))
+
+(record-bench 'unstaged 'micro 3)
+(time-test
+  (run 1 (ge)
+    (evalo-unstaged
+     (valid-ge? ge)
+     #t)
+    (evalo-unstaged
+     (micro `(,ge (empty-state)))
+     '((() . z) . ())))
+  '(((=== '_.0 '_.0)
+     $$
+     (=/= ((_.0 call)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))))
+
+
+;;;  doesn't come back after a minute
+#|
+(record-bench 'run-staged 'micro 4)
+(time-test
+  (run-staged 1 (ge)
+    (evalo-staged
+     (valid-ge? ge)
+     #t)
+    (evalo-staged
+     (micro `(,ge (empty-state)))
+     '(((((var . z) . 5)) s . z)
+       ((((var . z) . 6)) s . z))))
+  '???)
+|#
+
+
+;;;  doesn't come back after a minute
+#|
+(test
+    (run-staged 1 (ge)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       '((() . z)))
+      (evalo-staged
+       (valid-ge? ge)
+       #t))
+  '((=== '5 '5)))
+|#
 
 
 
@@ -276,31 +375,6 @@
   '(((=== '5 '5) ((() . z)))))
 
 
-;;;  doesn't come back after a minute
-#|
-(test
-    (run-staged 1 (ge)
-      (evalo-staged
-       (valid-ge? ge)
-       #t)
-      (evalo-staged
-       (micro `(,ge (empty-state)))
-       '((() . z))))
-  '((=== '5 '5)))
-|#
-
-;;;  doesn't come back after a minute
-#|
-(test
-    (run-staged 1 (ge)
-      (evalo-staged
-       (micro `(,ge (empty-state)))
-       '((() . z)))
-      (evalo-staged
-       (valid-ge? ge)
-       #t))
-  '((=== '5 '5)))
-|#
 
 (test
     (run-staged 1 (ge)
@@ -350,70 +424,73 @@
        (valid-ge? q)
        #t))
   '(((=== '_.0 '_.1)
-   $$
-   (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
-     (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
-  ((=== '_.0 (cons '_.1 '_.2))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
-  ((=== (cons '_.0 '_.1) '_.2)
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
-  ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((disj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
-  ((=== '_.0 (cons (cons '_.1 '_.2) (cons '_.3 '_.4)))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call _.3)
-     (call _.4) (closure _.0) (closure _.1) (closure _.2)
-     (closure _.3) (closure _.4) (dynamic _.0) (dynamic _.1)
-     (dynamic _.2) (dynamic _.3) (dynamic _.4) (prim _.0)
-     (prim _.1) (prim _.2) (prim _.3) (prim _.4)))
-  ((call/fresh (lambda (_.0) (=== '_.1 '_.2)))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2))))
+     $$
+     (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
+              (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
+    ((=== '_.0 (cons '_.1 '_.2))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+    ((=== (cons '_.0 '_.1) '_.2)
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
+              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+    ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((disj (=== '_.0 '_.1) (=== '_.2 '_.3))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
+              (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
+              (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3)))
+    ((=== '_.0 (cons (cons '_.1 '_.2) (cons '_.3 '_.4)))
+     $$
+     (absento (call _.0) (call _.1) (call _.2) (call _.3)
+              (call _.4) (closure _.0) (closure _.1) (closure _.2)
+              (closure _.3) (closure _.4) (dynamic _.0) (dynamic _.1)
+              (dynamic _.2) (dynamic _.3) (dynamic _.4) (prim _.0)
+              (prim _.1) (prim _.2) (prim _.3) (prim _.4)))
+    ((call/fresh (lambda (_.0) (=== '_.1 '_.2)))
+     $$
+     (=/= ((_.0 call))
+          ((_.0 closure))
+          ((_.0 dynamic))
+          ((_.0 prim)))
+     (sym _.0)
+     (absento (call _.1) (call _.2) (closure _.1) (closure _.2)
+              (dynamic _.1) (dynamic _.2) (prim _.1) (prim _.2))))
  )
 
-;; why are the constraints not identical?
 (test
     (run 10 (q)
       (evalo-unstaged
@@ -459,9 +536,13 @@
               (prim _.1) (prim _.2) (prim _.3)))
     ((call/fresh (lambda (_.0) (=== '_.1 '_.2)))
      $$
-     (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-              (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-              (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+     (=/= ((_.0 call))
+          ((_.0 closure))
+          ((_.0 dynamic))
+          ((_.0 prim)))
+     (sym _.0)
+     (absento (call _.1) (call _.2) (closure _.1) (closure _.2)
+              (dynamic _.1) (dynamic _.2) (prim _.1) (prim _.2)))
     ((=== (cons '_.0 (cons '_.1 '_.2)) '_.3)
      $$
      (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
@@ -473,10 +554,14 @@
      (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
               (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
               (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-              (prim _.1) (prim _.2) (prim _.3)))))
+              (prim _.1) (prim _.2) (prim _.3))))
+  )
 
 
 
+
+;;; need gensym in the relational iterpreter in order to implement 'call/fresh'
+;;; (in order to generate a new identifier for the new 'lambda')
 #|
 (define (micro-interp query)
   (micro
