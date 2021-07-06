@@ -445,7 +445,64 @@
 |#
 
 
+(record-bench 'run-staged 'peano-synth-fib-aps 4)
+(time-test
+  (run-staged 1 (fib-acc ACC1 ACC2)
+    (fresh (A B C)
+      (== `(lambda (n a1 a2)
+             (if (zero? n)
+                 ,A
+                 (if (zero? (sub1 n))
+                     a2
+                     (fib-aps (- n '(s . z)) ,B ,C))))
+          fib-acc))
+    (evalo-staged
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
 
+;;; Sloooooowww
+#|
+(record-bench 'unstaged 'peano-synth-fib-aps 4)
+(time-test
+  (run 1 (fib-acc ACC1 ACC2)
+    (fresh (A B C)
+      (== `(lambda (n a1 a2)
+             (if (zero? n)
+                 ,A
+                 (if (zero? (sub1 n))
+                     a2
+                     (fib-aps (- n '(s . z)) ,B ,C))))
+          fib-acc))
+    (evalo-unstaged
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
+|#
 
 
 (define (peano-fib query)
