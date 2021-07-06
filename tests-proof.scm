@@ -2,7 +2,7 @@
 
 (record-bench 'staging 'proofo)
 (define proofo
-  (eval (time
+  (time (eval
    (gen 'proof? '(proof)
         '(letrec ([member?
                    (lambda (x ls)

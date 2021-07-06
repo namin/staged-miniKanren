@@ -155,6 +155,18 @@
     (run* (q) (later `(== ,(expand q) ,(expand 1))))
   '((_.0 !! ((== _.0 '1)))))
 
+(test
+    (run* (x y)
+      (fresh (c1 c2)
+        (later-scope (fresh () (l== 5 x) (l== 6 y)) c1)
+        (later-scope (fresh () (l== 5 y) (l== 6 x)) c2)
+        (later `(conde ,c1 ,c2))))
+  '(((_.0 _.1)
+     !!
+     ((conde
+        ((== '5 _.0) (== '6 _.1))
+        ((== '5 _.1) (== '6 _.0)))))))
+
 ;; ### run-staged
 
 (test
@@ -221,6 +233,16 @@
    zs))
 
 res ;; contains the generated code
+
+;; generated code using environment extension at the top level
+(gen 'append '(xs ys)
+     `(letrec ((append
+                (lambda (xs ys)
+                  (if (null? xs)
+                      ys
+                      (cons (car xs)
+                            (append (cdr xs) ys))))))
+        (append xs ys)))
 
 (test
     (run* (q) (appendo '(a b) '(c d e) q))

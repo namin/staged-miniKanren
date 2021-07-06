@@ -1,3 +1,21 @@
+- [ ] This example should produce an error instead of failing. Maybe.
+```
+    (run* (x y)
+      (fresh (c1 c2)
+        (later-scope (fresh () (== 5 x) (== 6 y)) c1)
+        (later-scope (fresh () (== 5 y) (== 6 x)) c2)
+        (later `(conde ,c1 ,c2))))
+```
+meant to be
+```
+    (run* (x y)
+      (fresh (c1 c2)
+        (later-scope (fresh () (l== 5 x) (l== 6 y)) c1)
+        (later-scope (fresh () (l== 5 y) (l== 6 x)) c2)
+        (later `(conde ,c1 ,c2))))
+```
+
+
 - [x] Understand why [this crufy case](https://github.com/namin/staged-miniKanren/commit/3bf251d748713f65334e635011948ce012bbd13f#diff-31c94764bb6feaa595931c5cfd6a0bbc3cbcd54382fe692366fe4b7f99451f02) is needed for staging microKanren.
 
 - [ ] Fix [`letrec` issues](letrec-issue.scm).
