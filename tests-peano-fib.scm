@@ -154,9 +154,9 @@
      z
      (s . z))))
 
+;; run 1 returns    run 2 is either very slow, or diverges
 #|
-;;;  Seems super slow---didn't return after a minute or so
-(record-bench 'unstaged 'peano-synth-fib-aps 1)
+(record-bench 'run-unstaged 'peano-synth-fib-aps 1)
 (time-test
   (run #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -185,21 +185,18 @@
 |#
 
 
-;;  seems very slow, even with the symbolo hint
+
 #|
-(record-bench 'run-staged 'peano-synth-fib-aps 2)
 (time-test
-  (run-staged #f (fib-acc ACC1 ACC2)
-    (fresh (A B)
-      (symbolo B)
-      (== `(lambda (n a1 a2)
-             (if (zero? n)
-                 a1
-                 (if (zero? (sub1 n))
-                     ,B
-                     (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-          fib-acc))
-    (evalo-staged
+  (run #f (fib-acc ACC1 ACC2)
+    (== `(lambda (n a1 a2)
+           (if (zero? n)
+               a1
+               (if (zero? (sub1 n))
+                   a2
+                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+        fib-acc)
+    (evalo-unstaged
      (peano-synth-fib-aps fib-acc ACC1 ACC2)
      '(z
        (s . z)
@@ -216,6 +213,122 @@
      z
      (s . z))))
 |#
+
+
+
+
+(record-bench 'staging 'peano-synth-fib-aps)
+(define-staged-relation (peano-synth-fib-apso e ACC1 ACC2 result)
+  (evalo-staged
+   `(letrec ((zero?
+              (lambda (n)
+                (equal? 'z n))))
+
+      (letrec ((add1
+                (lambda (n)
+                  (cons 's n))))
+        (letrec ((sub1
+                  (lambda (n)
+                    (and (equal? (car n) 's)
+                         (cdr n)))))
+          (letrec ((+
+                    (lambda (n m)
+                      (if (zero? n)
+                          m
+                          (add1 (+ (sub1 n) m))))))
+            (letrec ((-
+                      (lambda (n m)
+                        (if (zero? m)
+                            n
+                            (sub1 (- n (sub1 m)))))))
+              (letrec ((fib-aps
+                        (lambda (n a1 a2)
+                          (if (zero? n)
+                              a1
+                              (if (zero? (sub1 n))
+                                  ,e
+                                  (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
+                (list
+                 (fib-aps 'z ',ACC1 ',ACC2)
+                 (fib-aps '(s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s s s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
+                ))))))
+   result))
+
+(record-bench 'staged 'peano-synth-fib-aps 2)
+(time-test
+  (run 1 (e ACC1 ACC2)
+    (peano-synth-fib-apso
+     e
+     ACC1
+     ACC2
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)            
+       (s s s s s . z))))
+  '((a2 z (s . z))))
+
+(record-bench 'run-staged 'peano-synth-fib-aps 2)
+(time-test
+  (run-staged 1 (fib-acc ACC1 ACC2)
+    (fresh (A B)
+      (== `(lambda (n a1 a2)
+             (if (zero? n)
+                 a1
+                 (if (zero? (sub1 n))
+                     ,B
+                     (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+          fib-acc))
+    (evalo-staged
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
+
+(record-bench 'run-unstaged 'peano-synth-fib-aps 2)
+(time-test
+  (run 1 (fib-acc ACC1 ACC2)
+    (fresh (A B)
+      (== `(lambda (n a1 a2)
+             (if (zero? n)
+                 a1
+                 (if (zero? (sub1 n))
+                     ,B
+                     (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+          fib-acc))
+    (evalo-unstaged
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
+
 
 
 (record-bench 'run-staged 'peano-synth-fib-aps 3)
