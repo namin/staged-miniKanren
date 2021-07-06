@@ -394,24 +394,15 @@
      (peano-fib `(fib-aps ,q 'z '(s . z)))
      '(s s s s s s s s s s s s s . z)))
   '('(s s s s s s s . z)
-  (((lambda _.0 '(s s s s s s s . z)))
-    $$
-    (=/= ((_.0 quote)))
-    (sym _.0))
-  (((lambda _.0 '(s s s s s s s . z)) _.1)
-    $$
-    (=/= ((_.0 quote)))
-    (num _.1)
-    (sym _.0))
-  (((lambda _.0 '(s s s s s s s . z)) _.1 _.2)
-    $$
-    (=/= ((_.0 quote)))
-    (num _.1 _.2)
-    (sym _.0))
-  ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
-    $$
-    (=/= ((_.0 quote)))
-    (sym _.1))))
+    ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
+     $$
+     (=/= ((_.0 quote)))
+     (sym _.1))
+    ((match _.0 [_.0 '(s s s s s s s . z)] . _.1) $$ (num _.0))
+    (and '(s s s s s s s . z))
+    ((letrec ([_.0 (lambda () _.1)]) '(s s s s s s s . z))
+     $$
+     (=/= ((_.0 quote))))))
 
 (record-bench 'unstaged 'peano-fib 4)
 (time-test
