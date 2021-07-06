@@ -29,19 +29,16 @@
          ((u-list-of-symbolso x)))
        (u-not-in-envo 'lambda env)))
     
-    ((fresh (rator x* rands body env^ a* cfun extra)
+    ((fresh (rator x* rands body env^ a* cfun extra proc)
        (== `(,rator . ,rands) expr)
        (u-eval-expo rator env cfun)
-       (== `(closure (lambda ,x* ,body) ,env^ ,extra) cfun)
-       (u-eval-listo rands env a*)
-       (callo cfun val a*)))
-
-    ((fresh (rator x* rands a* cfun proc)
-       (== `(,rator . ,rands) expr)
-       (u-eval-expo rator env cfun)
-       (== `(call ,proc) cfun)
-       (u-eval-listo rands env a*)
-       (callo proc val a*)))
+       (conde
+         ((== `(closure (lambda ,x* ,body) ,env^ ,extra) cfun)
+          (u-eval-listo rands env a*)
+          (callo cfun val a*))
+         ((== `(call ,proc) cfun)
+          (u-eval-listo rands env a*)
+          (callo proc val a*)))))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
