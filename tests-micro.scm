@@ -271,6 +271,7 @@
                        [`(quote ,datum) #t]
                        [`(cons ,te1 ,te2)
                         (and (valid-te? te1) (valid-te? te2))]
+                       [`,(? symbol? x) #t]
                        [`,else #f]))))
      (letrec ((valid-ge? (lambda (ge)
                            (match ge
