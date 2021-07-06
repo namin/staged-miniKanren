@@ -154,9 +154,9 @@
      z
      (s . z))))
 
+;; run 1 returns    run 2 is either very slow, or diverges
 #|
-;;;  Seems super slow---didn't return after a minute or so
-(record-bench 'unstaged 'peano-synth-fib-aps 1)
+(record-bench 'run-unstaged 'peano-synth-fib-aps 1)
 (time-test
   (run #f (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -183,6 +183,35 @@
      z
      (s . z))))
 |#
+
+
+
+(time-test
+  (run #f (fib-acc ACC1 ACC2)
+    (== `(lambda (n a1 a2)
+           (if (zero? n)
+               a1
+               (if (zero? (sub1 n))
+                   a2
+                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+        fib-acc)
+    (evalo-unstaged
+     (peano-synth-fib-aps fib-acc ACC1 ACC2)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)                   
+       (s s s s s . z))))
+  '(((lambda (n a1 a2)
+       (if (zero? n)
+           a1
+           (if (zero? (sub1 n))
+               a2
+               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+     z
+     (s . z))))
+
 
 
 
