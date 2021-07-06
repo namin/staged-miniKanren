@@ -328,7 +328,7 @@
        ((((var . z) . 6)) . (s . z)))))
   '((call/fresh (lambda (q) (disj (=== '5 q) (=== '6 q))))))
 
-(record-bench 'run-unstaged 'micro-synthesis 2)
+(record-bench 'unstaged 'micro-synthesis 2)
 (time-test
   (run 1 (ge)
     (absento 'var ge)
