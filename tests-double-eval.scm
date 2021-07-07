@@ -561,9 +561,8 @@
       (evalo-unstaged
        (ho-double-eval `(eval-expr ',q (lambda (y) 'error)))
        q))
- '((((lambda (_.0)
-      (list 'quote (list _.0 (list 'quote _.0))))
-     '(lambda (_.0) (list 'quote (list _.0 (list 'quote _.0)))))
+ '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+    '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
         ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
