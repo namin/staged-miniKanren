@@ -512,11 +512,8 @@
      (sym _.0))))
 |#
 
-(record-bench 'staging 'ho-double-evalo)
-(define ho-double-evalo
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([eval-expr
+(define (ho-double-eval body)
+          `(letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
                        [`(quote ,datum) datum]
@@ -538,7 +535,13 @@
                         ((eval-expr rator env)
                          (eval-expr rand env))]
                        ))])
-           (eval-expr expr (lambda (y) 'error)))))))
+             ,body))
+
+(record-bench 'staging 'ho-double-evalo)
+(define ho-double-evalo
+  (time (eval
+   (gen 'eval-expr '(expr)
+        (ho-double-eval `(eval-expr expr (lambda (y) 'error)))))))
 
 (time-test
   (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
@@ -546,13 +549,30 @@
 
 (record-bench 'staged 'ho-double-evalo)
 (time-test
- (run 2 (q) (absento 'closure q) (ho-double-evalo q q))
+ (run 3 (q) (absento 'closure q) (ho-double-evalo q q))
  '(error
    (((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
     $$
     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
     (sym _.0))))
+
+#|
+(record-bench 'unstaged 'ho-double-evalo)
+(time-test
+ (run 4 (q) (absento 'closure q)
+      (evalo-unstaged
+       (ho-double-eval q)
+       q))
+ '(error
+   #t ;; TODO: I am confused why these show up?
+   #f
+   (((lambda (_.0) (list _.0 (list 'quote _.0)))
+     '(lambda (_.0) (list _.0 (list 'quote _.0))))
+    $$
+    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+    (sym _.0))))
+|#
 
 #|
 #lang racket
