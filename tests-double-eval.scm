@@ -832,12 +832,11 @@
      (sym _.0))))
 
 #|
-;; same TODO
 (record-bench 'unstaged 'double-evalo-variadic-list-fo)
 (time-test
- (run 4 (q) (absento 'clo q)
+ (run 1 (q) (absento 'clo q)
       (evalo-unstaged
-       (double-evalo-variadic-list-f q) q))
+       (double-evalo-variadic-list-f `(eval-expr ,q '())) q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
