@@ -792,18 +792,15 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-(record-bench 'staging 'double-evalo-variadic-list-fo)
-(define double-evalo-variadic-list-fo
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([lookup
+(define (double-evalo-variadic-list-f body)
+          `(letrec ([lookup
                    (lambda (x env)
                      (match env
                        [`((,y . ,v) . ,renv)
                         (if (equal? x y)
                             v
-                            (lookup x renv))]))]
-                  [eval-expr
+                            (lookup x renv))]))])
+             (letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
                        [`(quote ,datum) datum]
@@ -819,7 +816,13 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '()))))))
+             ,body)))
+
+(record-bench 'staging 'double-evalo-variadic-list-fo)
+(define double-evalo-variadic-list-fo
+  (time (eval
+   (gen 'eval-expr '(expr)
+        (double-evalo-variadic-list-f (eval-expr expr '()))))))
 
 (record-bench 'staged 'double-evalo-variadic-list-fo)
 (time-test
@@ -829,6 +832,20 @@
      $$
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
+
+#|
+;; same TODO
+(record-bench 'unstaged 'double-evalo-variadic-list-fo)
+(time-test
+ (run 4 (q) (absento 'clo q)
+      (evalo-unstaged
+       (double-evalo-variadic-list-f q) q))
+  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     $$
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))))
+|#
 
 (record-bench 'staging 'double-evalo-variadic-list-fo-better)
 (define double-evalo-variadic-list-fo-less-ridiculous
