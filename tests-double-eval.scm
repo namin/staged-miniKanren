@@ -560,13 +560,11 @@
 #|
 (record-bench 'unstaged 'ho-double-evalo)
 (time-test
- (run 4 (q) (absento 'closure q)
+ (run 2 (q) (absento 'closure q)
       (evalo-unstaged
-       (ho-double-eval q)
+       (ho-double-eval `(eval-expr ,q (lambda (y) 'error)))
        q))
  '(error
-   #t ;; TODO: I am confused why these show up?
-   #f
    (((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
     $$
