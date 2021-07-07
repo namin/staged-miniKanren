@@ -623,11 +623,8 @@
 ;; => ((a . a) (b . b) (c . c))
 |#
 
-(record-bench 'staging 'map-in-double-eval)
-(define map-in-double-eval
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([lookup
+(define (map-in-double-eval-fun body)
+          `(letrec ([lookup
                    (lambda (x env)
                      (match env
                        [`((,y . ,v) . ,renv)
@@ -658,7 +655,12 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '()))))))
+             ,body))
+(record-bench 'staging 'map-in-double-eval)
+(define map-in-double-eval
+  (time (eval
+   (gen 'eval-expr '(expr)
+        (map-in-double-eval-fun '(eval-expr expr '()))))))
 
 (time-test
  (run 1 (q)
@@ -697,6 +699,29 @@
     (map-in-double-eval expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
+#|
+;; TODO: does not work
+(record-bench 'unstaged 'map-in-double-eval)
+(time-test
+ (run 1 (q)
+   (fresh (expr)
+    (absento 'clo q)
+    (== `((lambda (f)
+            (((f f)
+              (lambda (x) ,q))
+             '(a b c)))
+          (lambda (f)
+            (lambda (f^)
+              (lambda (l)
+                (if (null? l)
+                    '()
+                    (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
+        expr)
+    (evalo-unstaged
+     (map-in-double-eval-fun `(eval-expr ,expr '()))
+     '((a . a) (b . b) (c . c)))))
+ '((cons x x)))
+|#
 
 (record-bench 'staging 'double-evalo)
 (define double-evalo
