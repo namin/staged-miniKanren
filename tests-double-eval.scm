@@ -549,28 +549,30 @@
 
 (record-bench 'staged 'ho-double-evalo)
 (time-test
- (run 3 (q) (absento 'closure q) (ho-double-evalo q q))
- '(error
-   (((lambda (_.0) (list _.0 (list 'quote _.0)))
-     '(lambda (_.0) (list _.0 (list 'quote _.0))))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
-    (sym _.0))))
+ (run 1 (q) (absento 'error q) (absento 'closure q) (ho-double-evalo q q))
+ '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+    '(lambda (_.0) (list _.0 (list 'quote _.0))))
+   $$
+   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
+        ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+   (sym _.0))))
 
-#|
+;; TODO: why is the answer quoted and not above?
 (record-bench 'unstaged 'ho-double-evalo)
 (time-test
- (run 2 (q) (absento 'closure q)
+ (run 1 (q)
+   (absento 'error q)
+   (absento 'closure q)
       (evalo-unstaged
        (ho-double-eval `(eval-expr ,q (lambda (y) 'error)))
        q))
- '(error
-   (((lambda (_.0) (list _.0 (list 'quote _.0)))
-     '(lambda (_.0) (list _.0 (list 'quote _.0))))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
-    (sym _.0))))
-|#
+ '(('((lambda (_.0)
+      (list 'quote (list _.0 (list 'quote _.0))))
+     '(lambda (_.0) (list 'quote (list _.0 (list 'quote _.0)))))
+   $$
+   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
+        ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+   (sym _.0))))
 
 #|
 #lang racket
