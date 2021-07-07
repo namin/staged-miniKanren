@@ -503,7 +503,7 @@
     (absento 'error q)
     (absento 'closure q)
     (evalo-unstaged
-     (ho-quine-interp-cons-fun `(eval-expr ,q (lambda (y) 'error)))
+     (ho-quine-interp-cons-fun `(eval-expr ',q (lambda (y) 'error)))
      q))
   '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
@@ -557,16 +557,15 @@
         ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
    (sym _.0))))
 
-;; TODO: why is the answer quoted and not above?
 (record-bench 'unstaged 'ho-double-evalo)
 (time-test
  (run 1 (q)
    (absento 'error q)
    (absento 'closure q)
       (evalo-unstaged
-       (ho-double-eval `(eval-expr ,q (lambda (y) 'error)))
+       (ho-double-eval `(eval-expr ',q (lambda (y) 'error)))
        q))
- '(('((lambda (_.0)
+ '((((lambda (_.0)
       (list 'quote (list _.0 (list 'quote _.0))))
      '(lambda (_.0) (list 'quote (list _.0 (list 'quote _.0)))))
    $$
