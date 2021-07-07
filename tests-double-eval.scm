@@ -894,24 +894,21 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-(record-bench 'staging 'double-evalo-variadic-list-ho)
-(define double-evalo-variadic-list-ho
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([lookup
+(define (double-evalo-variadic-list-ho-fun body)
+  `(letrec ([lookup
                    (lambda (x env)
                      (match env
                        [`((,y . ,v) . ,renv)
                         (if (equal? x y)
                             v
-                            (lookup x renv))]))]
-                  [map
+                            (lookup x renv))]))])
+     (letrec ([map
                    (lambda (f l)
                      (match l
                        [`() '()]
                        [`(,a . ,d)
-                        (cons (f a) (map f d))]))]
-                  [eval-expr
+                        (cons (f a) (map f d))]))])
+       (letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
                        [`(quote ,datum) datum]
@@ -924,11 +921,29 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '()))))))
+     ,body))))
+
+(record-bench 'staging 'double-evalo-variadic-list-ho)
+(define double-evalo-variadic-list-ho
+  (time (eval
+   (gen 'eval-expr '(expr)
+        (double-evalo-variadic-list-ho-fun '(eval-expr expr '()))))))
 
 (record-bench 'staged 'double-evalo-variadic-list-ho)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
+  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+   $$
+   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+   (sym _.0))))
+
+(record-bench 'unstaged 'double-evalo-variadic-list-ho)
+(time-test
+ (run 1 (q) (absento 'clo q)
+      (evalo-unstaged
+       (double-evalo-variadic-list-ho-fun `(eval-expr ',q '()))
+       q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
