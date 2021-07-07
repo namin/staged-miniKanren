@@ -446,8 +446,7 @@
      (sym _.0))))
 
 (record-bench 'unstaged 'quasi-quine-evalo)
-(;;todo "unstaged quasi-quine-evalo"
- time-test
+(time-test
  (run 1 (q)
    (absento 'error q)
    (absento 'closure q)
