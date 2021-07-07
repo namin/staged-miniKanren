@@ -121,7 +121,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
-(record-bench 'staged 'eval-and-map-and-list-evalo)
+(record-bench 'staged 'eval-and-map-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
