@@ -1,45 +1,6 @@
 (load "staged-load.scm")
 
-(record-bench 'staging 'proofo)
-(define proofo
-  (time (eval
-   (gen 'proof? '(proof)
-        '(letrec ([member?
-                   (lambda (x ls)
-                     (if (null? ls) #f
-                         (if (equal? (car ls) x) #t
-                             (member? x (cdr ls)))))]
-                  [proof?
-                   (lambda (proof)
-                     (match proof
-                       [`(,A ,assms assumption ()) (member? A assms)]
-                       [`(,B ,assms modus-ponens
-                             (((,A => ,B) ,assms ,r1 ,ants1)
-                              (,A ,assms ,r2 ,ants2)))
-                        (and (proof? (list (list A '=> B) assms r1 ants1))
-                             (proof? (list A assms r2 ants2)))]
-                       [`((,A => ,B) ,assms conditional
-                          ((,B (,A . ,assms) ,rule ,ants)))
-                        (proof? (list B (cons A assms) rule ants))]))])
-           (proof? proof))))))
-
-(define ex-proof1
-  '((C (A (A => B) (B => C))
-       modus-ponens
-       (((B => C) (A (A => B) (B => C)) assumption ())
-        (B (A (A => B) (B => C))
-           modus-ponens
-           (((A => B) (A (A => B) (B => C)) assumption ())
-            (A (A (A => B) (B => C)) assumption ())))))))
-(record-bench 'staged 'proofo 1)
-(time-test
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(C (A (A => B) (B => C)) . ,body))
-      (proofo prf #t)))
-  ex-proof1)
-
-(define (prover prf)
+(define (prover body)
   `(letrec ([member?
              (lambda (x ls)
                (if (null? ls) #f
@@ -58,7 +19,29 @@
                       ((,B (,A . ,assms) ,rule ,ants)))
                     (proof? (list B (cons A assms) rule ants))]
                    ))])
-       (proof? ',prf))))
+       ,body)))
+
+(record-bench 'staging 'proofo)
+(define proofo
+  (time (eval
+   (gen 'proof? '(proof)
+        (prover '(proof? proof))))))
+
+(define ex-proof1
+  '((C (A (A => B) (B => C))
+       modus-ponens
+       (((B => C) (A (A => B) (B => C)) assumption ())
+        (B (A (A => B) (B => C))
+           modus-ponens
+           (((A => B) (A (A => B) (B => C)) assumption ())
+            (A (A (A => B) (B => C)) assumption ())))))))
+(record-bench 'staged 'proofo 1)
+(time-test
+  (run 1 (prf)
+    (fresh (body)
+      (== prf `(C (A (A => B) (B => C)) . ,body))
+      (proofo prf #t)))
+  ex-proof1)
 
 (record-bench 'run-staged 'proofo 1)
 (time-test
@@ -66,7 +49,7 @@
     (fresh (body)
       (== prf `(C (A (A => B) (B => C)) . ,body))
       (evalo-staged
-       (prover prf)
+       (prover `(proof? ',prf))
        #t)))
   ex-proof1)
 
@@ -76,7 +59,7 @@
     (fresh (body)
       (== prf `(C (A (A => B) (B => C)) . ,body))
       (u-evalo
-       (prover prf)
+       (prover `(proof? ',prf))
        #t)))
   ex-proof1)
 
@@ -112,7 +95,7 @@
     (fresh (body)
       (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
       (evalo-staged
-       (prover prf)
+       (prover `(proof? ',prf))
        #t)))
   ex-proof2)
 
@@ -122,7 +105,7 @@
     (fresh (body)
       (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
       (u-evalo
-       (prover prf)
+       (prover `(proof? ',prf))
        #t)))
   ex-proof2)
 
@@ -142,7 +125,7 @@
     (fresh (body)
       (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
       (evalo-staged
-       (prover prf)
+       (prover `(proof? ',prf))
        #t))))
  1)
 
