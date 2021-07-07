@@ -21,6 +21,7 @@
                    ))])
        ,body)))
 
+
 (record-bench 'staging 'proofo)
 (define proofo
   (time (eval
@@ -48,9 +49,7 @@
   (run-staged 1 (prf)
     (fresh (body)
       (== prf `(C (A (A => B) (B => C)) . ,body))
-      (evalo-staged
-       (prover `(proof? ',prf))
-       #t)))
+      (proof-staged prf)))
   ex-proof1)
 
 (record-bench 'unstaged 'proofo 1)
@@ -94,9 +93,7 @@
   (run-staged 1 (prf)
     (fresh (body)
       (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-      (evalo-staged
-       (prover `(proof? ',prf))
-       #t)))
+      (proof-staged prf)))
   ex-proof2)
 
 (record-bench 'unstaged 'proofo 2)
@@ -122,14 +119,10 @@
 (time-test
  (length
   (run-staged 1 (prf)
-    (fresh (body env)
+    (fresh (body)
       (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
-      (ext-env*o '(prf) (list prf) initial-env env)
-      (eval-expo
-       #t
-       (prover `(proof? prf))
-       env
-       #t))))
+      (proof-staged prf)
+)))
  1)
 
 #| doesn't come back
