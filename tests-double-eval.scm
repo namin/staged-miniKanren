@@ -816,7 +816,7 @@
 (define double-evalo-variadic-list-fo
   (time (eval
    (gen 'eval-expr '(expr)
-        (double-evalo-variadic-list-fo-fun (eval-expr expr '()))))))
+        (double-evalo-variadic-list-fo-fun '(eval-expr expr '()))))))
 
 (record-bench 'staged 'double-evalo-variadic-list-fo)
 (time-test
