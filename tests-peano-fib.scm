@@ -385,6 +385,67 @@
      (s . z))))
 
 
+(record-bench 'staging 'peano-synth-fib-aps-step)
+(define-staged-relation (peano-synth-fib-aps-stepo step1 step2 ACC1 ACC2 result)
+  (evalo-staged
+   `(letrec ((zero?
+              (lambda (n)
+                (equal? 'z n))))
+
+      (letrec ((add1
+                (lambda (n)
+                  (cons 's n))))
+        (letrec ((sub1
+                  (lambda (n)
+                    (and (equal? (car n) 's)
+                         (cdr n)))))
+          (letrec ((+
+                    (lambda (n m)
+                      (if (zero? n)
+                          m
+                          (add1 (+ (sub1 n) m))))))
+            (letrec ((-
+                      (lambda (n m)
+                        (if (zero? m)
+                            n
+                            (sub1 (- n (sub1 m)))))))
+              (letrec ((fib-aps
+                        (lambda (n a1 a2)
+                          (if (zero? n)
+                              a1
+                              (if (zero? (sub1 n))
+                                  a2
+                                  (fib-aps (- n '(s . z)) ,step1 ,step2))))))
+                (list
+                 (fib-aps 'z ',ACC1 ',ACC2)
+                 (fib-aps '(s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s s s . z) ',ACC1 ',ACC2)
+                 (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
+                ))))))
+   result))
+
+
+(record-bench 'staged 'peano-synth-fib-aps 3)
+(time-test
+  (run 1 (step1 step2 ACC1 ACC2)
+    (peano-synth-fib-aps-stepo
+      step1
+      step2
+      ACC1
+      ACC2
+      '(z
+        (s . z)
+        (s . z)
+        (s s . z)
+        (s s s . z)
+        (s s s s s . z))))
+  '((a2
+     (+ a1 a2)
+     z
+     (s . z))))
+
 (record-bench 'run-staged 'peano-synth-fib-aps 3)
 (time-test
   (run-staged 1 (fib-acc ACC1 ACC2)
