@@ -499,7 +499,8 @@
                     ((== a 'closure))
                     ((== a 'prim))
                     ((== a 'call))
-                    ((== a 'dynamic))))))))]
+                    ((== a 'dynamic))
+                    ((== a 'call-code))))))))]
     [(== prim-id 'null?)
      (fresh (v)
        (l== `(,v) a*)
