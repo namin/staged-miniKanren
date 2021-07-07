@@ -282,7 +282,6 @@
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
 
-#|
 (record-bench 'unstaged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
@@ -296,7 +295,7 @@
     (absento 'f q)
     (evalo-unstaged
      (eval-and-map-and-list-eval
-      `(eval-expr ((lambda (proc)
+      `(eval-expr '((lambda (proc)
                       (list (map proc '())
                             (map proc '(a))
                             (map proc '(b c))
@@ -304,7 +303,7 @@
                    (lambda (x) ,q)) (lambda (y) 'error)))
      '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
-|#
+
 
 #|
 ;;;  Painfully slow to generate this code!  Does it even terminate?
@@ -994,7 +993,7 @@
 (time-test
  (run 1 (q) (absento 'clo q)
       (evalo-unstaged
-       (double-evalo-cons `(eval-expr ',q '()))
+       (double-evalo-cons-fun `(eval-expr ',q '()))
        q))
   '((((lambda (_.0)
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
