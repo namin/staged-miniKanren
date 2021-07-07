@@ -459,11 +459,8 @@
     (sym _.0))))
 
 
-(record-bench 'staging 'ho-quine-interp-cons)
-(define ho-quine-interp-cons
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([eval-expr
+(define (ho-quine-interp-cons-fun body)
+          `(letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
                        [`(quote ,datum) datum]
@@ -478,7 +475,14 @@
                         (cons (eval-expr e1 env) (eval-expr e2 env))]
                        [`(,rator ,rand)
                         ((eval-expr rator env) (eval-expr rand env))]))])
-           (eval-expr expr (lambda (y) 'error)))))))
+             ,body))
+
+(record-bench 'staging 'ho-quine-interp-cons)
+(define ho-quine-interp-cons
+  (time (eval
+         (gen 'eval-expr '(expr)
+              (ho-quine-interp-cons-fun `(eval-expr expr (lambda (y) 'error)))
+))))
 
 (record-bench 'staged 'ho-quine-interp-cons)
 (time-test
@@ -491,6 +495,22 @@
      $$
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
+
+#|
+(record-bench 'unstaged 'ho-quine-interp-cons)
+(time-test
+  (run 1 (q)
+    (absento 'error q)
+    (absento 'closure q)
+    (evalo-unstaged
+     (ho-quine-interp-cons-fun `(eval-expr ,q (lambda (y) 'error)))
+     q))
+  '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
+      '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
+     $$
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     (sym _.0))))
+|#
 
 (record-bench 'staging 'ho-double-evalo)
 (define ho-double-evalo
