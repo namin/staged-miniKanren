@@ -302,7 +302,7 @@
                             (map proc '(d e f))))
                    (lambda (x) ,q)) (lambda (y) 'error)))
      '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
-  '((cons x (cons (cons x '()) (cons x '())))))
+  '((list x (cons x '()) x)))
 
 
 #|
