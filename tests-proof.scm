@@ -122,10 +122,13 @@
 (time-test
  (length
   (run-staged 1 (prf)
-    (fresh (body)
+    (fresh (body env)
       (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
-      (evalo-staged
-       (prover `(proof? ',prf))
+      (ext-env*o '(prf) (list prf) initial-env env)
+      (eval-expo
+       #t
+       (prover `(proof? prf))
+       env
        #t))))
  1)
 
