@@ -1,5 +1,6 @@
 (load "staged-load.scm")
 
+(record-bench 'staging 'eval-and-map-evalo)
 (define-staged-relation (eval-and-map-evalo expr val)
   (evalo-staged
    `(letrec ([map (lambda (f l)
@@ -120,6 +121,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
+(record-bench 'staged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -464,7 +466,7 @@
 
 (record-bench 'staging 'ho-double-evalo)
 (define ho-double-evalo
-  (eval
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([eval-expr
                    (lambda (expr env)
@@ -488,7 +490,7 @@
                         ((eval-expr rator env)
                          (eval-expr rand env))]
                        ))])
-           (eval-expr expr (lambda (y) 'error))))))
+           (eval-expr expr (lambda (y) 'error)))))))
 
 (time-test
   (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
@@ -553,8 +555,9 @@
 ;; => ((a . a) (b . b) (c . c))
 |#
 
+(record-bench 'staging 'map-in-double-eval)
 (define map-in-double-eval
-  (eval
+  (time (eval
    (gen 'eval-expr '(expr)
         `(letrec ([lookup
                    (lambda (x env)
@@ -587,7 +590,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '())))))
+           (eval-expr expr '()))))))
 
 (time-test
  (run 1 (q)
@@ -607,6 +610,7 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
+(record-bench 'staged 'map-in-double-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
