@@ -30,6 +30,14 @@
      env
      #t)))
 
+(define (proof-unstaged prf)
+  (fresh (env)
+    (ext-env*o '(prf) (list prf) initial-env env)
+    (u-eval-expo
+     (prover `(proof? prf))
+     env
+     #t)))
+
 (record-bench 'staging 'proofo)
 (define proofo
   (time (eval
@@ -65,9 +73,7 @@
   (run 1 (prf)
     (fresh (body)
       (== prf `(C (A (A => B) (B => C)) . ,body))
-      (u-evalo
-       (prover `(proof? ',prf))
-       #t)))
+      (proof-unstaged prf)))
   ex-proof1)
 
 (define ex-proof2
@@ -109,9 +115,7 @@
   (run 1 (prf)
     (fresh (body)
       (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-      (u-evalo
-       (prover `(proof? ',prf))
-       #t)))
+      (proof-unstaged prf)))
   ex-proof2)
 
 (record-bench 'staged 'proofo 3)
@@ -140,8 +144,6 @@
   (run 1 (prf)
     (fresh (body)
       (== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
-      (u-evalo
-       (prover prf)
-       #t))))
+       (prover prf))))
   1)
 |#
