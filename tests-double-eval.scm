@@ -630,8 +630,8 @@
                        [`((,y . ,v) . ,renv)
                         (if (equal? x y)
                             v
-                            (lookup x renv))]))]
-                  [eval-expr
+                            (lookup x renv))]))])
+             (letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
                        [`(quote ,datum) datum]
@@ -655,7 +655,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-             ,body))
+             ,body)))
 (record-bench 'staging 'map-in-double-eval)
 (define map-in-double-eval
   (time (eval
@@ -700,7 +700,6 @@
  '((cons x x)))
 
 #|
-;; TODO: does not work
 (record-bench 'unstaged 'map-in-double-eval)
 (time-test
  (run 1 (q)
