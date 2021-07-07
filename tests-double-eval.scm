@@ -496,7 +496,6 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
-#|
 (record-bench 'unstaged 'ho-quine-interp-cons)
 (time-test
   (run 1 (q)
@@ -510,7 +509,6 @@
      $$
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
-|#
 
 (define (ho-double-eval body)
           `(letrec ([eval-expr
