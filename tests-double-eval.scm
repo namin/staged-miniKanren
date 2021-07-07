@@ -198,11 +198,8 @@
      '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
 
-(record-bench 'staging 'eval-and-map-and-list-evalo)
-(define eval-and-map-and-list-evalo
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([map (lambda (f l)
+(define (eval-and-map-and-list-eval body)
+  `(letrec ([map (lambda (f l)
                          (if (null? l)
                              '()
                              (cons (f (car l))
@@ -237,7 +234,14 @@
                           (map (lambda (e) (eval-expr e env)) e*)]
                          [`(,rator ,rand)
                           ((eval-expr rator env) (eval-expr rand env))]))])
-             (eval-expr expr (lambda (y) 'error))))))))
+             ,body)))
+
+(record-bench 'staging 'eval-and-map-and-list-evalo)
+(define eval-and-map-and-list-evalo
+  (time (eval
+   (gen 'eval-expr '(expr)
+        (eval-and-map-and-list-eval
+         `(eval-expr expr (lambda (y) 'error)))))))
 
 (time-test
   (run 1 (q)
@@ -277,6 +281,30 @@
                                    (lambda (x) ,q))
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
+
+#|
+(record-bench 'unstaged 'eval-and-map-and-list-evalo)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'closure q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (evalo-unstaged
+     (eval-and-map-and-list-eval
+      `(eval-expr ((lambda (proc)
+                      (list (map proc '())
+                            (map proc '(a))
+                            (map proc '(b c))
+                            (map proc '(d e f))))
+                   (lambda (x) ,q)) (lambda (y) 'error)))
+     '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
+  '((cons x (cons (cons x '()) (cons x '())))))
+|#
 
 #|
 ;;;  Painfully slow to generate this code!  Does it even terminate?
