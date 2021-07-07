@@ -789,7 +789,7 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-(define (double-evalo-variadic-list-f body)
+(define (double-evalo-variadic-list-fo-fun body)
           `(letrec ([lookup
                    (lambda (x env)
                      (match env
@@ -819,7 +819,7 @@
 (define double-evalo-variadic-list-fo
   (time (eval
    (gen 'eval-expr '(expr)
-        (double-evalo-variadic-list-f (eval-expr expr '()))))))
+        (double-evalo-variadic-list-fo-fun (eval-expr expr '()))))))
 
 (record-bench 'staged 'double-evalo-variadic-list-fo)
 (time-test
@@ -830,31 +830,26 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
 
-#|
 (record-bench 'unstaged 'double-evalo-variadic-list-fo)
 (time-test
  (run 1 (q) (absento 'clo q)
       (evalo-unstaged
-       (double-evalo-variadic-list-f `(eval-expr ,q '())) q))
+       (double-evalo-variadic-list-fo-fun `(eval-expr ',q '())) q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
      (sym _.0))))
-|#
 
-(record-bench 'staging 'double-evalo-variadic-list-fo-better)
-(define double-evalo-variadic-list-fo-less-ridiculous
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([lookup
+(define (double-evalo-variadic-list-fo-less-ridiculous-fun body)
+          `(letrec ([lookup
                    (lambda (x env)
                      (match env
                        [`((,y . ,v) . ,renv)
                         (if (equal? x y)
                             v
-                            (lookup x renv))]))]
-                  [eval-expr
+                            (lookup x renv))]))])
+             (letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
                        [`(quote ,datum) datum]
@@ -872,11 +867,27 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '()))))))
+             ,body)))
+(record-bench 'staging 'double-evalo-variadic-list-fo-better)
+(define double-evalo-variadic-list-fo-less-ridiculous
+  (time (eval
+   (gen 'eval-expr '(expr)
+        (double-evalo-variadic-list-fo-less-ridiculous-fun '(eval-expr expr '()))))))
 
 (record-bench 'staged 'double-evalo-variadic-list-fo-better)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
+  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     $$
+     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (sym _.0))))
+
+(record-bench 'unstaged 'double-evalo-variadic-list-fo-better)
+(time-test
+ (run 1 (q) (absento 'clo q)
+      (evalo-unstaged
+       (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',q '())) q))
   '((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
