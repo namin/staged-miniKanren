@@ -385,7 +385,7 @@
      (s . z))))
 
 
-(record-bench 'staging 'peano-synth-fib-aps-step)
+;;(record-bench 'staging 'peano-synth-fib-aps-step)
 (define-staged-relation (peano-synth-fib-aps-stepo step1 step2 ACC1 ACC2 result)
   (evalo-staged
    `(letrec ((zero?

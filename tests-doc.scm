@@ -86,7 +86,7 @@
   '(1))
 
 (test
-    (run* (q) (evalo (car '(1 2)) q))
+    (run* (q) (evalo '(car '(1 2)) q))
   '(1))
 
 (todo "too slow in this version of evalo"

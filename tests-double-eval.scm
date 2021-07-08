@@ -434,7 +434,7 @@
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
      (sym _.0))))
 
-(record-bench 'run-staged 'quasi-quine-evalo)
+;;(record-bench 'run-staged 'quasi-quine-evalo)
 (time-test
   (run-staged 1 (q)
     (absento 'error q)
