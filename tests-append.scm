@@ -1,5 +1,7 @@
 (load "staged-load.scm")
 
+(display "in mk")
+(newline)
 (define (appendo xs ys zs)
   (conde
     ((== xs '()) (== ys zs))
@@ -17,6 +19,8 @@
 501
 |#
 
+(display "unstaged")
+(newline)
 (time (length (run* (x y)
       (evalo-unstaged
        `(letrec ((append (lambda (xs ys)
@@ -32,6 +36,8 @@
 501
 |#
 
+(display "unstaged env-passing")
+(newline)
 (time (length (run* (xs ys)
       (u-eval-expo
        `(letrec ((append (lambda (xs ys)
@@ -49,6 +55,8 @@
 501
 |#
 
+(display "staged")
+(newline)
 (define-staged-relation (appendo2 xs ys zs)
   (evalo-staged
    `(letrec ((append
@@ -69,6 +77,8 @@
 501
 |#
 
+(display "staged env-passing")
+(newline)
 (define-staged-relation (appendo3 xs ys zs)
   (eval-expo
    #t
