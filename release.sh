@@ -31,7 +31,6 @@ cp ../tests-doc-bench.scm staged-miniKanren/
 cp ../tests-doc.scm staged-miniKanren/
 cp ../tests-dl.scm staged-miniKanren/
 cp ../tests-double-eval.scm staged-miniKanren/
-cp ../tests-micro.scm staged-miniKanren/
 cp ../tests-peano-fib.scm staged-miniKanren/
 cp ../tests-parsing-with-derivatives.scm staged-miniKanren/
 cp ../tests-proof.scm staged-miniKanren/
