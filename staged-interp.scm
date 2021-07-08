@@ -390,7 +390,7 @@
     (conde
       ((== x y)
        (conde
-         ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) v t)))
+         ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) t v)))
          ((fresh (lam-expr code-expr)
             (== `(staged-rec ,lam-expr ,code-expr) b)
             ((if stage? l== ==) `(call ,x) t)))))
