@@ -23,7 +23,7 @@ meant to be
 - [ ] Fix [`letrec` issues](letrec-issue.scm).
 
 - [ ] Make the staged and unstaged interpreter cover exactly the same language.
-   + [ ] same primitives
+   + [x] same primitives
    + [ ] add multiple letrec bindings to unstaged interpreter
 
 - [x] Use a reify tag for quasi instead of ad-hoc knowledge for each construct.
@@ -109,18 +109,20 @@ run-staged 1 ()
 
 - [x] Check all explicit `later`s in `staged-interp` and make sure unifications are properly expanded.
 
-- [ ] Fix predicate primitives to consider nil and booleans in addition to symbol, number and pair.
-      Fix in original faster-mk full interp, in unstated-interp, in staged-interp.
+- [] Fix predicate primitives to consider nil and booleans in addition to symbol, number and pair.
+      - Fix in original faster-mk full interp
+      - [x] Fix in unstated-interp
+      - [x] Fix in staged-interp.
 
 - [x] Lifting in scope should probably preserve constraints.
 
-- [ ] Run proper benchmarks comparing staged and unstaged programs.
+- [x] Run proper benchmarks comparing staged and unstaged programs.
     + [x] Have basic benchmarks.
     + [x] Write script to generate TeX file.
-    + [ ] Convert more tests into benchmarks.
-    + [ ] Devise new benchmarks.
+    + [x] Convert more tests into benchmarks.
+    + [x] Devise new benchmarks.
 
-- [ ] Examine the `eval-expo #f` for rator evaluation.
+- [x] Examine the `eval-expo #f` for rator evaluation.
       Possible test: `(let ([f ,e]) (f 5))`.
       Also re-consider whether `stage?` should be `#t` when latering to `u-eval-expo` when `varo`.
 
@@ -132,7 +134,7 @@ run-staged 1 ()
 
 - [ ] @michaelballantyne will write a demo of syntactic later.
 
-- [ ] For showing off synthesis it would be interesting to have some examples that use really big ground contexts;
+- [x] For showing off synthesis it would be interesting to have some examples that use really big ground contexts;
       lots of helpers, say.
 
 - [ ] Revive `staged-regexp` application.
