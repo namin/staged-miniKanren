@@ -1,5 +1,7 @@
 # staged-miniKanren
 
+## Run
+
 We use Chez Scheme for `scheme`. It could be called `chez` depending on the system.
 
 All commands are executed from the `staged-miniKanren` directory.
