@@ -1,3 +1,5 @@
+- [ ] Get rid of `stage?`.
+
 - [ ] This example should produce an error instead of failing. Maybe.
 ```
     (run* (x y)
