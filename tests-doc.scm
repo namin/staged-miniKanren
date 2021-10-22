@@ -477,3 +477,57 @@ res
       (=/= ((_.0 quote)))
       (sym _.1))))
 
+(define-staged-relation (peano-synth-fib-acc-stepo step1 step2 ACC1 ACC2)
+  (evalo-staged
+   `(letrec ((zero?
+              (lambda (n)
+                (equal? 'z n))))
+      (letrec ((add1
+                (lambda (n)
+                  (cons 's n))))
+        (letrec ((sub1
+                  (lambda (n)
+                    (and (equal? (car n) 's)
+                         (cdr n)))))
+          (letrec ((+
+                    (lambda (n m)
+                      (if (zero? n)
+                          m
+                          (add1 (+ (sub1 n) m))))))
+            (letrec ((-
+                      (lambda (n m)
+                        (if (zero? m)
+                            n
+                            (sub1 (- n (sub1 m)))))))
+              (letrec ((fib-acc
+                        (lambda (n a1 a2)
+                          (if (zero? n)
+                              a1
+                              (if (zero? (sub1 n))
+                                  a2
+                                  (fib-acc (- n '(s . z)) ,step1 ,step2))))))
+                (list
+                 (fib-acc 'z ',ACC1 ',ACC2)
+                 (fib-acc '(s . z) ',ACC1 ',ACC2)
+                 (fib-acc '(s s . z) ',ACC1 ',ACC2)
+                 (fib-acc '(s s s . z) ',ACC1 ',ACC2)
+                 (fib-acc '(s s s s . z) ',ACC1 ',ACC2)
+                 (fib-acc '(s s s s s . z) ',ACC1 ',ACC2))
+                ))))))
+   '(z
+     (s . z)
+     (s . z)
+     (s s . z)
+     (s s s . z)
+     (s s s s s . z))))
+
+(time-test
+ (run 1 (step1 step2 ACC1 ACC2)
+   (peano-synth-fib-acc-stepo
+    step1
+    step2
+    ACC1
+    ACC2))
+ '((a2 (+ a1 a2) z (s . z)))
+ )
+
