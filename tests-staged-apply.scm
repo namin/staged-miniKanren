@@ -1,5 +1,8 @@
-; For now we need dynamic and staged versions of the relation; when we have stage
-; polymorphism we won't.
+(load "staged-load.scm")
+(load "staged-apply.scm")
+
+;; For now we need dynamic and staged versions of the relation; when we have stage
+;; polymorphism we won't.
 
 (define (test-rel-dyn y z x res)
   (fresh (yz)
@@ -16,9 +19,9 @@
 (test
   (run-staged 1 (q)
     (fresh (c r1 r2)
-      (reify-call c ((test-rel-staged test-rel-dyn) 2 3 _ _))
-      (apply-reified c ((test-rel-staged test-rel-dyn) _ _ 1 r1))
-      (apply-reified c ((test-rel-staged test-rel-dyn) _ _ 4 r1))
+      (reify-call c ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+      (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))
+      (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (4 r2)))
       (l== q (list r1 r2))))
   '(((1 2 3) (4 2 3))))
 
