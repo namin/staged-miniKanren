@@ -1,3 +1,5 @@
+;; TODO: constraints like absento and probably reification need to know about apply-rep.
+;; TODO: need a story for letrec
 (define-record-type apply-rep
   (nongenerative)
   (fields name-staged name-dyn args proc))

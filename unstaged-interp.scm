@@ -20,23 +20,24 @@
 
     ((symbolo expr) (u-lookupo expr env val))
 
-    ((fresh (x body extra)
+    ((fresh (x body rep)
        (== `(lambda ,x ,body) expr)
-       (== `(closure (lambda ,x ,body) ,env ,extra) val)
+       (== `(closure ,rep) val)
        (conde
          ;; Variadic
          ((symbolo x))
          ;; Multi-argument
          ((u-list-of-symbolso x)))
-       (u-not-in-envo 'lambda env)))
+       (u-not-in-envo 'lambda env)
+       (reify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _)))))
     
-    ((fresh (rator x* rands body env^ a* cfun extra proc)
+    ((fresh (rator rands a* cfun proc rep)
        (== `(,rator . ,rands) expr)
        (u-eval-expo rator env cfun)
        (conde
-         ((== `(closure (lambda ,x* ,body) ,env^ ,extra) cfun)
+         ((== `(closure ,rep) cfun)
           (u-eval-listo rands env a*)
-          (callo cfun val a*))
+          (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val))))
          ((== `(call-code ,proc) cfun)
           (u-eval-listo rands env a*)
           (callo proc val a*)))))

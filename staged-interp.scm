@@ -1,3 +1,22 @@
+(define (eval-apply-staged x* body env a* val)
+  (fresh (env^ x^)
+    (conde
+      ((symbolo x*)
+       (== x^ (unexpand x*))
+       (== `((,x* . (val . ,x^)) . ,env) env^))
+      ((list-of-symbolso x*)
+       (make-list-of-symso x* x^)
+       (ext-env*o x* x^ env env^)))
+    (eval-expo #t body env^ val)))
+
+(define (eval-apply-dyn x* body env a* val)
+  (fresh (env^)
+    (conde
+      ((symbolo x*)
+       (== `((,x* . (val . ,a*)) . ,env) env^))
+      ((u-ext-env*o x* a* env env^)))
+    (u-eval-expo body env^ val)))
+
 (define (booleano x)
   (conde
     ((== x #t))
@@ -193,14 +212,9 @@
               (lambda (_) (k fail))
               (lambda () ((apply cfun a*) val)))))
           (conde
-            ((fresh (clam cenv ccode x* body env^)
-               (== whole `(closure ,clam ,cenv ,ccode))
-               (== clam `(lambda ,x* ,body))
-               (conde
-                 ((symbolo x*)
-                  (== `((,x* . (val . ,a*)) . ,cenv) env^))
-                 ((u-ext-env*o x* a* cenv env^)))
-               (u-eval-expo body env^ val)))
+            ((fresh (rep)
+               (== whole `(closure ,rep))
+               (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))))
             ((absento 'closure whole)
              fail))))))
 
@@ -234,9 +248,9 @@
                   (absento 'dynamic v)
                   (not-in-envo 'quote env)
                   ((if stage? l== ==) val v)))
-               ((fresh (x body clo-code envt out c-body x^)
+               ((fresh (x body rep)
                   (== `(lambda ,x ,body) expr)
-                  ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
+                  ((if stage? l== ==) `(closure ,rep) val)
                   (conde
                     ((not-ground-paramso x)
                      (absent-staged-tago val)
@@ -248,17 +262,9 @@
                        ;; Multi-argument
                        ((list-of-symbolso x)))
                      (not-in-envo 'lambda env)
-                     (conde
-                       ((symbolo x)
-                        (== x^ (unexpand x))
-                        (== `((,x . (val . ,x^)) . ,env) envt))
-                       ((list-of-symbolso x)
-                        (make-list-of-symso x x^)
-                        (ext-env*o x x^ env envt)))
-                     (later-scope
-                      (eval-expo #t body envt out)
-                      c-body)
-                     (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
+                     (if stage?
+                         (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _)))
+                         (reify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))))))
                ((fresh (proc)
                   (eval-expo #f rator env proc)
                   (conde
@@ -266,22 +272,15 @@
                      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((non-varo proc)
                      (conde
-                       ((fresh (x* body env^ a* res clo-code)
-                          (== proc `(closure (lambda ,x* ,body) ,env^ ,clo-code))
+                       ((fresh (rep)
+                          (== proc `(closure ,rep))
                           (conde
                             ((not-ground-paramso x*)
                              (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                             ((ground-paramso x*)
-                             (conde
-                               ;; Variadic
-                               ((symbolo x*)
-                                (== `((,x* . (val . ,a*)) . ,env^) res)
-                                (eval-expo stage? body res val)
-                                (eval-listo rands env a*))
-                               ;; Multi-argument
-                               ((eval-listo rands env a*)
-                                (ext-env*o x* a* env^ res)
-                                (eval-expo stage? body res val)))))))
+                             (if staged?
+                                 (lapply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (x* val)))
+                                 (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (x* val))))))))
                        ((fresh (a* p-name)
                           (== stage? #t)
                           (== proc `(call ,p-name))
