@@ -12,8 +12,8 @@
            ((y-n ...) (generate-temporaries #'(y ...))))
           #'(fresh (x-n ... y-n ... body)
               (later-scope (rel-staged x-n ... y-n ...) body)
-              (== rep (make-apply-rep
-                       #'rel-staged #'rel-dyn (list x ...)
+              (l== rep (make-apply-rep
+                       'rel-staged 'rel-dyn (list x ...)
                        (unexpand `(lambda (,x-n ...)
                                     (lambda (,y-n ...)
                                       (fresh () . ,body))))))))))))
@@ -30,8 +30,8 @@
               (cond
                 ((var? rep)
                  (fresh (x-n ... y-n ...)
-                   (== rep (make-apply-rep ;
-                            #'rel-staged #'rel-dyn (list x-n ...) ;
+                   (== rep (make-apply-rep
+                            'rel-staged 'rel-dyn (list x-n ...) ;
                             (unexpand #f)))
                    (rel-dyn x-n ... y ...)))
                 ((apply-rep? rep)
@@ -40,3 +40,8 @@
                        (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
                        ((apply proc (apply-rep-args rep)) y ...))))
                 (else fail))))))))
+
+(define-syntax lapply-reified
+  (syntax-rules ()
+    ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
+     (later `(apply-reified ,rep ((rel-staged rel-dyn) (x ...) (,(expand y) ...)))))))
