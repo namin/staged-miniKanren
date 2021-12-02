@@ -30,11 +30,9 @@
               (cond
                 ((var? rep)
                  (fresh (x-n ... y-n ...)
-                   (== rep (make-apply-rep
-                            #'rel-staged #'rel-dyn (list x-n ...)
-                            (unexpand `(lambda (,x-n ...)
-                                         (lambda (,y-n ...)
-                                           (fresh () . ,body))))))
+                   (== rep (make-apply-rep ;
+                            #'rel-staged #'rel-dyn (list x-n ...) ;
+                            (unexpand #f)))
                    (rel-dyn x-n ... y ...)))
                 ((apply-rep? rep)
                  (let ((proc (apply-rep-proc rep)))
