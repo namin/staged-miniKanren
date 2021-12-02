@@ -34,6 +34,14 @@
       (l== q (list r1 r2))))
   '(((1 2 3) (4 2 3))))
 
+(test
+  (run-staged 1 (q)
+    (fresh (c r1 r2)
+      (reify-call c ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+      (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))
+      (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (4 r2)))
+      (l== q (list r1 r2))))
+  '(((1 2 3) (4 2 3))))
 
 ; the lifted unification from test-rel-staged fails when (5 6 7) is given for res at apply-reified
 (test
