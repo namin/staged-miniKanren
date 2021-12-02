@@ -2,7 +2,7 @@
   (nongenerative)
   (fields name-staged name-dyn args proc))
 
-(define-syntax reify-call
+(define-syntax lreify-call
   (lambda (stx)
     (syntax-case stx ()
         ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
@@ -18,6 +18,15 @@
                                     (lambda (,y-n ...)
                                       (fresh () . ,body))))))))))))
 
+(define-syntax reify-call
+  (lambda (stx)
+    (syntax-case stx ()
+        ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
+         (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(y ...)))
+         #'(== rep (make-apply-rep
+                    'rel-staged 'rel-dyn (list x ...)
+                    #f))))))
+
 (define-syntax apply-reified
   (lambda (stx)
     (syntax-case stx ()
@@ -32,11 +41,12 @@
                  (fresh (x-n ... y-n ...)
                    (== rep (make-apply-rep
                             'rel-staged 'rel-dyn (list x-n ...) ;
-                            (unexpand #f)))
+                            #f))
                    (rel-dyn x-n ... y ...)))
                 ((apply-rep? rep)
                  (let ((proc (apply-rep-proc rep)))
-                   (if (unexpand? proc)
+                   ;; TODO: unify to check names
+                   (if (or (not proc) (unexpand? proc))
                        (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
                        ((apply proc (apply-rep-args rep)) y ...))))
                 (else fail))))))))
