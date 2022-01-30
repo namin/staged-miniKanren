@@ -200,7 +200,8 @@ run-staged 1 ()
 - [ ] Compose with pink.
 
 - [ ] `absento` should be `later`.
-  ```(run-staged 1 (val) (evalo-staged '(quote closure) val))
+  ```
+  (run-staged 1 (val) (evalo-staged '(quote closure) val))
   running first stage
   Exception in gen: staging failed
   ```
