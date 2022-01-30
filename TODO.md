@@ -198,3 +198,9 @@ run-staged 1 ()
 - [ ] Make `evalo` stage polymorphic so that it can be instantiated to `evalo-staged` or `evalo-unstaged` (`u-evalo`).
 
 - [ ] Compose with pink.
+
+- [ ] `absento` should be `later`.
+  ```(run-staged 1 (val) (evalo-staged '(quote closure) val))
+  running first stage
+  Exception in gen: staging failed
+  ```
