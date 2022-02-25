@@ -272,9 +272,9 @@
                      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((non-varo proc)
                      (conde
-                       ((fresh (rep)
+                       ((fresh (a* rep)
                           (== proc `(closure ,rep))
-                          (if staged?
+                          (if stage?
                               (lapply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))
                               (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val))))
                           (eval-listo rands env a*)))
