@@ -36,8 +36,8 @@
        (u-eval-expo rator env cfun)
        (conde
          ((== `(closure ,rep) cfun)
-          (u-eval-listo rands env a*)
-          (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val))))
+          (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))
+          (u-eval-listo rands env a*)))
          ((== `(call-code ,proc) cfun)
           (u-eval-listo rands env a*)
           (callo proc val a*)))))

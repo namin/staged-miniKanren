@@ -274,13 +274,10 @@
                      (conde
                        ((fresh (rep)
                           (== proc `(closure ,rep))
-                          (conde
-                            ((not-ground-paramso x*)
-                             (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-                            ((ground-paramso x*)
-                             (if staged?
-                                 (lapply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (x* val)))
-                                 (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (x* val))))))))
+                          (if staged?
+                              (lapply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))
+                              (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val))))))))
+                          (eval-listo rands env a*)))
                        ((fresh (a* p-name)
                           (== stage? #t)
                           (== proc `(call ,p-name))
