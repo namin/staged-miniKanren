@@ -40,7 +40,7 @@
           (u-eval-listo rands env a*)))
          ((== `(call-code ,proc) cfun)
           (u-eval-listo rands env a*)
-          (callo proc val a*)))))
+          (callo proc val a*))))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
