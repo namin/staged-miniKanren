@@ -117,3 +117,29 @@
         (absento 2 c) ;; this is probably fine?
         (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))))
   '(_.0))
+
+(test
+    (run 1 (q)
+      (fresh (c r1)
+        (reify-call c ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+        (=/= c c)
+        (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))))
+  '())
+
+(test
+    (run 1 (q)
+      (fresh (c1 c2 r1)
+        (reify-call c1 ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+        (reify-call c2 ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+        (=/= c1 c2)
+        (apply-reified c1 ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))))
+  '())
+
+(test
+    (run 1 (q)
+      (fresh (c1 c2 r1)
+        (reify-call c1 ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+        (reify-call c2 ((test-rel-staged test-rel-dyn) (2 4) (_ _)))
+        (=/= c1 c2)
+        (apply-reified c1 ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))))
+  '(_.0))
