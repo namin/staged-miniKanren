@@ -155,19 +155,19 @@
 
 (define (varo x)
   (lambda (c)
-    (if (var? (walk* x (c->S c)))
+    (if (var? (walk* x (state-S c)))
         c
         #f)))
 
 (define (non-varo x)
   (lambda (c)
-    (if (var? (walk* x (c->S c)))
+    (if (var? (walk* x (state-S c)))
         #f
         c)))
 
 (define (logo f . args)
   (lambda (c)
-    (apply printf f (walk* args (c->S c)))
+    (apply printf f (walk* args (state-S c)))
     (newline)
     c))
 
@@ -176,11 +176,11 @@
     ((fresh (clam cenv ccode)
        (== cfun `(closure ,clam ,cenv ,ccode))
        (lambda (c)
-         (((maybe-apply (walk* ccode (c->S c)) (walk* cfun (c->S c)) (walk* a* (c->S c))) val)
+         (((maybe-apply (walk* ccode (state-S c)) (walk* cfun (state-S c)) (walk* a* (state-S c))) val)
           c))))
     ((absento 'closure cfun)
      (lambda (c)
-       (((maybe-apply (walk* cfun (c->S c)) (walk* cfun (c->S c)) (walk* a* (c->S c))) val)
+       (((maybe-apply (walk* cfun (state-S c)) (walk* cfun (state-S c)) (walk* a* (state-S c))) val)
         c)))))
 
 (define maybe-apply
