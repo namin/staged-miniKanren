@@ -101,3 +101,19 @@
       (lapply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 '(1 2 3))))
       (lapply-reified c ((test-rel-staged test-rel-dyn) (_ _) (4 '(4 2 5))))))
   '())
+
+(test
+    (run 1 (q)
+      (fresh (c r1)
+        (reify-call c ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+        (numbero c)
+        (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))))
+  '())
+
+(test
+    (run 1 (q)
+      (fresh (c r1)
+        (reify-call c ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
+        (absento 2 c)
+        (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))))
+  '(_.0))
