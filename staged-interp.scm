@@ -274,9 +274,7 @@
                      (conde
                        ((fresh (a* rep)
                           (== proc `(closure ,rep))
-                          (if stage?
-                              (lapply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))
-                              (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val))))
+                          (lapply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))
                           (eval-listo rands env a*)))
                        ((fresh (a* p-name)
                           (== stage? #t)
