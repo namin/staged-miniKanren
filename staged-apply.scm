@@ -32,28 +32,29 @@
 (define-syntax apply-reified
   (lambda (stx)
     (syntax-case stx ()
-        ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
+        ((_ urep ((rel-staged rel-dyn) (x ...) (y ...)))
          (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(x ...)))
          (with-syntax
           (((x-n ...) (generate-temporaries #'(x ...)))
            ((y-n ...) (generate-temporaries #'(y ...))))
-          #'(project (rep)
-              (cond
-                ((var? rep)
-                 (fresh (x-n ... y-n ...)
-                   (== rep (make-apply-rep
-                            'rel-staged 'rel-dyn (list x-n ...) ;
-                            #f))
-                   (rel-dyn x-n ... y ...)))
-                ((apply-rep? rep)
-                 (let ((proc (apply-rep-proc rep)))
-                   ;; TODO: unify to check names
-                   (if (or (not proc) (unexpand? proc))
-                       (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
-                       ((apply proc (apply-rep-args rep)) y ...))))
-                (else fail))))))))
+          #'(lambda (state)
+              (let ((rep (walk* urep (state-S state))))
+                (cond
+                  ((var? rep)
+                   ((fresh (x-n ... y-n ...)
+                       (== rep (make-apply-rep
+                                'rel-staged 'rel-dyn (list x-n ...) ;
+                                #f))
+                       (rel-dyn x-n ... y ...)) state))
+                  ((apply-rep? rep)
+                   (let ((proc (apply-rep-proc rep)))
+                     ;; TODO: unify to check names
+                     (if (or (not proc) (unexpand? proc))
+                         ((apply rel-dyn (append (apply-rep-args rep) (list y ...))) state)
+                         (((apply proc (apply-rep-args rep)) y ...) state))))
+                  (else (fail state))))))))))
 
 (define-syntax lapply-reified
   (syntax-rules ()
     ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-     (later `(apply-reified ,rep ((rel-staged rel-dyn) (x ...) (,(expand y) ...)))))))
+     (later `(apply-reified ,(expand rep) ((rel-staged rel-dyn) (x ...) (,(expand y) ...)))))))
