@@ -250,7 +250,7 @@
                   ((if stage? l== ==) val v)))
                ((fresh (x body rep)
                   (== `(lambda ,x ,body) expr)
-                  ((if stage? l== ==) `(closure ,rep) val)
+                  (l== `(closure ,rep) val)
                   (conde
                     ((not-ground-paramso x)
                      (absent-staged-tago val)
@@ -262,9 +262,7 @@
                        ;; Multi-argument
                        ((list-of-symbolso x)))
                      (not-in-envo 'lambda env)
-                     (if stage?
-                         (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _)))
-                         (reify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))))))
+                     (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _)))))))
                ((fresh (proc)
                   (eval-expo #f rator env proc)
                   (conde
