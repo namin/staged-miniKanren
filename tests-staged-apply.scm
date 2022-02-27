@@ -114,6 +114,6 @@
     (run 1 (q)
       (fresh (c r1)
         (reify-call c ((test-rel-staged test-rel-dyn) (2 3) (_ _)))
-        (absento 2 c)
+        (absento 2 c) ;; this is probably fine?
         (apply-reified c ((test-rel-staged test-rel-dyn) (_ _) (1 r1)))))
   '(_.0))
