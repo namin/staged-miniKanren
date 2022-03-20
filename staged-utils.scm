@@ -159,7 +159,7 @@
          (fresh (env inputs^)
            (ext-env*o inputs inputs^ initial-env env)
            (make-list-of-symso inputs inputs^)
-           (eval-expo #t
+           (eval-expo 
                       (context
                        `(letrec ((,p-name (lambda ,inputs ,rhs)))
                           (,p-name . ,inputs)))
@@ -171,7 +171,7 @@
   (gen-func
    (run 100 (q)
      (if (null? extra) succeed ((car extra) q))
-     (eval-expo #t
+     (eval-expo 
                 (query q)
                 initial-env
                 result))))

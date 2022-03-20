@@ -25,7 +25,6 @@
   (fresh (env)
     (ext-env*o '(prf) (list prf) initial-env env)
     (eval-expo
-     #t
      (prover `(proof? prf))
      env
      #t)))

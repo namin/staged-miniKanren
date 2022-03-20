@@ -1,5 +1,5 @@
 (define (evalo-staged expr val)
-  (eval-expo #t expr initial-env val))
+  (eval-expo expr initial-env val))
 
 (define (evalo-unstaged expr val)
   (u-eval-expo expr initial-env val))

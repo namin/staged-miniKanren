@@ -260,6 +260,18 @@ res ;; contains the generated code
     ))
 
 
+(define-staged-relation (context-ido e res)
+  (evalo-staged
+   `(letrec ((id (lambda (x) x)))
+      ,e)
+   res))
+
+res
+
+(test
+    (run* (q) (context-ido `(id 1) q))
+  '(1))
+
 (define-staged-relation (context-appendo e res)
   (evalo-staged
    `(letrec ((append
@@ -279,7 +291,7 @@ res
 
 (test
     (length (run* (q) (context-appendo 'append q)))
-  ;; ((call-code #<procedure append>))
+  ;; ((call #<procedure append>))
   1)
 
 (test

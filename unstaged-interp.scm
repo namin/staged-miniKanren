@@ -37,9 +37,9 @@
          ((== `(closure (lambda ,x* ,body) ,env^ ,extra) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*))
-         ((== `(call-code ,proc) cfun)
+         ((== `(call ,proc) cfun)
           (u-eval-listo rands env a*)
-          (callo proc val a*)))))
+          (callo cfun val a*)))))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
@@ -82,7 +82,7 @@
             (== `(closure ,lam-expr ,env ,extra) t)))
          ((fresh (lam-expr code-expr)
             (== `(staged-rec ,lam-expr ,code-expr) b)
-            (== `(call-code ,code-expr) t)))))
+            (== `(call ,code-expr) t)))))
       ((=/= x y)
        (u-lookupo x rest t)))))
 

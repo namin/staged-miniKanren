@@ -136,11 +136,6 @@
     (=/= 'dynamic v)
     (=/= 'call-code v)))
 
-(define (absent-staged-tago v)
-  (fresh ()
-    (absento 'call v)
-    (absento 'dynamic v)))
-
 (define (mapo fo xs ys)
   (conde
     ((== xs '()) (== ys '()))
@@ -171,49 +166,54 @@
     (newline)
     c))
 
-(define (callo cfun val a*)
+(define (same-lengtho a* b*)
   (conde
-    ((fresh (clam cenv ccode)
-       (== cfun `(closure ,clam ,cenv ,ccode))
-       (lambda (c)
-         (((maybe-apply (walk* ccode (state-S c)) (walk* cfun (state-S c)) (walk* a* (state-S c))) val)
-          c))))
-    ((absento 'closure cfun)
-     (lambda (c)
-       (((maybe-apply (walk* cfun (state-S c)) (walk* cfun (state-S c)) (walk* a* (state-S c))) val)
-        c)))))
+    ((== a* '()) (== b* '()))
+    ((fresh (a ar b br)
+       (== a* (cons a ar))
+       (== b* (cons b br))
+       (same-lengtho ar br)))))
 
-(define maybe-apply
-  (lambda (cfun whole a*)
-    (lambda (val)
-      (if (and (procedure? cfun) (list? a*))
-          (call/cc
-           (lambda (k)
-             (with-exception-handler
-              (lambda (_) (k fail))
-              (lambda () ((apply cfun a*) val)))))
-          (conde
-            ((fresh (clam cenv ccode x* body env^)
-               (== whole `(closure ,clam ,cenv ,ccode))
-               (== clam `(lambda ,x* ,body))
+(define (callo proc val a*)
+  (conde
+    ((fresh (x* body env code)
+       (== proc `(closure (lambda ,x* ,body) ,env ,code))
+       (project (code a*)
+         (if (and (procedure? code) (list? a*))
+             (fresh ()
+               (conde
+                 ((symbolo x*))
+                 ((same-lengtho x* a*)))
+               ((apply code a*) val))
+             (fresh (env^)
                (conde
                  ((symbolo x*)
-                  (== `((,x* . (val . ,a*)) . ,cenv) env^))
-                 ((u-ext-env*o x* a* cenv env^)))
-               (u-eval-expo body env^ val)))
-            ((absento 'closure whole)
+                  (== `((,x* . (val . ,a*)) . ,env) env^))
+                 ((u-ext-env*o x* a* env env^)))
+               (u-eval-expo body env^ val))))))
+    ((fresh (prim-id)
+       (== proc `(prim . ,prim-id))
+       (u-eval-primo prim-id a* val)))
+    ((fresh (code)
+       (== proc `(call ,code))
+       (project (code a*)
+         (if (and (procedure? code) (list? a*)) ;; TODO: what if a* is a var?
+             (call/cc
+              (lambda (k)
+                (with-exception-handler
+                 (lambda (_) (k fail))
+                 (lambda () ((apply code a*) val)))))
              fail))))))
 
-(define (eval-expo stage? expr env val)
+(define (eval-expo expr env val)
   (conde
     ((varo expr)
-     (absent-staged-tago val)
      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
     ((non-varo expr)
      (conde
-       ((numbero expr) ((if stage? l== ==) expr val))
+       ((numbero expr) (l== expr val))
 
-       ((symbolo expr) (lookupo stage? expr env val))
+       ((symbolo expr) (lookupo #t expr env val))
 
        ((fresh (rator rands)
           (== `(,rator . ,rands) expr)
@@ -221,7 +221,6 @@
             ((conde
                ((varo rator))
                ((non-varo rator) (not-ground-spineo rands)))
-             (absent-staged-tago val)
              (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
             ((ground-spineo rands)
              (non-varo rator)
@@ -233,13 +232,12 @@
                   (absento 'call v)
                   (absento 'dynamic v)
                   (not-in-envo 'quote env)
-                  ((if stage? l== ==) val v)))
+                  (l== val v)))
                ((fresh (x body clo-code envt out c-body x^)
                   (== `(lambda ,x ,body) expr)
-                  ((if stage? l== ==) `(closure (lambda ,x ,body) ,env ,clo-code) val)
+                  (l== `(closure (lambda ,x ,body) ,env ,clo-code) val)
                   (conde
                     ((not-ground-paramso x)
-                     (absent-staged-tago val)
                      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((ground-paramso x)
                      (conde
@@ -256,53 +254,30 @@
                         (make-list-of-symso x x^)
                         (ext-env*o x x^ env envt)))
                      (later-scope
-                      (eval-expo #t body envt out)
+                      (eval-expo body envt out)
                       c-body)
                      (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
-               ((fresh (proc)
-                  (eval-expo #f rator env proc)
-                  (conde
-                    ((varo proc)
-                     (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-                    ((non-varo proc)
-                     (conde
-                       ((fresh (x* body env^ a* res clo-code)
-                          (== proc `(closure (lambda ,x* ,body) ,env^ ,clo-code))
-                          (conde
-                            ((not-ground-paramso x*)
-                             (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-                            ((ground-paramso x*)
-                             (conde
-                               ;; Variadic
-                               ((symbolo x*)
-                                (== `((,x* . (val . ,a*)) . ,env^) res)
-                                (eval-expo stage? body res val)
-                                (eval-listo rands env a*))
-                               ;; Multi-argument
-                               ((eval-listo rands env a*)
-                                (ext-env*o x* a* env^ res)
-                                (eval-expo stage? body res val)))))))
-                       ((fresh (a* p-name)
-                          (== stage? #t)
-                          (== proc `(call ,p-name))
-                          (eval-listo rands env a*)
-                          (later `(callo ,p-name ,(expand val) ,(expand a*)))))
-                       ((fresh (a* p-name)
-                          (== stage? #t)
-                          (== proc `(dynamic ,p-name))
-                          (eval-listo rands env a*)
-                          (later `(callo ,p-name ,(expand val) ,(expand a*)))))
-                       ((fresh (a* p-name)
-                          (== stage? #t)
-                          (symbolo rator)
-                          (== proc (unexpand p-name))
-                          (eval-listo rands env a*)
-                          (later `(callo ,p-name ,(expand val) ,(expand a*)))))
-                       ((fresh (prim-id a*)
-                          (== proc `(prim . ,prim-id))
-                          (non-varo prim-id)
-                          (eval-primo prim-id a* val)
-                          (eval-listo rands env a*))))))))
+               ((fresh (proc a*)
+                  (project (rator)
+                    (cond ((symbol? rator)
+                           (fresh ()
+                             (lookupo #f rator env proc)
+                             (project (proc)
+                               (cond ((and (pair? proc) (eq? (car proc) 'prim))
+                                      (fresh (prim-id)
+                                        (== proc `(prim . ,prim-id))
+                                        ;;(non-varo prim-id)
+                                        (eval-primo prim-id a* val)
+                                        (eval-listo rands env a*)))
+                                     (else
+                                      (fresh ()
+                                        (eval-listo rands env a*)
+                                        (later `(callo ,(expand proc) ,(expand val) ,(expand a*)))))))))
+                          (else
+                           (fresh ()
+                             (eval-expo rator env proc)
+                             (eval-listo rands env a*)
+                             (later `(callo ,(expand proc) ,(expand val) ,(expand a*)))))))))
                ((handle-matcho expr env val))
                ((fresh (bindings* letrec-body out-bindings* env^)
                   ;; single-function variadic letrec version
@@ -315,10 +290,9 @@
                     ((letrec-bindings-checko bindings*)
                      (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
                      (not-in-envo 'letrec env)
-                     (== stage? #t)
                      (fresh (c-letrec-body)
                        (later-scope
-                        (eval-expo #t letrec-body env^ val)
+                        (eval-expo letrec-body env^ val)
                         c-letrec-body)
                        (later `(letrec ,out-bindings*
                                 (fresh () . ,c-letrec-body))))))))
@@ -326,35 +300,6 @@
                )))))
 
        ((boolean-primo expr env val))
-
-       ((fresh (rator rands a* p-name)
-          (== stage? #f)
-          (== `(,rator . ,rands) expr)
-          (eval-expo #f rator env `(call ,p-name))
-          (eval-listo rands env a*)
-          (fresh (out)
-            (later `(callo ,p-name ,(expand out) ,(expand a*)))
-            (== val `(dynamic ,out)))))
-
-       ((fresh (rator rands a* p-name)
-          (== stage? #f)
-          (== `(,rator . ,rands) expr)
-          (eval-expo #f rator env `(dynamic ,p-name))
-          (eval-listo rands env a*)
-          (fresh (out)
-            (later `(callo ,p-name ,(expand out) ,(expand a*)))
-            (== val `(dynamic ,out)))))
-
-       ((fresh (rator rands a* p-name)
-          (== stage? #f)
-          (== `(,rator . ,rands) expr)
-          (symbolo rator)
-          (eval-expo #f rator env (unexpand p-name))
-          (non-varo p-name)
-          (eval-listo rands env a*)
-          (fresh (out)
-            (later `(callo ,p-name ,(expand out) ,(expand a*)))
-            (== val `(call ,out)))))
 
        ))))
 
@@ -378,7 +323,7 @@
              (make-list-of-symso x x^)
              (ext-env*o x x^ envt res)))
        (later-scope
-        (eval-expo #t body res out)
+        (eval-expo body res out)
         c-body)
        (== o `(,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
 
@@ -393,7 +338,7 @@
          ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) t v)))
          ((fresh (lam-expr code-expr)
             (== `(staged-rec ,lam-expr ,code-expr) b)
-            ((if stage? l== ==) `(call ,x) t)))))
+            ((if stage? l== ==) `(call ,(unexpand x)) t)))))
       ((=/= x y)
        (lookupo stage? x rest t)))))
 
@@ -412,7 +357,7 @@
     ((fresh (a d v-a v-d)
        (== `(,a . ,d) expr)
        (== `(,v-a . ,v-d) val)
-       (eval-expo #t a env v-a)
+       (eval-expo a env v-a)
        (eval-listo d env v-d)))))
 
 ;; need to make sure lambdas are well formed.
@@ -533,10 +478,10 @@
     ((== '() e*) (== #t val))
     ((fresh (e)
        (== `(,e) e*)
-       (eval-expo #t e env val)))
+       (eval-expo e env val)))
     ((fresh (e1 e2 e-rest v c)
        (== `(,e1 ,e2 . ,e-rest) e*)
-       (eval-expo #t e1 env v)
+       (eval-expo e1 env v)
        (later-scope
         (ando `(,e2 . ,e-rest) env val)
         c)
@@ -557,10 +502,10 @@
     ((== '() e*) (== #f val))
     ((fresh (e)
        (== `(,e) e*)
-       (eval-expo #t e env val)))
+       (eval-expo e env val)))
     ((fresh (e1 e2 e-rest v c)
        (== `(,e1 ,e2 . ,e-rest) e*)
-       (eval-expo #t e1 env v)
+       (eval-expo e1 env v)
        (later-scope
         (oro `(,e2 . ,e-rest) env val)
         c)
@@ -574,9 +519,9 @@
   (fresh (e1 e2 e3 t c2 c3)
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
-    (eval-expo #t e1 env t)
-    (later-scope (eval-expo #t e2 env val) c2)
-    (later-scope (eval-expo #t e3 env val) c3)
+    (eval-expo e1 env t)
+    (later-scope (eval-expo e2 env val) c2)
+    (later-scope (eval-expo e3 env val) c3)
     (later `(conde
              ((=/= #f ,(expand t)) . ,c2)
              ((== #f ,(expand t)) . ,c3)))))
@@ -585,8 +530,8 @@
   (fresh (e2 e3 c2 c3)
     (== `(choice ,e2 ,e3) expr)
     (not-in-envo 'choice env)
-    (later-scope (eval-expo #t e2 env val) c2)
-    (later-scope (eval-expo #t e3 env val) c3)
+    (later-scope (eval-expo e2 env val) c2)
+    (later-scope (eval-expo e3 env val) c3)
     (later `(conde
             ,c2
             ,c3))))
@@ -613,7 +558,7 @@
         ((match-checko (cons clause clauses))
          (fresh (mval)
            (not-in-envo 'match env)
-           (eval-expo #t against-expr env mval)
+           (eval-expo against-expr env mval)
            (match-clauses mval `(,clause . ,clauses) env val)))))))
 
 (define (not-symbolo t)
@@ -673,7 +618,7 @@
         (fresh (env^)
           (p-match p mval '() penv)
           (regular-env-appendo penv env env^)
-          (eval-expo #t result-expr env^ val))
+          (eval-expo result-expr env^ val))
         c-yes)
        (later-scope
         (fresh ()

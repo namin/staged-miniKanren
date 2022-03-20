@@ -21,6 +21,33 @@
   '(1 2))
 
 (test
+    (length
+     (run-staged 1 (q)
+       (evalo-staged `(lambda (x) x) q)))
+  1)
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged `((lambda (x) x) 1) q))
+  '(1))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `((lambda (f) (f 1))
+         (lambda (x) x))
+       q))
+  '(1))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `(letrec ((f (lambda (x) x)))
+          (f 1))
+       q))
+  '(1))
+
+(test
     (run-staged 1 (q)
       (evalo-staged
        `(letrec ((append
@@ -80,6 +107,7 @@
                           (append (cdr xs) ys))))))
       (append ',xs ',ys))
    zs))
+
 (test
     (run* (xs ys)
       (appendo-staged xs ys '(a b c)))
@@ -87,16 +115,58 @@
 
 (test
     (run-staged 1 (q)
+      (l== q '(lambda () (lambda (x) x)))
+      (evalo-staged `((,q) 1) 1)
+      )
+  '((lambda () (lambda (x) x))))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged `((,q) 1) 1)
+      (l== q '(lambda () (lambda (x) x)))
+      )
+    '((lambda () (lambda (x) x))))
+
+(test
+    (run 1 (q)
+      (evalo-unstaged `(((lambda () car)) (cons 1 2)) 1)
+      )
+  '(_.0))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged `((lambda () car)) q)
+      )
+  '((prim . car)))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged `(((lambda () car)) (cons 1 2)) 1)
+      )
+  '(_.0))
+
+res
+
+(test
+    (run-staged 1 (q)
+      (== q '(lambda () car))
       (evalo-staged `((,q) (cons 1 2)) 1)
-      (l== q '(lambda () car))
       )
   '((lambda () car)))
 
 (test
     (run-staged 1 (q)
+      (l== q '(lambda () car))
       (evalo-staged `((,q) (cons 1 2)) 1)
       )
-  '(((lambda _.0 car) $$ (=/= ((_.0 car))) (sym _.0))))
+    '((lambda () car)))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged `((,q) (cons 1 2)) 1)
+      (l== q '(lambda () car))
+      )
+  '((lambda () car)))
 
 (test
     (run-staged 1 (q)
@@ -118,6 +188,6 @@
 ;; TODO: is this weird?
 ;;       it's not understood by evalo-unstaged
 (test
-    (run* (q)
-      (bogus-appendo '(1 2) '(3 4) q))
-  '((call append)))
+    (length (run* (q)
+              (bogus-appendo '(1 2) '(3 4) q)))
+  1)
