@@ -448,46 +448,30 @@ res
 ;; # Synthesis
 
 (test
-    (run-staged 5 (q)
-      (evalo-staged
-       q
-       '(I love staged evaluation)))
-  '('(I love staged evaluation)
-  ((car '((I love staged evaluation) . _.0))
-    $$
-    (absento (call _.0) (call-code _.0) (closure _.0)
-      (dynamic _.0) (prim _.0)))
-  (cons 'I '(love staged evaluation))
-  (((lambda _.0 '(I love staged evaluation)))
-    $$
-    (=/= ((_.0 quote)))
-    (sym _.0))
-  ((letrec ([_.0 (lambda _.1 _.2)])
-     '(I love staged evaluation))
-    $$
-    (=/= ((_.0 quote)))
-    (sym _.1))))
+    (length
+     (run-staged 5 (q)
+       (evalo-staged
+        q
+        '(I love staged evaluation))))
+  5)
 
 (test
+    (length
+     (run 5 (q)
+       (evalo-unstaged
+        q
+        '(I love staged evaluation))))
+  5)
+
+(test
+    (run-staged 5 (q)
+      (evalo-staged
+        q
+        '(I love staged evaluation)))
     (run 5 (q)
       (evalo-unstaged
        q
-       '(I love staged evaluation)))
-  '('(I love staged evaluation)
-     ((car '((I love staged evaluation) . _.0))
-      $$
-      (absento (call _.0) (call-code _.0) (closure _.0)
-               (dynamic _.0) (prim _.0)))
-     (cons 'I '(love staged evaluation))
-     (((lambda _.0 '(I love staged evaluation)))
-      $$
-      (=/= ((_.0 quote)))
-      (sym _.0))
-     ((letrec ([_.0 (lambda _.1 _.2)])
-        '(I love staged evaluation))
-      $$
-      (=/= ((_.0 quote)))
-      (sym _.1))))
+       '(I love staged evaluation))))
 
 (define-staged-relation (peano-synth-fib-acc-stepo step1 step2 ACC1 ACC2)
   (evalo-staged

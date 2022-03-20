@@ -235,11 +235,11 @@
                   (l== val v)))
                ((fresh (x body clo-code envt out c-body x^)
                   (== `(lambda ,x ,body) expr)
-                  (l== `(closure (lambda ,x ,body) ,env ,clo-code) val)
                   (conde
                     ((not-ground-paramso x)
                      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((ground-paramso x)
+                     (l== `(closure (lambda ,x ,body) ,env ,clo-code) val)
                      (conde
                        ;; Variadic
                        ((symbolo x))
@@ -382,6 +382,8 @@
 
 (define (eval-primo prim-id a* val)
   (conde
+    [(== prim-id 'list)
+     (l== a* val)]
     [(== prim-id 'cons)
      (fresh (a d)
        (l== `(,a ,d) a*)
@@ -536,7 +538,7 @@
             ,c2
             ,c3))))
 
-(define initial-env `((list . (val . (closure (lambda x x) ,empty-env (lambda x (lambda (out) (== x out))))))
+(define initial-env `((list . (val . (prim . list)))
                       (not . (val . (prim . not)))
                       (equal? . (val . (prim . equal?)))
                       (symbol? . (val . (prim . symbol?)))

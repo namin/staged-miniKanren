@@ -126,6 +126,8 @@
 
 (define (u-eval-primo prim-id a* val)
   (conde
+    [(== prim-id 'list)
+     (== a* val)]
     [(== prim-id 'cons)
      (fresh (a d)
        (== `(,a ,d) a*)
@@ -262,7 +264,7 @@
       ((=/= #f t) (u-eval-expo e2 env val))
       ((== #f t) (u-eval-expo e3 env val)))))
 
-(define u-initial-env `((list . (val . (closure (lambda x x) ,u-empty-env (lambda x (lambda (out) (== x out))))))
+(define u-initial-env `((list . (val . (prim . list)))
                       (not . (val . (prim . not)))
                       (equal? . (val . (prim . equal?)))
                       (symbol? . (val . (prim . symbol?)))

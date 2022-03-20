@@ -71,16 +71,18 @@
   '(car))
 
 (test
-    (run-staged 1 (q)
-      (fresh (q1 q2)
-        (l== q `(,q1 ,q2))
-        (evalo-staged `(,q1 (list ,q2 2)) q2)))
-  '((not #f)))
+    (length
+     (run-staged 1 (q)
+       (fresh (q1 q2)
+         (l== q `(,q1 ,q2))
+         (evalo-staged `(,q1 (list ,q2 2)) q2))))
+  1)
 
 (test
-    (run-staged 1 (q1 q2)
-      (evalo-staged `(,q1 (list ,q2 2)) q2))
-  '((not #f)))
+    (length
+     (run-staged 1 (q1 q2)
+       (evalo-staged `(,q1 (list ,q2 2)) q2)))
+  1)
 
 (define-relation (appendo xs ys zs)
   (conde
@@ -191,3 +193,8 @@ res
     (length (run* (q)
               (bogus-appendo '(1 2) '(3 4) q)))
   1)
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged '(list 1 2 3) q))
+  '((1 2 3)))
