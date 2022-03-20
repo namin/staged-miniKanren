@@ -96,67 +96,22 @@
 
 (record-bench 'unstaged 'nnf 0)
 (time-test
+ (length
   (run 10 (concept)
     (evalo-unstaged
      (nnf concept)
-     '(Not Top)))
-  '((Not Top)
-    (Not (Not (Not Top)))
-    (Not (Not (Not (Not (Not Top)))))
-    (Not (Not (Not (Not (Not (Not (Not Top)))))))
-    (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))
-    (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))
-    ((Not (AtLeast z _.0))
-     $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
-     (sym _.0))
-    (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
-    ((Not (Not (Not (AtLeast z _.0))))
-     $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
-     (sym _.0))
-    (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))))))
+     '(Not Top))))
+ 10)
 
 ;; Note the difference in order w.r.t. the unstaged version.
 (record-bench 'run-staged 'nnf 0)
 (time-test
+ (length
   (run-staged 10 (concept)
     (evalo-staged
      (nnf concept)
-     '(Not Top)))
-  '((Not Top) (Not (Not (Not Top)))
-  ((Not (AtLeast z _.0))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code))
-         ((_.0 closure))
-         ((_.0 dynamic))
-         ((_.0 prim)))
-    (sym _.0))
-  (Not (Not (Not (Not (Not Top)))))
-  ((Not (Not (Not (AtLeast z _.0))))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code))
-         ((_.0 closure))
-         ((_.0 dynamic))
-         ((_.0 prim)))
-    (sym _.0))
-  (Not (Not (Not (Not (Not (Not (Not Top)))))))
-  ((Not (Not (Not (Not (Not (AtLeast z _.0))))))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code))
-         ((_.0 closure))
-         ((_.0 dynamic))
-         ((_.0 prim)))
-    (sym _.0))
-  (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))
-  ((Not (Not (Not (Not (Not (Not (Not (AtLeast z _.0))))))))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code))
-         ((_.0 closure))
-         ((_.0 dynamic))
-         ((_.0 prim)))
-    (sym _.0))
-  (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not (Not Top)))))))))))))
+     '(Not Top))))
+ 10)
 
 
 
