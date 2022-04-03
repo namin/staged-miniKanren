@@ -41,6 +41,7 @@
          (with-syntax
           (((x-n ...) (generate-temporaries #'(x ...))))
           #'(project (rep)
+              (printf "project~\n")
               (cond
                 ((var? rep)
                  (fresh (x-n ...)
@@ -49,11 +50,14 @@
                             #f))
                    (rel-dyn x-n ... y ...)))
                 ((apply-rep? rep)
+                 (printf "applying rep...~\n")
                  (let ((proc (apply-rep-proc rep)))
                    ;; TODO: unify to check names
                    (if (or (not proc) (unexpand? proc))
                        (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
-                       (proc y ...))))
+                       (begin
+                         (printf "calling proc...~\n")
+                         (proc y ...)))))
                 (else fail))))))))
 
 (define-syntax lapply-reified
