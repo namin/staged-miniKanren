@@ -1,3 +1,20 @@
+(define (eval-apply-staged x* body env a* val)
+  (fresh (env^)
+    (conde
+      ((symbolo x*)
+       (== `((,x* . (val . ,a*)) . ,env) env^))
+      ((list-of-symbolso x*)
+       (ext-env*o x* a* env env^)))
+    (eval-expo body env^ val)))
+
+(define (eval-apply-dyn x* body env a* val)
+  (fresh (env^)
+    (conde
+      ((symbolo x*)
+       (== `((,x* . (val . ,a*)) . ,env) env^))
+      ((u-ext-env*o x* a* env env^)))
+    (u-eval-expo body env^ val)))
+
 (define (booleano x)
   (conde
     ((== x #t))
@@ -176,21 +193,9 @@
 
 (define (callo proc val a*)
   (conde
-    ((fresh (x* body env code)
-       (== proc `(closure (lambda ,x* ,body) ,env ,code))
-       (project (code a*)
-         (if (and (procedure? code) (list? a*))
-             (fresh ()
-               (conde
-                 ((symbolo x*))
-                 ((same-lengtho x* a*)))
-               ((apply code a*) val))
-             (fresh (env^)
-               (conde
-                 ((symbolo x*)
-                  (== `((,x* . (val . ,a*)) . ,env) env^))
-                 ((u-ext-env*o x* a* env env^)))
-               (u-eval-expo body env^ val))))))
+    ((fresh (rep)
+       (== proc `(closure ,rep))
+       (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))))
     ((fresh (prim-id)
        (== proc `(prim . ,prim-id))
        (u-eval-primo prim-id a* val)))
@@ -233,30 +238,20 @@
                   (absento 'dynamic v)
                   (not-in-envo 'quote env)
                   (l== val v)))
-               ((fresh (x body clo-code envt out c-body x^)
+               ((fresh (rep x body)
                   (== `(lambda ,x ,body) expr)
                   (conde
                     ((not-ground-paramso x)
                      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
                     ((ground-paramso x)
-                     (l== `(closure (lambda ,x ,body) ,env ,clo-code) val)
+                     (l== `(closure ,rep) val)
                      (conde
                        ;; Variadic
                        ((symbolo x))
                        ;; Multi-argument
                        ((list-of-symbolso x)))
                      (not-in-envo 'lambda env)
-                     (conde
-                       ((symbolo x)
-                        (== x^ (unexpand x))
-                        (== `((,x . (val . ,x^)) . ,env) envt))
-                       ((list-of-symbolso x)
-                        (make-list-of-symso x x^)
-                        (ext-env*o x x^ env envt)))
-                     (later-scope
-                      (eval-expo body envt out)
-                      c-body)
-                     (== clo-code (unexpand `(lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
+                     (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _)))))))
                ((fresh (proc a*)
                   (project (rator)
                     (cond ((symbol? rator)

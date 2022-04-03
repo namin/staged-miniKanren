@@ -10,15 +10,19 @@
         ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
          (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(y ...)))
          (with-syntax
-          (((x-n ...) (generate-temporaries #'(x ...)))
-           ((y-n ...) (generate-temporaries #'(y ...))))
-          #'(fresh (x-n ... y-n ... body)
-              (later-scope (rel-staged x-n ... y-n ...) body)
+          (((y-n ...) (generate-temporaries #'(y ...)))
+           ((y-n2 ...) (generate-temporaries #'(y ...))))
+          #'(fresh (y-n ... body)
+              (later-scope
+               (fresh ()
+                 (l== y-n (unexpand 'y-n2)) ...
+                 (rel-staged x ... y-n ...))
+               body)
               (l== rep (make-apply-rep
                        'rel-staged 'rel-dyn (list x ...)
-                       (unexpand `(lambda (,x-n ...)
-                                    (lambda (,y-n ...)
-                                      (fresh () . ,body))))))))))))
+                       (unexpand `(lambda (y-n2 ...)
+                                    (fresh ()
+                                      . ,body)))))))))))
 
 (define-syntax reify-call
   (lambda (stx)
@@ -35,12 +39,11 @@
         ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
          (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(x ...)))
          (with-syntax
-          (((x-n ...) (generate-temporaries #'(x ...)))
-           ((y-n ...) (generate-temporaries #'(y ...))))
+          (((x-n ...) (generate-temporaries #'(x ...))))
           #'(project (rep)
               (cond
                 ((var? rep)
-                 (fresh (x-n ... y-n ...)
+                 (fresh (x-n ...)
                    (== rep (make-apply-rep
                             'rel-staged 'rel-dyn (list x-n ...) ;
                             #f))
@@ -50,7 +53,7 @@
                    ;; TODO: unify to check names
                    (if (or (not proc) (unexpand? proc))
                        (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
-                       ((apply proc (apply-rep-args rep)) y ...))))
+                       (proc y ...))))
                 (else fail))))))))
 
 (define-syntax lapply-reified

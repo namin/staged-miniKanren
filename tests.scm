@@ -501,6 +501,7 @@
   '((a b)))
 
 ;; the hard way is no longer necessary!
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -510,6 +511,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e q))))
  '((a b)))
 
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -519,6 +521,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e q))))
  '((a b)))
 
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -528,6 +531,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
  '((a)))
 
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -537,6 +541,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
  '((a)))
 
+#;
 (test
  (run* (q) (fresh (x y p)
                   (== q (list x y))
@@ -547,6 +552,7 @@
  '((() (a b c d e)) ((a) (b c d e)) ((a b) (c d e))
    ((a b c) (d e)) ((a b c d) (e)) ((a b c d e) ())))
 
+#;
 (test
  (run* (q) (fresh (x y p)
                   (== q (list x y))
