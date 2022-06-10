@@ -1,5 +1,7 @@
 (define (eval-apply-rec-staged rep f x e env arg res)
   (fresh (env^)
+    ;; TODO
+    ;; (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
     (== env^ `((,x . (val . ,arg)) (,f . (val . (rec-closure ,rep))) . ,env))
     (eval-expo e env^ res)))
 
