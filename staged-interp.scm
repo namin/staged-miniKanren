@@ -4,7 +4,10 @@
     (eval-expo e env^ res)))
 
 (define (eval-apply-rec-dyn f x e env arg res)
-  (error 'eval-apply-rec-dyn "shouldn't be called"))
+  (fresh (rep env^)
+    (reify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
+    (== env^ `((,x . (val . ,arg)) (,f . (val . (rec-closure ,rep))) . ,env))
+    (u-eval-expo e env^ res)))
 
 (define (eval-apply-staged rep x* body env a* val)
   (fresh (env^)
