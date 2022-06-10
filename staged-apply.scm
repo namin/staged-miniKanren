@@ -16,7 +16,7 @@
               (later-scope
                (fresh ()
                  (l== y-n (unexpand 'y-n2)) ...
-                 (rel-staged x ... y-n ...))
+                 (rel-staged rep x ... y-n ...))
                body)
               (l== rep (make-apply-rep
                        'rel-staged 'rel-dyn (list x ...)
@@ -41,7 +41,7 @@
          (with-syntax
           (((x-n ...) (generate-temporaries #'(x ...))))
           #'(project (rep)
-              (printf "project~\n")
+              ;;(printf "project~\n")
               (cond
                 ((var? rep)
                  (fresh (x-n ...)
@@ -50,13 +50,13 @@
                             #f))
                    (rel-dyn x-n ... y ...)))
                 ((apply-rep? rep)
-                 (printf "applying rep...~\n")
+                 ;;(printf "applying rep...~\n")
                  (let ((proc (apply-rep-proc rep)))
                    ;; TODO: unify to check names
                    (if (or (not proc) (unexpand? proc))
                        (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
                        (begin
-                         (printf "calling proc...~\n")
+                         ;;(printf "calling proc...~\n")
                          (proc y ...)))))
                 (else fail))))))))
 

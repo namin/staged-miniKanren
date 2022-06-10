@@ -3,10 +3,10 @@
     (== env^ `((,x . (val . ,arg)) (,f . (val . (rec-closure ,rep))) . ,env))
     (eval-expo e env^ res)))
 
-(define (eval-apply-rec-dyn rep f x e env arg res)
+(define (eval-apply-rec-dyn f x e env arg res)
   (error 'eval-apply-rec-dyn "shouldn't be called"))
 
-(define (eval-apply-staged x* body env a* val)
+(define (eval-apply-staged rep x* body env a* val)
   (fresh (env^)
     (conde
       ((symbolo x*)
@@ -208,7 +208,7 @@
        (== proc `(rec-closure ,rep))
        (== `(,a) a*)
        (logo "here")
-       (apply-reified rep ((eval-apply-rec-staged eval-apply-rec-dyn) (_ _ _ _ _) (a val)))
+       (apply-reified rep ((eval-apply-rec-staged eval-apply-rec-dyn) (_ _ _ _) (a val)))
        (logo "there")))
     ((fresh (prim-id)
        (== proc `(prim . ,prim-id))
@@ -290,7 +290,7 @@
                ((handle-matcho expr env val))
                ((fresh (letrec-body f x e rep env^)
                   (== `(letrec^ ((,f (lambda (,x) ,e))) ,letrec-body) expr)
-                  (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (rep f x e env) (_ _)))
+                  (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
                   (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
                   (eval-expo letrec-body env^ val)))
                ((fresh (bindings* letrec-body out-bindings* env^)
