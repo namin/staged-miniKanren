@@ -300,56 +300,17 @@
                              (later `(callo ,(expand proc) ,(expand val) ,(expand a*)))))))))
                ((handle-matcho expr env val))
                ((fresh (letrec-body f x e rep env^)
-                  (== `(letrec^ ((,f (lambda ,x ,e))) ,letrec-body) expr)
+                  (== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
+                  (not-in-envo 'letrec env)
                   (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
                   (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
                   (eval-expo letrec-body env^ val)))
-               ((fresh (bindings* letrec-body out-bindings* env^)
-                  (== `(letrec ,bindings*
-                         ,letrec-body)
-                      expr)
-                  (conde
-                    ((not-letrec-bindings-checko bindings*)
-                     (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
-                    ((letrec-bindings-checko bindings*)
-                     (letrec-bindings-evalo bindings* out-bindings* env env^ env^)
-                     (not-in-envo 'letrec env)
-                     (fresh (c-letrec-body)
-                       (later-scope
-                        (eval-expo letrec-body env^ val)
-                        c-letrec-body)
-                       (later `(letrec ,out-bindings*
-                                (fresh () . ,c-letrec-body))))))))
                ((prim-expo expr env val))
                )))))
 
        ((boolean-primo expr env val))
 
        ))))
-
-(define (letrec-bindings-evalo bindings* out-bindings* env envt env^)
-  (conde
-    ((== '() bindings*)
-     (== '() out-bindings*)
-     (== env env^))
-    ((fresh (b bs e es res out c-body o os p-name x body x^)
-       (== (cons b bs) bindings*)
-       (== b `(,p-name (lambda ,x ,body)))
-       (== (cons e es) env^)
-       (== e `(,p-name . (staged-rec (lambda ,x ,body) ,(unexpand p-name))))
-       (== (cons o os) out-bindings*)
-       (letrec-bindings-evalo bs os env envt es)
-       (conde
-            ((symbolo x)
-             (== x^ (unexpand x))
-             (== `((,x . (val . ,x^)) . ,envt) res))
-            ((list-of-symbolso x)
-             (make-list-of-symso x x^)
-             (ext-env*o x x^ envt res)))
-       (later-scope
-        (eval-expo body res out)
-        c-body)
-       (== o `(,p-name (lambda ,x (lambda (,out) (fresh () . ,c-body)))))))))
 
 (define empty-env '())
 
