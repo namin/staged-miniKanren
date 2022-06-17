@@ -8,10 +8,7 @@
 (define (u-eval-expo expr env val)
   (conde
     ((== `(quote ,val) expr)
-     (absento 'rec-closure val)
-     (absento 'closure val)
-     (absento 'prim val)
-
+     (absent-tago val)
      (u-not-in-envo 'quote env))
 
     ((numbero expr) (== expr val))
@@ -184,9 +181,7 @@
          ((fresh (a d)
             (== `(,a . ,d) v)
             (== #f val)
-            (conde
-              ((== a 'closure))
-              ((== a 'prim)))))))]
+            (pos-tago a)))))]
     [(== prim-id 'null?)
      (fresh (v)
        (== `(,v) a*)

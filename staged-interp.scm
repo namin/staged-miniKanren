@@ -167,10 +167,23 @@
        (== (list scrutiny body) clause)
        (not-groundo scrutiny)))))
 
+(define (pos-tago v)
+  (conde
+    ((== v 'rec-closure))
+    ((== v 'closure))
+    ((== v 'prim))))
+
 (define (not-tago v)
   (fresh ()
+    (=/= 'rec-closure v)
     (=/= 'closure v)
     (=/= 'prim v)))
+
+(define (absent-tago v)
+  (fresh ()
+    (absento 'rec-closure v)
+    (absento 'closure v)
+    (absento 'prim v)))
 
 (define (mapo fo xs ys)
   (conde
@@ -244,9 +257,7 @@
              (conde
                ((fresh (v)
                   (== `(quote ,v) expr)
-                  (absento 'rec-closure v)
-                  (absento 'closure v)
-                  (absento 'prim v)
+                  (absent-tago v)
                   (not-in-envo 'quote env)
                   (l== val v)))
                ((fresh (rep x body)
@@ -287,9 +298,9 @@
                ((handle-matcho expr env val))
                ((fresh (letrec-body f x e rep env^)
                   (== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
+                  (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
                   (not-in-envo 'letrec env)
                   (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
-                  (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
                   (eval-expo letrec-body env^ val)))
                ((prim-expo expr env val))
                )))))
@@ -410,9 +421,7 @@
                ((fresh (a d)
                   (== `(,a . ,d) ,(expand v))
                   (== #f ,(expand val))
-                  (conde
-                    ((== a 'closure))
-                    ((== a 'prim))))))))]
+                  (pos-tago a))))))]
     [(== prim-id 'null?)
      (fresh (v)
        (l== `(,v) a*)
