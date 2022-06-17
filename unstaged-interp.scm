@@ -11,9 +11,6 @@
      (absento 'rec-closure val)
      (absento 'closure val)
      (absento 'prim val)
-     (absento 'call val)
-     (absento 'dynamic val)
-     (absento 'call-code val)
 
      (u-not-in-envo 'quote env))
 
@@ -40,9 +37,6 @@
           (u-eval-listo rands env a*)
           (callo cfun val a*))
          ((== `(rec-closure ,rep) cfun)
-          (u-eval-listo rands env a*)
-          (callo cfun val a*))
-         ((== `(call ,proc) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*)))))
 
@@ -86,10 +80,7 @@
             (== `(rec . ,lam-expr) b)
             (== `(lambda ,z ,body) lam-expr)
             (== `(closure ,rep) t)
-            (reify-call rep ((eval-apply-staged eval-apply-dyn) (z body env) (_ _)))))
-         ((fresh (lam-expr code-expr)
-            (== `(staged-rec ,lam-expr ,code-expr) b)
-            (== `(call ,code-expr) t)))))
+            (reify-call rep ((eval-apply-staged eval-apply-dyn) (z body env) (_ _)))))))
       ((=/= x y)
        (u-lookupo x rest t)))))
 
@@ -195,10 +186,7 @@
             (== #f val)
             (conde
               ((== a 'closure))
-              ((== a 'prim))
-              ((== a 'call))
-              ((== a 'dynamic))
-              ((== a 'call-code)))))))]
+              ((== a 'prim)))))))]
     [(== prim-id 'null?)
      (fresh (v)
        (== `(,v) a*)

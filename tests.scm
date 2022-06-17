@@ -673,6 +673,7 @@
     (run* (q) (my-not-symbolo 'x q))
   '(#f))
 
+#;
 (test
     (run 1 (q) (callo `(call ,(lambda (x) (lambda (out) (== x out)))) 1 `(,q)))
   '(1))

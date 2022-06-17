@@ -170,10 +170,7 @@
 (define (not-tago v)
   (fresh ()
     (=/= 'closure v)
-    (=/= 'prim v)
-    (=/= 'call v)
-    (=/= 'dynamic v)
-    (=/= 'call-code v)))
+    (=/= 'prim v)))
 
 (define (mapo fo xs ys)
   (conde
@@ -223,17 +220,7 @@
        (apply-reified rep ((eval-apply-rec-staged eval-apply-rec-dyn) (_ _ _ _) (a* val)))))
     ((fresh (prim-id)
        (== proc `(prim . ,prim-id))
-       (u-eval-primo prim-id a* val)))
-    ((fresh (code)
-       (== proc `(call ,code))
-       (project (code a*)
-         (if (and (procedure? code) (list? a*)) ;; TODO: what if a* is a var?
-             (call/cc
-              (lambda (k)
-                (with-exception-handler
-                 (lambda (_) (k fail))
-                 (lambda () ((apply code a*) val)))))
-             fail))))))
+       (u-eval-primo prim-id a* val)))))
 
 (define (eval-expo expr env val)
   (conde
@@ -260,8 +247,6 @@
                   (absento 'rec-closure v)
                   (absento 'closure v)
                   (absento 'prim v)
-                  (absento 'call v)
-                  (absento 'dynamic v)
                   (not-in-envo 'quote env)
                   (l== val v)))
                ((fresh (rep x body)
@@ -321,10 +306,7 @@
     (conde
       ((== x y)
        (conde
-         ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) t v)))
-         ((fresh (lam-expr code-expr)
-            (== `(staged-rec ,lam-expr ,code-expr) b)
-            ((if stage? l== ==) `(call ,(unexpand x)) t)))))
+         ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) t v)))))
       ((=/= x y)
        (lookupo stage? x rest t)))))
 
@@ -430,10 +412,7 @@
                   (== #f ,(expand val))
                   (conde
                     ((== a 'closure))
-                    ((== a 'prim))
-                    ((== a 'call))
-                    ((== a 'dynamic))
-                    ((== a 'call-code))))))))]
+                    ((== a 'prim))))))))]
     [(== prim-id 'null?)
      (fresh (v)
        (l== `(,v) a*)
