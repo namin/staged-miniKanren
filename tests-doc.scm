@@ -401,12 +401,11 @@ res
       (absento 'error q)
       (absento 'closure q)
       (quasi-quine-evalo q q))
-  '((((lambda (_.0) `(,_.0 ',_.0))
+    `((((lambda (_.0) `(,_.0 ',_.0))
       '(lambda (_.0) `(,_.0 ',_.0)))
-     $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic))
-          ((_.0 error)) ((_.0 prim)) ((_.0 rec-closure)))
-     (sym _.0))))
+       $$
+       ,not-tags0+error
+       (sym _.0))))
 
 (test
     ((lambda (x) `(,x ',x)) '(lambda (x) `(,x ',x)))

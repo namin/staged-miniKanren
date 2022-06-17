@@ -44,9 +44,9 @@
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'closure q)
     (eval-and-map-evalo `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
-  '(((lambda (_.0) (cons _.0 _.0))
+  `(((lambda (_.0) (cons _.0 _.0))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     ,not-tags0+error
      (sym _.0))))
 
 (time-test
@@ -429,9 +429,9 @@
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'closure q)
     (quasi-quine-evalo q q))
-  '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
+  `((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     ,not-tags0+error
      (sym _.0))))
 
 ;;(record-bench 'run-staged 'quasi-quine-evalo)
@@ -440,9 +440,9 @@
     (absento 'error q)
     (absento 'closure q)
     (evalo-staged (quasi-quine-eval q) q))
-  '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
+  `((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     ,not-tags0+error
      (sym _.0))))
 
 (record-bench 'unstaged 'quasi-quine-evalo)
@@ -451,9 +451,9 @@
    (absento 'error q)
    (absento 'closure q)
    (evalo-unstaged (quasi-quine-eval q) q))
- '((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
+ `((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
     $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+    ,not-tags0+error
     (sym _.0))))
 
 
@@ -488,10 +488,10 @@
     (absento 'error q)
     (absento 'closure q)
     (ho-quine-interp-cons q q))
-  '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
+  `((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     ,not-tags0+error
      (sym _.0))))
 
 (record-bench 'unstaged 'ho-quine-interp-cons)
@@ -502,10 +502,10 @@
     (evalo-unstaged
      (ho-quine-interp-cons-fun `(eval-expr ',q (lambda (y) 'error)))
      q))
-  '((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
+  `((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+     ,not-tags0+error
      (sym _.0))))
 
 (define (ho-double-eval body)
@@ -546,11 +546,10 @@
 (record-bench 'staged 'ho-double-evalo)
 (time-test
  (run 1 (q) (absento 'error q) (absento 'closure q) (ho-double-evalo q q))
- '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+ `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
-   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-        ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+   ,not-tags0+error
    (sym _.0))))
 
 (record-bench 'unstaged 'ho-double-evalo)
@@ -561,11 +560,10 @@
       (evalo-unstaged
        (ho-double-eval `(eval-expr ',q (lambda (y) 'error)))
        q))
- '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+ `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
-   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-        ((_.0 dynamic)) ((_.0 error)) ((_.0 prim)))
+   ,not-tags0+error
    (sym _.0))))
 
 #|
@@ -745,10 +743,10 @@
 (record-bench 'staged 'double-evalo)
 (time-test
  (run 1 (q) (absento 'clo q) (double-evalo q q))
- '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+ `((((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
     $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+    ,not-tags0
     (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo)
@@ -780,10 +778,10 @@
                             (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
             (eval-expr ',expr '())))
        q)))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     ,not-tags0
      (sym _.0))))
 
 (define (double-evalo-variadic-list-fo-fun body)
@@ -821,10 +819,10 @@
 (record-bench 'staged 'double-evalo-variadic-list-fo)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo q q))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     ,not-tags0
      (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-variadic-list-fo)
@@ -832,10 +830,10 @@
  (run 1 (q) (absento 'clo q)
       (evalo-unstaged
        (double-evalo-variadic-list-fo-fun `(eval-expr ',q '())) q))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+ `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     ,not-tags0
      (sym _.0))))
 
 (define (double-evalo-variadic-list-fo-less-ridiculous-fun body)
@@ -874,10 +872,10 @@
 (record-bench 'staged 'double-evalo-variadic-list-fo-better)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     ,not-tags0
      (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-variadic-list-fo-better)
@@ -885,10 +883,10 @@
  (run 1 (q) (absento 'clo q)
       (evalo-unstaged
        (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',q '())) q))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+ `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     ,not-tags0
      (sym _.0))))
 
 (define (double-evalo-variadic-list-ho-fun body)
@@ -929,10 +927,10 @@
 (record-bench 'staged 'double-evalo-variadic-list-ho)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
-   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+   ,not-tags0
    (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-variadic-list-ho)
@@ -941,10 +939,10 @@
       (evalo-unstaged
        (double-evalo-variadic-list-ho-fun `(eval-expr ',q '()))
        q))
-  '((((lambda (_.0) (list _.0 (list 'quote _.0)))
+ `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
-   (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+   ,not-tags0
    (sym _.0))))
 
 (define (double-evalo-cons-fun body)
@@ -979,12 +977,12 @@
 (record-bench 'staged 'double-evalo-cons)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-cons q q))
-  '((((lambda (_.0)
+  `((((lambda (_.0)
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     ,not-tags0
      (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-cons)
@@ -993,10 +991,10 @@
       (evalo-unstaged
        (double-evalo-cons-fun `(eval-expr ',q '()))
        q))
-  '((((lambda (_.0)
+ `((((lambda (_.0)
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 clo)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     ,not-tags0
      (sym _.0))))

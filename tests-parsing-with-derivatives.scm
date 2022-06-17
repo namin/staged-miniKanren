@@ -286,9 +286,9 @@
 (time-test
   (run 1 (regex)
     (d/dc-o regex 'f '(#f)))
-  '(((seq f (#f) . _.0)
+  `(((seq f (#f) . _.0)
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     ,absento-tags0)))
 
 (record-bench 'run-staged 'parse-backwards 0)
 (time-test
@@ -296,9 +296,9 @@
     (evalo-staged
       (parse `(d/dc ',regex 'f))
       '(#f)))
-  '(((seq f (#f) . _.0)
+  `(((seq f (#f) . _.0)
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     ,absento-tags0)))
 
 (record-bench 'unstaged 'parse-backwards 0)
 (time-test
@@ -306,9 +306,9 @@
     (evalo-unstaged
       (parse `(d/dc ',regex 'f))
       '(#f)))
-  '(((seq f (#f) . _.0)
+  `(((seq f (#f) . _.0)
      $$
-     (absento (call _.0) (call-code _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     ,absento-tags0)))
 
 
 ;; the orginal regex running forward was '(seq foo barn)'
@@ -316,9 +316,9 @@
 (time-test
   (run 1 (regex)
     (d/dc-o regex 'foo 'barn))
-  '(((seq foo barn . _.0)
+  `(((seq foo barn . _.0)
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     ,absento-tags0)))
 
 (record-bench 'run-staged 'parse-backwards 1)
 (time-test
@@ -326,9 +326,9 @@
     (evalo-staged
       (parse `(d/dc ',regex 'foo))
       'barn))
-  '(((seq foo barn . _.0)
+  `(((seq foo barn . _.0)
      $$
-     (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     ,absento-tags0)))
 
 (record-bench 'unstaged 'parse-backwards 1)
 (time-test
@@ -336,9 +336,9 @@
     (evalo-unstaged
       (parse `(d/dc ',regex 'foo))
       'barn))
-  '(((seq foo barn . _.0)
+  `(((seq foo barn . _.0)
      $$
-     (absento (call _.0) (call-code _.0) (closure _.0) (dynamic _.0) (prim _.0)))))
+     ,absento-tags0)))
 
 
 
@@ -349,13 +349,9 @@
 (time-test
   (run 1 (regex)
     (d/dc-o regex 'foo '(alt bar (rep baz))))
-  '(((seq foo (alt bar (rep baz)) . _.0)
-   $$
-   (absento
-     (call _.0)
-     (closure _.0)
-     (dynamic _.0)
-     (prim _.0)))))
+  `(((seq foo (alt bar (rep baz)) . _.0)
+     $$
+     ,absento-tags0)))
 
 (record-bench 'run-staged 'parse-backwards 2)
 (time-test
@@ -363,13 +359,9 @@
     (evalo-staged
       (parse `(d/dc ',regex 'foo))
       '(alt bar (rep baz))))
-  '(((seq foo (alt bar (rep baz)) . _.0)
-   $$
-   (absento
-     (call _.0)
-     (closure _.0)
-     (dynamic _.0)
-     (prim _.0)))))
+  `(((seq foo (alt bar (rep baz)) . _.0)
+     $$
+     ,absento-tags0)))
 
 ;; didn't come back after 5+ minutes
 #|
