@@ -724,8 +724,8 @@
                        [`((,y . ,v) . ,renv)
                         (if (equal? x y)
                             v
-                            (lookup x renv))]))]
-                  [eval-expr
+                            (lookup x renv))]))])
+           (letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
                        [`(quote ,datum) datum]
@@ -738,7 +738,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-           (eval-expr expr '()))))))
+             (eval-expr expr '())))))))
 
 (record-bench 'staged 'double-evalo)
 (time-test
@@ -746,7 +746,7 @@
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
     $$
-    ,not-tags0
+    ,not-tags0+clo
     (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo)
@@ -781,7 +781,7 @@
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     ,not-tags0
+     ,not-tags0+clo
      (sym _.0))))
 
 (define (double-evalo-variadic-list-fo-fun body)
@@ -822,7 +822,7 @@
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     ,not-tags0
+     ,not-tags0+clo
      (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-variadic-list-fo)
@@ -833,7 +833,7 @@
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     ,not-tags0
+     ,not-tags0+clo
      (sym _.0))))
 
 (define (double-evalo-variadic-list-fo-less-ridiculous-fun body)
@@ -875,7 +875,7 @@
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     ,not-tags0
+     ,not-tags0+clo
      (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-variadic-list-fo-better)
@@ -886,7 +886,7 @@
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
-     ,not-tags0
+     ,not-tags0+clo
      (sym _.0))))
 
 (define (double-evalo-variadic-list-ho-fun body)
@@ -930,7 +930,7 @@
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
-   ,not-tags0
+   ,not-tags0+clo
    (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-variadic-list-ho)
@@ -942,7 +942,7 @@
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
-   ,not-tags0
+   ,not-tags0+clo
    (sym _.0))))
 
 (define (double-evalo-cons-fun body)
@@ -982,7 +982,7 @@
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     ,not-tags0
+     ,not-tags0+clo
      (sym _.0))))
 
 (record-bench 'unstaged 'double-evalo-cons)
@@ -996,5 +996,5 @@
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
      $$
-     ,not-tags0
+     ,not-tags0+clo
      (sym _.0))))
