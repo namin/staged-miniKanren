@@ -30,7 +30,7 @@ print(header)
 for line in open('bench-log-ex.txt'):
     m = re_bench.match(line)
     if m:
-        assert cur_phase is None and cur_name is None and cur_id is None, "no time found for (%s, %s, %s)" % (cur_name, cur_phase, cur_id)
+        #assert cur_phase is None and cur_name is None and cur_id is None, "no time found for (%s, %s, %s)" % (cur_name, cur_phase, cur_id)
         cur_phase = m['phase']
         assert cur_phase in all_phases, "invalid phase %s" % (cur_phase)
         cur_name = m['name']
