@@ -198,3 +198,12 @@ res
     (run-staged 1 (q)
       (evalo-staged '(list 1 2 3) q))
   '((1 2 3)))
+
+
+(test
+    (length
+     (run-staged 1 (q p e)
+       (eval-expo `(x 1) `((x . (val . ,p))) q)
+       (later `(evalo-unstaged
+                ,(expand `(letrec ((f ,(unexpand e))) f)) ,p))))
+  1)
