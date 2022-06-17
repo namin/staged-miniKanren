@@ -257,6 +257,7 @@
              (conde
                ((fresh (v)
                   (== `(quote ,v) expr)
+                  (absento 'rec-closure v)
                   (absento 'closure v)
                   (absento 'prim v)
                   (absento 'call v)

@@ -8,6 +8,7 @@
 (define (u-eval-expo expr env val)
   (conde
     ((== `(quote ,val) expr)
+     (absento 'rec-closure val)
      (absento 'closure val)
      (absento 'prim val)
      (absento 'call val)
@@ -36,6 +37,9 @@
        (u-eval-expo rator env cfun)
        (conde
          ((== `(closure ,rep) cfun)
+          (u-eval-listo rands env a*)
+          (callo cfun val a*))
+         ((== `(rec-closure ,rep) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*))
          ((== `(call ,proc) cfun)

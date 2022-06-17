@@ -335,20 +335,20 @@ res
               (lambda (x ls)
                 (if (null? ls) #f
                     (if (equal? (car ls) x) #t
-                        (member? x (cdr ls)))))]
-             [proof?
-              (lambda (proof)
-                (match proof
-                  [`(,A ,assms assumption ()) (member? A assms)]
-                  [`(,B ,assms modus-ponens
-                        (((,A => ,B) ,assms ,r1 ,ants1)
-                         (,A ,assms ,r2 ,ants2)))
-                   (and (proof? (list (list A '=> B) assms r1 ants1))
-                        (proof? (list A assms r2 ants2)))]
-                  [`((,A => ,B) ,assms conditional
-                     ((,B (,A . ,assms) ,rule ,ants)))
-                   (proof? (list B (cons A assms) rule ants))]))])
-      (proof? ',proof))
+                        (member? x (cdr ls)))))])
+      (letrec ([proof?
+                (lambda (proof)
+                  (match proof
+                    [`(,A ,assms assumption ()) (member? A assms)]
+                    [`(,B ,assms modus-ponens
+                          (((,A => ,B) ,assms ,r1 ,ants1)
+                           (,A ,assms ,r2 ,ants2)))
+                     (and (proof? (list (list A '=> B) assms r1 ants1))
+                          (proof? (list A assms r2 ants2)))]
+                    [`((,A => ,B) ,assms conditional
+                       ((,B (,A . ,assms) ,rule ,ants)))
+                     (proof? (list B (cons A assms) rule ants))]))])
+        (proof? ',proof)))
    truth))
 
 (test
@@ -377,23 +377,23 @@ res
                              ;; ('error) in the 2017 ICFP Pearl, but
                              ;; the code generator rejects this erroneous code!
                              [`(,a . ,d)
-                              (cons (eval-quasi a eval) (eval-quasi d eval))]))]
-             [eval-expr
-              (lambda (expr env)
-                (match expr
-                  [`(quote ,datum) datum]
-                  [`(lambda (,(? symbol? x)) ,body)
-                   (lambda (a)
-                     (eval-expr body (lambda (y)
-                                       (if (equal? x y)
-                                           a
-                                           (env y)))))]
-                  [(? symbol? x) (env x)]
-                  [`(quasiquote ,datum)
-                   (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
-                  [`(,rator ,rand)
-                   ((eval-expr rator env) (eval-expr rand env))]))])
-      (eval-expr ',expr (lambda (y) 'error)))
+                              (cons (eval-quasi a eval) (eval-quasi d eval))]))])
+      (letrec ([eval-expr
+                (lambda (expr env)
+                  (match expr
+                    [`(quote ,datum) datum]
+                    [`(lambda (,(? symbol? x)) ,body)
+                     (lambda (a)
+                       (eval-expr body (lambda (y)
+                                         (if (equal? x y)
+                                             a
+                                             (env y)))))]
+                    [(? symbol? x) (env x)]
+                    [`(quasiquote ,datum)
+                     (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
+                    [`(,rator ,rand)
+                     ((eval-expr rator env) (eval-expr rand env))]))])
+        (eval-expr ',expr (lambda (y) 'error))))
    val))
 
 (todo "a tiny bit slow, left for the benchmarks"
@@ -405,7 +405,7 @@ res
       '(lambda (_.0) `(,_.0 ',_.0)))
      $$
      (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic))
-          ((_.0 error)) ((_.0 prim)))
+          ((_.0 error)) ((_.0 prim)) ((_.0 rec-closure)))
      (sym _.0))))
 
 (test
