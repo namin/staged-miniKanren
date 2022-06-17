@@ -483,7 +483,7 @@
 ))))
 
 (record-bench 'staged 'ho-quine-interp-cons)
-(time-test
+(todo "TODO:FIX:hanging";time-test
   (run 1 (q)
     (absento 'error q)
     (absento 'closure q)
@@ -544,7 +544,7 @@
   '(hello))
 
 (record-bench 'staged 'ho-double-evalo)
-(time-test
+(todo "TODO:FIX:hanging";time-test
  (run 1 (q) (absento 'error q) (absento 'closure q) (ho-double-evalo q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
