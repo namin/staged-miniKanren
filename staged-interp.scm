@@ -106,32 +106,6 @@
           (non-varo xa)
           (ground-paramso xd)))))))
 
-(define (not-letrec-bindings-checko bindings)
-  (conde
-    ((varo bindings))
-    ((non-varo bindings)
-     (fresh (b bs p-name x body)
-       (== (cons b bs) bindings)
-       (conde
-         ((varo b))
-         ((non-varo b)
-          (== b `(,p-name (lambda ,x ,body)))
-          (conde
-            ((not-ground-paramso (cons p-name x)))
-            ((ground-paramso (cons p-name x))
-             (not-letrec-bindings-checko bs)))))))))
-
-(define (letrec-bindings-checko bindings)
-  (fresh ()
-    (non-varo bindings)
-    (conde
-      ((== '()  bindings))
-      ((fresh (b bs p-name x body)
-         (== (cons b bs) bindings)
-         (== b `(,p-name (lambda ,x ,body)))
-         (ground-paramso (cons p-name x))
-         (letrec-bindings-checko bs))))))
-
 (define (match-checko clauses)
   (fresh ()
     (non-varo clauses)
