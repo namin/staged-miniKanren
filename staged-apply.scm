@@ -40,25 +40,26 @@
          (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(x ...)))
          (with-syntax
           (((x-n ...) (generate-temporaries #'(x ...))))
-          #'(project (rep)
-              ;;(printf "project~\n")
-              (cond
-                ((var? rep)
-                 (fresh (x-n ...)
-                   (== rep (make-apply-rep
-                            'rel-staged 'rel-dyn (list x-n ...) ;
-                            #f))
-                   (rel-dyn x-n ... y ...)))
-                ((apply-rep? rep)
-                 ;;(printf "applying rep...~\n")
-                 (let ((proc (apply-rep-proc rep)))
-                   ;; TODO: unify to check names
-                   (if (or (not proc) (unexpand? proc))
-                       (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
-                       (begin
-                         ;;(printf "calling proc...~\n")
-                         (proc y ...)))))
-                (else fail))))))))
+          #'(lambda (st)
+              (let ((rep (walk rep (state-S st))))
+                        ;;(printf "project~\n")
+                        ((cond
+                           ((var? rep)
+                            (fresh (x-n ...)
+                                   (== rep (make-apply-rep
+                                             'rel-staged 'rel-dyn (list x-n ...) ;
+                                             #f))
+                                   (rel-dyn x-n ... y ...)))
+                           ((apply-rep? rep)
+                            ;;(printf "applying rep...~\n")
+                            (let ((proc (apply-rep-proc rep)))
+                              ;; TODO: unify to check names
+                              (if (or (not proc) (unexpand? proc))
+                                (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
+                                (begin
+                                  ;;(printf "calling proc...~\n")
+                                  (proc y ...)))))
+                           (else fail)) st))))))))
 
 (define-syntax lapply-reified
   (syntax-rules ()
