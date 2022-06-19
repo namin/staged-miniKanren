@@ -346,7 +346,7 @@
 
 
 (record-bench 'staged 'parse-backwards 2)
-(todo "TODO:FIX:hanging";time-test
+(time-test
   (run 1 (regex)
     (d/dc-o regex 'foo '(alt bar (rep baz))))
   `(((seq foo (alt bar (rep baz)) . _.0)
@@ -354,7 +354,7 @@
      ,absento-tags0)))
 
 (record-bench 'run-staged 'parse-backwards 2)
-(todo "TODO:FIX:hanging";time-test
+(time-test
   (run-staged 1 (regex)
     (evalo-staged
       (parse `(d/dc ',regex 'foo))

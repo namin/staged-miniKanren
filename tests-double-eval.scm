@@ -483,10 +483,11 @@
 ))))
 
 (record-bench 'staged 'ho-quine-interp-cons)
-(todo "TODO:FIX:hanging";time-test
+(time-test
   (run 1 (q)
     (absento 'error q)
     (absento 'closure q)
+    (absento 'rec-closure q)
     (ho-quine-interp-cons q q))
   `((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
@@ -498,7 +499,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q)
-    (absento 'closure q)
+    (absento 'rec-closure q)
     (evalo-unstaged
      (ho-quine-interp-cons-fun `(eval-expr ',q (lambda (y) 'error)))
      q))
@@ -544,8 +545,8 @@
   '(hello))
 
 (record-bench 'staged 'ho-double-evalo)
-(todo "TODO:FIX:hanging";time-test
- (run 1 (q) (absento 'error q) (absento 'closure q) (ho-double-evalo q q))
+(time-test
+ (run 1 (q) (absento 'error q) (absento 'closure q) (absento 'rec-closure q) (ho-double-evalo q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
@@ -557,6 +558,7 @@
  (run 1 (q)
    (absento 'error q)
    (absento 'closure q)
+   (absento 'rec-closure q)
       (evalo-unstaged
        (ho-double-eval `(eval-expr ',q (lambda (y) 'error)))
        q))
