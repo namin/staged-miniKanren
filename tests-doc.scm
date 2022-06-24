@@ -370,7 +370,8 @@ res
                            (match q
                              [(? symbol? x) x]
                              [`() '()]
-                             [`(,`unquote ,exp) (eval exp)]
+                             [`(,,'`unquote ,exp) (eval exp)]
+                             ;;[`(,`unquote ,exp) (eval exp)]
                              [`(quasiquote ,datum) 'error]
                              ;; ('error) in the 2017 ICFP Pearl, but
                              ;; the code generator rejects this erroneous code!
