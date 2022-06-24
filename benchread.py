@@ -14,9 +14,10 @@ footer = """
 
 re_bench = re.compile(r'^BENCH (?P<phase>\S+) (?P<name>\S+)( (?P<id>\S+))?$')
 #re_time = re.compile(r'\s*(?P<time>\d+\.\d+)s elapsed cpu time')
-re_time = re.compile(r'\s*real time:\s*(?P<time>\d+)')
+re_time = re.compile(r'\s*cpu time:\s*(?P<time>\d+)')
 
-MAX_TIME = 100000.0
+#MAX_TIME = 100000.0
+MAX_TIME = 100000
 
 all_phases = ['staging', 'staged', 'run-staged', 'unstaged']
 all_times = {}
