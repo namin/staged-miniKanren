@@ -4,6 +4,8 @@
       (printf "BENCH ~a ~a ~a\n" phase name (car args))))
 
 (define test-failed #f)
+(define (set-test-failed!)
+  (set! test-failed #t))
 
 (define-syntax test
   (syntax-rules ()
@@ -14,7 +16,7 @@
               (produced tested-expression))
          (or (equal? expected produced)
              (begin
-               (set! test-failed #t)
+               (set-test-failed!)
                (error 'test
                       (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
                               'tested-expression expected produced))

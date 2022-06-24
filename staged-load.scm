@@ -14,6 +14,7 @@
 (define not-tags0+clo
   '(=/= ((_.0 clo)) ((_.0 closure)) ((_.0 prim)) ((_.0 rec-closure))))
 
+(load "staged-apply-chez.scm")
 (load "staged-apply.scm")
 (load "staged-interp.scm")
 (load "staged-utils.scm")

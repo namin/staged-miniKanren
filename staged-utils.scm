@@ -8,25 +8,16 @@
   (lambda (a b)
     (if (null? b) a (remq (car b) (diff a (cdr b))))))
 
-(define is-reified-var?
-  (lambda (x)
-    (and
-     (symbol? x)
-     (let ((s (symbol->string x)))
-       (and (> (string-length s) 2)
-            (char=? (string-ref s 0) #\_)
-            (char=? (string-ref s 1) #\.))))))
-
 (define fix-scope1
   (lambda (t . in-cdr)
     (cond
       ((symbol? t)
-       (list t (if (is-reified-var? t) (list t) (list))))
+       (list t (if (reified-var? t) (list t) (list))))
       ((and (null? in-cdr) (pair? t) (eq? 'fresh (car t)))
        (let ((r (map fix-scope1 (cddr t))))
          (let ((body (map car r))
                (vs (fold-right union
-			       (filter (lambda (x) (not (is-reified-var? x))) (cadr t))
+			       (filter (lambda (x) (not (reified-var? x))) (cadr t))
 			       (map cadr r))))
            (list `(fresh ,vs . ,body) (list)))))
       ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
@@ -45,7 +36,7 @@
   (lambda (t s . in-cdr)
     (cond
       ((and (null? in-cdr) (pair? t) (eq? 'fresh (car t)))
-       (let ((ds (diff (cadr t) (filter is-reified-var? s)))
+       (let ((ds (diff (cadr t) (filter reified-var? s)))
              (us (union (cadr t) s)))
          `(fresh ,ds . ,(map (lambda (x) (fix-scope2 x us)) (cddr t)))))
       ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
@@ -107,11 +98,7 @@
     ((eq? (car c) 'num)
      (map (lambda (x) `(numbero ,x)) (cdr c)))
     (else (error 'process-constraint "unexpected constraint" c))))
-(define (reified-var? x)
-  (and (symbol? x)
-       (let ((chars (string->list (symbol->string x))))
-         (and (char=? #\_ (car chars))
-              (char=? #\. (cadr chars))))))
+
 (define (miniexpand x)
   (cond
     ((reified-var? x) x)
