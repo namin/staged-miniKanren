@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (define evalo evalo-unstaged)
 
 ;; # Background

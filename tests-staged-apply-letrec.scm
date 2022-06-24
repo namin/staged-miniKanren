@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (test
     (run-staged 1 (q)
       (evalo-staged

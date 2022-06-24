@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (record-bench 'staging 'eval-and-map-evalo)
 (define-staged-relation (eval-and-map-evalo expr val)
   (evalo-staged

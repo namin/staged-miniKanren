@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 ;; Adapted from Matt Might's code for parsing with derivatives.
 
 (define (parse body-expr)

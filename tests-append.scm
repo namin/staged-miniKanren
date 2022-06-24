@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (display "in mk")
 (newline)
 (define (appendo xs ys zs)

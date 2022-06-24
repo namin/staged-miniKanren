@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 ;; Synthesizes a 'match'-based version of 'null?'
 (record-bench 'run-staged 'appendo-synth-0)
 (time-test

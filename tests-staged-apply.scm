@@ -1,6 +1,3 @@
-(load "staged-load.scm")
-(load "staged-apply.scm")
-
 ;; For now we need dynamic and staged versions of the relation; when we have stage
 ;; polymorphism we won't.
 

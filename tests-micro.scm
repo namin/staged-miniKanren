@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (define (micro0 query)
      `(letrec
        ((assp

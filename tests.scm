@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (test (ex 't '(x) 'x) '(x))
 #;(test
   (gen 't '(x) 'x)

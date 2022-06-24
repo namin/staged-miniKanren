@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (time-test
  (syn-hole 1
    (lambda (q)

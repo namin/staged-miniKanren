@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (define (prover body)
   `(letrec ([member?
              (lambda (x ls)
