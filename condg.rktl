@@ -20,9 +20,9 @@
         [_ (fallback st)]))))
 
 (define-syntax condg
-  (syntax-rules ()
+  (syntax-parser
     ((_ fallback ((x ...) (g0 g ...) (b0 b ...)) ...)
-     (condg-runtime
+     #'(condg-runtime
       (lambda (st) (fallback st))
       (list
        (lambda (st)

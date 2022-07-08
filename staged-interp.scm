@@ -209,7 +209,7 @@
             (== proc `(prim . ,prim-id))
             (u-eval-primo prim-id a* val)))))
 
-(define (eval-expo expr env val)
+(define (old-eval-expo expr env val)
   (conde
     ((varo expr)
      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
@@ -266,7 +266,7 @@
                                                                            (later `(callo ,(expand proc) ,(expand val) ,(expand a*)))))))))
                                            (else
                                              (fresh ()
-                                                    (eval-expo rator env proc)
+                                                   (eval-expo rator env proc)
                                                     (eval-listo rands env a*)
                                                     (later `(callo ,(expand proc) ,(expand val) ,(expand a*)))))))))
                     ((handle-matcho expr env val))
@@ -282,6 +282,60 @@
        ((boolean-primo expr env val))
 
        ))))
+
+(define (eval-expo expr env val)
+  (condg
+   (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
+   ([] [(numbero expr)] [(l== expr val)])
+   ([] [(symbolo expr)] [(lookupo #t expr env val)])
+   ([v]
+    [(== `(quote ,v) expr)
+     (absent-tago v)
+     (not-in-envo 'quote env)]
+    [(l== val v)])
+   ([x body]
+    [(== `(lambda ,x ,body) expr)
+     (conde
+         ;; Variadic
+         ((symbolo x))
+         ;; Multi-argument
+         ((list-of-symbolso x)))
+     (not-in-envo 'lambda env)]
+    [(fresh (rep)
+       (l== `(closure ,rep) val)
+       (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))])
+   ;; for now:
+   ;; leave out primitive optimizations by leaving primitives to callo
+   ([rator rands a*]
+    [(== `(,rator . ,rands) expr)
+     (conde
+       ((symbolo rator)
+        (fresh (proc) (lookupo #f expr env proc)))
+       ((fresh (a d) (== rator (cons a d)))))]
+    [(fresh (proc)
+       (eval-expo rator env proc)
+       (eval-listo rands env a*)
+       (later `(callo ,(expand proc) ,(expand val) ,(expand a*))))])
+   ;; match: TODO finish
+   ;; ([against-expr clauses]
+   ;;  [(== `(match ,against-expr . ,clauses) expr)
+   ;;   (not-in-envo 'match env)]
+   ;;  [(eval-expo against-expr env mval)
+   ;;   (match-clauses mval clauses env val)])
+   ;; letrec
+   ([letrec-body f x e]
+    [(== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
+     (not-in-envo 'letrec env)]
+    [(fresh (rep env^)
+       (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
+       (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
+       (eval-expo letrec-body env^ val))])
+   ;; prim-expo
+   ;; TODO
+   ;; boolean-primo
+   ([] [(== #t expr)] [(l== #t val)])
+   ([] [(== #f expr)] [(l== #f val)]))
+)
 
 (define empty-env '())
 
@@ -303,7 +357,7 @@
             (=/= y x)
             (not-in-envo x rest)))))
 
-(define (eval-listo expr env val)
+(define (old-eval-listo expr env val)
   (conde
     ((== '() expr)
      (== '() val))
@@ -312,6 +366,16 @@
             (== `(,v-a . ,v-d) val)
             (eval-expo a env v-a)
             (eval-listo d env v-d)))))
+
+(define (eval-listo expr env val)
+  (condg
+   (later `(u-eval-listo ,(expand expr) ,(expand env) ,(expand val)))
+   ([] [(== '() expr)] [(== '() val)])
+   ([a d v-a v-d]
+    [(== `(,a . ,d) expr)
+     (== `(,v-a . ,v-d) val)]
+    [(eval-expo a env v-a)
+     (eval-listo d env v-d)])))
 
 ;; need to make sure lambdas are well formed.
 ;; grammar constraints would be useful here!!!

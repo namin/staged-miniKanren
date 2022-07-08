@@ -5,7 +5,7 @@
 (require racket/list
          racket/include
          racket/match
-         (for-syntax racket/base))
+         (for-syntax racket/base syntax/parse))
 
 (include "../faster-minikanren/racket-compatibility.scm")
 (include "../faster-minikanren/mk.scm")
