@@ -7,19 +7,19 @@
 (define (condg-runtime fallback clauses)
   (lambda (st)
     (let ((st (state-with-scope st (new-scope))))
-      (let loop ((clauses clauses) (candidates '()))
-        (if (null? clauses)
-            (match candidates
-              ['() (error 'condg "no candidates")]
-              [(list (cons guard-answer body))
-               (body guard-answer)]
-              [_ (fallback st)])
-            (match (car clauses)
-              [(cons guard body)
-               (let ((guard-answer (evaluate-guard (lambda () (guard st)))))
-                 (if guard-answer
-                     (loop (cdr clauses) (cons (cons guard-answer body) candidates))
-                     (loop (cdr clauses) candidates)))]))))))
+      (define candidates
+        (for/fold ([candidates '()]) ([clause clauses])
+          (match clause
+            [(cons guard body)
+             (let ((guard-answer (evaluate-guard (lambda () (guard st)))))
+               (if guard-answer
+                   (cons (cons guard-answer body) candidates)
+                   candidates))])))
+      (match candidates
+        ['() (error 'condg "no candidates")]
+        [(list (cons guard-answer body))
+         (body guard-answer)]
+        [_ (fallback st)]))))
 
 (define-syntax condg
   (syntax-rules ()
