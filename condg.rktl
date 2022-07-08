@@ -8,13 +8,11 @@
   (lambda (st)
     (let ((st (state-with-scope st (new-scope))))
       (define candidates
-        (for/fold ([candidates '()]) ([clause clauses])
-          (match clause
-            [(cons guard body)
-             (let ((guard-answer (evaluate-guard (lambda () (guard st)))))
-               (if guard-answer
-                   (cons (cons guard-answer body) candidates)
-                   candidates))])))
+        (for/list ([clause clauses]
+                   #:do [(match-define (cons guard body) clause)
+                         (define guard-answer (evaluate-guard (lambda () (guard st))))]
+                   #:when guard-answer)
+          (cons guard-answer body)))
       (match candidates
         ['() (error 'condg "no candidates")]
         [(list (cons guard-answer body))
