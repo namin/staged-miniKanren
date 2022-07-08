@@ -30,6 +30,18 @@
   '(1))
 
 (test
+    (length
+     (run-staged 1 (q)
+       (evalo-staged `(cons 1 2) q)))
+  1)
+
+(test
+    (length
+     (run-staged 1 (q)
+       (evalo-staged `(lambda (f) (f 1)) q)))
+  1)
+
+(test
     (run-staged 1 (q)
       (evalo-staged
        `((lambda (f) (f 1))

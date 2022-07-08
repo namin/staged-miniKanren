@@ -310,7 +310,7 @@
     [(== `(,rator . ,rands) expr)
      (conde
        ((symbolo rator)
-        (fresh (proc) (lookupo #f expr env proc)))
+        (fresh (proc) (lookupo #f rator env proc)))
        ((fresh (a d) (== rator (cons a d)))))]
     [(fresh (proc)
        (eval-expo rator env proc)
