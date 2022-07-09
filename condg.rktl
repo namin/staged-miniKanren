@@ -2,7 +2,7 @@
   (match (take #f thunk-stream)
     ['() #f]
     [(list answer) answer]
-    [answers (error 'condg "guard produced too many answers" answers)]))
+    [answers (error 'condg "guard produced too many answers: ~a" answers)]))
 
 (define (condg-runtime fallback clauses)
   (lambda (st)
