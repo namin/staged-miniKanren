@@ -223,24 +223,25 @@
      [(l== val v)])
     ([x body]
      [(== `(lambda ,x ,body) expr)
-      (conde
-        ;; Variadic
-        ((symbolo x))
-        ;; Multi-argument
-        ((list-of-symbolso x)))
       (not-in-envo 'lambda env)]
-     [(fresh (rep)
-        (l== `(closure ,rep) val)
-        ;; could imagine the following line as (l== (eval-apply x body env) rep)
-        (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))])
+     [(project (x)
+        (if (or (symbol? x) (and (list? x) (andmap symbol? x)))
+            (fresh (rep)
+              (l== `(closure ,rep) val)
+              ;; could imagine the following line as (l== (eval-apply x body env) rep)
+              (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))
+            (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))))])
     ;; for now:
     ;; leave out primitive optimizations by leaving primitives to callo
     ([rator rands a*]
      [(== `(,rator . ,rands) expr)
       (conde
-        ((symbolo rator)
+        ((varo rator))
+        ((non-varo rator)
+         (symbolo rator)
          (fresh (proc) (lookupo rator env proc)))
-        ((fresh (a d) (== rator (cons a d)))))]
+        ((non-varo rator)
+         (fresh (a d) (== (cons a d) rator))))]
      [(fresh (proc)
         (eval-expo rator env proc)
         (eval-listo rands env a*)
