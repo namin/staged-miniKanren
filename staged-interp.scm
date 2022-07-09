@@ -643,7 +643,7 @@
     (conde
       ((== penv penv-out)
        (fresh (env-v)
-         (lookupo #t var penv env-v)
+         (lookupo var penv env-v)
          (l== env-v val)))
       ((== `((,var . (val . ,val)) . ,penv) penv-out)
        (not-in-envo var penv)))))
