@@ -260,8 +260,6 @@
         (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
         (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
         (eval-expo letrec-body env^ val))])
-    ;; prim-expo
-    ;; TODO
     ;; and-primo
     ([e*] [(== `(and . ,e*) expr) (not-in-envo 'and env)] [(ando e* env val)])
     ;; or-primo
@@ -409,11 +407,6 @@
                  ((== '() ,(expand v)) (== #t ,(expand val)))
                  ((=/= '() ,(expand v)) (== #f ,(expand val))))))]))
 
-(define (prim-expo expr env val)
-  (conde
-    ((choice-primo expr env val))
-    ))
-
 (define (ando e* env val)
   (condg
     (later `(u-ando ,(expand e*) ,(expand env) ,(expand val)))
@@ -449,16 +442,6 @@
                    (== ,(expand v) ,(expand val)))
                   ((== #f ,(expand v))
                    . ,c))))])))
-
-(define (choice-primo expr env val)
-  (fresh (e2 e3 c2 c3)
-    (== `(choice ,e2 ,e3) expr)
-    (not-in-envo 'choice env)
-    (later-scope (eval-expo e2 env val) c2)
-    (later-scope (eval-expo e3 env val) c3)
-    (later `(conde
-              ,c2
-              ,c3))))
 
 (define initial-env `((list . (val . (prim . list)))
                       (not . (val . (prim . not)))
