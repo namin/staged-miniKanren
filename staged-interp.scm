@@ -231,21 +231,38 @@
               ;; could imagine the following line as (l== (eval-apply x body env) rep)
               (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))
             (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))))])
-    ;; for now:
-    ;; leave out primitive optimizations by leaving primitives to callo
+    ;; statically-recognizable primitive application
+    ([rator rands a* prim]
+     [(== `(,rator . ,rands) expr)
+      (non-varo rator)
+      (symbolo rator)
+      (lookupo rator env `(prim . ,prim))
+      (non-varo prim)]
+     [(fresh (proc)
+        (eval-primo prim a* val)
+        (eval-listo rands env a*))])
+    ;; general application
     ([rator rands a*]
      [(== `(,rator . ,rands) expr)
       (conde
         ((varo rator))
         ((non-varo rator)
          (symbolo rator)
-         (fresh (proc) (lookupo rator env proc)))
+         (fresh (proc p tag)
+           (lookupo rator env proc)
+           (conde
+             ((varo proc))
+             ((non-varo proc)
+              (== `(,tag . ,p) proc)
+              (=/= 'prim tag)))))
         ((non-varo rator)
          (fresh (a d) (== (cons a d) rator))))]
      [(fresh (proc)
         (eval-expo rator env proc)
         (eval-listo rands env a*)
         (later `(callo ,(expand proc) ,(expand val) ,(expand a*))))])
+
+    
     ;; match: TODO finish
     ;; ([against-expr clauses]
     ;;  [(== `(match ,against-expr . ,clauses) expr)
