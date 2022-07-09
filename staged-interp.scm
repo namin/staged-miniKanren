@@ -201,6 +201,8 @@
   (conde
     ((fresh (rep)
        (== proc `(closure ,rep))
+       ;; maybe we can write something closer to this:
+       ;; (apply-reified rep eval-apply a* val)
        (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))))
     ((fresh (rep)
        (== proc `(rec-closure ,rep))
@@ -303,6 +305,7 @@
       (not-in-envo 'lambda env)]
      [(fresh (rep)
         (l== `(closure ,rep) val)
+        ;; could imagine the following line as (l== (eval-apply x body env) rep)
         (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))])
     ;; for now:
     ;; leave out primitive optimizations by leaving primitives to callo
