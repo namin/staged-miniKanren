@@ -342,11 +342,10 @@
 (define (lookupo x env v)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
-    (conde
-      ((== x y)
-       (== `(val . ,v) b))
-      ((=/= x y)
-       (lookupo x rest v)))))
+    (condg
+      (later `(u-lookupo ,(expand x) ,(expand env) ,(expand v)))
+      ([] [(== x y)] [(== `(val . ,v) b)])
+      ([] [(=/= x y)] [(lookupo x rest v)]))))
 
 (define (not-in-envo x env)
   (conde
