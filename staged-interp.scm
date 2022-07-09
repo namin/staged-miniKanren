@@ -287,7 +287,7 @@
   (condg
    (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
    ([] [(numbero expr)] [(l== expr val)])
-   ([] [(symbolo expr)] [(lookupo #t expr env val)])
+   ([] [(symbolo expr)] [(fresh (env-v) (lookupo expr env env-v) (l== env-v val))])
    ([v]
     [(== `(quote ,v) expr)
      (absent-tago v)
@@ -310,7 +310,7 @@
     [(== `(,rator . ,rands) expr)
      (conde
        ((symbolo rator)
-        (fresh (proc) (lookupo #f rator env proc)))
+        (fresh (proc) (lookupo rator env proc)))
        ((fresh (a d) (== rator (cons a d)))))]
     [(fresh (proc)
        (eval-expo rator env proc)
@@ -339,15 +339,14 @@
 
 (define empty-env '())
 
-(define (lookupo stage? x env t)
+(define (lookupo x env v)
   (fresh (y b rest)
-         (== `((,y . ,b) . ,rest) env)
-         (conde
-           ((== x y)
-            (conde
-              ((fresh (v) (== `(val . ,v) b) ((if stage? l== ==) t v)))))
-           ((=/= x y)
-            (lookupo stage? x rest t)))))
+    (== `((,y . ,b) . ,rest) env)
+    (conde
+      ((== x y)
+       (== `(val . ,v) b))
+      ((=/= x y)
+       (lookupo x rest v)))))
 
 (define (not-in-envo x env)
   (conde
@@ -643,7 +642,9 @@
          (l== mval val)
          (conde
            ((== penv penv-out)
-            (lookupo #t var penv val))
+            (fresh (env-v)
+              (lookupo #t var penv env-v)
+              (l== env-v val)))
            ((== `((,var . (val . ,val)) . ,penv) penv-out)
             (not-in-envo var penv)))))
 
@@ -661,7 +662,9 @@
             (symbolo var)
             (l=/= mval val)
             (== penv penv-out)
-            (lookupo #t var penv val)))))
+            (fresh (env-v)
+              (lookupo var penv env-v)
+              (l== env-v val))))))
 
 (define (p-match p mval penv penv-out)
   (conde
