@@ -262,6 +262,8 @@
         (eval-expo letrec-body env^ val))])
     ;; prim-expo
     ;; TODO
+    ;; and-primo
+    ([e*] [(== `(and . ,e*) expr) (not-in-envo 'and env)] [(ando e* env val)])
     ;; boolean-primo
     ([] [(== #t expr)] [(l== #t val)])
     ([] [(== #f expr)] [(l== #f val)]))
@@ -397,41 +399,28 @@
 
 (define (prim-expo expr env val)
   (conde
-    ((boolean-primo expr env val))
-    ((and-primo expr env val))
     ((or-primo expr env val))
     ((if-primo expr env val))
     ((choice-primo expr env val))
     ))
 
-(define (boolean-primo expr env val)
-  (conde
-    ((== #t expr) (l== #t val))
-    ((== #f expr) (l== #f val))))
-
-(define (and-primo expr env val)
-  (fresh (e*)
-    (== `(and . ,e*) expr)
-    (not-in-envo 'and env)
-    (ando e* env val)))
-
 (define (ando e* env val)
-  (conde
-    ((== '() e*) (== #t val))
-    ((fresh (e)
-       (== `(,e) e*)
-       (eval-expo e env val)))
-    ((fresh (e1 e2 e-rest v c)
-       (== `(,e1 ,e2 . ,e-rest) e*)
-       (eval-expo e1 env v)
-       (later-scope
-        (ando `(,e2 . ,e-rest) env val)
-        c)
-       (later `(conde
-                 ((== #f ,(expand v))
-                  (== #f ,(expand val)))
-                 ((=/= #f ,(expand v))
-                  . ,c)))))))
+  (condg
+    (later `(u-ando ,(expand e*) ,(expand env) ,(expand val)))
+    ([] [(== '() e*)] [(l== #t val)])
+    ([e] [(== `(,e) e*)] [(eval-expo e env val)])
+    ([e1 e2 e-rest]
+     [(== `(,e1 ,e2 . ,e-rest) e*)]
+     [(fresh (v c)
+        (eval-expo e1 env v)
+        (later-scope
+         (ando `(,e2 . ,e-rest) env val)
+         c)
+        (later `(conde
+                  ((== #f ,(expand v))
+                   (== #f ,(expand val)))
+                  ((=/= #f ,(expand v))
+                   . ,c))))])))
 
 (define (or-primo expr env val)
   (fresh (e*)

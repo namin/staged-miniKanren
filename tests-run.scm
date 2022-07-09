@@ -58,6 +58,62 @@
   '(1))
 
 (test
+    (length
+     (run 1 (q)
+       (fresh (v)
+         (evalo-staged
+          q
+          v))))
+  1)
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `(and #f #t)
+       q))
+  '(#f))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `(and (and #t #t) (and #t #t))
+       q))
+  '(#t))
+
+(test
+    (run-staged 1 (q)
+      (fresh (x)
+        (evalo-staged
+         `(and ,x #t)
+         #f)))
+  '(_.0))
+
+(test
+    (length
+     (run-staged 2 (q)
+       (fresh (x y)
+         (== (list x y) q)
+         (evalo-staged
+          `(and ,x #t)
+          y))))
+  2)
+
+(test
+    (run-staged 2 (q)
+      (evalo-staged
+       `(and ,q #t)
+       q))
+  '(#t #f))
+
+(test
+    ;; run 4 should generate a quine
+    (run-staged 3 (q)
+      (evalo-staged
+       `(and #t ,q)
+       q))
+  '((_.0 $$ (num _.0)) #t #f))
+
+(test
     (run-staged 1 (q)
       (evalo-staged
        `(letrec ((append
