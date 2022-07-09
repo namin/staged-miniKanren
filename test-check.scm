@@ -8,21 +8,23 @@
   (set! test-failed #t))
 
 (define-syntax test
-  (syntax-rules ()
-    ((_ tested-expression expected-result)
-     (begin
-       (printf "Testing ~a\n" 'tested-expression)
-       (let* ((expected expected-result)
-              (produced tested-expression))
-         (or (equal? expected produced)
-             (begin
-               (set-test-failed!)
-               (error 'test
-                      (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
-                              'tested-expression expected produced))
-               ;; (format #t "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
-               ;;         'tested-expression expected produced)
-               )))))))
+  (syntax-parser
+    ((~and test-case (_ tested-expression expected-result))
+     #'(begin
+         (printf "Testing ~a\n" 'tested-expression)
+         (let* ((expected expected-result)
+                (produced tested-expression))
+           (or (equal? expected produced)
+               (begin
+                 (set-test-failed!)
+                 (raise-syntax-error
+                  'test
+                  (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
+                          'tested-expression expected produced)
+                  #'test-case)
+                 ;; (format #t "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
+                 ;;         'tested-expression expected produced)
+                 )))))))
 
 (define-syntax time-test
   (syntax-rules ()
