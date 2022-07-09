@@ -114,6 +114,29 @@
   '((_.0 $$ (num _.0)) #t #f))
 
 (test
+    (run-staged 3 (q)
+      (evalo-staged
+       `(or #t . ,q)
+       #t))
+  '(() (_.0 . _.1)))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `(or #f . ,q)
+       1)
+      (l== '(1) q))
+  '((1)))
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged
+       `(or #f . ,q)
+       1)
+      (l== '(#f 1) q))
+  '((#f 1)))
+
+(test
     (run-staged 1 (q)
       (evalo-staged
        `(letrec ((append
