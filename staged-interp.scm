@@ -266,6 +266,16 @@
     ([e*] [(== `(and . ,e*) expr) (not-in-envo 'and env)] [(ando e* env val)])
     ;; or-primo
     ([e*] [(== `(or . ,e*) expr) (not-in-envo 'or env)] [(oro e* env val)])
+    ;; if-primo
+    ([e1 e2 e3]
+     [(== `(if ,e1 ,e2 ,e3) expr) (not-in-envo 'if env)]
+     [(fresh (t c2 c3)
+        (eval-expo e1 env t)
+        (later-scope (eval-expo e2 env val) c2)
+        (later-scope (eval-expo e3 env val) c3)
+        (later `(conde
+                  ((=/= #f ,(expand t)) . ,c2)
+                  ((== #f ,(expand t)) . ,c3))))])
     ;; boolean-primo
     ([] [(== #t expr)] [(l== #t val)])
     ([] [(== #f expr)] [(l== #f val)]))
@@ -401,7 +411,6 @@
 
 (define (prim-expo expr env val)
   (conde
-    ((if-primo expr env val))
     ((choice-primo expr env val))
     ))
 
@@ -440,17 +449,6 @@
                    (== ,(expand v) ,(expand val)))
                   ((== #f ,(expand v))
                    . ,c))))])))
-
-(define (if-primo expr env val)
-  (fresh (e1 e2 e3 t c2 c3)
-    (== `(if ,e1 ,e2 ,e3) expr)
-    (not-in-envo 'if env)
-    (eval-expo e1 env t)
-    (later-scope (eval-expo e2 env val) c2)
-    (later-scope (eval-expo e3 env val) c3)
-    (later `(conde
-              ((=/= #f ,(expand t)) . ,c2)
-              ((== #f ,(expand t)) . ,c3)))))
 
 (define (choice-primo expr env val)
   (fresh (e2 e3 c2 c3)
