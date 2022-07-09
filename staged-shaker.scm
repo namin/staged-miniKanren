@@ -33,7 +33,7 @@
      (map (lambda (x) (== x (to-sym (cdr (assoc x m))))) (cdr c)))
     ((eq? (car c) 'num)
      (map (lambda (x) (numbero x)) (cdr c)))
-    (else (error 'constraint2goals "unexpected constraint" c))))
+    (else (error 'constraint2goals (format "unexpected constraint: ~a" c)))))
 
 (define (shake1 t)
   (let* ((m (to-vars-map '() t))
