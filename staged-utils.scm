@@ -97,7 +97,7 @@
      (map (lambda (x) `(symbolo ,x)) (cdr c)))
     ((eq? (car c) 'num)
      (map (lambda (x) `(numbero ,x)) (cdr c)))
-    (else (error 'process-constraint "unexpected constraint" c))))
+    (else (error 'process-constraint (format "unexpected constraint: ~a" c)))))
 
 (define (miniexpand x)
   (cond
@@ -119,7 +119,7 @@
       (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
         (unless (code-layer? r)
-            (error 'gen-func "no code generated" r))
+          (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
               (fix-scope
                `(lambda (,@inputs out)
@@ -131,7 +131,7 @@
       (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
         (unless (code-layer? r)
-            (error 'gen-func "no code generated" r))
+          (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
               (fix-scope
                `(lambda (,@inputs)
