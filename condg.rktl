@@ -1,16 +1,16 @@
-(define (evaluate-guard thunk-stream)
+(define (evaluate-guard thunk-stream guard-stx)
   (match (take #f thunk-stream)
     ['() #f]
     [(list answer) answer]
-    [answers (error 'condg "guard produced too many answers: ~a" answers)]))
+    [answers (raise-syntax-error 'condg (format "guard produced too many answers: ~a" answers) guard-stx)]))
 
 (define (condg-runtime fallback clauses)
   (lambda (st)
     (let ((st (state-with-scope st (new-scope))))
       (define candidates
         (for/list ([clause clauses]
-                   #:do [(match-define (cons guard-stream body) (clause st))
-                         (define guard-answer (evaluate-guard (lambda () guard-stream)))]
+                   #:do [(match-define (list guard-stream body guard-stx) (clause st))
+                         (define guard-answer (evaluate-guard (lambda () guard-stream) guard-stx))]
                    #:when guard-answer)
           (cons guard-answer body)))
       (match candidates
@@ -21,14 +21,15 @@
 
 (define-syntax condg
   (syntax-parser
-    ((_ fallback ((x ...) (g0 g ...) (b0 b ...)) ...)
-     #'(condg-runtime
-      (lambda (st) (fallback st))
-      (list
-       (lambda (st)
-         (let ((scope (subst-scope (state-S st))))
-           (let ((x (var scope)) ...)
-             (cons
-              (bind* (g0 st) g ...)
-              (lambda (st) (bind* (b0 st) b ...))))))
-       ...)))))
+   ((_ fallback ((x ...) (~and guard (g0 g ...)) (b0 b ...)) ...)
+    #'(condg-runtime
+       (lambda (st) (fallback st))
+       (list
+         (lambda (st)
+           (let ((scope (subst-scope (state-S st))))
+             (let ((x (var scope)) ...)
+               (list
+                 (bind* (g0 st) g ...)
+                 (lambda (st) (bind* (b0 st) b ...))
+                 #'guard))))
+         ...)))))
