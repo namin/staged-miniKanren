@@ -296,3 +296,15 @@ res
        (later `(evalo-unstaged
                 ,(expand `(letrec ((f ,(unexpand e))) f)) ,p))))
   1)
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged '(match '(hello) [`(hello ,x) 1]) q))
+  '()
+  )
+
+(test
+    (run-staged 1 (q)
+      (evalo-staged '(match '(hello) [`(hello ,x) 1] [`(,x) 2]) q))
+  '(2)
+  )

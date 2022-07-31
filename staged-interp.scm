@@ -263,12 +263,14 @@
         (later `(callo ,(expand proc) ,(expand val) ,(expand a*))))])
 
     
-    ;; match: TODO finish
-    ;; ([against-expr clauses]
-    ;;  [(== `(match ,against-expr . ,clauses) expr)
-    ;;   (not-in-envo 'match env)]
-    ;;  [(eval-expo against-expr env mval)
-    ;;   (match-clauses mval clauses env val)])
+    ;; match
+    ([against-expr clauses]
+     [(== `(match ,against-expr . ,clauses) expr)
+      (not-in-envo 'match env)]
+     [(fresh (mval)
+        (eval-expo against-expr env mval)
+        (match-clauses mval clauses env val))])
+
     ;; letrec
     ([letrec-body f x e]
      [(== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
