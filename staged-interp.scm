@@ -267,9 +267,14 @@
     ([against-expr clauses]
      [(== `(match ,against-expr . ,clauses) expr)
       (not-in-envo 'match env)]
-     [(fresh (mval)
-        (eval-expo against-expr env mval)
-        (match-clauses mval clauses env val))])
+     [
+
+      ;; (fresh (mval)
+      ;;   (eval-expo against-expr env mval)
+      ;;   (match-clauses mval clauses env val))
+
+      (handle-matcho expr env val)
+      ])
 
     ;; letrec
     ([letrec-body f x e]
