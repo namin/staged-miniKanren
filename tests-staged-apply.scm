@@ -6,7 +6,7 @@
     (== yz `(,y ,z))
     (== res (cons x yz))))
 
-(define (test-rel-staged y z x res)
+(define (test-rel-staged rep y z x res)
   (fresh (yz)
     (== yz `(,y ,z))
     (l== res (cons x yz))))
