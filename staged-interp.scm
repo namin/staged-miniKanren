@@ -221,7 +221,7 @@
       (absent-tago v)
       (not-in-envo 'quote env)]
      [(l== val v)])
-     ([x body]
+    ([x body]
      [(== `(lambda ,x ,body) expr)
       (not-in-envo 'lambda env)
       (conde
@@ -231,17 +231,6 @@
         (l== `(closure ,rep) val)
         ;; could imagine the following line as (l== (eval-apply x body env) rep)
         (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))])
-     #;
-    ([x body]
-     [(== `(lambda ,x ,body) expr)
-      (not-in-envo 'lambda env)]
-     [(project (x)
-        (if (or (symbol? x) (and (list? x) (andmap symbol? x)))
-            (fresh (rep)
-              (l== `(closure ,rep) val)
-              ;; could imagine the following line as (l== (eval-apply x body env) rep)
-              (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))
-            (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))))])
      ;; statically-recognizable primitive application
     ([rator rands a* prim]
      [(== `(,rator . ,rands) expr)
