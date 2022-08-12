@@ -230,8 +230,7 @@
      [(fresh (rep)
         (l== `(closure ,rep) val)
         ;; could imagine the following line as (l== (eval-apply x body env) rep)
-        (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))
-      (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))])
+        (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))])
      #;
     ([x body]
      [(== `(lambda ,x ,body) expr)
@@ -383,59 +382,59 @@
     [(fresh (a)
        (l== `((,a . ,val)) a*)
        (not-tago a))])
-   ([] [(== prim-id 'not)] [
-           (fresh (b)
-             (l== `(,b) a*)
-             (later `(conde
-                       ((=/= #f ,(expand b)) (== #f ,(expand val)))
-                       ((== #f ,(expand b)) (== #t ,(expand val))))))])
-   ([] [(== prim-id 'equal?)] [
-           (fresh (v1 v2)
-             (l== `(,v1 ,v2) a*)
-             (later `(conde
-                       ((== ,(expand v1) ,(expand v2)) (== #t ,(expand val)))
-                       ((=/= ,(expand v1) ,(expand v2)) (== #f ,(expand val))))))])
-   ([] [(== prim-id 'symbol?)] [
-           (fresh (v)
-             (l== `(,v) a*)
-             (later `(conde
-                       ((symbolo ,(expand v)) (== #t ,(expand val)))
-                       ((numbero ,(expand v)) (== #f ,(expand val)))
-                       ((fresh (a d)
-                          (== `(,a . ,d) ,(expand v))
-                          (== #f ,(expand val))))
-                       ((booleano ,(expand v)) (== #f ,(expand val))))))])
-   ([] [(== prim-id 'number?)] [
-           (fresh (v)
-             (l== `(,v) a*)
-             (later `(conde
-                       ((numbero ,(expand v)) (== #t ,(expand val)))
-                       ((symbolo ,(expand v)) (== #f ,(expand val)))
-                       ((fresh (a d)
-                          (== `(,a . ,d) ,(expand v))
-                          (== #f ,(expand val))))
-                       ((booleano ,(expand v)) (== #f ,(expand val))))))])
-   ([] [(== prim-id 'pair?)] [
-           (fresh (v)
-             (l== `(,v) a*)
-             (later `(conde
-                       ((symbolo ,(expand v)) (== #f ,(expand val)))
-                       ((numbero ,(expand v)) (== #f ,(expand val)))
-                       ((booleano ,(expand v)) (== #f ,(expand val)))
-                       ((fresh (a d)
-                          (== `(,a . ,d) ,(expand v))
-                          (== #t ,(expand val))
-                          (not-tago a)))
-                       ((fresh (a d)
-                          (== `(,a . ,d) ,(expand v))
-                          (== #f ,(expand val))
-                          (pos-tago a))))))])
-   ([] [(== prim-id 'null?)] [
-           (fresh (v)
-             (l== `(,v) a*)
-             (later `(conde
-                       ((== '() ,(expand v)) (== #t ,(expand val)))
-                       ((=/= '() ,(expand v)) (== #f ,(expand val))))))])))
+   ([] [(== prim-id 'not)]
+    [(fresh (b)
+       (l== `(,b) a*)
+       (later `(conde
+                 ((=/= #f ,(expand b)) (== #f ,(expand val)))
+                 ((== #f ,(expand b)) (== #t ,(expand val))))))])
+   ([] [(== prim-id 'equal?)]
+    [(fresh (v1 v2)
+       (l== `(,v1 ,v2) a*)
+       (later `(conde
+                 ((== ,(expand v1) ,(expand v2)) (== #t ,(expand val)))
+                 ((=/= ,(expand v1) ,(expand v2)) (== #f ,(expand val))))))])
+   ([] [(== prim-id 'symbol?)]
+    [(fresh (v)
+       (l== `(,v) a*)
+       (later `(conde
+                 ((symbolo ,(expand v)) (== #t ,(expand val)))
+                 ((numbero ,(expand v)) (== #f ,(expand val)))
+                 ((fresh (a d)
+                    (== `(,a . ,d) ,(expand v))
+                    (== #f ,(expand val))))
+                 ((booleano ,(expand v)) (== #f ,(expand val))))))])
+   ([] [(== prim-id 'number?)]
+    [(fresh (v)
+       (l== `(,v) a*)
+       (later `(conde
+                 ((numbero ,(expand v)) (== #t ,(expand val)))
+                 ((symbolo ,(expand v)) (== #f ,(expand val)))
+                 ((fresh (a d)
+                    (== `(,a . ,d) ,(expand v))
+                    (== #f ,(expand val))))
+                 ((booleano ,(expand v)) (== #f ,(expand val))))))])
+   ([] [(== prim-id 'pair?)]
+    [(fresh (v)
+       (l== `(,v) a*)
+       (later `(conde
+                 ((symbolo ,(expand v)) (== #f ,(expand val)))
+                 ((numbero ,(expand v)) (== #f ,(expand val)))
+                 ((booleano ,(expand v)) (== #f ,(expand val)))
+                 ((fresh (a d)
+                    (== `(,a . ,d) ,(expand v))
+                    (== #t ,(expand val))
+                    (not-tago a)))
+                 ((fresh (a d)
+                    (== `(,a . ,d) ,(expand v))
+                    (== #f ,(expand val))
+                    (pos-tago a))))))])
+   ([] [(== prim-id 'null?)]
+    [(fresh (v)
+       (l== `(,v) a*)
+       (later `(conde
+                 ((== '() ,(expand v)) (== #t ,(expand val)))
+                 ((=/= '() ,(expand v)) (== #f ,(expand val))))))])))
 
 (define (ando e* env val)
   (condg
