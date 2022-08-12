@@ -1,8 +1,11 @@
 (define (evaluate-guard thunk-stream guard-stx)
-  (match (take #f thunk-stream)
+  (match (take 2 thunk-stream)
     ['() #f]
     [(list answer) answer]
-    [answers (raise-syntax-error 'condg (format "guard produced too many answers: ~a" answers) guard-stx)]))
+    [answers
+     'nondet
+     ;;(raise-syntax-error 'condg (format "guard produced too many answers: ~a" answers) guard-stx)
+     ]))
 
 (define (condg-runtime fallback clauses)
   (lambda (st)
@@ -16,7 +19,9 @@
       (match candidates
         ['() (error 'condg "no candidates")]
         [(list (cons guard-answer body))
-         (body guard-answer)]
+         (if (eq? 'nondet guard-answer)
+             (fallback st)
+             (body guard-answer))]
         [_ (fallback st)]))))
 
 (define-syntax condg

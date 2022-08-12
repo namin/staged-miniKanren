@@ -298,6 +298,23 @@ res
   1)
 
 (test
+    (run-staged 1 (q x)
+      (symbolo x)
+      (evalo-staged `((lambda (,x) x) 1) q))
+  '((1 x)))
+
+(test
+    (length
+     (run-staged 3 (q x y)
+       (symbolo x)
+       (symbolo y)
+       (=/= x 'lambda)
+       (=/= y 'lambda)
+       (evalo-staged `(((lambda (,x) (lambda (,y) z)) 1) 2) q)))
+  2)
+;; NOTE: res has a u-lookupo call!
+
+(test
     (run-staged 1 (q)
       (evalo-staged '(match '(hello) [`(hello ,x) 1]) q))
   '()
