@@ -1,7 +1,20 @@
+(define (tree-contains tree atom)
+  (cond
+    ((null? tree) #f)
+    ((pair? tree)
+     (or (tree-contains (car tree) atom)
+         (tree-contains (cdr tree) atom)))
+    (else (equal? tree atom))))
+
+
 (define (record-bench phase name . args)
+  (when res
+    (format #t "generated code contains u-eval-expo: ~a~%"
+            (tree-contains res 'u-eval-expo)))
   (if (null? args)
       (printf "BENCH ~a ~a\n" phase name)
-      (printf "BENCH ~a ~a ~a\n" phase name (car args))))
+      (printf "BENCH ~a ~a ~a\n" phase name (car args)))
+  (set! res #f))
 
 (define test-failed #f)
 (define (set-test-failed!)
@@ -28,7 +41,7 @@
   (syntax-rules ()
     ((_ tested-expression expected-result)
      (test
-       (time tested-expression)
+         (time tested-expression)
        expected-result))))
      
 (define-syntax todo
