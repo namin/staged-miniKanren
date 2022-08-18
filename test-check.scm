@@ -6,11 +6,20 @@
          (tree-contains (cdr tree) atom)))
     (else (equal? tree atom))))
 
+(define (tree-count tree atom)
+  (cond
+    ((null? tree) 0)
+    ((pair? tree)
+     (+ (tree-count(car tree) atom)
+        (tree-count (cdr tree) atom)))
+    ((equal? tree atom) 1)
+    (else 0)))
+
 
 (define (record-bench phase name . args)
   (when res
-    (format #t "generated code contains u-eval-expo: ~a~%"
-            (tree-contains res 'u-eval-expo)))
+    (format #t "generated code u-eval-expo count: ~a~%"
+            (tree-count res 'u-eval-expo)))
   (if (null? args)
       (printf "BENCH ~a ~a\n" phase name)
       (printf "BENCH ~a ~a ~a\n" phase name (car args)))
