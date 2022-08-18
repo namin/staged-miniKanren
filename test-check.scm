@@ -18,7 +18,7 @@
 
 (define (record-bench phase name . args)
   (when res
-    (format #t "generated code u-eval-expo count: ~a~%"
+    (printf "generated code u-eval-expo count: ~a~%"
             (tree-count res 'u-eval-expo)))
   (if (null? args)
       (printf "BENCH ~a ~a\n" phase name)
