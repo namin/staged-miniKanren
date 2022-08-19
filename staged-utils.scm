@@ -112,7 +112,7 @@
            (reified-expand (cdr x))))
     (else `(quote ,x))))
 ;; # Helpers for turning functional procedure into relational one
-(define res '())
+(define res #f)
 
 (define (gen-func r . inputs)
   (let ((r (unique-result r)))
