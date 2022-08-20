@@ -433,7 +433,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-;;(record-bench 'run-staged 'quasi-quine-evalo)
+(record-bench 'run-staged 'quasi-quine-evalo)
 (time-test
   (run-staged 1 (q)
     (absento 'error q)
