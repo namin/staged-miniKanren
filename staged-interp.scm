@@ -393,38 +393,38 @@
    ([] [(== prim-id 'number?)]
     [(fresh (v)
        (l== `(,v) a*)
-       (later `(conde
-                 ((numbero ,(expand v)) (== #t ,(expand val)))
-                 ((symbolo ,(expand v)) (== #f ,(expand val)))
-                 ((fresh (a d)
-                    (== `(,a . ,d) ,(expand v))
-                    (== #f ,(expand val))))
-                 ((booleano ,(expand v)) (== #f ,(expand val))))))])
+       (lconde
+         ((lnumbero v) (l== #t val))
+         ((lsymbolo v) (l== #f val))
+         ((fresh (a d)
+            (l== `(,a . ,d) v)
+            (l== #f val)))
+         ((lapp booleano v) (l== #f val))))])
    ([] [(== prim-id 'pair?)]
     [(fresh (v)
        (l== `(,v) a*)
-       (later `(conde
-                 ((symbolo ,(expand v)) (== #f ,(expand val)))
-                 ((numbero ,(expand v)) (== #f ,(expand val)))
-                 ((booleano ,(expand v)) (== #f ,(expand val)))
-                 ((fresh (a d)
-                    (== `(,a . ,d) ,(expand v))
-                    (== #t ,(expand val))
-                    (not-tago a)))
-                 ((fresh (a d)
-                    (== `(,a . ,d) ,(expand v))
-                    (== #f ,(expand val))
-                    (pos-tago a))))))])
+       (lconde
+         ((lsymbolo v) (l== #f val))
+         ((lnumbero v) (l== #f val))
+         ((lapp booleano v) (l== #f val))
+         ((fresh (a d)
+            (l== `(,a . ,d) v)
+            (l== #t val)
+            (lapp not-tago a)))
+         ((fresh (a d)
+            (l== `(,a . ,d) v)
+            (l== #f val)
+            (lapp pos-tago a)))))])
    ([] [(== prim-id 'null?)]
     [(fresh (v)
        (l== `(,v) a*)
-       (later `(conde
-                 ((== '() ,(expand v)) (== #t ,(expand val)))
-                 ((=/= '() ,(expand v)) (== #f ,(expand val))))))])))
+       (lconde
+         ((l== '() v) (l== #t val))
+         ((l=/= '() v) (l== #f val))))])))
 
 (define (ando e* env val)
   (condg
-    (later `(u-ando ,(expand e*) ,(expand env) ,(expand val)))
+    (lapp u-ando e* env val)
     ([] [(== '() e*)] [(l== #t val)])
     ([e] [(== `(,e) e*)] [(eval-expo e env val)])
     ([e1 e2 e-rest]
@@ -439,7 +439,7 @@
 
 (define (oro e* env val)
   (condg
-    (later `(u-oro ,(expand e*) ,(expand env) ,(expand val)))
+    (lapp u-oro e* env val)
     ([] [(== '() e*)] [(l== #f val)])
     ([e] [(== `(,e) e*)] [(eval-expo e env val)])
     ([e1 e2 e-rest]
@@ -470,7 +470,7 @@
       (== `(match ,against-expr ,clause . ,clauses) expr)
       (conde
         ((not-match-checko (cons clause clauses))
-         (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val))))
+         (lapp u-eval-expo expr env val))
         ((match-checko (cons clause clauses))
          (fresh (mval)
            (not-in-envo 'match env)
@@ -522,7 +522,7 @@
     ;; match-clauses with an empty list of clauses.
     ;; in staged, defer to runtime.
     ((== clauses '())
-     (later 'fail))
+     lfail)
     ((fresh (p result-expr d penv c-yes c-no)
        (== `((,p ,result-expr) . ,d) clauses)
        (lconde
@@ -555,7 +555,7 @@
     ;; runtime.
     ((symbolo var)
      (not-in-envo var penv)
-     (later 'fail))
+     lfail)
     ((fresh (val)
        (symbolo var)
        (l=/= mval val)
@@ -574,9 +574,9 @@
        (== `(? ,pred ,var) p)
        (conde
          ((== 'symbol? pred)
-          (later `(symbolo ,(expand mval))))
+          (lsymbolo mval))
          ((== 'number? pred)
-          (later `(numbero ,(expand mval)))))
+          (lnumbero mval)))
        (var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
        (== (list 'quasiquote quasi-p) p)
@@ -600,8 +600,8 @@
             (var-p-no-match var mval penv penv-out)]))
          ((== 'number? pred)
           (lconde
-           [(later `(not-numbero ,(expand mval)))]
-           [(later `(numbero ,(expand mval)))
+           [(lapp not-numbero mval)]
+           [(lnumbero mval)
             (var-p-no-match var mval penv penv-out)])))))
     ((fresh (quasi-p)
        (== (list 'quasiquote quasi-p) p)
