@@ -9,17 +9,17 @@
          (with-syntax
           (((y-n ...) (generate-temporaries #'(y ...)))
            ((y-n2 ...) (generate-temporaries #'(y ...))))
-          #'(fresh (y-n ... body)
-              (later-scope
+          #'(fresh (y-n ...)
+              (capture-later
                (fresh ()
                  (l== y-n (unexpand 'y-n2)) ...
                  (rel-staged rep x ... y-n ...))
-               body)
-              (l== rep (make-apply-rep
-                       'rel-staged 'rel-dyn (list x ...)
-                       (unexpand `(lambda (y-n2 ...)
-                                    (fresh ()
-                                      . ,body)))))))))))
+               (lambda (body)
+                 (l== rep (make-apply-rep
+                           'rel-staged 'rel-dyn (list x ...)
+                           (unexpand `(lambda (y-n2 ...)
+                                        (fresh ()
+                                          . ,body)))))))))))))
 
 (define-syntax reify-call
   (lambda (stx)

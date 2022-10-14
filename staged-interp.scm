@@ -213,7 +213,7 @@
 
 (define (eval-expo expr env val)
   (condg
-    (later `(u-eval-expo ,(expand expr) ,(expand env) ,(expand val)))
+    (lapp u-eval-expo expr env val)
     ([] [(numbero expr)] [(l== expr val)])
     ([] [(symbolo expr)] [(fresh (env-v) (lookupo expr env env-v) (l== env-v val))])
     ([v]
@@ -252,7 +252,7 @@
      [(fresh (proc)
         (eval-expo rator env proc)
         (eval-listo rands env a*)
-        (later `(callo ,(expand proc) ,(expand val) ,(expand a*))))])
+        (lapp callo proc val a*))])
 
     
     ;; match
@@ -285,11 +285,9 @@
      [(== `(if ,e1 ,e2 ,e3) expr) (not-in-envo 'if env)]
      [(fresh (t c2 c3)
         (eval-expo e1 env t)
-        (later-scope (eval-expo e2 env val) c2)
-        (later-scope (eval-expo e3 env val) c3)
-        (later `(conde
-                  ((=/= #f ,(expand t)) . ,c2)
-                  ((== #f ,(expand t)) . ,c3))))])
+        (lconde
+         ((l=/= #f t) (eval-expo e2 env val))
+         ((l== #f t) (eval-expo e3 env val))))])
     ;; boolean-primo
     ([] [(== #t expr)] [(l== #t val)])
     ([] [(== #f expr)] [(l== #f val)]))
@@ -301,7 +299,7 @@
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (condg
-      (later `(u-lookupo ,(expand x) ,(expand env) ,(expand v)))
+      (lapp u-lookupo x env v)
       ([] [(== x y)] [(== `(val . ,v) b)])
       ([] [(=/= x y)] [(lookupo x rest v)]))))
 
@@ -325,7 +323,7 @@
 
 (define (eval-listo expr env val)
   (condg
-    (later `(u-eval-listo ,(expand expr) ,(expand env) ,(expand val)))
+    (lapp u-eval-listo expr env val)
     ([] [(== '() expr)] [(== '() val)])
     ([a d v-a v-d]
      [(== `(,a . ,d) expr)
@@ -354,9 +352,8 @@
        (ext-env*o dx* da* env2 out)))))
 
 (define (eval-primo prim-id a* val)
-  ;; TODO: use condg
   (condg
-   (later `(u-eval-primo ,(expand prim-id) ,(expand a*) ,(expand val)))
+   (lapp u-eval-primo prim-id a* val)
    ([] [(== prim-id 'list)]
     [(l== a* val)])
    ([] [(== prim-id 'cons)]
@@ -374,25 +371,25 @@
    ([] [(== prim-id 'not)]
     [(fresh (b)
        (l== `(,b) a*)
-       (later `(conde
-                 ((=/= #f ,(expand b)) (== #f ,(expand val)))
-                 ((== #f ,(expand b)) (== #t ,(expand val))))))])
+       (lconde
+        ((l=/= #f b) (l== #f val))
+        ((l== #f b) (l== #t val))))])
    ([] [(== prim-id 'equal?)]
     [(fresh (v1 v2)
        (l== `(,v1 ,v2) a*)
-       (later `(conde
-                 ((== ,(expand v1) ,(expand v2)) (== #t ,(expand val)))
-                 ((=/= ,(expand v1) ,(expand v2)) (== #f ,(expand val))))))])
+       (lconde
+        [(l== v1 v2) (l== #t val)]
+        [(l=/= v1 v2) (l== #f val)]))])
    ([] [(== prim-id 'symbol?)]
     [(fresh (v)
        (l== `(,v) a*)
-       (later `(conde
-                 ((symbolo ,(expand v)) (== #t ,(expand val)))
-                 ((numbero ,(expand v)) (== #f ,(expand val)))
-                 ((fresh (a d)
-                    (== `(,a . ,d) ,(expand v))
-                    (== #f ,(expand val))))
-                 ((booleano ,(expand v)) (== #f ,(expand val))))))])
+       (lconde
+        ((lsymbolo v) (l== #t val))
+        ((lnumbero v) (l== #f val))
+        ((fresh (a d)
+           (l== `(,a . ,d) v)
+           (l== #f val)))
+        ((lapp booleano v) (l== #f val))))])
    ([] [(== prim-id 'number?)]
     [(fresh (v)
        (l== `(,v) a*)
@@ -434,14 +431,11 @@
      [(== `(,e1 ,e2 . ,e-rest) e*)]
      [(fresh (v c)
         (eval-expo e1 env v)
-        (later-scope
-         (ando `(,e2 . ,e-rest) env val)
-         c)
-        (later `(conde
-                  ((== #f ,(expand v))
-                   (== #f ,(expand val)))
-                  ((=/= #f ,(expand v))
-                   . ,c))))])))
+        (lconde
+         ((l== #f v)
+          (l== #f val))
+         ((=/= #f v)
+          (ando `(,e2 . ,e-rest) env val))))])))
 
 (define (oro e* env val)
   (condg
@@ -452,14 +446,11 @@
      [(== `(,e1 ,e2 . ,e-rest) e*)]
      [(fresh (v c)
         (eval-expo e1 env v)
-        (later-scope
-         (oro `(,e2 . ,e-rest) env val)
-         c)
-        (later `(conde
-                  ((=/= #f ,(expand v))
-                   (== ,(expand v) ,(expand val)))
-                  ((== #f ,(expand v))
-                   . ,c))))])))
+        (lconde
+         ((l=/= #f v)
+          (l== v val))
+         ((l== #f v)
+          (oro `(,e2 . ,e-rest) env val))))])))
 
 (define initial-env `((list . (val . (prim . list)))
                       (not . (val . (prim . not)))
@@ -534,18 +525,13 @@
      (later 'fail))
     ((fresh (p result-expr d penv c-yes c-no)
        (== `((,p ,result-expr) . ,d) clauses)
-       (later-scope
-        (fresh (env^)
-          (p-match p mval '() penv)
-          (regular-env-appendo penv env env^)
-          (eval-expo result-expr env^ val))
-        c-yes)
-       (later-scope
-        (fresh ()
-          (p-no-match p mval '() penv)
-          (match-clauses mval d env val))
-        c-no)
-       (later `(conde ,c-yes ,c-no))))))
+       (lconde
+        [(fresh (env^)
+           (p-match p mval '() penv)
+           (regular-env-appendo penv env env^)
+           (eval-expo result-expr env^ val))]
+        [(p-no-match p mval '() penv)
+         (match-clauses mval d env val)])))))
 
 (define (var-p-match var mval penv penv-out)
   (fresh (val)
@@ -608,29 +594,15 @@
        (symbolo var)
        (conde
          ((== 'symbol? pred)
-          (fresh (z1 z2)
-            (later-scope
-             (fresh ()
-               (later `(not-symbolo ,(expand mval))))
-             z1)
-            (later-scope
-             (fresh ()
-               (later `(symbolo ,(expand mval)))
-               (var-p-no-match var mval penv penv-out))
-             z2)
-            (later `(conde ,z1 ,z2))))
+          (lconde
+           [(lapp not-symbolo mval)]
+           [(lsymbolo mval)
+            (var-p-no-match var mval penv penv-out)]))
          ((== 'number? pred)
-          (fresh (z1 z2)
-            (later-scope
-             (fresh ()
-               (later `(not-numbero ,(expand mval))))
-             z1)
-            (later-scope
-             (fresh ()
-               (later `(numbero ,(expand mval)))
-               (var-p-no-match var mval penv penv-out))
-             z2)
-            (later `(conde ,z1 ,z2)))))))
+          (lconde
+           [(later `(not-numbero ,(expand mval)))]
+           [(later `(numbero ,(expand mval)))
+            (var-p-no-match var mval penv penv-out)])))))
     ((fresh (quasi-p)
        (== (list 'quasiquote quasi-p) p)
        (quasi-p-no-match quasi-p mval penv penv-out)))))
@@ -653,36 +625,22 @@
 (define (quasi-p-no-match quasi-p mval penv penv-out)
   (fresh ()
     (conde
-      ((l=/= quasi-p mval)
-       (== penv penv-out)
-       (literalo quasi-p))
-      ((fresh (p)
-         (== (list 'unquote p) quasi-p)
-         (not-tago mval)
-         (p-no-match p mval penv penv-out)))
-      ((fresh (a d)
-         (== `(,a . ,d) quasi-p)
-         (=/= 'unquote a)
-         (fresh (z1 z2)
-           (later-scope
-            (fresh ()
-              (== penv penv-out)
-              (later `(literalo ,(expand mval))))
-            z1)
-           (later-scope
-            (fresh (penv^ v1 v2)
-              (l== `(,v1 . ,v2) mval)
-              (fresh (z3 z4)
-                (later-scope
-                 (fresh ()
-                   (quasi-p-no-match a v1 penv penv-out))
-                 z3)
-                (later-scope
-                 (fresh ()
-                   (quasi-p-match a v1 penv penv^)
-                   (quasi-p-no-match d v2 penv^ penv-out))
-                 z4)
-                (later `(conde ,z3 ,z4))))
-            z2)
-           (later `(conde ,z1 ,z2)))
-         )))))
+     ((l=/= quasi-p mval)
+      (== penv penv-out)
+      (literalo quasi-p))
+     ((fresh (p)
+        (== (list 'unquote p) quasi-p)
+        (not-tago mval)
+        (p-no-match p mval penv penv-out)))
+     ((fresh (a d)
+        (== `(,a . ,d) quasi-p)
+        (=/= 'unquote a)
+        (lconde
+         [(== penv penv-out)
+          (lapp literalo mval)]
+         [(fresh (penv^ v1 v2)
+            (l== `(,v1 . ,v2) mval)
+            (lconde
+             [(quasi-p-no-match a v1 penv penv-out)]
+             [(quasi-p-match a v1 penv penv^)
+              (quasi-p-no-match d v2 penv^ penv-out)]))]))))))
