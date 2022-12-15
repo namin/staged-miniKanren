@@ -12,14 +12,14 @@
           #'(fresh (y-n ...)
               (capture-later
                (fresh ()
-                 (l== y-n (unexpand 'y-n2)) ...
+                 (l== y-n (unexpand #'y-n2)) ...
                  (rel-staged rep x ... y-n ...))
                (lambda (body)
                  (l== rep (make-apply-rep
                            'rel-staged 'rel-dyn (list x ...)
-                           (unexpand `(lambda (y-n2 ...)
+                           (unexpand #`(lambda (y-n2 ...)
                                         (fresh ()
-                                          . ,body)))))))))))))
+                                          . #,body)))))))))))))
 
 (define-syntax reify-call
   (lambda (stx)
