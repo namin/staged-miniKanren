@@ -115,7 +115,7 @@
 (define res #f)
 
 (define (to-datum x)
-  (map syntax-e x))
+  (map syntax->datum x))
 
 (define (gen-func r . inputs)
   (let ((r (unique-result r)))
