@@ -114,6 +114,9 @@
 ;; # Helpers for turning functional procedure into relational one
 (define res #f)
 
+(define (to-datum x)
+  (map syntax-e x))
+
 (define (gen-func r . inputs)
   (let ((r (unique-result r)))
       (let ((cs (convert-constraints r))
@@ -123,7 +126,7 @@
         (set! res
               (fix-scope
                `(lambda (,@inputs out)
-                  (fresh () ,@cs (== ,(reified-expand (car r)) out) . ,(caddr r)))))
+                  (fresh () ,@cs (== ,(reified-expand (car r)) out) . ,(to-datum (caddr r))))))
         res)))
 
 (define (gen-func-rel r . inputs)
@@ -135,7 +138,7 @@
         (set! res
               (fix-scope
                `(lambda (,@inputs)
-                  (fresh () ,@cs (== ,(reified-expand (car r)) (list ,@inputs)) . ,(caddr r)))))
+                  (fresh () ,@cs (== ,(reified-expand (car r)) (list ,@inputs)) . ,(to-datum (caddr r))))))
         res)))
 
 (define gen
