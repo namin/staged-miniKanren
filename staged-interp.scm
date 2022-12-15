@@ -168,6 +168,9 @@
        (fo xa ya)
        (mapo fo xd yd)))))
 
+(define (make-list-of-symso xs ys)
+  (mapo (lambda (x y) (== y (unexpand x))) xs ys))
+
 (define (varo x)
   (lambda (c)
     (if (var? (walk* x (state-S c)))
