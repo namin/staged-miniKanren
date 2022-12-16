@@ -86,31 +86,29 @@
   (printf "processing constraint: ~a\n" c)
   (cond
     ((eq? (car c) '=/=)
-     (map (lambda (x) (cons '=/=
-                       (list (miniexpand (caar x)) (miniexpand (cadar x)))))
+     (map (lambda (x) #`(=/= #,(miniexpand (caar x)) #,(miniexpand (cadar x))))
           (cdr c)))
     ((eq? (car c) 'absento)
-     (map (lambda (x) (cons 'absento
-                       (list (miniexpand (car x)) (miniexpand (cadr x)))))
+     (map (lambda (x) #`(absento #,(miniexpand (car x)) #,(miniexpand (cadr x))))
           (cdr c)))
     ((eq? (car c) 'sym)
-     (map (lambda (x) `(symbolo ,x)) (cdr c)))
+     (map (lambda (x) #`(symbolo #,x)) (cdr c)))
     ((eq? (car c) 'num)
-     (map (lambda (x) `(numbero ,x)) (cdr c)))
+     (map (lambda (x) #`(numbero #,x)) (cdr c)))
     (else (error 'process-constraint (format "unexpected constraint: ~a" c)))))
 
 (define (miniexpand x)
   (cond
     ((reified-var? x) x)
-    (else `(quote ,x))))
+    (else #`(quote #,x))))
 (define (reified-expand x)
   (cond
     ((reified-var? x) x)
     ((pair? x)
-     (list 'cons
-           (reified-expand (car x))
-           (reified-expand (cdr x))))
-    (else `(quote ,x))))
+     #`(cons
+        #,(reified-expand (car x))
+        #,(reified-expand (cdr x))))
+    (else #`(quote #,x))))
 ;; # Helpers for turning functional procedure into relational one
 (define res #f)
 
@@ -127,9 +125,10 @@
         (unless (code-layer? r)
           (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-              (fix-scope
-               `(lambda (,@inputs out)
-                  (fresh () ,@cs (== ,(reified-expand (car r)) out) . ,(to-datum (caddr r))))))
+          (fix-scope
+           (syntax->datum
+            #`(lambda (#,@inputs out)
+                (fresh () #,@cs (== #,(reified-expand (car r)) out) . #,(map strip-data-from-syntax (caddr r)))))))
         res)))
 
 (define (gen-func-rel r . inputs)
@@ -139,9 +138,10 @@
         (unless (code-layer? r)
           (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-              (fix-scope
-               `(lambda (,@inputs)
-                  (fresh () ,@cs (== ,(reified-expand (car r)) (list ,@inputs)) . ,(to-datum (caddr r))))))
+          (fix-scope
+           (syntax->datum
+            #`(lambda (#,@inputs)
+                (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(map strip-data-from-syntax (caddr r)))))))
         res)))
 
 (define gen
