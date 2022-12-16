@@ -12,13 +12,6 @@
 |#
 
 (test
-    (run-staged 2 (q)
-      (later `(conde
-               ((== ,q 1))
-               ((== ,q 2)))))
-  '(1 2))
-
-(test
     (length
      (run-staged 1 (q)
        (evalo-staged `(lambda (x) x) q)))
@@ -262,7 +255,7 @@ res
 (test
     (run-staged 1 (q)
       (symbolo q)
-      (later `(numbero ,q)))
+      (lnumbero q))
   '())
 
 (define-staged-relation (bogus-appendo xs ys zs)
@@ -293,8 +286,8 @@ res
     (length
      (run-staged 1 (q p e)
        (eval-expo `(x 1) `((x . (val . ,p))) q)
-       (later `(evalo-unstaged
-                ,(expand `(letrec ((f ,(unexpand e))) f)) ,p))))
+       (lapp evalo-unstaged
+             `(letrec ((f ,e)) f) p)))
   1)
 
 (test

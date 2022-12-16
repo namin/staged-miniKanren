@@ -114,8 +114,11 @@
 ;; # Helpers for turning functional procedure into relational one
 (define res #f)
 
+(define (strip-data-from-syntax x)
+  (map-on-syntax-data (lambda (v) v) x))
+
 (define (to-datum x)
-  (map syntax->datum x))
+  (map syntax->datum (map strip-data-from-syntax x)))
 
 (define (gen-func r . inputs)
   (let ((r (unique-result r)))
