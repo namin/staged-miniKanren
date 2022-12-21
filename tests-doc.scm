@@ -127,33 +127,33 @@
 
 ;; ## Staging
 
-(test
+(todo "run with staged"
     (run* (q) (l== q 1))
   '((_.0 !! ((== _.0 '1)))))
 
-(test
+(todo "run with staged"
     (run* (q) (== q 1))
   '(1))
 
-(test
+(todo "run with staged"
     (run* (q) (l== (list 1) (list q)))
   '((_.0 !! ((== (cons '1 '()) (cons _.0 '())))))
   ;; not simplified to ((_.0 !! ((== '1 _.0))))
   )
 
-(test
+(todo "run with staged"
     (run* (q) (l== 1 2))
   '((_.0 !! ((== '1 '2)))))
 
-(test
+(todo "run with staged"
     (run* (q) (fresh (x) (l== (cons x x) q)))
   '((_.0 !! ((== (cons _.1 _.1) _.0)))))
 
-(test
+(todo "run with staged"
     (run* (q) (later `(== ,(expand q) ,(expand 1))))
   '((_.0 !! ((== _.0 '1)))))
 
-(test
+(todo "run with staged"
     (run* (x y)
       (fresh (c1 c2)
         (later-scope (fresh () (l== 5 x) (l== 6 y)) c1)
@@ -183,7 +183,7 @@
 ;; Exception: staging non-deterministic
 |#
 
-(test
+(todo "later conde"
     (run-staged 2 (q)
       (later `(conde
                 ((== ,(expand q) 1))
