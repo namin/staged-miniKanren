@@ -235,6 +235,14 @@
              ,body)))
 
 (record-bench 'staging 'eval-and-map-and-list-evalo)
+(define-staged-relation (eval-and-map-and-list-evalo expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (eval-and-map-and-list-eval `(eval-expr expr (lambda (y) 'error)))
+     env
+     val)))
+#;
 (define eval-and-map-and-list-evalo
   (time (eval
    (gen 'eval-expr '(expr)
@@ -475,6 +483,14 @@
              ,body))
 
 (record-bench 'staging 'ho-quine-interp-cons)
+(define-staged-relation (ho-quine-interp-cons expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (ho-quine-interp-cons-fun `(eval-expr expr (lambda (y) 'error)))
+     env
+     val)))
+#;
 (define ho-quine-interp-cons
   (time (eval
          (gen 'eval-expr '(expr)
@@ -534,6 +550,14 @@
              ,body))
 
 (record-bench 'staging 'ho-double-evalo)
+(define-staged-relation (ho-double-evalo expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (ho-double-eval `(eval-expr expr (lambda (y) 'error)))
+     env
+     val)))
+#;
 (define ho-double-evalo
   (time (eval
    (gen 'eval-expr '(expr)
@@ -650,6 +674,14 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,body)))
 (record-bench 'staging 'map-in-double-eval)
+(define-staged-relation (map-in-double-eval expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (map-in-double-eval-fun '(eval-expr expr '()))
+     env
+     val)))
+#;
 (define map-in-double-eval
   (time (eval
    (gen 'eval-expr '(expr)
@@ -716,30 +748,34 @@
 |#
 
 (record-bench 'staging 'double-evalo)
-(define double-evalo
-  (time (eval
-   (gen 'eval-expr '(expr)
-        `(letrec ([lookup
-                   (lambda (x env)
-                     (match env
-                       [`((,y . ,v) . ,renv)
-                        (if (equal? x y)
-                            v
-                            (lookup x renv))]))])
-           (letrec ([eval-expr
-                   (lambda (expr env)
-                     (match expr
-                       [`(quote ,datum) datum]
-                       [`(lambda (,(? symbol? x)) ,body)
-                        (list 'clo x body env)]
-                       [`(list ,e1 ,e2)
-                        (list (eval-expr e1 env) (eval-expr e2 env))]
-                       [(? symbol? x) (lookup x env)]
-                       [`(,rator ,rand)
-                        (match (eval-expr rator env)
-                          [`(clo ,x ,body ,clo-env)
-                           (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-             (eval-expr expr '())))))))
+(define-staged-relation (double-evalo expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     `(letrec ([lookup
+             (lambda (x env)
+               (match env
+                 [`((,y . ,v) . ,renv)
+                  (if (equal? x y)
+                      v
+                      (lookup x renv))]))])
+     (letrec ([eval-expr
+               (lambda (expr env)
+                 (match expr
+                   [`(quote ,datum) datum]
+                   [`(lambda (,(? symbol? x)) ,body)
+                    (list 'clo x body env)]
+                   [`(list ,e1 ,e2)
+                    (list (eval-expr e1 env) (eval-expr e2 env))]
+                   [(? symbol? x) (lookup x env)]
+                   [`(,rator ,rand)
+                    (match (eval-expr rator env)
+                      [`(clo ,x ,body ,clo-env)
+                       (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
+       (eval-expr expr '())))
+     env
+     val))
+  )
 
 (record-bench 'staged 'double-evalo)
 (time-test
@@ -812,6 +848,14 @@
              ,body)))
 
 (record-bench 'staging 'double-evalo-variadic-list-fo)
+(define-staged-relation (double-evalo-variadic-list-fo expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (double-evalo-variadic-list-fo-fun '(eval-expr expr '()))
+     env
+     val)))
+#;
 (define double-evalo-variadic-list-fo
   (time (eval
    (gen 'eval-expr '(expr)
@@ -865,6 +909,14 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,body)))
 (record-bench 'staging 'double-evalo-variadic-list-fo-better)
+(define-staged-relation (double-evalo-variadic-list-fo-less-ridiculous expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (double-evalo-variadic-list-fo-less-ridiculous-fun '(eval-expr expr '()))
+     env
+     val)))
+#;
 (define double-evalo-variadic-list-fo-less-ridiculous
   (time (eval
    (gen 'eval-expr '(expr)
@@ -920,6 +972,14 @@
      ,body))))
 
 (record-bench 'staging 'double-evalo-variadic-list-ho)
+(define-staged-relation (double-evalo-variadic-list-ho expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (double-evalo-variadic-list-ho-fun '(eval-expr expr '()))
+     env
+     val)))
+#;
 (define double-evalo-variadic-list-ho
   (time (eval
    (gen 'eval-expr '(expr)
@@ -970,6 +1030,14 @@
              ,body)))
 
 (record-bench 'staging 'double-evalo-cons)
+(define-staged-relation (double-evalo-cons expr val)
+  (fresh (env)
+    (ext-env*o '(expr) (list expr) initial-env env)
+    (eval-expo
+     (double-evalo-cons-fun '(eval-expr expr '()))
+     env
+     val)))
+#;
 (define double-evalo-cons
   (time (eval
    (gen 'eval-expr '(expr)
