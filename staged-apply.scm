@@ -61,4 +61,4 @@
 (define-syntax lapply-reified
   (syntax-rules ()
     ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-     (later `(apply-reified ,rep ((rel-staged rel-dyn) (x ...) (,(expand y) ...)))))))
+     (later #`(apply-reified #,(expand rep) ((rel-staged rel-dyn) (x ...) (#,(expand y) ...)))))))
