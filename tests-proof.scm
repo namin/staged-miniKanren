@@ -36,10 +36,18 @@
      #t)))
 
 (record-bench 'staging 'proofo)
+(define-staged-relation (proofo prf b)
+  (fresh (env)
+    (ext-env*o '(prf) (list prf) initial-env env)
+    (eval-expo
+     (prover `(proof? prf))
+     env
+     b)))
+#;
 (define proofo
   (time (eval
-   (gen 'proof? '(proof)
-        (prover '(proof? proof))))))
+         (gen 'proof? '(proof)
+              (prover '(proof? proof))))))
 
 (define ex-proof1
   '((C (A (A => B) (B => C))
