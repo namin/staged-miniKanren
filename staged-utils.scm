@@ -8,6 +8,74 @@
   (lambda (a b)
     (if (null? b) a (remq (car b) (diff a (cdr b))))))
 
+#|
+goals :=
+(== term term)
+(fresh (x ...) goal...)
+(conde (goal ...) ...)
+term :=
+(cons term term)
+(lambda x goal)
+(lambda (x ...) goal)
+(quote datum)
+(list term...)
+(data var)
+
+things to manipulate:
+reified logic variables, always in data position
+fresh syntax that is not quoted
+
+by the way we construct lambdas in lreify-call, the parameter names do not intersect with logic variables, so we don't need to consider lambda especially in fix scope.
+
+|#
+
+(define fix-scope1-syntax
+  (syntax-parser
+   #:literals (fresh quote)
+   [(fresh (x ...+) goal ...)
+    (error 'fix-scope1-syntax "encountered fresh with variables")]
+   [(fresh () goal ...)
+    (define r (map fix-scope1-syntax (attribute goal)))
+    (define/syntax-parse (goal^ ...) (map first r))
+    (define/syntax-parse (var ...) (apply set-union (map second r)))
+    (list #'(fresh (var ...) goal^ ...) (list))]
+   [(quote datum)
+    (list this-syntax (list))]
+   [d
+    #:when (data? (syntax-e #'d))
+    (define var (data-value (syntax-e #'d)))
+    (list #`#,var (list var))]
+   [(a . d)
+    (define ra (fix-scope1-syntax #'a))
+    (define rd (fix-scope1-syntax #'d))
+    (list #`(#,(first ra) . #,(first rd)) (set-union (second ra) (second rd)))]
+   [_ (list this-syntax (list))]))
+
+(define fix-scope2-syntax
+  (lambda (stx bound-vars)
+    (syntax-parse
+     stx
+     #:literals (fresh quote)
+     [(fresh (x ...) goal ...)
+      (define xs (map syntax-e (attribute x)))
+      (define/syntax-parse (x^ ...) (set-subtract xs bound-vars))
+      (define bound-vars^ (set-union xs bound-vars))
+      (define/syntax-parse (goal^ ...)
+        (for/list ([g (attribute goal)]) (fix-scope2-syntax g bound-vars^)))
+      #'(fresh (x^ ...) goal^ ...)]
+     [(quote datum)
+      this-syntax]
+     [(a . d)
+      #`(#,(fix-scope2-syntax #'a bound-vars) . #,(fix-scope2-syntax #'d bound-vars))]
+     [_ this-syntax])))
+
+(define fix-scope-syntax
+  (lambda (stx)
+    (define r (fix-scope1-syntax stx))
+    (unless (null? (second r))
+      (error 'fix-scope-syntax "unscoped variable"))
+    (fix-scope2-syntax (first r) '())))
+
 (define fix-scope1
   (lambda (t . in-cdr)
     (cond
@@ -125,10 +193,10 @@
         (unless (code-layer? r)
           (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-          (fix-scope
-           (syntax->datum
+          (syntax->datum
+           (fix-scope-syntax
             #`(lambda (#,@inputs out)
-                (fresh () #,@cs (== #,(reified-expand (car r)) out) . #,(map strip-data-from-syntax (caddr r)))))))
+                (fresh () #,@cs (== #,(reified-expand (car r)) out) . #,(caddr r))))))
         res)))
 
 (define (gen-func-rel r . inputs)
@@ -138,10 +206,10 @@
         (unless (code-layer? r)
           (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-          (fix-scope
-           (syntax->datum
+          (syntax->datum
+           (fix-scope-syntax
             #`(lambda (#,@inputs)
-                (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(map strip-data-from-syntax (caddr r)))))))
+                (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r))))))
         res)))
 
 (define gen

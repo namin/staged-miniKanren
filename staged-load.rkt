@@ -5,6 +5,8 @@
 (require racket/list
          racket/include
          racket/match
+         racket/set
+         syntax/parse
          (for-syntax racket/base syntax/parse))
 
 (include "../faster-minikanren/racket-compatibility.scm")
