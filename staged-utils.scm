@@ -171,7 +171,7 @@ by the way we construct lambdas in lreify-call, the parameter names do not inter
     (else #`(quote #,x))))
 (define (reified-expand x)
   (cond
-    ((reified-var? x) x)
+    ((reified-var? x) (data x))
     ((pair? x)
      #`(cons
         #,(reified-expand (car x))
