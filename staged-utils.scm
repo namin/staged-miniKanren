@@ -30,7 +30,7 @@ by the way we construct lambdas in lreify-call, the parameter names do not inter
 |#
 
 #|
-for each later state variable, fix-scope1-syntax will ensure each fresh surrounding a direct mention of a variable will bind it.
+for each later state variable, fix-scope1-syntax will add a binding to the variable to the immediately surrounding fresh.
 fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 |#
 (define fix-scope1-syntax
