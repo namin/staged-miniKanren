@@ -6,6 +6,14 @@
 res
 
 (run-staged* (q)
+  (== 1 2))
+
+(run* (q)
+  (conde
+    ((l== q 1))
+    ((l== q 2))))
+
+(run-staged* (q)
   (conde
     ((l== q 1))
     ((l== q 2))))

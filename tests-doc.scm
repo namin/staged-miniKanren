@@ -396,10 +396,11 @@ res
    val))
 
 (todo "a tiny bit slow, left for the benchmarks"
-    (run 1 (q)
-      (absento 'error q)
-      (absento 'closure q)
-      (quasi-quine-evalo q q))
+      (time
+       (run 1 (q)
+         (absento 'error q)
+         (absento 'closure q)
+         (quasi-quine-evalo q q)))
     `((((lambda (_.0) `(,_.0 ',_.0))
       '(lambda (_.0) `(,_.0 ',_.0)))
        $$
