@@ -25,5 +25,9 @@ and thanks to
   - relational interpreter
   - Barliman
 - Nada: Staging Relational Programming (10 minutes)
+  - basics
+  - staged mini "interpreter"
+  - staged relational interpreter
+  - more examples time allowing
 - Will: BAT context (10 minutes)
 - Nada: BAT demo (3 minutes)
