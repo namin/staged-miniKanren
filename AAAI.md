@@ -1,0 +1,29 @@
+# Staged Relational Programming for Synthesis
+## AP2S
+Automated Program and Proof Synthesis Bridge Program
+Part of the AAAI-23 Bridge Program
+
+### Nada Amin, Harvard University
+### William Byrd, University of Alabama at Birmingham
+
+joint work with
+- Michael Ballantybe
+- Greg Rosenblatt
+- Matt Might
+
+and thanks to
+- Raffi Sanna for brainstorming talk with us
+- Garrett Katz and Kristopher Micinski for organizing AP2S AAAI Bridge
+
+## Outline
+
+- Nada: Motivating examples (5 minutes)
+  - Theorem checker turned prover
+  - Fib synthesis
+- Will: Foundations (10 minutes)
+  - miniKanren
+  - relational interpreter
+  - Barliman
+- Nada: Staging Relational Programming (10 minutes)
+- Will: BAT context (10 minutes)
+- Nada: BAT demo (3 minutes)
