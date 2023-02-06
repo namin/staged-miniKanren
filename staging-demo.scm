@@ -44,8 +44,10 @@ res
    ([] [(symbolo expr)] [(l== 'SYM val)])
    ([e1 e2 v1 v2] [(== `(,e1 ,e2) expr)]
     [(l== `(,v1 ,v2) val)
-     (u-minio e1 v1)
-     (u-minio e2 v2)])))
+     (minio e1 v1)
+     (minio e2 v2)])))
 
 (run-staged* (q) (minio '(hello 1) q))
 res
+
+(run-staged* (q) (fresh (a) (minio `(hello ,a) q)))
