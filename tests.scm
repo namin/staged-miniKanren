@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (test (ex 't '(x) 'x) '(x))
 #;(test
   (gen 't '(x) 'x)
@@ -501,6 +499,7 @@
   '((a b)))
 
 ;; the hard way is no longer necessary!
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -510,6 +509,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e q))))
  '((a b)))
 
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -519,6 +519,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e q))))
  '((a b)))
 
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -528,6 +529,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
  '((a)))
 
+#;
 (test
  (run* (q)
        (fresh (p)
@@ -537,6 +539,7 @@
                      (u-eval-expo (list l (list 'quote '(b))) e '(a b)))))
  '((a)))
 
+#;
 (test
  (run* (q) (fresh (x y p)
                   (== q (list x y))
@@ -547,6 +550,7 @@
  '((() (a b c d e)) ((a) (b c d e)) ((a b) (c d e))
    ((a b c) (d e)) ((a b c d) (e)) ((a b c d e) ())))
 
+#;
 (test
  (run* (q) (fresh (x y p)
                   (== q (list x y))
@@ -559,7 +563,7 @@
 
 (test
  (run 1 (q)
-      (eval-expo #t q '() 1))
+      (eval-expo q '() 1))
  '((_.0 !! ((u-eval-expo _.0 '() '1)))))
 
 
@@ -667,8 +671,9 @@
     (run* (q) (my-not-symbolo 'x q))
   '(#f))
 
+#;
 (test
-    (run 1 (q) (callo (lambda (x) (lambda (out) (== x out))) 1 `(,q)))
+    (run 1 (q) (callo `(call ,(lambda (x) (lambda (out) (== x out)))) 1 `(,q)))
   '(1))
 
 (define mb-scope
@@ -703,34 +708,34 @@
 (test
     (length
      (run 20 (params body)
-       (eval-expo #t `(lambda ,params ,body) initial-env 1)))
+       (eval-expo `(lambda ,params ,body) initial-env 1)))
   1)
 
 (test
     (length
      (run 20 (params body args)
-       (eval-expo #t `((lambda ,params ,body) . ,args) initial-env 1)))
+       (eval-expo `((lambda ,params ,body) . ,args) initial-env 1)))
   1)
 
 (test
     (length
      (run 2 (args)
-       (eval-expo #t `(letrec ((f (lambda x x))) (f . ,args)) initial-env 1)))
+       (eval-expo `(letrec ((f (lambda x x))) (f . ,args)) initial-env 1)))
   1)
 
 (test (length
        (run 2 (args)
-         (eval-expo #t `((lambda x x) 1 . ,args) initial-env 1)))
+         (eval-expo `((lambda x x) 1 . ,args) initial-env 1)))
   1)
 
 (test (length
        (run 3 (param)
-         (eval-expo #t `((lambda (x ,param) x) 1 2) initial-env 1)))
+         (eval-expo `((lambda (x ,param) x) 1 2) initial-env 1)))
   1)
 
 (test (length
        (run 3 (clause)
-         (eval-expo #t
+         (eval-expo
                     `(match 1
                        [,clause 1])
                     initial-env 1)))
@@ -738,12 +743,12 @@
 
 (test (length
        (run 3 (params)
-         (eval-expo #t `(and . ,params) initial-env #t)))
+         (eval-expo `(and . ,params) initial-env #t)))
   1)
 
 (test (length
        (run 3 (params)
-         (eval-expo #t `(or . ,params) initial-env #t)))
+         (eval-expo `(or . ,params) initial-env #t)))
   1)
 
 (test
@@ -790,9 +795,6 @@
 (test (run* (q) (not-groundo `(1 2 (,q 4)))) '(_.0))
 (test (run* (q) (groundo '(#t 2 (3 4)))) '(_.0))
 (test (run* (q) (not-groundo `(#t 1 2 (,q 4)))) '(_.0))
-
-(test (run* (q) (letrec-bindings-checko '((t (lambda (x) x))))) '(_.0))
-(test (run* (q) (not-letrec-bindings-checko '((t (lambda (x) x))))) '())
 
 (test
     (length

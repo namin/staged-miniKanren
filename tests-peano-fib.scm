@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 

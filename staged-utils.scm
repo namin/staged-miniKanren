@@ -8,25 +8,88 @@
   (lambda (a b)
     (if (null? b) a (remq (car b) (diff a (cdr b))))))
 
-(define is-reified-var?
-  (lambda (x)
-    (and
-     (symbol? x)
-     (let ((s (symbol->string x)))
-       (and (> (string-length s) 2)
-            (char=? (string-ref s 0) #\_)
-            (char=? (string-ref s 1) #\.))))))
+#|
+goals :=
+(== term term)
+(fresh (x ...) goal...)
+(conde (goal ...) ...)
+term :=
+(cons term term)
+(lambda x goal)
+(lambda (x ...) goal)
+(quote datum)
+(list term...)
+(data var)
+
+things to manipulate:
+reified logic variables, always in data position
+fresh syntax that is not quoted
+
+by the way we construct lambdas in lreify-call, the parameter names do not intersect with logic variables, so we don't need to consider lambda especially in fix scope.
+
+|#
+
+#|
+for each later state variable, fix-scope1-syntax will add a binding to the variable to the immediately surrounding fresh.
+fix-scope2-syntax keeps only the outermost fresh binding for a variable.
+|#
+(define fix-scope1-syntax
+  (syntax-parser
+   #:literals (fresh quote)
+   [(fresh (x ...+) goal ...)
+    (error 'fix-scope1-syntax "encountered fresh with variables")]
+   [(fresh () goal ...)
+    (define r (map fix-scope1-syntax (attribute goal)))
+    (define/syntax-parse (goal^ ...) (map first r))
+    (define/syntax-parse (var ...) (apply set-union (map second r)))
+    (list #'(fresh (var ...) goal^ ...) (list))]
+   [(quote datum)
+    (list this-syntax (list))]
+   [d
+    #:when (data? (syntax-e #'d))
+    (define var (data-value (syntax-e #'d)))
+    (list #`#,var (list var))]
+   [(a . d)
+    (define ra (fix-scope1-syntax #'a))
+    (define rd (fix-scope1-syntax #'d))
+    (list #`(#,(first ra) . #,(first rd)) (set-union (second ra) (second rd)))]
+   [_ (list this-syntax (list))]))
+
+(define fix-scope2-syntax
+  (lambda (stx bound-vars)
+    (syntax-parse
+     stx
+     #:literals (fresh quote)
+     [(fresh (x ...) goal ...)
+      (define xs (map syntax-e (attribute x)))
+      (define/syntax-parse (x^ ...) (set-subtract xs bound-vars))
+      (define bound-vars^ (set-union xs bound-vars))
+      (define/syntax-parse (goal^ ...)
+        (for/list ([g (attribute goal)]) (fix-scope2-syntax g bound-vars^)))
+      #'(fresh (x^ ...) goal^ ...)]
+     [(quote datum)
+      this-syntax]
+     [(a . d)
+      #`(#,(fix-scope2-syntax #'a bound-vars) . #,(fix-scope2-syntax #'d bound-vars))]
+     [_ this-syntax])))
+
+(define fix-scope-syntax
+  (lambda (stx)
+    (define r (fix-scope1-syntax stx))
+    (unless (null? (second r))
+      (error 'fix-scope-syntax "unscoped variable"))
+    (fix-scope2-syntax (first r) '())))
 
 (define fix-scope1
   (lambda (t . in-cdr)
     (cond
       ((symbol? t)
-       (list t (if (is-reified-var? t) (list t) (list))))
+       (list t (if (reified-var? t) (list t) (list))))
       ((and (null? in-cdr) (pair? t) (eq? 'fresh (car t)))
        (let ((r (map fix-scope1 (cddr t))))
          (let ((body (map car r))
                (vs (fold-right union
-			       (filter (lambda (x) (not (is-reified-var? x))) (cadr t))
+			       (filter (lambda (x) (not (reified-var? x))) (cadr t))
 			       (map cadr r))))
            (list `(fresh ,vs . ,body) (list)))))
       ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
@@ -45,7 +108,7 @@
   (lambda (t s . in-cdr)
     (cond
       ((and (null? in-cdr) (pair? t) (eq? 'fresh (car t)))
-       (let ((ds (diff (cadr t) (filter is-reified-var? s)))
+       (let ((ds (diff (cadr t) (filter reified-var? s)))
              (us (union (cadr t) s)))
          `(fresh ,ds . ,(map (lambda (x) (fix-scope2 x us)) (cddr t)))))
       ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
@@ -95,48 +158,49 @@
   (printf "processing constraint: ~a\n" c)
   (cond
     ((eq? (car c) '=/=)
-     (map (lambda (x) (cons '=/=
-                       (list (miniexpand (caar x)) (miniexpand (cadar x)))))
+     (map (lambda (x) #`(=/= #,(miniexpand (caar x)) #,(miniexpand (cadar x))))
           (cdr c)))
     ((eq? (car c) 'absento)
-     (map (lambda (x) (cons 'absento
-                       (list (miniexpand (car x)) (miniexpand (cadr x)))))
+     (map (lambda (x) #`(absento #,(miniexpand (car x)) #,(miniexpand (cadr x))))
           (cdr c)))
     ((eq? (car c) 'sym)
-     (map (lambda (x) `(symbolo ,x)) (cdr c)))
+     (map (lambda (x) #`(symbolo #,x)) (cdr c)))
     ((eq? (car c) 'num)
-     (map (lambda (x) `(numbero ,x)) (cdr c)))
-    (else (error 'process-constraint "unexpected constraint" c))))
-(define (reified-var? x)
-  (and (symbol? x)
-       (let ((chars (string->list (symbol->string x))))
-         (and (char=? #\_ (car chars))
-              (char=? #\. (cadr chars))))))
+     (map (lambda (x) #`(numbero #,x)) (cdr c)))
+    (else (error 'process-constraint (format "unexpected constraint: ~a" c)))))
+
 (define (miniexpand x)
   (cond
     ((reified-var? x) x)
-    (else `(quote ,x))))
+    (else #`(quote #,x))))
 (define (reified-expand x)
   (cond
-    ((reified-var? x) x)
+    ((reified-var? x) (data x))
     ((pair? x)
-     (list 'cons
-           (reified-expand (car x))
-           (reified-expand (cdr x))))
-    (else `(quote ,x))))
+     #`(cons
+        #,(reified-expand (car x))
+        #,(reified-expand (cdr x))))
+    (else #`(quote #,x))))
 ;; # Helpers for turning functional procedure into relational one
-(define res '())
+(define res #f)
+
+(define (strip-data-from-syntax x)
+  (map-on-syntax-data (lambda (v) v) x))
+
+(define (to-datum x)
+  (map syntax->datum (map strip-data-from-syntax x)))
 
 (define (gen-func r . inputs)
   (let ((r (unique-result r)))
       (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
         (unless (code-layer? r)
-            (error 'gen-func "no code generated" r))
+          (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-              (fix-scope
-               `(lambda (,@inputs out)
-                  (fresh () ,@cs (== ,(reified-expand (car r)) out) . ,(caddr r)))))
+          (syntax->datum
+           (fix-scope-syntax
+            #`(lambda (#,@inputs out)
+                (fresh () #,@cs (== #,(reified-expand (car r)) out) . #,(caddr r))))))
         res)))
 
 (define (gen-func-rel r . inputs)
@@ -144,11 +208,12 @@
       (let ((cs (convert-constraints r))
             (r (maybe-remove-constraints r)))
         (unless (code-layer? r)
-            (error 'gen-func "no code generated" r))
+          (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-              (fix-scope
-               `(lambda (,@inputs)
-                  (fresh () ,@cs (== ,(reified-expand (car r)) (list ,@inputs)) . ,(caddr r)))))
+          (syntax->datum
+           (fix-scope-syntax
+            #`(lambda (#,@inputs)
+                (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r))))))
         res)))
 
 (define gen
@@ -159,7 +224,7 @@
          (fresh (env inputs^)
            (ext-env*o inputs inputs^ initial-env env)
            (make-list-of-symso inputs inputs^)
-           (eval-expo #t
+           (eval-expo 
                       (context
                        `(letrec ((,p-name (lambda ,inputs ,rhs)))
                           (,p-name . ,inputs)))
@@ -171,7 +236,7 @@
   (gen-func
    (run 100 (q)
      (if (null? extra) succeed ((car extra) q))
-     (eval-expo #t
+     (eval-expo 
                 (query q)
                 initial-env
                 result))))

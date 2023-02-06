@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 ;; Synthesizes a 'match'-based version of 'null?'
 (record-bench 'run-staged 'appendo-synth-0)
 (time-test
@@ -450,7 +448,7 @@
         (map (lambda (x) ,q) '(a b c))))
    '((a (a) a) (b (b) b) (c (c) c))
    (lambda (q) (absento 'a q)))
- '((cons x (cons (list x) (list x)))))
+ '((list x (list x) x)))
 
 (record-bench 'unstaged 'map-hole 1)
 (time-test
@@ -465,4 +463,4 @@
         (map (lambda (x) ,q) '(a b c)))
      initial-env
      '((a (a) a) (b (b) b) (c (c) c))))
- '((cons x (cons (list x) (list x)))))
+ '((list x (list x) x)))

@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 ;; Adapted by Kanae Tsushima and Will Byrd from Indiana University's
 ;; old (~2004) compilers course exercise by R. Kent Dyvig, Daniel
 ;; P. Friedman, and Oscar Waddell.

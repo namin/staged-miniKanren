@@ -1,5 +1,3 @@
-(load "staged-load.scm")
-
 (define evalo evalo-unstaged)
 
 ;; # Background
@@ -129,33 +127,33 @@
 
 ;; ## Staging
 
-(test
+(todo "run with staged"
     (run* (q) (l== q 1))
   '((_.0 !! ((== _.0 '1)))))
 
-(test
+(todo "run with staged"
     (run* (q) (== q 1))
   '(1))
 
-(test
+(todo "run with staged"
     (run* (q) (l== (list 1) (list q)))
   '((_.0 !! ((== (cons '1 '()) (cons _.0 '())))))
   ;; not simplified to ((_.0 !! ((== '1 _.0))))
   )
 
-(test
+(todo "run with staged"
     (run* (q) (l== 1 2))
   '((_.0 !! ((== '1 '2)))))
 
-(test
+(todo "run with staged"
     (run* (q) (fresh (x) (l== (cons x x) q)))
   '((_.0 !! ((== (cons _.1 _.1) _.0)))))
 
-(test
+(todo "run with staged"
     (run* (q) (later `(== ,(expand q) ,(expand 1))))
   '((_.0 !! ((== _.0 '1)))))
 
-(test
+(todo "run with staged"
     (run* (x y)
       (fresh (c1 c2)
         (later-scope (fresh () (l== 5 x) (l== 6 y)) c1)
@@ -185,7 +183,7 @@
 ;; Exception: staging non-deterministic
 |#
 
-(test
+(todo "later conde"
     (run-staged 2 (q)
       (later `(conde
                 ((== ,(expand q) 1))
@@ -260,6 +258,18 @@ res ;; contains the generated code
     ))
 
 
+(define-staged-relation (context-ido e res)
+  (evalo-staged
+   `(letrec ((id (lambda (x) x)))
+      ,e)
+   res))
+
+res
+
+(test
+    (run* (q) (context-ido `(id 1) q))
+  '(1))
+
 (define-staged-relation (context-appendo e res)
   (evalo-staged
    `(letrec ((append
@@ -279,7 +289,7 @@ res
 
 (test
     (length (run* (q) (context-appendo 'append q)))
-  ;; ((call-code #<procedure append>))
+  ;; ((call #<procedure append>))
   1)
 
 (test
@@ -323,20 +333,20 @@ res
               (lambda (x ls)
                 (if (null? ls) #f
                     (if (equal? (car ls) x) #t
-                        (member? x (cdr ls)))))]
-             [proof?
-              (lambda (proof)
-                (match proof
-                  [`(,A ,assms assumption ()) (member? A assms)]
-                  [`(,B ,assms modus-ponens
-                        (((,A => ,B) ,assms ,r1 ,ants1)
-                         (,A ,assms ,r2 ,ants2)))
-                   (and (proof? (list (list A '=> B) assms r1 ants1))
-                        (proof? (list A assms r2 ants2)))]
-                  [`((,A => ,B) ,assms conditional
-                     ((,B (,A . ,assms) ,rule ,ants)))
-                   (proof? (list B (cons A assms) rule ants))]))])
-      (proof? ',proof))
+                        (member? x (cdr ls)))))])
+      (letrec ([proof?
+                (lambda (proof)
+                  (match proof
+                    [`(,A ,assms assumption ()) (member? A assms)]
+                    [`(,B ,assms modus-ponens
+                          (((,A => ,B) ,assms ,r1 ,ants1)
+                           (,A ,assms ,r2 ,ants2)))
+                     (and (proof? (list (list A '=> B) assms r1 ants1))
+                          (proof? (list A assms r2 ants2)))]
+                    [`((,A => ,B) ,assms conditional
+                       ((,B (,A . ,assms) ,rule ,ants)))
+                     (proof? (list B (cons A assms) rule ants))]))])
+        (proof? ',proof)))
    truth))
 
 (test
@@ -360,28 +370,29 @@ res
                            (match q
                              [(? symbol? x) x]
                              [`() '()]
-                             [`(,`unquote ,exp) (eval exp)]
+                             [`(,,'`unquote ,exp) (eval exp)]
+                             ;;[`(,`unquote ,exp) (eval exp)]
                              [`(quasiquote ,datum) 'error]
                              ;; ('error) in the 2017 ICFP Pearl, but
                              ;; the code generator rejects this erroneous code!
                              [`(,a . ,d)
-                              (cons (eval-quasi a eval) (eval-quasi d eval))]))]
-             [eval-expr
-              (lambda (expr env)
-                (match expr
-                  [`(quote ,datum) datum]
-                  [`(lambda (,(? symbol? x)) ,body)
-                   (lambda (a)
-                     (eval-expr body (lambda (y)
-                                       (if (equal? x y)
-                                           a
-                                           (env y)))))]
-                  [(? symbol? x) (env x)]
-                  [`(quasiquote ,datum)
-                   (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
-                  [`(,rator ,rand)
-                   ((eval-expr rator env) (eval-expr rand env))]))])
-      (eval-expr ',expr (lambda (y) 'error)))
+                              (cons (eval-quasi a eval) (eval-quasi d eval))]))])
+      (letrec ([eval-expr
+                (lambda (expr env)
+                  (match expr
+                    [`(quote ,datum) datum]
+                    [`(lambda (,(? symbol? x)) ,body)
+                     (lambda (a)
+                       (eval-expr body (lambda (y)
+                                         (if (equal? x y)
+                                             a
+                                             (env y)))))]
+                    [(? symbol? x) (env x)]
+                    [`(quasiquote ,datum)
+                     (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
+                    [`(,rator ,rand)
+                     ((eval-expr rator env) (eval-expr rand env))]))])
+        (eval-expr ',expr (lambda (y) 'error))))
    val))
 
 (todo "a tiny bit slow, left for the benchmarks"
@@ -389,12 +400,11 @@ res
       (absento 'error q)
       (absento 'closure q)
       (quasi-quine-evalo q q))
-  '((((lambda (_.0) `(,_.0 ',_.0))
+    `((((lambda (_.0) `(,_.0 ',_.0))
       '(lambda (_.0) `(,_.0 ',_.0)))
-     $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic))
-          ((_.0 error)) ((_.0 prim)))
-     (sym _.0))))
+       $$
+       ,not-tags0+error
+       (sym _.0))))
 
 (test
     ((lambda (x) `(,x ',x)) '(lambda (x) `(,x ',x)))
@@ -436,46 +446,30 @@ res
 ;; # Synthesis
 
 (test
-    (run-staged 5 (q)
-      (evalo-staged
-       q
-       '(I love staged evaluation)))
-  '('(I love staged evaluation)
-  ((car '((I love staged evaluation) . _.0))
-    $$
-    (absento (call _.0) (call-code _.0) (closure _.0)
-      (dynamic _.0) (prim _.0)))
-  (cons 'I '(love staged evaluation))
-  (((lambda _.0 '(I love staged evaluation)))
-    $$
-    (=/= ((_.0 quote)))
-    (sym _.0))
-  ((letrec ([_.0 (lambda _.1 _.2)])
-     '(I love staged evaluation))
-    $$
-    (=/= ((_.0 quote)))
-    (sym _.1))))
+    (length
+     (run-staged 5 (q)
+       (evalo-staged
+        q
+        '(I love staged evaluation))))
+  5)
 
 (test
+    (length
+     (run 5 (q)
+       (evalo-unstaged
+        q
+        '(I love staged evaluation))))
+  5)
+
+(test
+    (run-staged 5 (q)
+      (evalo-staged
+        q
+        '(I love staged evaluation)))
     (run 5 (q)
       (evalo-unstaged
        q
-       '(I love staged evaluation)))
-  '('(I love staged evaluation)
-     ((car '((I love staged evaluation) . _.0))
-      $$
-      (absento (call _.0) (call-code _.0) (closure _.0)
-               (dynamic _.0) (prim _.0)))
-     (cons 'I '(love staged evaluation))
-     (((lambda _.0 '(I love staged evaluation)))
-      $$
-      (=/= ((_.0 quote)))
-      (sym _.0))
-     ((letrec ([_.0 (lambda _.1 _.2)])
-        '(I love staged evaluation))
-      $$
-      (=/= ((_.0 quote)))
-      (sym _.1))))
+       '(I love staged evaluation))))
 
 (define-staged-relation (peano-synth-fib-acc-stepo step1 step2 ACC1 ACC2)
   (evalo-staged

@@ -8,38 +8,34 @@
 (define (u-eval-expo expr env val)
   (conde
     ((== `(quote ,val) expr)
-     (absento 'closure val)
-     (absento 'prim val)
-     (absento 'call val)
-     (absento 'dynamic val)
-     (absento 'call-code val)
-
+     (absent-tago val)
      (u-not-in-envo 'quote env))
 
     ((numbero expr) (== expr val))
 
     ((symbolo expr) (u-lookupo expr env val))
 
-    ((fresh (x body extra)
+    ((fresh (rep x body)
        (== `(lambda ,x ,body) expr)
-       (== `(closure (lambda ,x ,body) ,env ,extra) val)
+       (== `(closure ,rep) val)
        (conde
          ;; Variadic
          ((symbolo x))
          ;; Multi-argument
          ((u-list-of-symbolso x)))
-       (u-not-in-envo 'lambda env)))
+       (u-not-in-envo 'lambda env)
+       (reify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _)))))
     
-    ((fresh (rator x* rands body env^ a* cfun extra proc)
+    ((fresh (rator rands a* cfun rep proc)
        (== `(,rator . ,rands) expr)
        (u-eval-expo rator env cfun)
        (conde
-         ((== `(closure (lambda ,x* ,body) ,env^ ,extra) cfun)
+         ((== `(closure ,rep) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*))
-         ((== `(call-code ,proc) cfun)
+         ((== `(rec-closure ,rep) cfun)
           (u-eval-listo rands env a*)
-          (callo proc val a*)))))
+          (callo cfun val a*)))))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
@@ -77,12 +73,11 @@
       ((== x y)
        (conde
          ((== `(val . ,t) b))
-         ((fresh (lam-expr extra)
+         ((fresh (lam-expr z body rep)
             (== `(rec . ,lam-expr) b)
-            (== `(closure ,lam-expr ,env ,extra) t)))
-         ((fresh (lam-expr code-expr)
-            (== `(staged-rec ,lam-expr ,code-expr) b)
-            (== `(call-code ,code-expr) t)))))
+            (== `(lambda ,z ,body) lam-expr)
+            (== `(closure ,rep) t)
+            (reify-call rep ((eval-apply-staged eval-apply-dyn) (z body env) (_ _)))))))
       ((=/= x y)
        (u-lookupo x rest t)))))
 
@@ -126,6 +121,8 @@
 
 (define (u-eval-primo prim-id a* val)
   (conde
+    [(== prim-id 'list)
+     (== a* val)]
     [(== prim-id 'cons)
      (fresh (a d)
        (== `(,a ,d) a*)
@@ -184,12 +181,7 @@
          ((fresh (a d)
             (== `(,a . ,d) v)
             (== #f val)
-            (conde
-              ((== a 'closure))
-              ((== a 'prim))
-              ((== a 'call))
-              ((== a 'dynamic))
-              ((== a 'call-code)))))))]
+            (pos-tago a)))))]
     [(== prim-id 'null?)
      (fresh (v)
        (== `(,v) a*)
@@ -262,7 +254,7 @@
       ((=/= #f t) (u-eval-expo e2 env val))
       ((== #f t) (u-eval-expo e3 env val)))))
 
-(define u-initial-env `((list . (val . (closure (lambda x x) ,u-empty-env (lambda x (lambda (out) (== x out))))))
+(define u-initial-env `((list . (val . (prim . list)))
                       (not . (val . (prim . not)))
                       (equal? . (val . (prim . equal?)))
                       (symbol? . (val . (prim . symbol?)))
