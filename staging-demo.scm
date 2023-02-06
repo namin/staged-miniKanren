@@ -36,10 +36,11 @@ res
        (u-minio e2 v2)))))
 
 (run* (q) (u-minio '(hello 1) q))
+(run* (q) (u-minio q '(SYM 1)))
 
 (define (minio expr val)
   (condg
-   (u-minio expr val)
+   (lapp u-minio expr val)
    ([] [(numbero expr)] [(l== expr val)])
    ([] [(symbolo expr)] [(l== 'SYM val)])
    ([e1 e2 v1 v2] [(== `(,e1 ,e2) expr)]
@@ -50,5 +51,8 @@ res
 (run-staged* (q) (minio '(hello 1) q))
 res
 
-(run 10 (q) (fresh (a) (minio `(hello ,a) q)))
-(run-staged* (q) (fresh (a) (minio `(hello ,a) q)))
+(run-staged* (q) (minio q '(SYM 1)))
+res
+
+(run-staged 1 (q) (fresh (a) (minio `(hello ,a) q)))
+res
