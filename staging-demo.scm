@@ -50,4 +50,5 @@ res
 (run-staged* (q) (minio '(hello 1) q))
 res
 
+(run 10 (q) (fresh (a) (minio `(hello ,a) q)))
 (run-staged* (q) (fresh (a) (minio `(hello ,a) q)))
