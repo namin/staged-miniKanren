@@ -28,6 +28,8 @@ and thanks to
   - basics
   - staged mini "interpreter"
   - staged relational interpreter
+    - generated code for append turned appendo
   - more examples time allowing
+    - quasi-quote quine
 - Will: BAT context (10 minutes)
 - Nada: BAT demo (3 minutes)
