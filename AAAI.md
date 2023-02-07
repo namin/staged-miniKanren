@@ -10,7 +10,7 @@ https://garrettkatz.github.io/ap2s-bridge/
 ### William Byrd, University of Alabama at Birmingham
 
 joint work with
-- Michael Ballantybe
+- Michael Ballantyne
 - Greg Rosenblatt
 - Matt Might
 
