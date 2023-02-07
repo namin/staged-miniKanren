@@ -27,7 +27,7 @@ and thanks to
   - miniKanren
   - relational interpreter
   - Barliman
-- Nada: Staging Relational Programming (10 minutes)
+- Nada: Staging in Relational Programming (10 minutes)
   - basics
   - staged mini "interpreter"
   - staged relational interpreter
