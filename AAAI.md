@@ -1,7 +1,10 @@
 # Staged Relational Programming for Synthesis
+https://github.com/namin/staged-miniKanren
+
 ## AP2S
 Automated Program and Proof Synthesis Bridge Program
 Part of the AAAI-23 Bridge Program
+https://garrettkatz.github.io/ap2s-bridge/
 
 ### Nada Amin, Harvard University
 ### William Byrd, University of Alabama at Birmingham
