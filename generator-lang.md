@@ -17,6 +17,27 @@ Some `later` forms requires explanation:
 
 ## `condg`
 
+The special form `condg` aims to simplify writing generators which must be deterministic in the first stage: all the non-determinism is accumulated in the later code.
+
+The grammar of `condg` is:
+```
+(condg
+generator-goal
+([variable ...] [generator-goal ...] [generator-goal ...]) ...)
+```
+
+Let's name this as follows:
+```
+(condg
+fallback
+(vars guard branch) ...)
+```
+
+Semantically:
+- All guards fail: this is a staging-time error.
+- Only one guad succeeds and produces only one answer: its branch is taken.
+- Otherwise, the fallback is taken.
+
 ## reified partial applications
 
 
