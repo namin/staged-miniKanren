@@ -197,10 +197,9 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
         (unless (code-layer? r)
           (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-          (syntax->datum
-           (fix-scope-syntax
+          (fix-scope-syntax
             #`(lambda (#,@inputs out)
-                (fresh () #,@cs (== #,(reified-expand (car r)) out) . #,(caddr r))))))
+                (fresh () #,@cs (== #,(reified-expand (car r)) out) . #,(caddr r)))))
         res)))
 
 (define (gen-func-rel r . inputs)
@@ -210,10 +209,9 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
         (unless (code-layer? r)
           (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
-          (syntax->datum
-           (fix-scope-syntax
+          (fix-scope-syntax
             #`(lambda (#,@inputs)
-                (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r))))))
+                (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r)))))
         res)))
 
 (define gen

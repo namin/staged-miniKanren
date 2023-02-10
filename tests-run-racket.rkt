@@ -2,4 +2,4 @@
 
 (require "staged-load.rkt")
 
-(load "tests-run.scm")
+(include "tests-run.scm")
