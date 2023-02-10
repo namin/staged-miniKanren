@@ -1,4 +1,4 @@
-#lang racket/load
+#lang racket
 
 (require "staged-load.rkt")
 

@@ -318,3 +318,10 @@ res
       (evalo-staged '(match '(hello) [`(hello ,x) 1] [`(,x) 2]) q))
   '(2)
   )
+
+(define (is-fiveo arg)
+  (== arg 5))
+
+(test
+ (run-staged 1 (q) (lapp is-fiveo q))
+ '(5))
