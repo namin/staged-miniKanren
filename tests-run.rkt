@@ -1,3 +1,7 @@
+#lang racket
+
+(require "staged-load.rkt")
+
 (test
     (run-staged 1 (q)
       (l== q 1))
