@@ -257,3 +257,9 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
   (lambda (r)
     (lambda (x)
       (run* (q) (r x q)))))
+
+(define (generated-code)
+  (and res (syntax->datum res)))
+
+(define (reset-generated-code!)
+  (set! res #f))

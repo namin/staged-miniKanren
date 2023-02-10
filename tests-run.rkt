@@ -1,6 +1,8 @@
 #lang racket
 
-(require "staged-load.rkt")
+(require "generator-lang.rkt"
+         "staged-interp.rkt"
+         "test-check.rkt")
 
 (test
     (run-staged 1 (q)
@@ -232,8 +234,6 @@
       (evalo-staged `(((lambda () car)) (cons 1 2)) 1)
       )
   '(_.0))
-
-res
 
 (test
     (run-staged 1 (q)

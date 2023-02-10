@@ -21,3 +21,25 @@
 (include "staged-run.scm")
 (include "unstaged-interp.scm")
 (include "test-check.scm")
+
+
+(define (make-list-of-symso xs ys)
+  (mapo (lambda (x y) (== y (unexpand x))) xs ys))
+
+(define (varo x)
+  (lambda (c)
+    (if (var? (walk* x (state-S c)))
+        c
+        #f)))
+
+(define (non-varo x)
+  (lambda (c)
+    (if (var? (walk* x (state-S c)))
+        #f
+        c)))
+
+(define (logo f . args)
+  (lambda (c)
+    (apply printf f (walk* args (state-S c)))
+    (newline)
+    c))

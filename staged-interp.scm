@@ -168,27 +168,6 @@
        (fo xa ya)
        (mapo fo xd yd)))))
 
-(define (make-list-of-symso xs ys)
-  (mapo (lambda (x y) (== y (unexpand x))) xs ys))
-
-(define (varo x)
-  (lambda (c)
-    (if (var? (walk* x (state-S c)))
-        c
-        #f)))
-
-(define (non-varo x)
-  (lambda (c)
-    (if (var? (walk* x (state-S c)))
-        #f
-        c)))
-
-(define (logo f . args)
-  (lambda (c)
-    (apply printf f (walk* args (state-S c)))
-    (newline)
-    c))
-
 (define (same-lengtho a* b*)
   (conde
     ((== a* '()) (== b* '()))
@@ -644,3 +623,9 @@
              [(quasi-p-no-match a v1 penv penv-out)]
              [(quasi-p-match a v1 penv penv^)
               (quasi-p-no-match d v2 penv^ penv-out)]))]))))))
+
+(define (evalo-staged expr val)
+  (eval-expo expr initial-env val))
+
+(define (evalo-unstaged expr val)
+  (u-eval-expo expr initial-env val))
