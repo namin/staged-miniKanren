@@ -1,10 +1,49 @@
 #lang racket/base
 
+(provide
+ quote
+ cons
+ ==
+ apply-partial
+ =/=
+ absento
+ stringo
+ numbero
+ symbolo
+ fresh
+ conde
+ condg
+ later
+ now
+ fail
+
+ defrel
+ defrel-partial
+ defrel/staged
+ defrel-partial/staged
+ run
+ run/staged
+
+ quasiquote
+ (for-space mk quasiquote)
+ unquote)
+
 ;; https://github.com/michaelballantyne/syntax-spec
 (require syntax-spec
-         (for-syntax racket/base syntax/parse)
+         (for-syntax racket/base
+                     syntax/parse
+                     racket/match
+                     racket/list)
+         
          (prefix-in g: "generator-lang.rkt")
          (only-in "staged-load.rkt" [staged-relation g:staged-relation]))
+
+(begin-for-syntax
+  (struct plain-rel [args-count] #:prefab)
+  (struct partial-rel [now-args-count later-args-count] #:prefab)
+  (struct staged-partial-rel [fallback-rel now-args later-args] #:prefab)
+
+  (define-persistent-symbol-table relation-info))
 
 (syntax-spec
   (binding-class term-var)
@@ -55,9 +94,9 @@
 
     fail
 
+    (#%rel-app r:relation-name arg:term ...)
     (~> (r:id arg ...)
-        #'(#%rel-app r arg ...))
-    (#%rel-app r:relation-name arg:term ...))
+        #'(#%rel-app r arg ...)))
 
   (nonterminal condg-clause
     ([x:term-var ...] [guard:goal ...] [body:goal ...])
@@ -69,7 +108,8 @@
       g:goal ...+)
     #:binding [(export r) {(bind arg) g}]
     #:lhs
-    [#'r]
+    [(symbol-table-set! relation-info #'r (plain-rel (length (attribute arg))))
+     #'r]
     #:rhs
     [#'(lambda (arg ...)
          (g:fresh ()
@@ -81,7 +121,10 @@
       g:goal ...+)
     #:binding [(export r) {(bind now-arg later-arg) g}]
     #:lhs
-    [#'r]
+    [(symbol-table-set!
+      relation-info #'r
+      (partial-rel (length (attribute now-arg)) (length (attribute later-arg))))
+     #'r]
     #:rhs
     [#'(lambda (now-arg ... later-arg ...)
          (fresh ()
@@ -129,6 +172,52 @@
 (define-syntax compile-runtime-goal
   (syntax-parser
     #:literal-sets (goal-literals)
+
+    [(_ (#%rel-app r:id arg ...))
+     (match (symbol-table-ref relation-info #'r)
+       [(plain-rel arg-count)
+        (when (not (= arg-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of arguments to relation" #'r))
+        #'(r (compile-term arg) ...)]
+       [_ (raise-syntax-error #f "plain relation application expects relation defined by defrel" #'r)])]
+    
+    [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
+     (match (symbol-table-ref relation-info #'rel)
+       [(partial-rel now-args-count later-args-count)
+        (when (not (= now-args-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
+        (with-syntax ([rel-dyn #'rel]
+                      [(later-placeholders ...) (make-list #'_ later-args-count)])
+          #'(g:apply-reified v ((#f rel-dyn) (arg ...) (later-placeholders ...))))]
+       [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
+    
+    [(_ (== t1 t2))
+     #'(g:== (compile-term t1) (compile-term t2))]
+    #;(
+       (apply-partial rel:relation-name arg:term ...)
+
+       (=/= t1:term t2:term)
+       (absento t1:term t2:term)
+       (symbolo t1:term)
+       (numbero t1:term)
+       (stringo t1:term)
+
+       (fresh (x:term-var ...) g:goal ...+)
+       #:binding {(bind x) g}
+    
+       (conde [g:goal ...+] ...+)
+       (condg #:fallback g:goal c:condg-clause ...+)
+
+       (later g:goal)
+       (now g:goal)
+
+       fail
+
+       (~> (r:id arg ...)
+           #'(#%rel-app r arg ...))
+       (#%rel-app r:relation-name arg:term ...))
+    
+    
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 (define-syntax compile-now-goal
