@@ -3,7 +3,8 @@
 ;; https://github.com/michaelballantyne/syntax-spec
 (require syntax-spec
          (for-syntax racket/base syntax/parse)
-         (prefix-in g: "generator-lang.rkt"))
+         (prefix-in g: "generator-lang.rkt")
+         (only-in "staged-load.rkt" [staged-relation g:staged-relation]))
 
 (syntax-spec
   (binding-class term-var)
@@ -23,9 +24,7 @@
     #:description "miniKanren term"
     #:allow-extension term-macro
     
-    (~> x:id
-        #'(#%term-var x))
-    (#%term-var x:term-var)
+    x:term-var
 
     (~> n:number
         #'(quote n))
@@ -33,6 +32,7 @@
     ((~literal cons) t1:term t2:term))
   
   (nonterminal goal
+    #:bind-literal-set goal-literals
     (== t1:term t2:term)
   
     (== v:term-var ((~datum partial-apply) rel:relation-name arg:term ...))
@@ -71,7 +71,9 @@
     #:lhs
     [#'r]
     #:rhs
-    [#''TODO])
+    [#'(lambda (arg ...)
+         (g:fresh ()
+           (compile-runtime-goal g) ...))])
 
   (host-interface/definition
     (defrel-partial
@@ -81,7 +83,9 @@
     #:lhs
     [#'r]
     #:rhs
-    [#''TODO])
+    [#'(lambda (now-arg ... later-arg ...)
+         (fresh ()
+           (compile-runtime-goal g) ...))])
 
   (host-interface/definition
     (defrel/staged (r:relation-name arg:term-var ...)
@@ -90,30 +94,53 @@
     #:lhs
     [#'r]
     #:rhs
-    [#''TODO])
+    [#'(g:staged-relation (arg ...)
+         (compile-now-goal g) ...)])
   
   (host-interface/definition
     (defrel-partial/staged
       (r:relation-name [now-arg:term-var ...+] [later-arg:term-var ...+])
-      #:fallback f:goal
+      #:fallback f:relation-name
       g:goal ...+)
-    #:binding [(export r) {(bind now-arg later-arg) f g}]
+    #:binding [(export r) {(bind now-arg later-arg) g}]
     #:lhs
     [#'r]
     #:rhs
-    [#''TODO])
+    [#'(lambda (now-arg ... later-arg ...)
+         (fresh ()
+           (compile-now-goal g) ...))])
 
   (host-interface/expression
     (run n:racket-expr (q:term-var ...+) g:goal ...+)
     #:binding {(bind q) g}
 
-    #''TODO)
+    #'(g:run n (q ...) (compile-runtime-goal g) ...))
 
   (host-interface/expression
     (run/staged n:racket-expr (q:term-var ...+) g:goal ...+)
     #:binding {(bind q) g}
 
-    #''TODO))
+    #'(g:run-staged n (q ...) (compile-now-goal g) ...)))
+
+(define-syntax compile-term
+  (syntax-parser
+    [(_ t) #'t]))
+
+(define-syntax compile-runtime-goal
+  (syntax-parser
+    #:literal-sets (goal-literals)
+    [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
+
+(define-syntax compile-now-goal
+  (syntax-parser
+    #:literal-sets (goal-literals)
+    [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
+
+(define-syntax compile-later-goal
+  (syntax-parser
+    #:literal-sets (goal-literals)
+    [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
+
 
 
 (define-syntax define-syntax/space
