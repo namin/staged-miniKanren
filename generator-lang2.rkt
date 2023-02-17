@@ -2,7 +2,8 @@
 
 ;; https://github.com/michaelballantyne/syntax-spec
 (require syntax-spec
-         (for-syntax racket/base syntax/parse))
+         (for-syntax racket/base syntax/parse)
+         (prefix-in g: "generator-lang.rkt"))
 
 (syntax-spec
   (binding-class term-var)
@@ -22,8 +23,12 @@
     #:description "miniKanren term"
     #:allow-extension term-macro
     
-    n:number
-    x:term-var
+    (~> x:id
+        #'(#%term-var x))
+    (#%term-var x:term-var)
+
+    (~> n:number
+        #'(quote n))
     ((~literal quote) t:quoted)
     ((~literal cons) t1:term t2:term))
   
@@ -48,7 +53,11 @@
     (later g:goal)
     (now g:goal)
 
-    fail)
+    fail
+
+    (~> (r:id arg ...)
+        #'(#%rel-app r arg ...))
+    (#%rel-app r:relation-name arg:term ...))
 
   (nonterminal condg-clause
     ([x:term-var ...] [guard:goal ...] [body:goal ...])
