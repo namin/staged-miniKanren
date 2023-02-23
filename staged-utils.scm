@@ -198,65 +198,18 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
           (error 'gen-func (format "no code generated: ~a" r)))
         (set! res
           (fix-scope-syntax
-            #`(lambda (#,@inputs out)
-                (fresh () #,@cs (== #,(reified-expand (car r)) out) . #,(caddr r)))))
-        res)))
-
-(define (gen-func-rel r . inputs)
-  (let ((r (unique-result r)))
-      (let ((cs (convert-constraints r))
-            (r (maybe-remove-constraints r)))
-        (unless (code-layer? r)
-          (error 'gen-func (format "no code generated: ~a" r)))
-        (set! res
-          (fix-scope-syntax
             #`(lambda (#,@inputs)
                 (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r)))))
         res)))
 
-(define gen
-  (lambda (p-name inputs rhs . contexts)
-    (let ((context (if (null? contexts) (lambda (x) x) (car contexts))))
-      (apply gen-func
-       (run 100 (q)
-         (fresh (env inputs^)
-           (ext-env*o inputs inputs^ initial-env env)
-           (make-list-of-symso inputs inputs^)
-           (eval-expo 
-                      (context
-                       `(letrec ((,p-name (lambda ,inputs ,rhs)))
-                          (,p-name . ,inputs)))
-                      env
-                      q)))
-       inputs))))
+(define-syntax-rule (generate-staged (var ...) goal)
+  (eval-syntax
+   (gen-func
+    (run 100 (var ... bogus-var1 bogus-var2) goal)
+    'var ... 'bogus-var1 'bogus-var2)))
 
-(define (gen-hole query result . extra)
-  (gen-func
-   (run 100 (q)
-     (if (null? extra) succeed ((car extra) q))
-     (eval-expo 
-                (query q)
-                initial-env
-                result))))
-(define (syn-hole n query result . extra)
-  (printf "running first stage\n")
-  (let ((e (eval (apply gen-hole query result
-                        (if (null? extra) '() (cdr extra))))))
-    (printf "running second stage\n")
-    (run n (q)
-      (if (null? extra) succeed ((car extra) q))
-      (e q))))
-
-(define ex
-  (lambda (p-name inputs rhs)
-    (let ((r (eval (gen p-name inputs rhs))))
-      (run 1 (q)
-        (apply r (append inputs (list q)))))))
-
-(define fwd1
-  (lambda (r)
-    (lambda (x)
-      (run* (q) (r x q)))))
+(define (invoke-staged f . args)
+  (apply f (append args (list 'bogus-1 'bogus-2))))
 
 (define (generated-code)
   (and res (syntax->datum res)))

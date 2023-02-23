@@ -4,10 +4,11 @@
      (begin
        (printf "running first stage\n")
        (let* ((f (gen-func
-                  (run 100 (q) g0 g ...)))
+                  (run 100 (q bogus-var) g0 g ...)
+                  'out 'bogus-var))
               (e (eval-syntax f)))
          (printf "running second stage\n")
-         (run n (q) (e q)))))
+         (run n (q) (e q 'bogus-val)))))
     ((_ n (q0 q1 q ...) g0 g ...)
      (run-staged n (x)
                  (fresh (q0 q1 q ...)
@@ -34,6 +35,7 @@
     [(_ (x0 x ...) g0 g ...)
      (time
       (eval-syntax
-       (gen-func-rel
+       (gen-func
         (run 100 (x0 x ...) g0 g ...)
         'x0 'x ...)))]))
+

@@ -32,10 +32,11 @@
          (for-syntax racket/base
                      syntax/parse
                      racket/match
-                     racket/list)
+                     racket/list
+                     syntax/id-set)
          
          (prefix-in g: "generator-lang.rkt")
-         (only-in "staged-load.rkt" [staged-relation g:staged-relation]))
+         (only-in "staged-load.rkt" generate-staged invoke-staged))
 
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)
@@ -62,12 +63,14 @@
     #:description "miniKanren term"
     #:allow-extension term-macro
     
-    x:term-var
-
-    (~> n:number
-        #'(quote n))
+    (#%term-var x:term-var)
     ((~literal quote) t:quoted)
-    ((~literal cons) t1:term t2:term))
+    ((~literal cons) t1:term t2:term)
+
+    (~> x:id
+        #'(#%term-var x))
+    (~> n:number
+        #'(quote n)))
   
   (nonterminal goal
     #:bind-literal-set goal-literals
@@ -155,19 +158,49 @@
 
 (define-syntax compile-term
   (syntax-parser
-    [(_ t) #'t]))
+    #:literals (#%term-var quote cons)
+    [(_ (#%term-var x))
+     #'x]
+    [(_ (quote t))
+     #'(quote t)]
+    [(cons t1 t2)
+     #'(cons (compile-term t1) (compile-term t2))]))
 
-(define-syntax-class binary-constraint
-  #:literal-sets (goal-literals)
-  (pattern == #:attr c #'g:==)
-  (pattern =/= #:attr c #'g:=/=)
-  (pattern absento #:attr c #'g:absento))
+(begin-for-syntax
+  (define-syntax-class binary-constraint
+    #:literal-sets (goal-literals)
+    (pattern ==
+      #:attr c #'g:==
+      #:attr l #'g:l==)
+    (pattern =/=
+      #:attr c #'g:=/=
+      #:attr l #'g:l=/=)
+    (pattern absento
+      #:attr c #'g:absento
+      #:attr l #'g:labsento))
 
-(define-syntax-class unary-constraint
-  #:literal-sets (goal-literals)
-  (pattern symbolo #:attr c #'g:symbolo)
-  (pattern numbero #:attr c #'g:numbero)
-  (pattern stringo #:attr c #'g:stringo))
+  (define-syntax-class unary-constraint
+    #:literal-sets (goal-literals)
+    (pattern symbolo #:attr c #'g:symbolo)
+    (pattern numbero #:attr c #'g:numbero)
+    (pattern stringo #:attr c #'g:stringo))
+
+  (define (free-vars goal-stx)
+    (syntax-parse goal-stx
+      #:literals (#%term-var fresh quote)
+      [(#%term-var x) (immutable-free-id-set (list #'x))]
+      [(quote _) (immutable-free-id-set)]
+      [(fresh (x ...) g ...)
+       (define body-vars
+         (for/fold ([body-vars (immutable-free-id-set)])
+                   ([g (attribute g)])
+           (free-id-set-union body-vars (free-vars g))))
+       (free-id-set-subtract
+        body-vars
+        (immutable-free-id-set (attribute x)))]
+      [(a . d)
+       (free-id-set-union (free-vars #'a) (free-vars #'d))]
+      [_ (immutable-free-id-set)])))
 
 (define-syntax compile-runtime-goal
   (syntax-parser
@@ -207,25 +240,31 @@
 
     [(~or (_ (later _)) (_ (now _)))
      (raise-syntax-error #f "not allowed in runtime goal")]
-    [(staged g)
-     ]
-    #;(
-       (apply-partial rel:relation-name arg:term ...)
-       (staged g:goal))
-    
+    [(_ (staged g))
+     #:with (var ...) (free-id-set->list (free-vars #'g))
+     #:with staged-f (syntax-local-lift-expression #'(generate-staged (var ...) (compile-now-goal g)))
+     #'(invoke-staged staged-f var ...)]
+  
+    #;[(apply-partial rel:relation-name arg:term ...)
+       #''TODO]
     
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 (define-syntax compile-now-goal
   (syntax-parser
     #:literal-sets (goal-literals)
+    [(_ (constraint:binary-constraint t1 t2))
+     #'(constraint.c (compile-term t1) (compile-term t2))]
+    [(_ (later g))
+     #'(compile-later-goal g)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 (define-syntax compile-later-goal
   (syntax-parser
     #:literal-sets (goal-literals)
+    [(_ (constraint:binary-constraint t1 t2))
+     #'(constraint.l (compile-term t1) (compile-term t2))]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
-
 
 
 (define-syntax define-syntax/space
@@ -253,3 +292,4 @@
            #`(cons #,(recur #'a level) #,(recur #'d level))]
           [(~or* v:identifier v:number v:boolean v:string) #'(quote v)]
           [() #'(quote ())]))])))
+
