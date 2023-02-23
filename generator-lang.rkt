@@ -11,6 +11,7 @@
  ;; TODO: generator code shouldn't use conde, but unstaged fallbacks are currently
  ;; written in the same language because of the mutual dependency between staged and unstaged.
  conde
+ fail
  symbolo numbero stringo
  absento
  

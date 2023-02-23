@@ -157,6 +157,18 @@
   (syntax-parser
     [(_ t) #'t]))
 
+(define-syntax-class binary-constraint
+  #:literal-sets (goal-literals)
+  (pattern == #:attr c #'g:==)
+  (pattern =/= #:attr c #'g:=/=)
+  (pattern absento #:attr c #'g:absento))
+
+(define-syntax-class unary-constraint
+  #:literal-sets (goal-literals)
+  (pattern symbolo #:attr c #'g:symbolo)
+  (pattern numbero #:attr c #'g:numbero)
+  (pattern stringo #:attr c #'g:stringo))
+
 (define-syntax compile-runtime-goal
   (syntax-parser
     #:literal-sets (goal-literals)
@@ -179,32 +191,27 @@
           #'(g:apply-reified v ((#f rel-dyn) (arg ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
-    [(_ (== t1 t2))
-     #'(g:== (compile-term t1) (compile-term t2))]
+    [(_ (constraint:binary-constraint t1 t2))
+     #'(constraint.c (compile-term t1) (compile-term t2))]
+    [(_ (constraint:unary-constraint t))
+     #'(constraint.c (compile-term t))]
+    [(_ (fresh (x:id ...) g ...))
+     #'(g:fresh (x ...) (compile-runtime-goal g) ...)]
+    [(_ (conde [g ...] ...))
+     #'(g:conde [(compile-runtime-goal g) ...] ...)]
+    [fail
+     #'g:fail]
+    
+    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
+     #'(g:condg (compile-runtime-goal gl) ([x ...] [(compile-runtime-goal guard) ...] [(compile-runtime-goal body) ...]) ...)]
+
+    [(~or (_ (later _)) (_ (now _)))
+     (raise-syntax-error #f "not allowed in runtime goal")]
+    [(staged g)
+     ]
     #;(
        (apply-partial rel:relation-name arg:term ...)
-
-       (=/= t1:term t2:term)
-       (absento t1:term t2:term)
-       (symbolo t1:term)
-       (numbero t1:term)
-       (stringo t1:term)
-
-       (fresh (x:term-var ...) g:goal ...+)
-       #:binding {(bind x) g}
-    
-       (conde [g:goal ...+] ...+)
-       (condg #:fallback g:goal c:condg-clause ...+)
-
-       (staged g:goal)
-       (later g:goal)
-       (now g:goal)
-
-       fail
-
-       (~> (r:id arg ...)
-           #'(#%rel-app r arg ...))
-       (#%rel-app r:relation-name arg:term ...))
+       (staged g:goal))
     
     
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
