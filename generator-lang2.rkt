@@ -13,16 +13,15 @@
  fresh
  conde
  condg
+ staged
  later
  now
  fail
 
  defrel
  defrel-partial
- defrel/staged
- defrel-partial/staged
+ defrel/generator
  run
- run/staged
 
  quasiquote
  (for-space mk quasiquote)
@@ -39,9 +38,9 @@
          (only-in "staged-load.rkt" [staged-relation g:staged-relation]))
 
 (begin-for-syntax
-  (struct plain-rel [args-count] #:prefab)
-  (struct partial-rel [now-args-count later-args-count] #:prefab)
-  (struct staged-partial-rel [fallback-rel now-args later-args] #:prefab)
+  (struct runtime-rel [args-count] #:prefab)
+  (struct generator-rel [args-count] #:prefab)
+  (struct partial-rel [now-args-count later-args-count maybe-generator-rel] #:prefab)
 
   (define-persistent-symbol-table relation-info))
 
@@ -89,9 +88,10 @@
     (conde [g:goal ...+] ...+)
     (condg #:fallback g:goal c:condg-clause ...+)
 
+    (staged g:goal)
     (later g:goal)
     (now g:goal)
-
+    
     fail
 
     (#%rel-app r:relation-name arg:term ...)
@@ -108,7 +108,7 @@
       g:goal ...+)
     #:binding [(export r) {(bind arg) g}]
     #:lhs
-    [(symbol-table-set! relation-info #'r (plain-rel (length (attribute arg))))
+    [(symbol-table-set! relation-info #'r (runtime-rel (length (attribute arg))))
      #'r]
     #:rhs
     [#'(lambda (arg ...)
@@ -116,54 +116,42 @@
            (compile-runtime-goal g) ...))])
 
   (host-interface/definition
+    (defrel/generator (r:relation-name arg:term-var ...)
+      g:goal ...+)
+    #:binding [(export r) {(bind arg) g}]
+    #:lhs
+    [(symbol-table-set! relation-info #'r (generator-rel (length (attribute arg))))
+     #'r]
+    #:rhs
+    [#'(lambda (arg ...)
+         (g:fresh ()
+           (compile-now-goal g) ...))])
+
+  (nonterminal maybe-generator
+    id:relation-name
+    (~datum #f))
+  
+  (host-interface/definition
     (defrel-partial
       (r:relation-name [now-arg:term-var ...+] [later-arg:term-var ...+])
+      #:generator gen:maybe-generator
       g:goal ...+)
     #:binding [(export r) {(bind now-arg later-arg) g}]
     #:lhs
     [(symbol-table-set!
       relation-info #'r
-      (partial-rel (length (attribute now-arg)) (length (attribute later-arg))))
+      (partial-rel (length (attribute now-arg)) (length (attribute later-arg)) (syntax-parse #'gen [#f #f] [g:id #'g])))
      #'r]
     #:rhs
     [#'(lambda (now-arg ... later-arg ...)
          (fresh ()
            (compile-runtime-goal g) ...))])
 
-  (host-interface/definition
-    (defrel/staged (r:relation-name arg:term-var ...)
-      g:goal ...+)
-    #:binding [(export r) {(bind arg) g}]
-    #:lhs
-    [#'r]
-    #:rhs
-    [#'(g:staged-relation (arg ...)
-         (compile-now-goal g) ...)])
-  
-  (host-interface/definition
-    (defrel-partial/staged
-      (r:relation-name [now-arg:term-var ...+] [later-arg:term-var ...+])
-      #:fallback f:relation-name
-      g:goal ...+)
-    #:binding [(export r) {(bind now-arg later-arg) g}]
-    #:lhs
-    [#'r]
-    #:rhs
-    [#'(lambda (now-arg ... later-arg ...)
-         (fresh ()
-           (compile-now-goal g) ...))])
-
   (host-interface/expression
     (run n:racket-expr (q:term-var ...+) g:goal ...+)
     #:binding {(bind q) g}
 
-    #'(g:run n (q ...) (compile-runtime-goal g) ...))
-
-  (host-interface/expression
-    (run/staged n:racket-expr (q:term-var ...+) g:goal ...+)
-    #:binding {(bind q) g}
-
-    #'(g:run-staged n (q ...) (compile-now-goal g) ...)))
+    #'(g:run n (q ...) (compile-runtime-goal g) ...)))
 
 (define-syntax compile-term
   (syntax-parser
@@ -175,15 +163,15 @@
 
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)
-       [(plain-rel arg-count)
+       [(runtime-rel arg-count)
         (when (not (= arg-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of arguments to relation" #'r))
         #'(r (compile-term arg) ...)]
-       [_ (raise-syntax-error #f "plain relation application expects relation defined by defrel" #'r)])]
+       [_ (raise-syntax-error #f "runtime relation application expects relation defined by defrel" #'r)])]
     
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
-       [(partial-rel now-args-count later-args-count)
+       [(partial-rel now-args-count later-args-count maybe-generator-id)
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
         (with-syntax ([rel-dyn #'rel]
@@ -208,6 +196,7 @@
        (conde [g:goal ...+] ...+)
        (condg #:fallback g:goal c:condg-clause ...+)
 
+       (staged g:goal)
        (later g:goal)
        (now g:goal)
 
