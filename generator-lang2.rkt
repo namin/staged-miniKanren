@@ -181,9 +181,15 @@
 
   (define-syntax-class unary-constraint
     #:literal-sets (goal-literals)
-    (pattern symbolo #:attr c #'g:symbolo)
-    (pattern numbero #:attr c #'g:numbero)
-    (pattern stringo #:attr c #'g:stringo))
+    (pattern symbolo
+      #:attr c #'g:symbolo
+      #:attr l #'g:lsymbolo)
+    (pattern numbero
+      #:attr c #'g:numbero
+      #:attr l #'g:lnumbero)
+    (pattern stringo
+      #:attr c #'g:stringo
+      #:attr l #'g:lstringo))
 
   (define (free-vars goal-stx)
     (syntax-parse goal-stx
@@ -255,6 +261,12 @@
     #:literal-sets (goal-literals)
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.c (compile-term t1) (compile-term t2))]
+    [(_ (constraint:unary-constraint t ))
+     #'(constraint.c (compile-term t))]
+    [(_ (fresh (x:id ...) g ...))
+     #'(g:fresh (x ...) (compile-now-goal g) ...)]
+    [(_ (conde [g ...] ...))
+     #'(g:conde [(compile-now-goal g) ...] ...)]
     [(_ (later g))
      #'(compile-later-goal g)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
@@ -264,6 +276,14 @@
     #:literal-sets (goal-literals)
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.l (compile-term t1) (compile-term t2))]
+    [(_ (constraint:unary-constraint t ))
+     #'(constraint.l (compile-term t))]
+    [(_ (fresh (x:id ...) g ...))
+     #'(g:fresh (x ...) (compile-later-goal g) ...)]
+    [(_ (conde [g ...] ...))
+     #'(g:lconde [(compile-later-goal g) ...] ...)]
+    [(_ (now g))
+     #'(compile-now-goal g)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 
