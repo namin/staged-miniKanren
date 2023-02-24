@@ -23,6 +23,8 @@
  defrel/generator
  run
 
+ (rename-out [g:generated-code generated-code])
+ 
  quasiquote
  (for-space mk quasiquote)
  unquote)
