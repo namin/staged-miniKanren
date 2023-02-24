@@ -85,3 +85,19 @@
         [(now (== x 1))]
         [(now (== x 2))])))))
  '(1 2))
+
+;; TODO: this one is even harder! There's no way to tell at the end of capture-later
+;; that the value of x will end up being relevant to the later stage.
+;;
+;; I think we have to reflect all store / substitution extensions and then do dead
+;; code elimination on the final program.
+(test
+ (run 2 (q)
+   (staged
+    (fresh (x y)
+      (later
+       (conde
+        [(now (== x 1)) (== 1 1)]
+        [(now (== x 2)) (== 1 1)]))
+      (== q x))))
+ '(1 2))
