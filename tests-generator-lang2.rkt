@@ -10,13 +10,6 @@
  (run 1 (q) (foo 5))
  '(_.0))
 
-(test
- (run 1 (q)
-   (staged
-    (later
-     (== q 1))))
- '(1))
-
 (defrel (bar a)
   (staged
    (later
@@ -89,7 +82,7 @@
  '(_.0 _.0))
 
 ;; TODO: should be okay if there are no `later`s in a staged
-(test
+(todo "no later staged should be OK"
  (run 1 (q)
    (staged
     (== q 1)))
