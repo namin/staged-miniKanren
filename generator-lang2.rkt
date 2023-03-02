@@ -165,7 +165,7 @@
      #'x]
     [(_ (quote t))
      #'(quote t)]
-    [(cons t1 t2)
+    [(_ (cons t1 t2))
      #'(cons (compile-term t1) (compile-term t2))]))
 
 (begin-for-syntax
