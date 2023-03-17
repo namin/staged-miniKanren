@@ -31,6 +31,8 @@
 
 ;; https://github.com/michaelballantyne/syntax-spec
 (require syntax-spec
+         ;; for a nasty workaround
+         (for-syntax (only-in ee-lib compile-reference))
          (for-syntax racket/base
                      syntax/parse
                      racket/match
@@ -231,7 +233,7 @@
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
         (with-syntax ([rel-dyn #'rel]
-                      [rel-staged (symbol-table-ref defrel-partial-generator #'rel)]
+                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                       [(later-placeholders ...) (make-list later-args-count #'_)])
           #'(g:reify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
@@ -243,7 +245,7 @@
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
        (with-syntax ([rel-dyn #'rel]
-                     [rel-staged (symbol-table-ref defrel-partial-generator #'rel)]
+                     [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                      [(now-placeholders ...) (make-list now-args-count #'_)])
           #'(g:apply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
@@ -321,11 +323,30 @@
         #'(g:lapp r (compile-term arg) ...)]
        [_ (raise-syntax-error #f "generated-code relation application expects relation defined by defrel" #'r)])]
 
-    #;[(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
-       ]
-    #;[(_ (apply-partial v:id rel:id arg ...))
-       #''TODO]
+
+    [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
+     (match (symbol-table-ref relation-info #'rel)
+       [(partial-rel now-args-count later-args-count)
+        (when (not (= now-args-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
+        (with-syntax ([rel-dyn #'rel]
+                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
+                      [(later-placeholders ...) (make-list later-args-count #'_)])
+          #'(g:lreify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+       [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
+    
+    [(_ (apply-partial v:id rel:id arg ...))
+     (match (symbol-table-ref relation-info #'rel)
+       [(partial-rel now-args-count later-args-count)
+        (when (not (= later-args-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
+       (with-syntax ([rel-dyn #'rel]
+                     [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
+                     [(now-placeholders ...) (make-list now-args-count #'_)])
+          #'(g:lapply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+       [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
+   
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.l (compile-term t1) (compile-term t2))]
     [(_ (constraint:unary-constraint t ))

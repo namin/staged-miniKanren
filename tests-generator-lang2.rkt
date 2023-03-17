@@ -99,6 +99,7 @@
     (== yz `(,y ,z))
     (later (== res (cons x yz)))))
 
+;; partial application, all at runtime
 (test
  (run 1 (q)
    (fresh (c r1 r2)
@@ -107,6 +108,19 @@
      (apply-partial c test-rel 4 r2)
      (== q `(,r1 ,r2))))
 '(((1 2 3) (4 2 3))))
+
+;; partial application, all later (this is like fully-staged interpretation of closures)
+(test
+ (run 1 (q)
+   (staged
+     (fresh (c r1 r2)
+       (later (== c (partial-apply test-rel 2 3)))
+       (later (apply-partial c test-rel 1 r1))
+       (later (apply-partial c test-rel 4 r2))
+       (later (== q `(,r1 ,r2))))))
+'(((1 2 3) (4 2 3))))
+
+
 
 (defrel/generator (gen-unify-5 x)
   (later
