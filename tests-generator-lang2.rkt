@@ -120,7 +120,18 @@
        (later (== q `(,r1 ,r2))))))
 '(((1 2 3) (4 2 3))))
 
-
+;; partial application, staged closure, call in runtime code
+(defrel (like-callo c arg res)
+  (apply-partial c test-rel arg res))
+(test
+ (run 1 (q)
+   (staged
+     (fresh (c r1 r2)
+       (later (== c (partial-apply test-rel 2 3)))
+       (later (like-callo c 1 r1))
+       (later (like-callo c 4 r2))
+       (later (== q `(,r1 ,r2))))))
+ '(((1 2 3) (4 2 3))))
 
 (defrel/generator (gen-unify-5 x)
   (later
