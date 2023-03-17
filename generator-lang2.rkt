@@ -145,7 +145,8 @@
     #:lhs
     [(symbol-table-set!
       relation-info #'r
-      (partial-rel (length (attribute now-arg)) (length (attribute later-arg)) (syntax-parse #'gen [#f #f] [g:id #'g])))
+      (partial-rel (length (attribute now-arg)) (length (attribute later-arg))
+                   (syntax-parse #'gen [#f #f] [g:id #'g])))
      #'r]
     #:rhs
     [#'(lambda (now-arg ... later-arg ...)
@@ -232,60 +233,94 @@
           #'(g:apply-reified v ((#f rel-dyn) (arg ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
+    #;[(apply-partial rel:relation-name arg:term ...)
+       #''TODO]
+    
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.c (compile-term t1) (compile-term t2))]
     [(_ (constraint:unary-constraint t))
      #'(constraint.c (compile-term t))]
+    
     [(_ (fresh (x:id ...) g ...))
      #'(g:fresh (x ...) (compile-runtime-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(g:conde [(compile-runtime-goal g) ...] ...)]
+    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
+     #'(g:condg (compile-runtime-goal gl)
+                ([x ...] [(compile-runtime-goal guard) ...]
+                         [(compile-runtime-goal body) ...]) ...)]
     [fail
      #'g:fail]
-    
-    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
-     #'(g:condg (compile-runtime-goal gl) ([x ...] [(compile-runtime-goal guard) ...] [(compile-runtime-goal body) ...]) ...)]
-
-    [(~or (_ (later _)) (_ (now _)))
-     (raise-syntax-error #f "not allowed in runtime goal")]
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with staged-f (syntax-local-lift-expression #'(generate-staged (var ...) (compile-now-goal g)))
      #'(invoke-staged staged-f var ...)]
-  
-    #;[(apply-partial rel:relation-name arg:term ...)
-       #''TODO]
-    
+
+    [(_ (~and stx (~or (later . _) (now . _))))
+     (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 (define-syntax compile-now-goal
   (syntax-parser
     #:literal-sets (goal-literals)
+    #;[(_ (#%rel-app r:id arg ...))
+       ]
+    #;[(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
+       ]
+    #;[(apply-partial rel:relation-name arg:term ...)
+       #''TODO]
+    
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.c (compile-term t1) (compile-term t2))]
-    [(_ (constraint:unary-constraint t ))
+    [(_ (constraint:unary-constraint t))
      #'(constraint.c (compile-term t))]
+    
     [(_ (fresh (x:id ...) g ...))
      #'(g:fresh (x ...) (compile-now-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(g:conde [(compile-now-goal g) ...] ...)]
+    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
+     #'(g:condg (compile-now-goal gl)
+                ([x ...] [(compile-now-goal guard) ...]
+                         [(compile-now-goal body) ...]) ...)]
+    [fail #'fail]
+
     [(_ (later g))
      #'(compile-later-goal g)]
+
+    [(_ (~and stx (~or (staged . _)
+                       (now . _))))
+     (raise-syntax-error #f "not supported in generator code" #'stx)]    
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 (define-syntax compile-later-goal
   (syntax-parser
     #:literal-sets (goal-literals)
+    #;[(_ (#%rel-app r:id arg ...))
+       ]
+    #;[(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
+       ]
+    #;[(apply-partial rel:relation-name arg:term ...)
+       #''TODO]
+        
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.l (compile-term t1) (compile-term t2))]
     [(_ (constraint:unary-constraint t ))
      #'(constraint.l (compile-term t))]
+    
     [(_ (fresh (x:id ...) g ...))
      #'(g:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(g:lconde [(compile-later-goal g) ...] ...)]
+    [fail #'lfail]
+    
     [(_ (now g))
      #'(compile-now-goal g)]
+    
+    [(_ (~and stx (~or (condg . _)
+                       (staged . _)
+                       (later . _))))
+     (raise-syntax-error #f "not supported in generated code" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 
