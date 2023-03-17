@@ -43,9 +43,10 @@
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)
   (struct generator-rel [args-count] #:prefab)
-  (struct partial-rel [now-args-count later-args-count maybe-generator-rel] #:prefab)
+  (struct partial-rel [now-args-count later-args-count] #:prefab)
 
-  (define-persistent-symbol-table relation-info))
+  (define-persistent-symbol-table relation-info)
+  (define-persistent-symbol-table defrel-partial-generator))
 
 (syntax-spec
   (binding-class term-var)
@@ -76,10 +77,11 @@
   
   (nonterminal goal
     #:bind-literal-set goal-literals
+
+    (== v:term-var ((~datum partial-apply) rel:relation-name arg:term ...))
     (== t1:term t2:term)
   
-    (== v:term-var ((~datum partial-apply) rel:relation-name arg:term ...))
-    (apply-partial rel:relation-name arg:term ...)
+    (apply-partial v:term-var rel:relation-name arg:term ...)
 
     (=/= t1:term t2:term)
     (absento t1:term t2:term)
@@ -145,12 +147,12 @@
     #:lhs
     [(symbol-table-set!
       relation-info #'r
-      (partial-rel (length (attribute now-arg)) (length (attribute later-arg))
-                   (syntax-parse #'gen [#f #f] [g:id #'g])))
+      (partial-rel (length (attribute now-arg)) (length (attribute later-arg))))
+     (symbol-table-set! defrel-partial-generator #'r (syntax-parse #'gen [#f #f] [g:id #'g]))
      #'r]
     #:rhs
     [#'(lambda (now-arg ... later-arg ...)
-         (fresh ()
+         (g:fresh ()
            (compile-runtime-goal g) ...))])
 
   (host-interface/expression
@@ -225,16 +227,26 @@
     
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
-       [(partial-rel now-args-count later-args-count maybe-generator-id)
+       [(partial-rel now-args-count later-args-count)
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
         (with-syntax ([rel-dyn #'rel]
-                      [(later-placeholders ...) (make-list #'_ later-args-count)])
-          #'(g:apply-reified v ((#f rel-dyn) (arg ...) (later-placeholders ...))))]
+                      [rel-staged (symbol-table-ref defrel-partial-generator #'rel)]
+                      [(later-placeholders ...) (make-list later-args-count #'_)])
+          #'(g:reify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
-    #;[(apply-partial rel:relation-name arg:term ...)
-       #''TODO]
+    [(_ (apply-partial v:id rel:id arg ...))
+     (match (symbol-table-ref relation-info #'rel)
+       [(partial-rel now-args-count later-args-count)
+        (when (not (= later-args-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
+        
+       (with-syntax ([rel-dyn #'rel]
+                     [rel-staged (symbol-table-ref defrel-partial-generator #'rel)]
+                     [(now-placeholders ...) (make-list now-args-count #'_)])
+          #'(g:apply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+       [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
     
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.c (compile-term t1) (compile-term t2))]
@@ -267,7 +279,7 @@
        ]
     #;[(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
        ]
-    #;[(apply-partial rel:relation-name arg:term ...)
+    #;[(_ (apply-partial v:id rel:id arg ...))
        #''TODO]
     
     [(_ (constraint:binary-constraint t1 t2))
@@ -300,7 +312,7 @@
        ]
     #;[(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
        ]
-    #;[(apply-partial rel:relation-name arg:term ...)
+    #;[(_ (apply-partial v:id rel:id arg ...))
        #''TODO]
         
     [(_ (constraint:binary-constraint t1 t2))

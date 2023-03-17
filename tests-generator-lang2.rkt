@@ -81,6 +81,30 @@
           [(now (numbero x)) (== y 1)]))))))
  '(_.0 _.0))
 
+
+
+(defrel-partial (test-rel [y z] [x res])
+  #:generator test-rel-staged
+  (fresh (yz)
+    (== yz `(,y ,z))
+    (== res (cons x yz))))
+
+(defrel/generator (test-rel-staged rep y z x res)
+  (fresh (yz)
+    (== yz `(,y ,z))
+    (later (== res (cons x yz)))))
+
+(test
+ (run 1 (q)
+   (fresh (c r1 r2)
+     (== c (partial-apply test-rel 2 3))
+     (apply-partial c test-rel 1 r1)
+     (apply-partial c test-rel 4 r2)
+     (== q `(,r1 ,r2))))
+'(((1 2 3) (4 2 3))))
+
+
+
 ;; TODO: should be okay if there are no `later`s in a staged
 (todo "no later staged should be OK"
  (run 1 (q)
