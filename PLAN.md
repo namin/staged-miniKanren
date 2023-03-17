@@ -1,7 +1,7 @@
 Plan
 ----
 
-1. [ ] Finish the new syntax layer
+1. [x] Finish the new syntax layer
 2. [ ] Finish translating the interpreter to use condg
 3. [ ] Port all the examples to the new syntax layer
 4. [ ] Fix the semantics of now inside later conde. I know how, but there's some code to write.
