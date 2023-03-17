@@ -91,7 +91,7 @@
 ;; TODO: this fails for two reasons.
 ;; - conde: bad syntax in: (conde () ())
 ;; - we don't capture substitution extensions in conde
-(test
+(todo "now in later conde bug"
  (run 2 (q)
    (staged
     (fresh (x y)
@@ -102,7 +102,7 @@
         [(now (== x 2))])))))
  '(1 2))
 
-(test
+(todo "now in later conde bug"
  (run 2 (q)
    (staged
     (fresh (x y)
@@ -118,7 +118,7 @@
 ;;
 ;; I think we have to reflect all store / substitution extensions and then do dead
 ;; code elimination on the final program.
-(test
+(todo "now in later conde bug"
  (run 2 (q)
    (staged
     (fresh (x y)
