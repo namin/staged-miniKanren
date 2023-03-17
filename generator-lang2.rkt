@@ -313,8 +313,14 @@
 (define-syntax compile-later-goal
   (syntax-parser
     #:literal-sets (goal-literals)
-    #;[(_ (#%rel-app r:id arg ...))
-       ]
+    [(_ (#%rel-app r:id arg ...))
+     (match (symbol-table-ref relation-info #'r)
+       [(runtime-rel arg-count)
+        (when (not (= arg-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of arguments to relation" #'r))
+        #'(g:lapp r (compile-term arg) ...)]
+       [_ (raise-syntax-error #f "generated-code relation application expects relation defined by defrel" #'r)])]
+
     #;[(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
        ]
     #;[(_ (apply-partial v:id rel:id arg ...))

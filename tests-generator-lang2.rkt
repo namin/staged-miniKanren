@@ -3,11 +3,11 @@
 (require "generator-lang2.rkt"
          "test-check.rkt")
 
-(defrel (foo a)
-  (== a 5))
+(defrel (unify-5 x)
+  (== x 5))
 
 (test
- (run 1 (q) (foo 5))
+ (run 1 (q) (unify-5 5))
  '(_.0))
 
 (defrel (bar a)
@@ -19,6 +19,12 @@
  (run 1 (q)
    (bar q))
  '(1))
+
+(test
+ (run 1 (q)
+   (staged
+    (later (unify-5 q))))
+ '(5))
 
 
 (test
