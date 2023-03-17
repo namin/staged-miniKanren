@@ -82,7 +82,6 @@
  '(_.0 _.0))
 
 
-
 (defrel-partial (test-rel [y z] [x res])
   #:generator test-rel-staged
   (fresh (yz)
@@ -103,6 +102,15 @@
      (== q `(,r1 ,r2))))
 '(((1 2 3) (4 2 3))))
 
+(defrel/generator (gen-unify-5 x)
+  (later
+   (== x 5)))
+
+(test
+ (run 1 (q)
+   (staged
+    (gen-unify-5 q)))
+ '(5))
 
 
 ;; TODO: should be okay if there are no `later`s in a staged

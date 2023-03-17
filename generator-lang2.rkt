@@ -275,13 +275,17 @@
 (define-syntax compile-now-goal
   (syntax-parser
     #:literal-sets (goal-literals)
-    #;[(_ (#%rel-app r:id arg ...))
-       ]
-    #;[(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
-       ]
-    #;[(_ (apply-partial v:id rel:id arg ...))
-       #''TODO]
-    
+    [(_ (#%rel-app r:id arg ...))
+     (match (symbol-table-ref relation-info #'r)
+       [(generator-rel arg-count)
+        (when (not (= arg-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of arguments to relation" #'r))
+        #'(r (compile-term arg) ...)]
+       [_ (raise-syntax-error #f "generator relation application expects relation defined by defrel/generator" #'r)])]
+
+    [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
+     (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]
+
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.c (compile-term t1) (compile-term t2))]
     [(_ (constraint:unary-constraint t))
@@ -300,7 +304,8 @@
     [(_ (later g))
      #'(compile-later-goal g)]
 
-    [(_ (~and stx (~or (staged . _)
+    [(_ (~and stx (~or (apply-partial . _)
+                       (staged . _)
                        (now . _))))
      (raise-syntax-error #f "not supported in generator code" #'stx)]    
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
