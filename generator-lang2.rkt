@@ -4,7 +4,6 @@
  quote
  cons
  list
- racket-term
  ==
  apply-partial
  =/=
@@ -34,7 +33,7 @@
 ;; https://github.com/michaelballantyne/syntax-spec
 (require syntax-spec
          ;; for a nasty workaround
-         (for-syntax (only-in ee-lib compile-reference))
+         (for-syntax (only-in ee-lib compile-reference lookup))
          (for-syntax racket/base
                      syntax/parse
                      racket/match
@@ -70,17 +69,20 @@
   (nonterminal term
     #:description "miniKanren term"
     #:allow-extension term-macro
-    
-    (#%term-var x:term-var)
+
     ((~literal quote) t:quoted)
     ((~literal cons) t1:term t2:term)
     ((~literal list) t:term ...)
 
+    (#%term-var x:term-var)
     ;; TODO: we don't check that the value of e is a valid term value.
-    (racket-term e:racket-expr)
+    (#%racket-term e:racket-expr)
+    
+    (~> v:id
+        (if (lookup #'v (binding-class-predicate term-var))
+            #'(#%term-var v)
+            #'(#%racket-term v)))
 
-    (~> x:id
-        #'(#%term-var x))
     (~> n:number
         #'(quote n))
     (~> b:boolean
@@ -174,17 +176,17 @@
 
 (define-syntax compile-term
   (syntax-parser
-    #:literals (#%term-var quote cons list)
-    [(_ (#%term-var x))
+    #:literals (quote cons list #%term-var #%racket-term)
+    [(_ (#%term-var x:id))
      #'x]
+    [(_ (#%racket-term e))
+     #'e]
     [(_ (quote t))
      #'(quote t)]
     [(_ (cons t1 t2))
      #'(cons (compile-term t1) (compile-term t2))]
     [(_ (list t ...))
-     #'(list (compile-term t) ...)]
-    [(_ (racket-term e))
-     #'e]))
+     #'(list (compile-term t) ...)]))
 
 (begin-for-syntax
   (define-syntax-class binary-constraint

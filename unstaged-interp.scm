@@ -26,7 +26,7 @@
 ;; interpreters.
 
 (defrel (u-evalo expr val)
-  (u-eval-expo expr (racket-term u-initial-env) val))
+  (u-eval-expo expr u-initial-env val))
 
 (defrel (u-eval-expo expr env val)
   (conde
@@ -110,7 +110,7 @@
 
 (defrel (u-not-in-envo x env)
   (conde
-    ((== (racket-term u-empty-env) env))
+    ((== u-empty-env env))
     ((fresh (y b rest)
        (== `((,y . ,b) . ,rest) env)
        (=/= y x)
@@ -337,7 +337,7 @@
 
 (defrel (u-regular-env-appendo env1 env2 env-out)
   (conde
-    ((== (racket-term u-empty-env) env1) (== env2 env-out))
+    ((== u-empty-env env1) (== env2 env-out))
     ((fresh (y v rest res)
        (== `((,y . (val . ,v)) . ,rest) env1)
        (== `((,y . (val . ,v)) . ,res) env-out)
@@ -462,4 +462,4 @@
           (u-quasi-p-no-match d v2 penv^ penv-out)))))))
 
 (defrel (evalo-unstaged expr val)
-  (u-eval-expo expr (racket-term u-initial-env) val))
+  (u-eval-expo expr u-initial-env val))
