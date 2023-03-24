@@ -239,12 +239,9 @@
      [(== `(match ,against-expr . ,clauses) expr)
       (not-in-envo 'match env)]
      [
-
-      ;; (fresh (mval)
-      ;;   (eval-expo against-expr env mval)
-      ;;   (match-clauses mval clauses env val))
-
-      (handle-matcho expr env val)
+      (fresh (mval)
+        (eval-expo against-expr env mval)
+        (match-clauses mval clauses env val))
       ])
 
     ;; letrec
@@ -443,19 +440,6 @@
                       (cdr . (val . (prim . cdr)))
                       . ,empty-env))
 
-(define handle-matcho
-  (lambda  (expr env val)
-    (fresh (against-expr clause clauses)
-      (== `(match ,against-expr ,clause . ,clauses) expr)
-      (conde
-        ((not-match-checko (cons clause clauses))
-         (lapp u-eval-expo expr env val))
-        ((match-checko (cons clause clauses))
-         (fresh (mval)
-           (not-in-envo 'match env)
-           (eval-expo against-expr env mval)
-           (match-clauses mval `(,clause . ,clauses) env val)))))))
-
 (define (not-symbolo t)
   (conde
     ((== #f t))
@@ -495,134 +479,138 @@
        (regular-env-appendo rest env2 res)))))
 
 (define (match-clauses mval clauses env val)
-  (conde
+  (condg
+   (lapp u-match-clauses mval clauses env val)
     ;; a match fails if no clause matches; in
     ;; unstaged this happens when reaching
     ;; match-clauses with an empty list of clauses.
     ;; in staged, defer to runtime.
-    ((== clauses '())
-     lfail)
-    ((fresh (p result-expr d penv c-yes c-no)
-       (== `((,p ,result-expr) . ,d) clauses)
-       (lconde
-        [(fresh (env^)
-           (p-match p mval '() penv)
-           (regular-env-appendo penv env env^)
-           (eval-expo result-expr env^ val))]
-        [(p-no-match p mval '() penv)
-         (match-clauses mval d env val)])))))
+   ([]  [(== clauses '())] [lfail])
+   ([p result-expr d penv c-yes c-no]
+    [(== `((,p ,result-expr) . ,d) clauses)]
+    [(lconde
+       [(fresh (env^)
+          (p-match p mval '() penv)
+          (regular-env-appendo penv env env^)
+          (eval-expo result-expr env^ val))]
+       [(p-no-match p mval '() penv)
+        (match-clauses mval d env val)])])))
 
 (define (var-p-match var mval penv penv-out)
   (fresh (val)
-    (symbolo var)
-    (not-tago mval)
+    (lapp not-tago mval)
     (l== mval val)
-    (conde
-      ((== penv penv-out)
-       (fresh (env-v)
-         (lookupo var penv env-v)
-         (l== env-v val)))
-      ((== `((,var . (val . ,val)) . ,penv) penv-out)
-       (not-in-envo var penv)))))
+    (var-p-match-extend var val penv penv-out)))
+
+(define (var-p-match-extend var val penv penv-out)
+  (condg
+   (lapp u-var-p-match-extend var val penv penv-out)
+   ([env-v] [(u-lookupo var penv env-v)]
+    [(== penv penv-out)
+     (l== env-v val)])
+   ([]
+    [(not-in-envo var penv)]
+    [(== `((,var . (val . ,val)) . ,penv) penv-out)])))
 
 (define (var-p-no-match var mval penv penv-out)
-  (conde
+  (condg
+   (lapp u-var-p-no-match var mval penv penv-out)
     ;; a variable pattern cannot fail when it is
     ;; the first occurence of the name. unstaged
     ;; fails by failure of the lookupo below; in
     ;; staged we need to defer this failure to
     ;; runtime.
-    ((symbolo var)
-     (not-in-envo var penv)
-     lfail)
-    ((fresh (val)
-       (symbolo var)
-       (l=/= mval val)
-       (== penv penv-out)
-       (fresh (env-v)
-         (lookupo var penv env-v)
-         (l== env-v val))))))
+   ([] [(not-in-envo var penv)]
+    [lfail])
+   ([env-v]
+    [(== penv penv-out)
+     (u-lookupo var penv env-v)]
+    [(l=/= mval env-v)])))
 
 (define (p-match p mval penv penv-out)
-  (conde
-    ((self-eval-literalo p)
-     (l== p mval)
-     (== penv penv-out))
-    ((var-p-match p mval penv penv-out))
-    ((fresh (var pred val)
-       (== `(? ,pred ,var) p)
-       (conde
-         ((== 'symbol? pred)
-          (lsymbolo mval))
-         ((== 'number? pred)
-          (lnumbero mval)))
-       (var-p-match var mval penv penv-out)))
-    ((fresh (quasi-p)
-       (== (list 'quasiquote quasi-p) p)
-       (quasi-p-match quasi-p mval penv penv-out)))))
+  (condg
+   (lapp u-p-match p mval penv penv-out)
+   ([] [(self-eval-literalo p)]
+    [(l== p mval)
+     (== penv penv-out)])
+   ([] [(symbolo p)] [(var-p-match p mval penv penv-out)])
+   ([var pred]
+    [(== `(? ,pred ,var) p)]
+    [(pred-match pred mval)
+     (var-p-match var mval penv penv-out)])
+   ([quasi-p] [(== (list 'quasiquote quasi-p) p)]
+    [(quasi-p-match quasi-p mval penv penv-out)])))
+
+(define (pred-match pred mval)
+  (condg
+   (lapp u-pred-match pred mval)
+   ([] [(== 'symbol? pred)] [(lsymbolo mval)])
+   ([] [(== 'number? pred)] [(lnumbero mval)])))
 
 (define (p-no-match p mval penv penv-out)
-  (conde
-    ((self-eval-literalo p)
-     (l=/= p mval)
-     (== penv penv-out))
-    ((var-p-no-match p mval penv penv-out))
-    ((fresh (var pred val)
-       (== `(? ,pred ,var) p)
-       (== penv penv-out)
-       (symbolo var)
-       (conde
-         ((== 'symbol? pred)
-          (lconde
-           [(lapp not-symbolo mval)]
-           [(lsymbolo mval)
-            (var-p-no-match var mval penv penv-out)]))
-         ((== 'number? pred)
-          (lconde
-           [(lapp not-numbero mval)]
-           [(lnumbero mval)
-            (var-p-no-match var mval penv penv-out)])))))
-    ((fresh (quasi-p)
-       (== (list 'quasiquote quasi-p) p)
-       (quasi-p-no-match quasi-p mval penv penv-out)))))
+  (condg
+   (lapp u-p-no-match p mval penv penv-out)
+   ([] [(self-eval-literalo p)]
+    [(l=/= p mval)
+     (== penv penv-out)])
+   ([] [(symbolo p)] [(var-p-no-match p mval penv penv-out)])
+   ([var pred] [(== `(? ,pred ,var) p)]
+    [(== penv penv-out)
+     (symbolo var)
+     (pred-no-match pred var mval penv penv-out)])
+   ([quasi-p] [(== (list 'quasiquote quasi-p) p)]
+    [(quasi-p-no-match quasi-p mval penv penv-out)])))
+
+(define (pred-no-match pred var mval penv penv-out)
+  (condg
+   (lapp u-pred-no-match pred var mval penv penv-out)
+   ([] [(== 'symbol? pred)]
+    [(lconde
+       [(lapp not-symbolo mval)]
+       [(lsymbolo mval)
+        (var-p-no-match var mval penv penv-out)])])
+   ([] [(== 'number? pred)]
+    [(lconde
+       [(lapp not-numbero mval)]
+       [(lnumbero mval)
+        (var-p-no-match var mval penv penv-out)])])))
 
 (define (quasi-p-match quasi-p mval penv penv-out)
-  (conde
-    ((l== quasi-p mval)
-     (== penv penv-out)
-     (literalo quasi-p))
-    ((fresh (p)
-       (== (list 'unquote p) quasi-p)
-       (p-match p mval penv penv-out)))
-    ((fresh (a d v1 v2 penv^)
-       (== `(,a . ,d) quasi-p)
-       (l== `(,v1 . ,v2) mval)
-       (=/= 'unquote a)
-       (quasi-p-match a v1 penv penv^)
-       (quasi-p-match d v2 penv^ penv-out)))))
+  (condg
+   (lapp u-quasi-p-match quasi-p mval penv penv-out)
+   ([] [(literalo quasi-p)]
+    [(l== quasi-p mval)
+     (== penv penv-out)])
+   ([p] [(== (list 'unquote p) quasi-p)]
+    [(p-match p mval penv penv-out)])
+   ([a d v1 v2 penv^]
+    [(== `(,a . ,d) quasi-p)
+     (=/= 'unquote a)]
+    [(l== `(,v1 . ,v2) mval)
+     (quasi-p-match a v1 penv penv^)
+     (quasi-p-match d v2 penv^ penv-out)])))
 
 (define (quasi-p-no-match quasi-p mval penv penv-out)
-  (fresh ()
-    (conde
-     ((l=/= quasi-p mval)
-      (== penv penv-out)
-      (literalo quasi-p))
-     ((fresh (p)
-        (== (list 'unquote p) quasi-p)
-        (not-tago mval)
-        (p-no-match p mval penv penv-out)))
-     ((fresh (a d)
-        (== `(,a . ,d) quasi-p)
-        (=/= 'unquote a)
-        (lconde
-         [(== penv penv-out)
-          (lapp literalo mval)]
-         [(fresh (penv^ v1 v2)
-            (l== `(,v1 . ,v2) mval)
-            (lconde
-             [(quasi-p-no-match a v1 penv penv-out)]
-             [(quasi-p-match a v1 penv penv^)
-              (quasi-p-no-match d v2 penv^ penv-out)]))]))))))
+  (condg
+   (lapp u-quasi-p-no-match quasi-p mval penv penv-out)
+   ([] [(literalo quasi-p)]
+    [(l=/= quasi-p mval)
+     (== penv penv-out)])
+   ([p] [(== (list 'unquote p) quasi-p)]
+    [(lapp not-tago mval) ;; TODO: why do we need this?
+     (p-no-match p mval penv penv-out)])
+   ([a d]
+    [(== `(,a . ,d) quasi-p)
+     (=/= 'unquote a)]
+    [(lconde
+       [(== penv penv-out)
+        (lapp literalo mval)]
+       [(fresh (penv^ v1 v2)
+          (l== `(,v1 . ,v2) mval)
+          (lconde
+           [(quasi-p-no-match a v1 penv penv-out)]
+           [(quasi-p-match a v1 penv penv^)
+            (quasi-p-no-match d v2 penv^ penv-out)]))])])))
 
 (define (evalo-staged expr val)
   (eval-expo expr initial-env val))

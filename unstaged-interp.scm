@@ -329,15 +329,17 @@
        (u-match-clauses mval d env val)))))
 
 (define (u-var-p-match var mval penv penv-out)
-  (fresh (val)
+  (fresh ()
     (symbolo var)
     (not-tago mval)
-    (conde
-      ((== mval val)
-       (== penv penv-out)
-       (u-lookupo var penv val))
-      ((== `((,var . (val . ,mval)) . ,penv) penv-out)
-       (u-not-in-envo var penv)))))
+    (u-var-p-match-extend var mval penv penv-out)))
+
+(define (u-var-p-match-extend var val penv penv-out)
+  (conde
+    ((== penv penv-out)
+     (u-lookupo var penv val))
+    ((== `((,var . (val . ,val)) . ,penv) penv-out)
+     (u-not-in-envo var penv))))
 
 (define (u-var-p-no-match var mval penv penv-out)
   (fresh (val)
@@ -352,17 +354,20 @@
      (== p mval)
      (== penv penv-out))
     ((u-var-p-match p mval penv penv-out))
-    ((fresh (var pred val)
+    ((fresh (var pred)
       (== `(? ,pred ,var) p)
-      (conde
-        ((== 'symbol? pred)
-         (symbolo mval))
-        ((== 'number? pred)
-         (numbero mval)))
+      (u-pred-match pred mval)
       (u-var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
       (u-quasi-p-match quasi-p mval penv penv-out)))))
+
+(define (u-pred-match pred mval)
+  (conde
+    ((== 'symbol? pred)
+     (symbolo mval))
+    ((== 'number? pred)
+     (numbero mval))))
 
 (define (u-p-no-match p mval penv penv-out)
   (conde
@@ -370,24 +375,27 @@
      (=/= p mval)
      (== penv penv-out))
     ((u-var-p-no-match p mval penv penv-out))
-    ((fresh (var pred val)
+    ((fresh (var pred)
        (== `(? ,pred ,var) p)
        (== penv penv-out)
        (symbolo var)
-       (conde
-         ((== 'symbol? pred)
-          (conde
-            ((u-not-symbolo mval))
-            ((symbolo mval)
-             (u-var-p-no-match var mval penv penv-out))))
-         ((== 'number? pred)
-          (conde
-            ((u-not-numbero mval))
-            ((numbero mval)
-             (u-var-p-no-match var mval penv penv-out)))))))
+       (u-pred-no-match pred var mval penv penv-out)))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
       (u-quasi-p-no-match quasi-p mval penv penv-out)))))
+
+(define (u-pred-no-match pred var mval penv penv-out)
+  (conde
+    ((== 'symbol? pred)
+     (conde
+       ((u-not-symbolo mval))
+       ((symbolo mval)
+        (u-var-p-no-match var mval penv penv-out))))
+    ((== 'number? pred)
+     (conde
+       ((u-not-numbero mval))
+       ((numbero mval)
+        (u-var-p-no-match var mval penv penv-out))))))
 
 (define (u-quasi-p-match quasi-p mval penv penv-out)
   (conde
