@@ -47,7 +47,7 @@
          ;; Multi-argument
          ((u-list-of-symbolso x)))
        (u-not-in-envo 'lambda env)
-       ;;TODO(fix): (== rep (partial-apply (eval-apply-staged eval-apply-dyn) (x body env) (_ _)))
+       (== rep (partial-apply eval-apply x body env))
        ))
     
     ((fresh (rator rands a* cfun rep proc)
@@ -56,11 +56,11 @@
        (conde
          ((== `(closure ,rep) cfun)
           (u-eval-listo rands env a*)
-          ;;TODO(fix): (callo cfun val a*)
+          (callo cfun val a*)
           )
          ((== `(rec-closure ,rep) cfun)
           (u-eval-listo rands env a*)
-          ;;TODO(fix): (callo cfun val a*)
+          (callo cfun val a*)
           ))))
 
     ((fresh (rator x* rands a* prim-id)
@@ -103,7 +103,7 @@
             (== `(rec . ,lam-expr) b)
             (== `(lambda ,z ,body) lam-expr)
             (== `(closure ,rep) t)
-            ;;TODO(fix): (reify-call rep ((eval-apply-staged eval-apply-dyn) (z body env) (_ _)))
+            (== rep (partial-apply eval-apply z body env))
             ))))
       ((=/= x y)
        (u-lookupo x rest t)))))

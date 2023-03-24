@@ -11,4 +11,4 @@
          racket/include)
 
 (include "unstaged-interp.scm")
-;;(include "staged-interp.scm")
+(include "staged-interp.scm")

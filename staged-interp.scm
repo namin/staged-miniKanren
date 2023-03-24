@@ -1,4 +1,21 @@
-(define (eval-apply-rec-staged rep f x* e env a* res)
+(defrel/generator (absent-tago/gen v)
+  (fresh ()
+    (absento 'rec-closure v)
+    (absento 'closure v)
+    (absento 'prim v)))
+
+(defrel/generator (not-tago/gen v)
+  (fresh ()
+    (=/= 'rec-closure v)
+    (=/= 'closure v)
+    (=/= 'prim v)))
+
+(defrel/generator (booleano/gen t)
+  (conde
+    ((== #f t))
+    ((== #t t))))
+
+(defrel/generator (eval-apply-rec-staged rep f x* e env a* res)
   (fresh (env^ env-self)
     ;; TODO
     ;; (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x* e env) (_ _)))
@@ -10,9 +27,10 @@
        (ext-env*o x* a* env-self env^)))
     (eval-expo e env^ res)))
 
-(define (eval-apply-rec-dyn f x* e env a* res)
+(defrel-partial (eval-apply-rec [f x* e env] [a* res])
+  #:generator eval-apply-rec-staged
   (fresh (rep env^ env-self)
-    (reify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x* e env) (_ _)))
+    (== rep (partial-apply eval-apply-rec f x* e env))
     (== env-self `((,f . (val . (rec-closure ,rep))) . ,env))
     (conde
       ((symbolo x*)
@@ -20,7 +38,7 @@
       ((u-ext-env*o x* a* env-self env^)))
     (u-eval-expo e env^ res)))
 
-(define (eval-apply-staged rep x* body env a* val)
+(defrel/generator (eval-apply-staged rep x* body env a* val)
   (fresh (env^)
     (conde
       ((symbolo x*)
@@ -29,7 +47,8 @@
        (ext-env*o x* a* env env^)))
     (eval-expo body env^ val)))
 
-(define (eval-apply-dyn x* body env a* val)
+(defrel-partial (eval-apply [x* body env] [a* val])
+  #:generator eval-apply-staged
   (fresh (env^)
     (conde
       ((symbolo x*)
@@ -37,38 +56,28 @@
       ((u-ext-env*o x* a* env env^)))
     (u-eval-expo body env^ val)))
 
-(define (same-lengtho a* b*)
-  (conde
-    ((== a* '()) (== b* '()))
-    ((fresh (a ar b br)
-       (== a* (cons a ar))
-       (== b* (cons b br))
-       (same-lengtho ar br)))))
-
-(define (callo proc val a*)
+(defrel (callo proc val a*)
   (conde
     ((fresh (rep)
        (== proc `(closure ,rep))
-       ;; maybe we can write something closer to this:
-       ;; (apply-reified rep eval-apply a* val)
-       (apply-reified rep ((eval-apply-staged eval-apply-dyn) (_ _ _) (a* val)))))
+       (apply-partial rep eval-apply a* val)))
     ((fresh (rep)
        (== proc `(rec-closure ,rep))
-       (apply-reified rep ((eval-apply-rec-staged eval-apply-rec-dyn) (_ _ _ _) (a* val)))))
+       (apply-partial rep eval-apply-rec a* val)))
     ((fresh (prim-id)
        (== proc `(prim . ,prim-id))
        (u-eval-primo prim-id a* val)))))
 
-(define (eval-expo expr env val)
+(defrel/generator (eval-expo expr env val)
   (condg
-    (lapp u-eval-expo expr env val)
-    ([] [(numbero expr)] [(l== expr val)])
-    ([] [(symbolo expr)] [(fresh (env-v) (lookupo expr env env-v) (l== env-v val))])
+    #:fallback (later (u-eval-expo expr env val))
+    ([] [(numbero expr)] [(later (== expr val))])
+    ([] [(symbolo expr)] [(fresh (env-v) (lookupo expr env env-v) (later (== env-v val)))])
     ([v]
      [(== `(quote ,v) expr)
-      (absent-tago v)
+      (absent-tago/gen v)
       (not-in-envo 'quote env)]
-     [(l== val v)])
+     [(later (== val v))])
     ([x body]
      [(== `(lambda ,x ,body) expr)
       (not-in-envo 'lambda env)
@@ -76,9 +85,9 @@
         ((symbolo x))
         ((list-of-symbolso x)))]
      [(fresh (rep)
-        (l== `(closure ,rep) val)
-        ;; could imagine the following line as (l== (eval-apply x body env) rep)
-        (lreify-call rep ((eval-apply-staged eval-apply-dyn) (x body env) (_ _))))])
+        (later (== `(closure ,rep) val))
+        ;; could imagine the following line as (later (== (eval-apply x body env) rep)
+        (later (== rep (partial-apply eval-apply x body env))))])
      ;; statically-recognizable primitive application
     ([rator rands a* prim]
      [(== `(,rator . ,rands) expr)
@@ -100,7 +109,7 @@
      [(fresh (proc)
         (eval-expo rator env proc)
         (eval-listo rands env a*)
-        (lapp callo proc val a*))])
+        (later (callo proc val a*)))])
 
     
     ;; match
@@ -119,7 +128,7 @@
       (not-in-envo 'letrec env)]
      [(fresh (rep env^)
         (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
-        (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x e env) (_ _)))
+        (later (== rep (partial-apply eval-apply-rec f x e env)))
         (eval-expo letrec-body env^ val))])
     ;; and-primo
     ([e*] [(== `(and . ,e*) expr) (not-in-envo 'and env)] [(ando e* env val)])
@@ -130,45 +139,44 @@
      [(== `(if ,e1 ,e2 ,e3) expr) (not-in-envo 'if env)]
      [(fresh (t c2 c3)
         (eval-expo e1 env t)
-        (lconde
-         ((l=/= #f t) (eval-expo e2 env val))
-         ((l== #f t) (eval-expo e3 env val))))])
+        (later (conde
+                 ((=/= #f t) (now (eval-expo e2 env val)))
+                 ((== #f t) (now (eval-expo e3 env val))))))])
     ;; boolean-primo
-    ([] [(== #t expr)] [(l== #t val)])
-    ([] [(== #f expr)] [(l== #f val)]))
+    ([] [(== #t expr)] [(later (== #t val))])
+    ([] [(== #f expr)] [(later (== #f val))]))
   )
 
 (define empty-env '())
 
-(define (lookupo x env v)
+(defrel/generator (lookupo x env v)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (condg
-      (lapp u-lookupo x env v)
+      #:fallback (later (u-lookupo x env v))
       ([] [(== x y)] [(== `(val . ,v) b)])
       ([] [(=/= x y)] [(lookupo x rest v)]))))
 
-(define (not-in-envo x env)
+(defrel/generator (match-lookupo/gen x env t)
+  (fresh (y b rest)
+    (== `((,y . ,b) . ,rest) env)
+    (conde
+      ((== x y)
+       (== `(val . ,t) b))
+      ((=/= x y)
+       (match-lookupo/gen x rest t)))))
+
+(defrel/generator (not-in-envo x env)
   (conde
-    ((== empty-env env))
+    ((== (racket-term empty-env) env))
     ((fresh (y b rest)
        (== `((,y . ,b) . ,rest) env)
        (=/= y x)
        (not-in-envo x rest)))))
 
-(define (old-eval-listo expr env val)
-  (conde
-    ((== '() expr)
-     (== '() val))
-    ((fresh (a d v-a v-d)
-       (== `(,a . ,d) expr)
-       (== `(,v-a . ,v-d) val)
-       (eval-expo a env v-a)
-       (eval-listo d env v-d)))))
-
-(define (eval-listo expr env val)
+(defrel/generator (eval-listo expr env val)
   (condg
-    (lapp u-eval-listo expr env val)
+    #:fallback (later (u-eval-listo expr env val))
     ([] [(== '() expr)] [(== '() val)])
     ([a d v-a v-d]
      [(== `(,a . ,d) expr)
@@ -178,7 +186,7 @@
 
 ;; need to make sure lambdas are well formed.
 ;; grammar constraints would be useful here!!!
-(define (list-of-symbolso los)
+(defrel/generator (list-of-symbolso los)
   (conde
     ((== '() los))
     ((fresh (a d)
@@ -186,7 +194,7 @@
        (symbolo a)
        (list-of-symbolso d)))))
 
-(define (ext-env*o x* a* env out)
+(defrel/generator (ext-env*o x* a* env out)
   (conde
     ((== '() x*) (== '() a*) (== env out))
     ((fresh (x a dx* da* env2)
@@ -196,106 +204,107 @@
        (symbolo x)
        (ext-env*o dx* da* env2 out)))))
 
-(define (eval-primo prim-id a* val)
+(defrel/generator (eval-primo prim-id a* val)
   (condg
-   (lapp u-eval-primo prim-id a* val)
+   #:fallback (later (u-eval-primo prim-id a* val))
    ([] [(== prim-id 'list)]
-    [(l== a* val)])
+    [(later (== a* val))])
    ([] [(== prim-id 'cons)]
     [(fresh (a d)
-        (l== `(,a ,d) a*)
-        (l== `(,a . ,d) val))])
+        (later (== `(,a ,d) a*))
+        (later (== `(,a . ,d) val)))])
    ([] [(== prim-id 'car)]
     [(fresh (d)
-          (l== `((,val . ,d)) a*)
-          (not-tago val))])
+          (later (== `((,val . ,d)) a*))
+          (not-tago/gen val))])
    ([] [(== prim-id 'cdr)]
     [(fresh (a)
-       (l== `((,a . ,val)) a*)
-       (not-tago a))])
+       (later (== `((,a . ,val)) a*))
+       (not-tago/gen a))])
    ([] [(== prim-id 'not)]
-    [(fresh (b)
-       (l== `(,b) a*)
-       (lconde
-        ((l=/= #f b) (l== #f val))
-        ((l== #f b) (l== #t val))))])
+    [(later
+      (fresh (b)
+        (== `(,b) a*)
+        (conde
+          ((=/= #f b) (== #f val))
+          ((== #f b) (== #t val)))))])
    ([] [(== prim-id 'equal?)]
-    [(fresh (v1 v2)
-       (l== `(,v1 ,v2) a*)
-       (lconde
-        [(l== v1 v2) (l== #t val)]
-        [(l=/= v1 v2) (l== #f val)]))])
+    [(later (fresh (v1 v2)
+              (== `(,v1 ,v2) a*)
+              (conde
+                [(== v1 v2) (== #t val)]
+                [(=/= v1 v2) (== #f val)])))])
    ([] [(== prim-id 'symbol?)]
-    [(fresh (v)
-       (l== `(,v) a*)
-       (lconde
-        ((lsymbolo v) (l== #t val))
-        ((lnumbero v) (l== #f val))
-        ((fresh (a d)
-           (l== `(,a . ,d) v)
-           (l== #f val)))
-        ((lapp booleano v) (l== #f val))))])
+    [(later (fresh (v)
+              (== `(,v) a*)
+              (conde
+               ((symbolo v) (== #t val))
+               ((numbero v) (== #f val))
+               ((fresh (a d)
+                  (== `(,a . ,d) v)
+                  (== #f val)))
+               ((booleano v) (== #f val)))))])
    ([] [(== prim-id 'number?)]
-    [(fresh (v)
-       (l== `(,v) a*)
-       (lconde
-         ((lnumbero v) (l== #t val))
-         ((lsymbolo v) (l== #f val))
-         ((fresh (a d)
-            (l== `(,a . ,d) v)
-            (l== #f val)))
-         ((lapp booleano v) (l== #f val))))])
+    [(later (fresh (v)
+              (== `(,v) a*)
+              (conde
+               ((numbero v) (== #t val))
+               ((symbolo v) (== #f val))
+               ((fresh (a d)
+                  (== `(,a . ,d) v)
+                  (== #f val)))
+               ((booleano v) (== #f val)))))])
    ([] [(== prim-id 'pair?)]
-    [(fresh (v)
-       (l== `(,v) a*)
-       (lconde
-         ((lsymbolo v) (l== #f val))
-         ((lnumbero v) (l== #f val))
-         ((lapp booleano v) (l== #f val))
-         ((fresh (a d)
-            (l== `(,a . ,d) v)
-            (l== #t val)
-            (lapp not-tago a)))
-         ((fresh (a d)
-            (l== `(,a . ,d) v)
-            (l== #f val)
-            (lapp pos-tago a)))))])
+    [(later (fresh (v)
+              (== `(,v) a*)
+              (conde
+               ((symbolo v) (== #f val))
+               ((numbero v) (== #f val))
+               ((booleano v) (== #f val))
+               ((fresh (a d)
+                  (== `(,a . ,d) v)
+                  (== #t val)
+                  (not-tago a)))
+               ((fresh (a d)
+                  (== `(,a . ,d) v)
+                  (== #f val)
+                  (pos-tago a))))))])
    ([] [(== prim-id 'null?)]
-    [(fresh (v)
-       (l== `(,v) a*)
-       (lconde
-         ((l== '() v) (l== #t val))
-         ((l=/= '() v) (l== #f val))))])))
+    [(later (fresh (v)
+              (== `(,v) a*)
+              (conde
+               ((== '() v) (== #t val))
+               ((=/= '() v) (== #f val)))))])))
 
-(define (ando e* env val)
+(defrel/generator (ando e* env val)
   (condg
-    (lapp u-ando e* env val)
-    ([] [(== '() e*)] [(l== #t val)])
+    #:fallback (later (u-ando e* env val))
+    ([] [(== '() e*)] [(later (== #t val))])
     ([e] [(== `(,e) e*)] [(eval-expo e env val)])
     ([e1 e2 e-rest]
      [(== `(,e1 ,e2 . ,e-rest) e*)]
      [(fresh (v c)
         (eval-expo e1 env v)
-        (lconde
-         ((l== #f v)
-          (l== #f val))
-         ((=/= #f v)
-          (ando `(,e2 . ,e-rest) env val))))])))
+        (later (conde
+                 ((== #f v)
+                  (== #f val))
+                 ((=/= #f v)
+                  (now (ando `(,e2 . ,e-rest) env val))))))])))
 
-(define (oro e* env val)
+(defrel/generator (oro e* env val)
   (condg
-    (lapp u-oro e* env val)
-    ([] [(== '() e*)] [(l== #f val)])
+    #:fallback (later (u-oro e* env val))
+    ([] [(== '() e*)] [(later (== #f val))])
     ([e] [(== `(,e) e*)] [(eval-expo e env val)])
     ([e1 e2 e-rest]
      [(== `(,e1 ,e2 . ,e-rest) e*)]
      [(fresh (v c)
         (eval-expo e1 env v)
-        (lconde
-         ((l=/= #f v)
-          (l== v val))
-         ((l== #f v)
-          (oro `(,e2 . ,e-rest) env val))))])))
+        (later (conde
+                ((=/= #f v)
+                 (== v val))
+                ((== #f v)
+                 (now (oro `(,e2 . ,e-rest) env val))))))])))
 
 (define initial-env `((list . (val . (prim . list)))
                       (not . (val . (prim . not)))
@@ -309,7 +318,7 @@
                       (cdr . (val . (prim . cdr)))
                       . ,empty-env))
 
-(define (not-symbolo t)
+(defrel (not-symbolo t)
   (conde
     ((== #f t))
     ((== #t t))
@@ -318,7 +327,7 @@
     ((fresh (a d)
        (== `(,a . ,d) t)))))
 
-(define (not-numbero t)
+(defrel (not-numbero t)
   (conde
     ((== #f t))
     ((== #t t))
@@ -327,80 +336,80 @@
     ((fresh (a d)
        (== `(,a . ,d) t)))))
 
-(define (self-eval-literalo t)
+(defrel/generator (self-eval-literalo t)
   (conde
     ((numbero t))
-    ((booleano t))))
+    ((booleano/gen t))))
 
-(define (literalo t)
+(defrel/generator (literalo t)
   (conde
     ((numbero t))
-    ((symbolo t) (not-tago t))
-    ((booleano t))
+    ((symbolo t) (not-tago/gen t))
+    ((booleano/gen t))
     ((== '() t))))
 
-(define (regular-env-appendo env1 env2 env-out)
+(defrel/generator (regular-env-appendo env1 env2 env-out)
   (conde
-    ((== empty-env env1) (== env2 env-out))
+    ((== (racket-term empty-env) env1) (== env2 env-out))
     ((fresh (y v rest res)
        (== `((,y . (val . ,v)) . ,rest) env1)
        (== `((,y . (val . ,v)) . ,res) env-out)
        (regular-env-appendo rest env2 res)))))
 
-(define (match-clauses mval clauses env val)
+(defrel/generator (match-clauses mval clauses env val)
   (condg
-   (lapp u-match-clauses mval clauses env val)
+   #:fallback (later (u-match-clauses mval clauses env val))
     ;; a match fails if no clause matches; in
     ;; unstaged this happens when reaching
     ;; match-clauses with an empty list of clauses.
     ;; in staged, defer to runtime.
-   ([]  [(== clauses '())] [lfail])
+   ([]  [(== clauses '())] [(later fail)])
    ([p result-expr d penv c-yes c-no]
     [(== `((,p ,result-expr) . ,d) clauses)]
-    [(lconde
-       [(fresh (env^)
-          (p-match p mval '() penv)
-          (regular-env-appendo penv env env^)
-          (eval-expo result-expr env^ val))]
-       [(p-no-match p mval '() penv)
-        (match-clauses mval d env val)])])))
+    [(later (conde
+              [(now (fresh (env^)
+                      (p-match p mval '() penv)
+                      (regular-env-appendo penv env env^)
+                      (eval-expo result-expr env^ val)))]
+              [(now (p-no-match p mval '() penv))
+               (now (match-clauses mval d env val))]))])))
 
-(define (var-p-match var mval penv penv-out)
+(defrel/generator (var-p-match var mval penv penv-out)
   (fresh (val)
-    (lapp not-tago mval)
-    (l== mval val)
+    (later (not-tago mval))
+    (later (== mval val))
     (var-p-match-extend var val penv penv-out)))
 
-(define (var-p-match-extend var val penv penv-out)
+(defrel/generator (var-p-match-extend var val penv penv-out)
   (condg
-   (lapp u-var-p-match-extend var val penv penv-out)
-   ([env-v] [(u-lookupo var penv env-v)]
+   #:fallback (later (u-var-p-match-extend var val penv penv-out))
+   ([env-v] [(match-lookupo/gen var penv env-v)]
     [(== penv penv-out)
-     (l== env-v val)])
+     (later (== env-v val))])
    ([]
     [(not-in-envo var penv)]
     [(== `((,var . (val . ,val)) . ,penv) penv-out)])))
 
-(define (var-p-no-match var mval penv penv-out)
+(defrel/generator (var-p-no-match var mval penv penv-out)
   (condg
-   (lapp u-var-p-no-match var mval penv penv-out)
+   #:fallback (later (u-var-p-no-match var mval penv penv-out))
     ;; a variable pattern cannot fail when it is
     ;; the first occurence of the name. unstaged
     ;; fails by failure of the lookupo below; in
     ;; staged we need to defer this failure to
     ;; runtime.
    ([] [(not-in-envo var penv)]
-    [lfail])
+    [(later fail)])
    ([env-v]
     [(== penv penv-out)
-     (u-lookupo var penv env-v)]
-    [(l=/= mval env-v)])))
+     (match-lookupo/gen var penv env-v)]
+    [(later (=/= mval env-v))])))
 
-(define (p-match p mval penv penv-out)
+(defrel/generator (p-match p mval penv penv-out)
   (condg
-   (lapp u-p-match p mval penv penv-out)
+   #:fallback (later (u-p-match p mval penv penv-out))
    ([] [(self-eval-literalo p)]
-    [(l== p mval)
+    [(later (== p mval))
      (== penv penv-out)])
    ([] [(symbolo p)] [(var-p-match p mval penv penv-out)])
    ([var pred]
@@ -410,17 +419,17 @@
    ([quasi-p] [(== (list 'quasiquote quasi-p) p)]
     [(quasi-p-match quasi-p mval penv penv-out)])))
 
-(define (pred-match pred mval)
+(defrel/generator (pred-match pred mval)
   (condg
-   (lapp u-pred-match pred mval)
-   ([] [(== 'symbol? pred)] [(lsymbolo mval)])
-   ([] [(== 'number? pred)] [(lnumbero mval)])))
+   #:fallback (later (u-pred-match pred mval))
+   ([] [(== 'symbol? pred)] [(later (symbolo mval))])
+   ([] [(== 'number? pred)] [(later (numbero mval))])))
 
-(define (p-no-match p mval penv penv-out)
+(defrel/generator (p-no-match p mval penv penv-out)
   (condg
-   (lapp u-p-no-match p mval penv penv-out)
+   #:fallback (later (u-p-no-match p mval penv penv-out))
    ([] [(self-eval-literalo p)]
-    [(l=/= p mval)
+    [(later (=/= p mval))
      (== penv penv-out)])
    ([] [(symbolo p)] [(var-p-no-match p mval penv penv-out)])
    ([var pred] [(== `(? ,pred ,var) p)]
@@ -430,56 +439,56 @@
    ([quasi-p] [(== (list 'quasiquote quasi-p) p)]
     [(quasi-p-no-match quasi-p mval penv penv-out)])))
 
-(define (pred-no-match pred var mval penv penv-out)
+(defrel/generator (pred-no-match pred var mval penv penv-out)
   (condg
-   (lapp u-pred-no-match pred var mval penv penv-out)
+   #:fallback (later (u-pred-no-match pred var mval penv penv-out))
    ([] [(== 'symbol? pred)]
-    [(lconde
-       [(lapp not-symbolo mval)]
-       [(lsymbolo mval)
-        (var-p-no-match var mval penv penv-out)])])
+    [(later (conde
+              [(not-symbolo mval)]
+              [(symbolo mval)
+               (now (var-p-no-match var mval penv penv-out))]))])
    ([] [(== 'number? pred)]
-    [(lconde
-       [(lapp not-numbero mval)]
-       [(lnumbero mval)
-        (var-p-no-match var mval penv penv-out)])])))
+    [(later (conde
+              [(not-numbero mval)]
+              [(numbero mval)
+               (now (var-p-no-match var mval penv penv-out))]))])))
 
-(define (quasi-p-match quasi-p mval penv penv-out)
+(defrel/generator (quasi-p-match quasi-p mval penv penv-out)
   (condg
-   (lapp u-quasi-p-match quasi-p mval penv penv-out)
+   #:fallback (later (u-quasi-p-match quasi-p mval penv penv-out))
    ([] [(literalo quasi-p)]
-    [(l== quasi-p mval)
+    [(later (== quasi-p mval))
      (== penv penv-out)])
    ([p] [(== (list 'unquote p) quasi-p)]
     [(p-match p mval penv penv-out)])
    ([a d v1 v2 penv^]
     [(== `(,a . ,d) quasi-p)
      (=/= 'unquote a)]
-    [(l== `(,v1 . ,v2) mval)
+    [(later (== `(,v1 . ,v2) mval))
      (quasi-p-match a v1 penv penv^)
      (quasi-p-match d v2 penv^ penv-out)])))
 
-(define (quasi-p-no-match quasi-p mval penv penv-out)
+(defrel/generator (quasi-p-no-match quasi-p mval penv penv-out)
   (condg
-   (lapp u-quasi-p-no-match quasi-p mval penv penv-out)
+   #:fallback (later (u-quasi-p-no-match quasi-p mval penv penv-out))
    ([] [(literalo quasi-p)]
-    [(l=/= quasi-p mval)
+    [(later (=/= quasi-p mval))
      (== penv penv-out)])
    ([p] [(== (list 'unquote p) quasi-p)]
-    [(lapp not-tago mval) ;; TODO: why do we need this?
+    [(later (not-tago mval)) ;; TODO: why do we need this?
      (p-no-match p mval penv penv-out)])
    ([a d]
     [(== `(,a . ,d) quasi-p)
      (=/= 'unquote a)]
-    [(lconde
-       [(== penv penv-out)
-        (lapp literalo mval)]
-       [(fresh (penv^ v1 v2)
-          (l== `(,v1 . ,v2) mval)
-          (lconde
-           [(quasi-p-no-match a v1 penv penv-out)]
-           [(quasi-p-match a v1 penv penv^)
-            (quasi-p-no-match d v2 penv^ penv-out)]))])])))
+    [(later (conde
+              [(now (== penv penv-out)) ;; TODO: could this get lost?
+               (u-literalo mval)]
+             [(fresh (penv^ v1 v2)
+                (== `(,v1 . ,v2) mval)
+                (conde
+                  [(now (quasi-p-no-match a v1 penv penv-out))]
+                  [(now (quasi-p-match a v1 penv penv^))
+                   (now (quasi-p-no-match d v2 penv^ penv-out))]))]))])))
 
-(define (evalo-staged expr val)
-  (eval-expo expr initial-env val))
+(defrel/generator (evalo-staged expr val)
+  (eval-expo expr (racket-term initial-env) val))

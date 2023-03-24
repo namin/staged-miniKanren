@@ -276,7 +276,7 @@
      #'(g:condg (compile-runtime-goal gl)
                 ([x ...] [(compile-runtime-goal guard) ...]
                          [(compile-runtime-goal body) ...]) ...)]
-    [fail
+    [(_ fail)
      #'g:fail]
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
@@ -314,7 +314,7 @@
      #'(g:condg (compile-now-goal gl)
                 ([x ...] [(compile-now-goal guard) ...]
                          [(compile-now-goal body) ...]) ...)]
-    [fail #'fail]
+    [(_ fail) #'fail]
 
     [(_ (later g))
      #'(compile-later-goal g)]
@@ -369,7 +369,7 @@
      #'(g:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(g:lconde [(compile-later-goal g) ...] ...)]
-    [fail #'lfail]
+    [(_ fail) #'g:lfail]
     
     [(_ (now g))
      #'(compile-now-goal g)]
