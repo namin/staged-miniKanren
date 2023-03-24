@@ -1,5 +1,7 @@
 #lang racket/load
 
-(require "staged-load.rkt")
+(require "generator-lang2.rkt"
+         "staged-interp.rkt"
+         "test-check.rkt")
 
 (load "tests-all-bench.scm")

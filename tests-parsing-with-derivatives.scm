@@ -118,16 +118,18 @@
                                      ))))))))))))))))))
 
 (record-bench 'staging 'parse)
-(define-staged-relation (d/dc-o re c parse-result)
-  (evalo-staged
-   (parse `(d/dc ',re ',c))
-   parse-result))
+(defrel (d/dc-o re c parse-result)
+  (staged
+   (evalo-staged
+    (racket-term (parse `(d/dc ',re ',c)))
+    parse-result)))
 
 ;;(record-bench 'staging 'match)
-(define-staged-relation (regex-matcho pattern data parse-result)
-  (evalo-staged
-   (parse `(regex-match ',pattern ',data))
-   parse-result))
+(defrel (regex-matcho pattern data parse-result)
+  (staged
+   (evalo-staged
+    (racket-term (parse `(regex-match ',pattern ',data)))
+    parse-result)))
 
 (record-bench 'staged 'parse 0)
 (time-test
