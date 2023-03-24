@@ -106,8 +106,12 @@
     #:binding {(bind x) g}
     
     (conde [g:goal ...+] ...+)
+    
+    #;(~>/form (condg #:fallback f [(~optional (fresh x:id ...)) guard ...+ (~datum --) body ...] ...)
+               #'(condg #:fallback f ((~? [x ...] []) [guard ...] [body ...]) ...))
     (condg #:fallback g:goal c:condg-clause ...+)
-
+    
+    
     (staged g:goal)
     (later g:goal)
     (now g:goal)
@@ -121,7 +125,6 @@
   (nonterminal condg-clause
     ([x:term-var ...] [guard:goal ...] [body:goal ...])
     #:binding {(bind x) guard body})
-
   
   (host-interface/definition
     (defrel (r:relation-name arg:term-var ...)
