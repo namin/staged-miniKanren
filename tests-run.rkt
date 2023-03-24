@@ -167,7 +167,7 @@
   '(car))
 
 (test
-    (run 1 (q) ;; TODO(fix): run*
+    (run* (q)
       (staged
        (fresh ()
          (later (== q 'car))
@@ -198,30 +198,30 @@
        (== (cons xa zd) zs)
        (appendo xd ys zd)))))
 (test
-    (run 10 (xs ys) ;; TODO(fix): run*
+    (run* (xs ys)
       (appendo xs ys '(a b c)))
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
 
-#| ;;TODO(fix)
-(define-staged-relation (ex e)
-  (evalo-staged `(cons ,e '()) '(5)))
+(defrel (ex e)
+  (staged
+   (evalo-staged `(cons ,e '()) '(5))))
 
-(define-staged-relation (appendo-staged xs ys zs)
-  (evalo-staged
-   `(letrec ((append
-              (lambda (xs ys)
-                (if (null? xs)
-                    ys
-                    (cons (car xs)
-                          (append (cdr xs) ys))))))
-      (append ',xs ',ys))
-   zs))
+(defrel (appendo-staged xs ys zs)
+  (staged
+   (evalo-staged
+    `(letrec ((append
+               (lambda (xs ys)
+                 (if (null? xs)
+                     ys
+                     (cons (car xs)
+                           (append (cdr xs) ys))))))
+       (append ',xs ',ys))
+    zs)))
 
 (test
     (run* (xs ys)
       (appendo-staged xs ys '(a b c)))
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
-|#
 
 (test
     (run 1 (q)
@@ -296,17 +296,17 @@
          (later (numbero q)))))
   '())
 
-#| ;; TODO(fix)
-(define-staged-relation (bogus-appendo xs ys zs)
-  (evalo-staged
-   `(letrec ((append
-              (lambda (xs ys)
-                (if (null? xs)
-                    ys
-                    (cons (car xs)
-                          (append (cdr xs) ys))))))
-      append)
-   zs))
+(defrel (bogus-appendo xs ys zs)
+  (staged
+   (evalo-staged
+    `(letrec ((append
+               (lambda (xs ys)
+                 (if (null? xs)
+                     ys
+                     (cons (car xs)
+                           (append (cdr xs) ys))))))
+       append)
+    zs)))
 
 ;; TODO: is this weird?
 ;;       it's not understood by evalo-unstaged
@@ -314,7 +314,6 @@
     (length (run 1 (q)
               (bogus-appendo '(1 2) '(3 4) q)))
   1)
-|#
 
 (test
     (run 1 (q)
