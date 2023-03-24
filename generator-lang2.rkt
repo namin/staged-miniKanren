@@ -3,6 +3,8 @@
 (provide
  quote
  cons
+ list
+ racket-term
  ==
  apply-partial
  =/=
@@ -60,6 +62,7 @@
   (nonterminal quoted
     #:description "quoted value"
     n:number
+    b:boolean
     s:id
     ()
     (a:quoted . d:quoted))
@@ -71,11 +74,17 @@
     (#%term-var x:term-var)
     ((~literal quote) t:quoted)
     ((~literal cons) t1:term t2:term)
+    ((~literal list) t:term ...)
+
+    ;; TODO: we don't check that the value of e is a valid term value.
+    (racket-term e:racket-expr)
 
     (~> x:id
         #'(#%term-var x))
     (~> n:number
-        #'(quote n)))
+        #'(quote n))
+    (~> b:boolean
+        #'(quote b)))
   
   (nonterminal goal
     #:bind-literal-set goal-literals
@@ -165,13 +174,17 @@
 
 (define-syntax compile-term
   (syntax-parser
-    #:literals (#%term-var quote cons)
+    #:literals (#%term-var quote cons list)
     [(_ (#%term-var x))
      #'x]
     [(_ (quote t))
      #'(quote t)]
     [(_ (cons t1 t2))
-     #'(cons (compile-term t1) (compile-term t2))]))
+     #'(cons (compile-term t1) (compile-term t2))]
+    [(_ (list t ...))
+     #'(list (compile-term t) ...)]
+    [(_ (racket-term e))
+     #'e]))
 
 (begin-for-syntax
   (define-syntax-class binary-constraint

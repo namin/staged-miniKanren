@@ -37,38 +37,6 @@
       ((u-ext-env*o x* a* env env^)))
     (u-eval-expo body env^ val)))
 
-(define (booleano t)
-  (conde
-    ((== #f t))
-    ((== #t t))))
-
-(define (pos-tago v)
-  (conde
-    ((== v 'rec-closure))
-    ((== v 'closure))
-    ((== v 'prim))))
-
-(define (not-tago v)
-  (fresh ()
-    (=/= 'rec-closure v)
-    (=/= 'closure v)
-    (=/= 'prim v)))
-
-(define (absent-tago v)
-  (fresh ()
-    (absento 'rec-closure v)
-    (absento 'closure v)
-    (absento 'prim v)))
-
-(define (mapo fo xs ys)
-  (conde
-    ((== xs '()) (== ys '()))
-    ((fresh (xa xd ya yd)
-       (== xs (cons xa xd))
-       (== ys (cons ya yd))
-       (fo xa ya)
-       (mapo fo xd yd)))))
-
 (define (same-lengtho a* b*)
   (conde
     ((== a* '()) (== b* '()))
@@ -515,6 +483,3 @@
 
 (define (evalo-staged expr val)
   (eval-expo expr initial-env val))
-
-(define (evalo-unstaged expr val)
-  (u-eval-expo expr initial-env val))

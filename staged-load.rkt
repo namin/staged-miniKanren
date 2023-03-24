@@ -16,12 +16,20 @@
 (include "staged-apply-racket.rkt")
 (include "staged-apply.scm")
 (include "condg.rktl")
-(include "staged-interp.scm")
+;;(include "staged-interp.scm")
 (include "staged-utils.scm")
 (include "staged-run.scm")
-(include "unstaged-interp.scm")
+;;(include "unstaged-interp.scm")
 (include "test-check.scm")
 
+(define (mapo fo xs ys)
+  (conde
+    ((== xs '()) (== ys '()))
+    ((fresh (xa xd ya yd)
+       (== xs (cons xa xd))
+       (== ys (cons ya yd))
+       (fo xa ya)
+       (mapo fo xd yd)))))
 
 (define (make-list-of-symso xs ys)
   (mapo (lambda (x y) (== y (unexpand x))) xs ys))
