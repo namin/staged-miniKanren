@@ -4,6 +4,7 @@
  quote
  cons
  list
+ racket-term
  ==
  apply-partial
  =/=
@@ -77,12 +78,12 @@
 
     (#%term-var x:term-var)
     ;; TODO: we don't check that the value of e is a valid term value.
-    (#%racket-term e:racket-expr)
+    (racket-term e:racket-expr)
     
     (~> v:id
         (if (lookup #'v (binding-class-predicate term-var))
             #'(#%term-var v)
-            #'(#%racket-term v)))
+            #'(racket-term v)))
 
     (~> n:number
         #'(quote n))
@@ -184,10 +185,10 @@
 
 (define-syntax compile-term
   (syntax-parser
-    #:literals (quote cons list #%term-var #%racket-term)
+    #:literals (quote cons list #%term-var racket-term)
     [(_ (#%term-var x:id))
      #'x]
-    [(_ (#%racket-term e))
+    [(_ (racket-term e))
      #'e]
     [(_ (quote t))
      #'(quote t)]
