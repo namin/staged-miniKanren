@@ -167,7 +167,7 @@
   '(car))
 
 (test
-    (run 1 (q) ;; TODO(fix): run*
+    (run* (q)
       (staged
        (fresh ()
          (later (== q 'car))
@@ -198,7 +198,7 @@
        (== (cons xa zd) zs)
        (appendo xd ys zd)))))
 (test
-    (run 10 (xs ys) ;; TODO(fix): run*
+    (run* (xs ys)
       (appendo xs ys '(a b c)))
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
 

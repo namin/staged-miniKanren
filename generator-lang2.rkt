@@ -24,6 +24,7 @@
  defrel-partial
  defrel/generator
  run
+ run*
 
  (rename-out [g:generated-code generated-code])
  
@@ -169,8 +170,12 @@
   (host-interface/expression
     (run n:racket-expr (q:term-var ...+) g:goal ...+)
     #:binding {(bind q) g}
+    #'(g:run n (q ...) (compile-runtime-goal g) ...))
 
-    #'(g:run n (q ...) (compile-runtime-goal g) ...)))
+  (host-interface/expression
+    (run* (q:term-var ...+) g:goal ...+)
+    #:binding {(bind q) g}
+    #'(g:run* (q ...) (compile-runtime-goal g) ...)))
 
 (define-syntax compile-term
   (syntax-parser
