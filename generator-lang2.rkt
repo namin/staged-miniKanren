@@ -183,13 +183,21 @@
     #:binding {(bind q) g}
     #'(g:run* (q ...) (compile-runtime-goal g) ...)))
 
+(begin-for-syntax
+  (require syntax/transformer)
+  (define term-var-transformer
+    (make-variable-like-transformer
+     (lambda (id)
+       #`(term-variable #,id)))))
+
 (define-syntax compile-term
   (syntax-parser
     #:literals (quote cons list #%term-var racket-term)
     [(_ (#%term-var x:id))
      #'x]
     [(_ (racket-term e))
-     #'e]
+     #'(with-reference-compilers ([term-var term-var-transformer])
+         (unwrap-term e #'e))]
     [(_ (quote t))
      #'(quote t)]
     [(_ (cons t1 t2))
@@ -418,3 +426,20 @@
           [(~or* v:identifier v:number v:boolean v:string) #'(quote v)]
           [() #'(quote ())]))])))
 
+(require ee-lib/errors racket/match)
+(struct term-variable [value])
+(define (unwrap-term v blame-stx)
+  (match v
+    [atom
+     #:when (or (symbol? atom)
+                (string? atom)
+                (number? atom)
+                (null? atom)
+                (boolean? atom))
+     atom]
+    [(term-variable val)
+     val]
+    [(cons a d)
+     (cons (unwrap-term a blame-stx) (unwrap-term d blame-stx))]
+    [_ (raise-argument-error/stx 'term "term-or-term-variable?" v blame-stx)]))
+    
