@@ -721,7 +721,7 @@
 (record-bench 'staging 'double-evalo)
 (defrel (double-evalo expr val)
   (staged
-   (eval-staged
+   (evalo-staged
     `(letrec ([lookup
                (lambda (x env)
                  (match env
@@ -819,7 +819,7 @@
 (record-bench 'staging 'double-evalo-variadic-list-fo)
 (defrel (double-evalo-variadic-list-fo expr val)
   (staged
-    (eval-staged
+    (evalo-staged
      (double-evalo-variadic-list-fo-fun `(eval-expr ',expr '()))
      val)))
 
@@ -873,7 +873,7 @@
 (record-bench 'staging 'double-evalo-variadic-list-fo-better)
 (defrel (double-evalo-variadic-list-fo-less-ridiculous expr val)
   (staged
-    (eval-staged
+    (evalo-staged
      (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',expr '()))
      val)))
 
