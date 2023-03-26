@@ -1,4 +1,4 @@
-(define (prover body)
+(define-term-syntax-rule (prover body)
   `(letrec ([member?
              (lambda (x ls)
                (if (null? ls) #f
@@ -19,35 +19,22 @@
                    ))])
        ,body)))
 
-(define (proof-staged prf)
-  (fresh (env)
-    (ext-env*o '(prf) (list prf) initial-env env)
-    (eval-expo
-     (prover `(proof? prf))
-     env
-     #t)))
+(defrel/generator (proof-staged prf)
+  (evalo-staged
+   (prover `(proof? ',prf))
+   #t))
 
-(define (proof-unstaged prf)
-  (fresh (env)
-    (ext-env*o '(prf) (list prf) initial-env env)
-    (u-eval-expo
-     (prover `(proof? prf))
-     env
-     #t)))
+(defrel (proof-unstaged prf)
+  (evalo-unstaged
+   (prover `(proof? ',prf))
+   #t))
 
 (record-bench 'staging 'proofo)
-(define-staged-relation (proofo prf b)
-  (fresh (env)
-    (ext-env*o '(prf) (list prf) initial-env env)
-    (eval-expo
-     (prover `(proof? prf))
-     env
-     b)))
-#;
-(define proofo
-  (time (eval
-         (gen 'proof? '(proof)
-              (prover '(proof? proof))))))
+(defrel (proofo prf b)
+  (staged
+   (evalo-staged
+    (prover `(proof? ',prf))
+    b)))
 
 (define ex-proof1
   '((C (A (A => B) (B => C))
@@ -67,10 +54,11 @@
 
 (record-bench 'run-staged 'proofo 1)
 (time-test
-  (run-staged 1 (prf)
+ (run 1 (prf)
+   (staged
     (fresh (body)
       (== prf `(C (A (A => B) (B => C)) . ,body))
-      (proof-staged prf)))
+      (proof-staged prf))))
   ex-proof1)
 
 (record-bench 'unstaged 'proofo 1)
@@ -109,10 +97,11 @@
 
 (record-bench 'run-staged 'proofo 2)
 (time-test
-  (run-staged 1 (prf)
+ (run 1 (prf)
+   (staged
     (fresh (body)
       (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-      (proof-staged prf)))
+      (proof-staged prf))))
   ex-proof2)
 
 (record-bench 'unstaged 'proofo 2)
@@ -135,11 +124,12 @@
 (record-bench 'run-staged 'proofo 3)
 (time-test
  (length
-  (run-staged 1 (prf)
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
-      (proof-staged prf)
-)))
+  (run 1 (prf)
+    (staged
+     (fresh (body)
+       (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
+       (proof-staged prf)
+       ))))
  1)
 
 #| doesn't come back
