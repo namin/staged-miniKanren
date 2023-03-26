@@ -196,7 +196,7 @@
      '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
 
-(define-term-syntax-rule (eval-and-map-and-list-eval body)
+(define-term-syntax-rule (eval-and-map-and-list-eval letrec-body)
   `(letrec ([map (lambda (f l)
                          (if (null? l)
                              '()
@@ -232,7 +232,7 @@
                           (map (lambda (e) (eval-expr e env)) e*)]
                          [`(,rator ,rand)
                           ((eval-expr rator env) (eval-expr rand env))]))])
-             ,body)))
+             ,letrec-body)))
 
 (record-bench 'staging 'eval-and-map-and-list-evalo)
 (defrel (eval-and-map-and-list-evalo expr val)

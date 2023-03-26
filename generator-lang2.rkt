@@ -20,6 +20,7 @@
  later
  now
  fail
+ trace
 
  defrel
  defrel-partial
@@ -44,7 +45,7 @@
                      syntax/id-set)
          
          (prefix-in g: "generator-lang.rkt")
-         (only-in "staged-load.rkt" generate-staged invoke-staged))
+         (only-in "staged-load.rkt" generate-staged invoke-staged project succeed))
 
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)
@@ -104,6 +105,8 @@
     (symbolo t1:term)
     (numbero t1:term)
     (stringo t1:term)
+
+    (trace name:id t:term-var ...)
 
     (fresh (x:term-var ...) g:goal ...+)
     #:binding {(bind x) g}
@@ -254,6 +257,12 @@
   (syntax-parser
     #:literal-sets (goal-literals)
 
+    [(_ (trace id x ...))
+     #'(project (x ...)
+         (begin
+           (displayln (list 'id x ...))
+           succeed))]
+    
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)
        [(runtime-rel arg-count)
@@ -294,10 +303,11 @@
      #'(g:fresh (x ...) (compile-runtime-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(g:conde [(compile-runtime-goal g) ...] ...)]
-    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
-     #'(g:condg (compile-runtime-goal gl)
-                ([x ...] [(compile-runtime-goal guard) ...]
-                         [(compile-runtime-goal body) ...]) ...)]
+    [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
+     ;; preserve the srcloc for condg runtime errors
+     (syntax/loc #'stx (g:condg (compile-runtime-goal gl)
+                                ([x ...] [(compile-runtime-goal guard) ...]
+                                         [(compile-runtime-goal body) ...]) ...))]
     [(_ fail)
      #'g:fail]
     [(_ (staged g))
@@ -312,6 +322,12 @@
 (define-syntax compile-now-goal
   (syntax-parser
     #:literal-sets (goal-literals)
+    [(_ (trace id x ...))
+     #'(project (x ...)
+         (begin
+           (displayln (list 'id x ...))
+           succeed))]
+    
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)
        [(generator-rel arg-count)
@@ -332,10 +348,11 @@
      #'(g:fresh (x ...) (compile-now-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(g:conde [(compile-now-goal g) ...] ...)]
-    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
-     #'(g:condg (compile-now-goal gl)
-                ([x ...] [(compile-now-goal guard) ...]
-                         [(compile-now-goal body) ...]) ...)]
+    [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
+     ;; preserve the srcloc for condg runtime errors
+     (syntax/loc #'stx (g:condg (compile-now-goal gl)
+                                ([x ...] [(compile-now-goal guard) ...]
+                                         [(compile-now-goal body) ...]) ...))]
     [(_ fail) #'fail]
 
     [(_ (later g))

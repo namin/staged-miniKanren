@@ -7,7 +7,7 @@
      ;;(raise-syntax-error 'condg (format "guard produced too many answers: ~a" answers) guard-stx)
      ]))
 
-(define (condg-runtime fallback clauses)
+(define (condg-runtime fallback clauses error-stx)
   (lambda (st)
     (let ((st (state-with-scope st (new-scope))))
       (define candidates
@@ -17,7 +17,7 @@
                    #:when guard-answer)
           (cons guard-answer body)))
       (match candidates
-        ['() (error 'condg "no candidates")]
+        ['() (raise-syntax-error #f "all guards failed" error-stx)]
         [(list (cons guard-answer body))
          (if (eq? 'nondet guard-answer)
              (fallback st)
@@ -27,6 +27,7 @@
 (define-syntax condg
   (syntax-parser
    ((_ fallback ((x ...) (~and guard (g0 g ...)) (b0 b ...)) ...)
+    #:with error-stx this-syntax
     #'(condg-runtime
        (lambda (st) (fallback st))
        (list
@@ -37,4 +38,5 @@
                  (bind* (g0 st) g ...)
                  (lambda (st) (bind* (b0 st) b ...))
                  #'guard))))
-         ...)))))
+         ...)
+       #'error-stx))))
