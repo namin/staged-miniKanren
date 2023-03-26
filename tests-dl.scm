@@ -1,7 +1,7 @@
 ;; Adapted from the nnf code in 'The Semantic Web Explained' by Péter
 ;; Szeredi, Gergely Lukácsy, and Tamás Benkő. Cambridge University
 ;; Press, 2014.
-(define-term-syntax-rule (nnf concept)
+(define-term-syntax-rule (nnf the-concept)
   `(letrec ((positive?
              (lambda (n)
                (match n
@@ -41,7 +41,7 @@
                        [`(All ,(? symbol? r) ,c)
                         (list 'All r (nnf c))]
                        [concept concept]))))
-           (nnf ',concept))))))
+           (nnf ',the-concept))))))
 
 (record-bench 'staging 'nnf)
 (defrel (nnfo concept nnf-concept)
@@ -113,10 +113,11 @@
 
 (record-bench 'run-staged 'nnf 1)
 (time-test
-  (run-staged #f (nnf-concept)
+ (run* (nnf-concept)
+   (staged
     (evalo-staged
      (nnf '(Not (AtLeast z hasChild)))
-     nnf-concept))
+     nnf-concept)))
   '((Not Top)))
 
 (record-bench 'staged 'nnf 1)
@@ -137,10 +138,11 @@
 
 (record-bench 'run-staged 'nnf 2)
 (time-test
-  (run-staged #f (nnf-concept)
+ (run* (nnf-concept)
+   (staged
     (evalo-staged
      (nnf '(Not (AtMost (s . z) hasChild)))
-     nnf-concept))
+     nnf-concept)))
   '((AtLeast (s s . z) hasChild)))
 
 (record-bench 'staged 'nnf 2)
@@ -160,9 +162,10 @@
 
 (record-bench 'run-staged 'nnf 3)
 (time-test
-  (run-staged #f (nnf-concept)
+ (run* (nnf-concept)
+   (staged
     (evalo-staged
-     (nnf '(Not (AtLeast (s s s . z) hasChild))) nnf-concept))
+     (nnf '(Not (AtLeast (s s s . z) hasChild))) nnf-concept)))
   '((AtMost (s s . z) hasChild)))
 
 (record-bench 'staged 'nnf 3)
