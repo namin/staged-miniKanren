@@ -131,23 +131,24 @@
 
 (record-bench 'run-staged 'peano-synth-fib-aps 0)
 (time-test
-  (run* (fib-acc)
-    (== `(lambda (n a1 a2)
-           (if (zero? n)
-               a1
-               (if (zero? (sub1 n))
-                   a2
-                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-        fib-acc)
-    (staged
-     (evalo-staged
-      (peano-synth-fib-aps fib-acc 'z '(s . z))
-      '(z
-        (s . z)
-        (s . z)
-        (s s . z)
-        (s s s . z)                   
-        (s s s s s . z)))))
+ (run* (fib-acc)  
+   (staged
+    (fresh ()
+      (== `(lambda (n a1 a2)
+             (if (zero? n)
+                 a1
+                 (if (zero? (sub1 n))
+                     a2
+                     (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+          fib-acc)
+      (evalo-staged
+       (peano-synth-fib-aps fib-acc 'z '(s . z))
+       '(z
+         (s . z)
+         (s . z)
+         (s s . z)
+         (s s s . z)                   
+         (s s s s s . z))))))
   '((lambda (n a1 a2)
       (if (zero? n)
           a1
@@ -185,23 +186,24 @@
 
 (record-bench 'run-staged 'peano-synth-fib-aps 1)
 (time-test
-  (run* (fib-acc ACC1 ACC2)
-    (== `(lambda (n a1 a2)
-           (if (zero? n)
-               a1
-               (if (zero? (sub1 n))
-                   a2
-                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-        fib-acc)
-    (staged
-     (evalo-staged
-      (peano-synth-fib-aps fib-acc ACC1 ACC2)
-      '(z
-        (s . z)
-        (s . z)
-        (s s . z)
-        (s s s . z)                   
-        (s s s s s . z)))))
+ (run* (fib-acc ACC1 ACC2)
+   (staged
+    (fresh ()
+      (== `(lambda (n a1 a2)
+             (if (zero? n)
+                 a1
+                 (if (zero? (sub1 n))
+                     a2
+                     (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+          fib-acc)
+      (evalo-staged
+       (peano-synth-fib-aps fib-acc ACC1 ACC2)
+       '(z
+         (s . z)
+         (s . z)
+         (s s . z)
+         (s s s . z)                   
+         (s s s s s . z))))))
   '(((lambda (n a1 a2)
        (if (zero? n)
            a1
@@ -332,23 +334,25 @@
 
 (record-bench 'run-staged 'peano-synth-fib-aps 2)
 (time-test
-  (run-staged 1 (fib-acc ACC1 ACC2)
-    (fresh (A B)
-      (== `(lambda (n a1 a2)
-             (if (zero? n)
-                 a1
-                 (if (zero? (sub1 n))
-                     ,B
-                     (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-          fib-acc))
-    (evalo-staged
-     (peano-synth-fib-aps fib-acc ACC1 ACC2)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)
-       (s s s s s . z))))
+ (run 1 (fib-acc ACC1 ACC2)
+   (staged
+    (fresh ()
+      (fresh (A B)
+        (== `(lambda (n a1 a2)
+               (if (zero? n)
+                   a1
+                   (if (zero? (sub1 n))
+                       ,B
+                       (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+            fib-acc))
+      (evalo-staged
+       (peano-synth-fib-aps fib-acc ACC1 ACC2)
+       '(z
+         (s . z)
+         (s . z)
+         (s s . z)
+         (s s s . z)
+         (s s s s s . z))))))
   '(((lambda (n a1 a2)
        (if (zero? n)
            a1
