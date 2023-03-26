@@ -277,45 +277,46 @@
 
 
 (record-bench 'staging 'peano-synth-fib-aps)
-(define-staged-relation (peano-synth-fib-apso e ACC1 ACC2 result)
-  (evalo-staged
-   `(letrec ((zero?
-              (lambda (n)
-                (equal? 'z n))))
+(defrel (peano-synth-fib-apso e ACC1 ACC2 result)
+  (staged
+   (evalo-staged
+    `(letrec ((zero?
+               (lambda (n)
+                 (equal? 'z n))))
 
-      (letrec ((add1
-                (lambda (n)
-                  (cons 's n))))
-        (letrec ((sub1
-                  (lambda (n)
-                    (and (equal? (car n) 's)
-                         (cdr n)))))
-          (letrec ((+
-                    (lambda (n m)
-                      (if (zero? n)
-                          m
-                          (add1 (+ (sub1 n) m))))))
-            (letrec ((-
-                      (lambda (n m)
-                        (if (zero? m)
-                            n
-                            (sub1 (- n (sub1 m)))))))
-              (letrec ((fib-aps
-                        (lambda (n a1 a2)
-                          (if (zero? n)
-                              a1
-                              (if (zero? (sub1 n))
-                                  ,e
-                                  (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
-                (list
-                 (fib-aps 'z ',ACC1 ',ACC2)
-                 (fib-aps '(s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s s s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
-                ))))))
-   result))
+       (letrec ((add1
+                 (lambda (n)
+                   (cons 's n))))
+         (letrec ((sub1
+                   (lambda (n)
+                     (and (equal? (car n) 's)
+                          (cdr n)))))
+           (letrec ((+
+                     (lambda (n m)
+                       (if (zero? n)
+                           m
+                           (add1 (+ (sub1 n) m))))))
+             (letrec ((-
+                       (lambda (n m)
+                         (if (zero? m)
+                             n
+                             (sub1 (- n (sub1 m)))))))
+               (letrec ((fib-aps
+                         (lambda (n a1 a2)
+                           (if (zero? n)
+                               a1
+                               (if (zero? (sub1 n))
+                                   ,e
+                                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
+                 (list
+                  (fib-aps 'z ',ACC1 ',ACC2)
+                  (fib-aps '(s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s s s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
+                 ))))))
+    result)))
 
 (record-bench 'staged 'peano-synth-fib-aps 2)
 (time-test
@@ -392,45 +393,46 @@
 
 
 ;;(record-bench 'staging 'peano-synth-fib-aps-step)
-(define-staged-relation (peano-synth-fib-aps-stepo step1 step2 ACC1 ACC2 result)
-  (evalo-staged
-   `(letrec ((zero?
-              (lambda (n)
-                (equal? 'z n))))
+(defrel (peano-synth-fib-aps-stepo step1 step2 ACC1 ACC2 result)
+  (staged
+   (evalo-staged
+    `(letrec ((zero?
+               (lambda (n)
+                 (equal? 'z n))))
 
-      (letrec ((add1
-                (lambda (n)
-                  (cons 's n))))
-        (letrec ((sub1
-                  (lambda (n)
-                    (and (equal? (car n) 's)
-                         (cdr n)))))
-          (letrec ((+
-                    (lambda (n m)
-                      (if (zero? n)
-                          m
-                          (add1 (+ (sub1 n) m))))))
-            (letrec ((-
-                      (lambda (n m)
-                        (if (zero? m)
-                            n
-                            (sub1 (- n (sub1 m)))))))
-              (letrec ((fib-aps
-                        (lambda (n a1 a2)
-                          (if (zero? n)
-                              a1
-                              (if (zero? (sub1 n))
-                                  a2
-                                  (fib-aps (- n '(s . z)) ,step1 ,step2))))))
-                (list
-                 (fib-aps 'z ',ACC1 ',ACC2)
-                 (fib-aps '(s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s s s . z) ',ACC1 ',ACC2)
-                 (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
-                ))))))
-   result))
+       (letrec ((add1
+                 (lambda (n)
+                   (cons 's n))))
+         (letrec ((sub1
+                   (lambda (n)
+                     (and (equal? (car n) 's)
+                          (cdr n)))))
+           (letrec ((+
+                     (lambda (n m)
+                       (if (zero? n)
+                           m
+                           (add1 (+ (sub1 n) m))))))
+             (letrec ((-
+                       (lambda (n m)
+                         (if (zero? m)
+                             n
+                             (sub1 (- n (sub1 m)))))))
+               (letrec ((fib-aps
+                         (lambda (n a1 a2)
+                           (if (zero? n)
+                               a1
+                               (if (zero? (sub1 n))
+                                   a2
+                                   (fib-aps (- n '(s . z)) ,step1 ,step2))))))
+                 (list
+                  (fib-aps 'z ',ACC1 ',ACC2)
+                  (fib-aps '(s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s s s . z) ',ACC1 ',ACC2)
+                  (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
+                 ))))))
+    result)))
 
 
 (record-bench 'staged 'peano-synth-fib-aps 3)
@@ -454,7 +456,8 @@
 
 (record-bench 'run-staged 'peano-synth-fib-aps 3)
 (time-test
-  (run-staged 1 (fib-acc ACC1 ACC2)
+ (run 1 (fib-acc ACC1 ACC2)
+   (staged
     (fresh (A B)
       (== `(lambda (n a1 a2)
              (if (zero? n)
@@ -462,15 +465,15 @@
                  (if (zero? (sub1 n))
                      a2
                      (fib-aps (- n '(s . z)) ,A ,B))))
-          fib-acc))
-    (evalo-staged
-     (peano-synth-fib-aps fib-acc ACC1 ACC2)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)
-       (s s s s s . z))))
+          fib-acc)
+      (evalo-staged
+       (peano-synth-fib-aps fib-acc ACC1 ACC2)
+       '(z
+         (s . z)
+         (s . z)
+         (s s . z)
+         (s s s . z)
+         (s s s s s . z))))))
   '(((lambda (n a1 a2)
        (if (zero? n)
            a1
@@ -514,7 +517,8 @@
 
 (record-bench 'run-staged 'peano-synth-fib-aps 4)
 (time-test
-  (run-staged 1 (fib-acc ACC1 ACC2)
+ (run 1 (fib-acc ACC1 ACC2)
+   (staged
     (fresh (A B C)
       (== `(lambda (n a1 a2)
              (if (zero? n)
@@ -522,15 +526,15 @@
                  (if (zero? (sub1 n))
                      a2
                      (fib-aps (- n '(s . z)) ,B ,C))))
-          fib-acc))
-    (evalo-staged
-     (peano-synth-fib-aps fib-acc ACC1 ACC2)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)
-       (s s s s s . z))))
+          fib-acc)
+      (evalo-staged
+       (peano-synth-fib-aps fib-acc ACC1 ACC2)
+       '(z
+         (s . z)
+         (s . z)
+         (s s . z)
+         (s s s . z)
+         (s s s s s . z))))))
   '(((lambda (n a1 a2)
        (if (zero? n)
            a1
@@ -572,7 +576,7 @@
 |#
 
 
-(define (peano-fib query)
+(define-term-syntax-rule (peano-fib query)
   `(letrec ((zero?
              (lambda (n)
                (equal? 'z n))))
@@ -605,13 +609,14 @@
      ,query
      )))))))
 
-(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
+;;(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
 
 (record-bench 'staging 'peano-fib)
-(define-staged-relation (fib-apso n a1 a2 result)
-  (evalo-staged
-   (peano-fib `(fib-aps ',n ',a1 ',a2))
-   result))
+(defrel (fib-apso n a1 a2 result)
+  (staged
+   (evalo-staged
+    (peano-fib `(fib-aps ',n ',a1 ',a2))
+    result)))
 
 (record-bench 'staged 'peano-fib 1)
 (time-test
@@ -621,10 +626,11 @@
 
 (record-bench 'run-staged 'peano-fib 1)
 (time-test
-  (run-staged #f (v)
+ (run* (v)
+   (staged
     (evalo-staged
      (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
-     v))
+     v)))
   '((s s s s s s s s . z)))
 
 (record-bench 'unstaged 'peano-fib 1)
@@ -645,10 +651,11 @@
 
 (record-bench 'run-staged 'peano-fib 2)
 (time-test
-  (run-staged 1 (q)
+ (run 1 (q)
+   (staged
     (evalo-staged
      (peano-fib `(fib-aps ',q 'z '(s . z)))
-     '(s s s s s s s s . z)))
+     '(s s s s s s s s . z))))
   '((s s s s s s . z)))
 
 (record-bench 'unstaged 'peano-fib 2)
@@ -669,10 +676,11 @@
 
 (record-bench 'run-staged 'peano-fib 3)
 (time-test
-  (run-staged 1 (q)
+ (run 1 (q)
+   (staged
     (evalo-staged
      (peano-fib `(fib-aps ',q 'z '(s . z)))
-     '(s s s s s s s s s s s s s . z)))
+     '(s s s s s s s s s s s s s . z))))
   '((s s s s s s s . z)))
 
 (record-bench 'unstaged 'peano-fib 3)
@@ -686,10 +694,11 @@
 
 (record-bench 'run-staged 'peano-fib 4)
 (time-test
-  (run-staged 5 (q)
+ (run 5 (q)
+   (staged
     (evalo-staged
      (peano-fib `(fib-aps ,q 'z '(s . z)))
-     '(s s s s s s s s s s s s s . z)))
+     '(s s s s s s s s s s s s s . z))))
   '('(s s s s s s s . z)
     ((letrec ([_.0 (lambda _.1 _.2)]) '(s s s s s s s . z))
      $$
