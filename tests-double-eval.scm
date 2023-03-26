@@ -389,7 +389,7 @@
   '((list x (cons x '()) x)))
 |#
 
-(define-term-syntax-rule (quasi-quine-eval expr)
+(define-term-syntax-rule (quasi-quine-eval initial-expr)
    `(letrec ([eval-quasi (lambda (q eval)
                            (match q
                              [(? symbol? x) x]
@@ -416,7 +416,7 @@
                      (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
                     [`(,rator ,rand)
                      ((eval-expr rator env) (eval-expr rand env))]))])
-        (eval-expr ',expr (lambda (y) 'error)))))
+        (eval-expr ',initial-expr (lambda (y) 'error)))))
 
 (record-bench 'staging 'quasi-quine-evalo)
 (defrel (quasi-quine-evalo expr val)
@@ -457,7 +457,7 @@
     (sym _.0))))
 
 
-(define-term-syntax-rule (ho-quine-interp-cons-fun body)
+(define-term-syntax-rule (ho-quine-interp-cons-fun letrec-body)
           `(letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
@@ -473,7 +473,7 @@
                         (cons (eval-expr e1 env) (eval-expr e2 env))]
                        [`(,rator ,rand)
                         ((eval-expr rator env) (eval-expr rand env))]))])
-             ,body))
+             ,letrec-body))
 
 (record-bench 'staging 'ho-quine-interp-cons)
 (defrel (ho-quine-interp-cons expr val)
@@ -509,7 +509,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-(define-term-syntax-rule (ho-double-eval body)
+(define-term-syntax-rule (ho-double-eval letrec-body)
           `(letrec ([eval-expr
                    (lambda (expr env)
                      (match expr
@@ -532,7 +532,7 @@
                         ((eval-expr rator env)
                          (eval-expr rand env))]
                        ))])
-             ,body))
+             ,letrec-body))
 
 (record-bench 'staging 'ho-double-evalo)
 (defrel (ho-double-evalo expr val)
@@ -618,7 +618,7 @@
 ;; => ((a . a) (b . b) (c . c))
 |#
 
-(define-term-syntax-rule (map-in-double-eval-fun body)
+(define-term-syntax-rule (map-in-double-eval-fun letrec-body)
           `(letrec ([lookup
                    (lambda (x env)
                      (match env
@@ -650,7 +650,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-             ,body)))
+             ,letrec-body)))
 (record-bench 'staging 'map-in-double-eval)
 (defrel (map-in-double-eval expr val)
   (staged
@@ -790,7 +790,7 @@
      ,not-tags0+clo
      (sym _.0))))
 
-(define-term-syntax-rule (double-evalo-variadic-list-fo-fun body)
+(define-term-syntax-rule (double-evalo-variadic-list-fo-fun letrec-body)
           `(letrec ([lookup
                    (lambda (x env)
                      (match env
@@ -814,7 +814,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-             ,body)))
+             ,letrec-body)))
 
 (record-bench 'staging 'double-evalo-variadic-list-fo)
 (defrel (double-evalo-variadic-list-fo expr val)
@@ -843,7 +843,7 @@
      ,not-tags0+clo
      (sym _.0))))
 
-(define-term-syntax-rule (double-evalo-variadic-list-fo-less-ridiculous-fun body)
+(define-term-syntax-rule (double-evalo-variadic-list-fo-less-ridiculous-fun letrec-body)
           `(letrec ([lookup
                    (lambda (x env)
                      (match env
@@ -869,7 +869,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-             ,body)))
+             ,letrec-body)))
 (record-bench 'staging 'double-evalo-variadic-list-fo-better)
 (defrel (double-evalo-variadic-list-fo-less-ridiculous expr val)
   (staged
@@ -897,7 +897,7 @@
      ,not-tags0+clo
      (sym _.0))))
 
-(define-term-syntax-rule (double-evalo-variadic-list-ho-fun body)
+(define-term-syntax-rule (double-evalo-variadic-list-ho-fun letrec-body)
   `(letrec ([lookup
                    (lambda (x env)
                      (match env
@@ -924,7 +924,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-     ,body))))
+     ,letrec-body))))
 
 (record-bench 'staging 'double-evalo-variadic-list-ho)
 (defrel (double-evalo-variadic-list-ho expr val)
@@ -954,7 +954,7 @@
    ,not-tags0+clo
    (sym _.0))))
 
-(define-term-syntax-rule (double-evalo-cons-fun body)
+(define-term-syntax-rule (double-evalo-cons-fun letrec-body)
           `(letrec ([lookup
                    (lambda (x env)
                      (match env
@@ -975,7 +975,7 @@
                         (match (eval-expr rator env)
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-             ,body)))
+             ,letrec-body)))
 
 (record-bench 'staging 'double-evalo-cons)
 (defrel (double-evalo-cons expr val)
