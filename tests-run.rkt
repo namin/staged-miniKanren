@@ -374,13 +374,3 @@
 (test
     (run 1 (q) (staged (later (is-fiveo q))))
   '(5))
-
-(define (f x)
-  (displayln x)
-  (list x x))
-
-(test
- (run 1 (q)
-   (fresh (x)
-     (== q (racket-term (f x)))))
- '((_.0 _.0)))

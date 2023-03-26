@@ -4,4 +4,5 @@
          "staged-interp.rkt"
          "test-check.rkt")
 
+(load "staged-test-tags.scm")
 (load "tests-all-bench.scm")

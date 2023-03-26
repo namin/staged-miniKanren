@@ -1,6 +1,7 @@
 ;; Adapted from Matt Might's code for parsing with derivatives.
 
-(define (parse body-expr)
+(define-term-syntax-rule
+  (parse body-expr)
   `(letrec ((regex-NULL (lambda () #f)))
      (letrec ((regex-BLANK (lambda () #t)))
        (letrec ((regex-alt?
@@ -121,14 +122,14 @@
 (defrel (d/dc-o re c parse-result)
   (staged
    (evalo-staged
-    (racket-term (parse `(d/dc ',re ',c)))
+    (parse `(d/dc ',re ',c))
     parse-result)))
 
 ;;(record-bench 'staging 'match)
 (defrel (regex-matcho pattern data parse-result)
   (staged
    (evalo-staged
-    (racket-term (parse `(regex-match ',pattern ',data)))
+    (parse `(regex-match ',pattern ',data))
     parse-result)))
 
 (record-bench 'staged 'parse 0)
@@ -139,10 +140,11 @@
 
 (record-bench 'run-staged 'parse 0)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
+  (run #f (parse-result)
+    (staged
+     (evalo-staged
       (parse '(d/dc 'baz 'f))
-      parse-result))
+      parse-result)))
   '(#f))
 
 (record-bench 'unstaged 'parse 0)
@@ -162,10 +164,11 @@
 
 (record-bench 'run-staged 'parse 1)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
+  (run #f (parse-result)
+    (staged
+     (evalo-staged
       (parse '(d/dc '(seq foo barn) 'foo))
-      parse-result))
+      parse-result)))
   '(barn))
 
 (record-bench 'unstaged 'parse 1)
@@ -184,10 +187,11 @@
 
 (record-bench 'run-staged 'parse 2)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
+  (run #f (parse-result)
+    (staged
+     (evalo-staged
       (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
-      parse-result))
+      parse-result)))
   '((alt bar (rep baz))))
 
 (record-bench 'unstaged 'parse 2)
@@ -209,11 +213,12 @@
 
 (record-bench 'run-staged 'parse 3)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
-     (parse '(regex-match '(seq foo (rep bar)) 
-                          '(foo bar bar bar)))
-     parse-result))
+  (run #f (parse-result)
+    (staged
+     (evalo-staged
+      (parse '(regex-match '(seq foo (rep bar)) 
+                           '(foo bar bar bar)))
+      parse-result)))
   '(#t))
 
 (record-bench 'unstaged 'parse 3)
@@ -235,11 +240,12 @@
 
 (record-bench 'run-staged 'parse 4)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
-     (parse '(regex-match '(seq foo (rep bar)) 
-                          '(foo bar baz bar bar)))
-     parse-result))
+  (run #f (parse-result)
+    (staged
+     (evalo-staged
+      (parse '(regex-match '(seq foo (rep bar)) 
+                           '(foo bar baz bar bar)))
+     parse-result)))
   '(#f))
 
 (record-bench 'unstaged 'parse 4)
@@ -261,11 +267,12 @@
 
 (record-bench 'run-staged 'parse 5)
 (time-test
-  (run-staged #f (parse-result)
-    (evalo-staged
-     (parse '(regex-match '(seq foo (rep (alt bar baz))) 
-                          '(foo bar baz bar bar)))
-     parse-result))
+  (run #f (parse-result)
+    (staged
+     (evalo-staged
+      (parse '(regex-match '(seq foo (rep (alt bar baz))) 
+                           '(foo bar baz bar bar)))
+     parse-result)))
   '(#t))
 
 (record-bench 'unstaged 'parse 5)
@@ -292,10 +299,11 @@
 
 (record-bench 'run-staged 'parse-backwards 0)
 (time-test
-  (run-staged 1 (regex)
-    (evalo-staged
+  (run 1 (regex)
+    (staged
+     (evalo-staged
       (parse `(d/dc ',regex 'f))
-      '(#f)))
+      '(#f))))
   `(((seq f (#f) . _.0)
      $$
      ,absento-tags0)))
@@ -322,10 +330,11 @@
 
 (record-bench 'run-staged 'parse-backwards 1)
 (time-test
-  (run-staged 1 (regex)
-    (evalo-staged
+  (run 1 (regex)
+    (staged
+     (evalo-staged
       (parse `(d/dc ',regex 'foo))
-      'barn))
+      'barn)))
   `(((seq foo barn . _.0)
      $$
      ,absento-tags0)))
@@ -355,10 +364,11 @@
 
 (record-bench 'run-staged 'parse-backwards 2)
 (time-test
-  (run-staged 1 (regex)
-    (evalo-staged
+  (run 1 (regex)
+    (staged
+     (evalo-staged
       (parse `(d/dc ',regex 'foo))
-      '(alt bar (rep baz))))
+      '(alt bar (rep baz)))))
   `(((seq foo (alt bar (rep baz)) . _.0)
      $$
      ,absento-tags0)))

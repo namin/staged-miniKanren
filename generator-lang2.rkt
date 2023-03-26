@@ -4,7 +4,8 @@
  quote
  cons
  list
- racket-term
+ #;racket-term
+ define-term-syntax-rule
  ==
  apply-partial
  =/=
@@ -196,7 +197,9 @@
     [(_ (#%term-var x:id))
      #'x]
     [(_ (racket-term e))
-     #'(with-reference-compilers ([term-var term-var-transformer])
+     ;; Disable access to term variables right now because of bug in combination
+     ;; with syntax-local-lift-expression in staged
+     #'(with-reference-compilers (#;[term-var term-var-transformer])
          (unwrap-term e #'e))]
     [(_ (quote t))
      #'(quote t)]
@@ -443,3 +446,12 @@
      (cons (unwrap-term a blame-stx) (unwrap-term d blame-stx))]
     [_ (raise-argument-error/stx 'term "term-or-term-variable?" v blame-stx)]))
     
+(define-syntax define-term-syntax-rule
+  (syntax-parser
+    [(_ (name . pat)
+        template)
+     #'(define-syntax name
+         (term-macro
+          (syntax-rules ()
+            [(_ . pat)
+             template])))]))
