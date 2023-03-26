@@ -18,6 +18,7 @@
     ;; TODO
     ;; (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x* e env) (_ _)))
     (== env-self `((,f . (val . (rec-closure ,rep))) . ,env))
+    ;; TODO: should be condg-ified
     (conde
       ((symbolo x*)
        (== env^ `((,x* . (val . ,a*)) . ,env-self)))
@@ -38,6 +39,7 @@
 
 (defrel/generator (eval-apply-staged rep x* body env a* val)
   (fresh (env^)
+    ;; TODO: should be condg-ified
     (conde
       ((symbolo x*)
        (== `((,x* . (val . ,a*)) . ,env) env^))
