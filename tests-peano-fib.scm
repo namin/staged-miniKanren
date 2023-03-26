@@ -1,7 +1,7 @@
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm
 
-(define (peano-synth-fib-direct fib-skeleton)
+(define-term-syntax-rule (peano-synth-fib-direct fib-skeleton)
   `(letrec ((zero?
              (lambda (n)
                (equal? 'z n))))
@@ -40,22 +40,24 @@
 
 (record-bench 'run-staged 'peano-synth-fib-direct 1)
 (time-test
-  (run-staged #f (fib-direct)
-    (== `(lambda (n)
-           (if (zero? n)
-               'z
-               (if (zero? (sub1 n))
-                   '(s . z)
-                   (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
-        fib-direct)
-    (evalo-staged
-     (peano-synth-fib-direct fib-direct)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)                   
-       (s s s s s . z))))
+ (run* (fib-direct)
+   (staged
+    (fresh ()
+      (== `(lambda (n)
+             (if (zero? n)
+                 'z
+                 (if (zero? (sub1 n))
+                     '(s . z)
+                     (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
+          fib-direct)
+      (evalo-staged
+       (peano-synth-fib-direct fib-direct)
+       '(z
+         (s . z)
+         (s . z)
+         (s s . z)
+         (s s s . z)                   
+         (s s s s s . z))))))
   '((lambda (n)
        (if (zero? n)
            'z
@@ -65,7 +67,7 @@
 
 (record-bench 'unstaged 'peano-synth-fib-direct 1)
 (time-test
-  (run #f (fib-direct)
+  (run* (fib-direct)
     (== `(lambda (n)
            (if (zero? n)
                'z
@@ -92,7 +94,7 @@
 ;; Attempt to synthesize part of the definition of fib-aps.
 ;; Can try to synthesize the initial accumulator arguments as well.
 
-(define (peano-synth-fib-aps fib-aps-skeleton ACC1 ACC2)
+(define-term-syntax-rule (peano-synth-fib-aps fib-aps-skeleton ACC1 ACC2)
   `(letrec ((zero?
              (lambda (n)
                (equal? 'z n))))
@@ -129,7 +131,7 @@
 
 (record-bench 'run-staged 'peano-synth-fib-aps 0)
 (time-test
-  (run-staged #f (fib-acc)
+  (run* (fib-acc)
     (== `(lambda (n a1 a2)
            (if (zero? n)
                a1
@@ -137,14 +139,15 @@
                    a2
                    (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
         fib-acc)
-    (evalo-staged
-     (peano-synth-fib-aps fib-acc 'z '(s . z))
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)                   
-       (s s s s s . z))))
+    (staged
+     (evalo-staged
+      (peano-synth-fib-aps fib-acc 'z '(s . z))
+      '(z
+        (s . z)
+        (s . z)
+        (s s . z)
+        (s s s . z)                   
+        (s s s s s . z)))))
   '((lambda (n a1 a2)
       (if (zero? n)
           a1
@@ -155,7 +158,7 @@
 
 (record-bench 'unstaged 'peano-synth-fib-aps 0)
 (time-test
-  (run #f (fib-acc)
+  (run* (fib-acc)
     (== `(lambda (n a1 a2)
            (if (zero? n)
                a1
@@ -182,7 +185,7 @@
 
 (record-bench 'run-staged 'peano-synth-fib-aps 1)
 (time-test
-  (run-staged #f (fib-acc ACC1 ACC2)
+  (run* (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
            (if (zero? n)
                a1
@@ -190,14 +193,15 @@
                    a2
                    (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
         fib-acc)
-    (evalo-staged
-     (peano-synth-fib-aps fib-acc ACC1 ACC2)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)                   
-       (s s s s s . z))))
+    (staged
+     (evalo-staged
+      (peano-synth-fib-aps fib-acc ACC1 ACC2)
+      '(z
+        (s . z)
+        (s . z)
+        (s s . z)
+        (s s s . z)                   
+        (s s s s s . z)))))
   '(((lambda (n a1 a2)
        (if (zero? n)
            a1
@@ -211,7 +215,7 @@
 #|
 (record-bench 'unstaged 'peano-synth-fib-aps 1)
 (time-test
-  (run #f (fib-acc ACC1 ACC2)
+  (run* (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
            (if (zero? n)
                a1

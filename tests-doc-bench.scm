@@ -1,7 +1,8 @@
 ;; Synthesizes a 'match'-based version of 'null?'
 (record-bench 'run-staged 'appendo-synth-0)
 (time-test
-  (run-staged 1 (q)
+ (run 1 (q)
+   (staged
     (evalo-staged
      `(letrec ((append
                 (lambda (xs ys)
@@ -12,7 +13,7 @@
               (append '(c d) '(e f))))
      '(()
        (a b)
-       (c d e f))))
+       (c d e f)))))
   '(((match xs
        [`() _.0]
        [_.1 '#f]
@@ -51,19 +52,20 @@
 ;;  Much slower to come up with the `equal?` equivalent of `(null? xs)`, if `match` is disallowed.
 (record-bench 'run-staged 'appendo-synth-0b)
 (time-test
-  (run-staged 1 (q)
+  (run 1 (q)
     (absento 'match q)
-    (evalo-staged
-     `(letrec ((append
-                (lambda (xs ys)
-                  (if ,q ys
-                      (cons (car xs) (append (cdr xs) ys))))))
-        (list (append '() '())
-              (append '(a) '(b))
-              (append '(c d) '(e f))))
-     '(()
-       (a b)
-       (c d e f))))
+    (staged
+     (evalo-staged
+      `(letrec ((append
+                 (lambda (xs ys)
+                   (if ,q ys
+                       (cons (car xs) (append (cdr xs) ys))))))
+         (list (append '() '())
+               (append '(a) '(b))
+               (append '(c d) '(e f))))
+      '(()
+        (a b)
+        (c d e f)))))
   '((equal? xs '())))
 
 
@@ -89,7 +91,8 @@
 ;;  if we don't exclude `match`, variants of `match` will be generated with a `run 3`, rather than `null?`
 (record-bench 'run-staged 'appendo-synth-0d)
 (time-test
-  (run-staged 3 (q)
+ (run 3 (q)
+   (staged
     (evalo-staged
      `(letrec ((append
                 (lambda (xs ys)
@@ -100,7 +103,7 @@
               (append '(c d) '(e f))))
      '(()
        (a b)
-       (c d e f))))
+       (c d e f)))))
   '(((match xs
        (`() _.0)
        (_.1 '#f)
