@@ -1,37 +1,25 @@
 (run* (q)
-  (l== q 1))
-
-(run-staged* (q)
-  (l== q 1))
-res
-
-(run-staged* (q)
-  (== 1 2))
+  (staged
+   (later (== q 1))))
+(generated-code)
 
 (run* (q)
-  (conde
-    ((l== q 1))
-    ((l== q 2))))
+  (staged
+   (condg
+    #:fallback (later (== q 3))
+    ([] [(== q 1)] [(later (== q 1))])
+    ([] [(== q 2)] [(later (== q 2))]))))
 
-(run-staged* (q)
-  (conde
-    ((l== q 1))
-    ((l== q 2))))
+(run* (q)
+  (staged
+   (fresh ()
+     (== q 1)
+     (condg
+      #:fallback (later (== q 3))
+      ([] [(== q 1)] [(later (== q 1))])
+      ([] [(== q 2)] [(later (== q 2))])))))
 
-(run-staged* (q)
-  (condg
-   (l== q 3)
-   ([] [(== q 1)] [(l== q 1)])
-   ([] [(== q 2)] [(l== q 2)])))
-
-(run-staged* (q)
-  (== q 1)
-  (condg
-   (l== q 3)
-   ([] [(== q 1)] [(l== q 1)])
-   ([] [(== q 2)] [(l== q 2)])))
-
-(define (u-minio expr val)
+(defrel (u-minio expr val)
   (conde
     ((numbero expr)
      (== expr val))
@@ -46,21 +34,22 @@ res
 (run* (q) (u-minio '(hello 1) q))
 (run* (q) (u-minio q '(SYM 1)))
 
-(define (minio expr val)
-  (condg
-   (lapp u-minio expr val)
-   ([] [(numbero expr)] [(l== expr val)])
-   ([] [(symbolo expr)] [(l== 'SYM val)])
-   ([e1 e2 v1 v2] [(== `(,e1 ,e2) expr)]
-    [(l== `(,v1 ,v2) val)
-     (minio e1 v1)
-     (minio e2 v2)])))
+(defrel (minio expr val)
+  (staged
+   (condg
+    #:fallback (later (u-minio expr val))
+    ([] [(numbero expr)] [(later (== expr val))])
+    ([] [(symbolo expr)] [(later (== 'SYM val))])
+    ([e1 e2 v1 v2] [(== `(,e1 ,e2) expr)]
+     [(later (== `(,v1 ,v2) val))
+      (minio e1 v1)
+      (minio e2 v2)]))))
 
-(run-staged* (q) (minio '(hello 1) q))
-res
+(run* (q) (staged (minio '(hello 1) q)))
+(generated-code)
 
-(run-staged* (q) (minio q '(SYM 1)))
-res
+(run* (q) (staged (minio q '(SYM 1))))
+(generated-code)
 
-(run-staged 1 (q) (fresh (a) (minio `(hello ,a) q)))
-res
+(run 1 (q) (staged (fresh (a) (minio `(hello ,a) q))))
+(generated-code)
