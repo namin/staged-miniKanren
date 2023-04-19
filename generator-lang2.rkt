@@ -236,19 +236,30 @@
       #:attr c #'g:stringo
       #:attr l #'g:lstringo))
 
+  (define (free-vars-of-binding-form binder-vars body-goals)
+    (define body-vars
+      (for/fold ([body-vars (immutable-free-id-set)])
+                ([g body-goals])
+        (free-id-set-union body-vars (free-vars g))))
+    (free-id-set-subtract
+     body-vars
+     (immutable-free-id-set binder-vars)))
+  
   (define (free-vars goal-stx)
     (syntax-parse goal-stx
-      #:literals (#%term-var fresh quote)
+      #:literals (#%term-var quote fresh condg)
       [(#%term-var x) (immutable-free-id-set (list #'x))]
       [(quote _) (immutable-free-id-set)]
       [(fresh (x ...) g ...)
-       (define body-vars
-         (for/fold ([body-vars (immutable-free-id-set)])
-                   ([g (attribute g)])
-           (free-id-set-union body-vars (free-vars g))))
-       (free-id-set-subtract
-        body-vars
-        (immutable-free-id-set (attribute x)))]
+       (free-vars-of-binding-form (attribute x) (attribute g))]
+      [(condg #:fallback gl clauses ...)
+       (apply free-id-set-union
+              (for/list ([clause (attribute clauses)])
+                (define/syntax-parse ([x:id ...] [guard ...] [body ...]) clause)
+                (free-id-set-union
+                 (free-vars #'gl)
+                 (free-vars-of-binding-form (attribute x)
+                                            (append (attribute guard) (attribute body))))))]
       [(a . d)
        (free-id-set-union (free-vars #'a) (free-vars #'d))]
       [_ (immutable-free-id-set)])))
