@@ -45,7 +45,7 @@
                      syntax/id-set)
          
          (prefix-in g: "generator-lang.rkt")
-         (only-in "staged-load.rkt" generate-staged invoke-staged project succeed))
+         (only-in "staged-load.rkt" generate-staged invoke-staged project succeed relation-body))
 
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)
@@ -141,7 +141,7 @@
      #'r]
     #:rhs
     [#'(lambda (arg ...)
-         (g:fresh ()
+         (relation-body
            (compile-runtime-goal g) ...))])
 
   (host-interface/definition
@@ -153,7 +153,7 @@
      #'r]
     #:rhs
     [#'(lambda (arg ...)
-         (g:fresh ()
+         (relation-body
            (compile-now-goal g) ...))])
 
   (nonterminal maybe-generator
@@ -174,7 +174,7 @@
      #'r]
     #:rhs
     [#'(lambda (now-arg ... later-arg ...)
-         (g:fresh ()
+         (relation-body
            (compile-runtime-goal g) ...))])
 
   (host-interface/expression
