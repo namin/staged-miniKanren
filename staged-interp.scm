@@ -71,7 +71,26 @@
 (defrel/generator (eval-appo rator rands env val)
   (condg
    #:fallback
-   (fresh (proc a*)
+   ;; Note that this generates duplicate code for the two branches of evaluating the
+   ;; arguments. We would need something a little higher-order to avoid that.
+   (fresh (proc)
+     (eval-expo rator env proc)
+     (later (conde
+             [(fresh (prim a*)
+                (== `(prim . ,prim) proc)
+                (u-eval-primo prim a* val)
+                (now (eval-listo rands env a*)))]
+             [(fresh (tag p a*)
+                (== `(,tag . ,p) proc)
+                (now (eval-listo rands env a*))
+                (callo proc val a*))])))
+
+   ;; Behavior changes based on groundness!
+   ;; When the shape of the rator is unknown, we stage evaluation of the arguments
+   ;; and generate code where this evaluation comes first. This is a different evaluation
+   ;; order than we use when the proc is statically-recognizable as a primitive, and
+   ;; when the unstaged interpreter encounters a primitive.
+   #;(fresh (proc a*)
      (eval-expo rator env proc)
      (eval-listo rands env a*)
      (later (callo proc val a*)))
