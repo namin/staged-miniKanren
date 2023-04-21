@@ -79,9 +79,9 @@
 
 (record-bench 'staged 'nnf 0)
 (time-test
-  (run 10 (concept)
-    (nnfo concept '(Not Top)))
-  nnfo-10-results)
+ (length (run 10 (concept)
+           (nnfo concept '(Not Top))))
+ 10)
 
 (record-bench 'unstaged 'nnf 0)
 (time-test
@@ -94,12 +94,13 @@
 
 (record-bench 'run-staged 'nnf 0)
 (time-test
- (run 10 (concept)
-   (staged
-    (evalo-staged
-     (nnf concept)
-     '(Not Top))))
- nnfo-10-results)
+ (length
+  (run 10 (concept)
+    (staged
+     (evalo-staged
+      (nnf concept)
+      '(Not Top)))))
+ 10)
 
 
 
