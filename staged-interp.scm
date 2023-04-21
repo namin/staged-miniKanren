@@ -3,6 +3,7 @@
   (absento 'closure v)
   (absento 'prim v))
 
+;; inlining these avoids an `inc` at runtime
 (defrel/generator (not-tago/gen v)
   (=/= 'rec-closure v)
   (=/= 'closure v)
@@ -71,9 +72,20 @@
 (defrel/generator (eval-appo rator rands env val)
   (condg
    #:fallback
-   ;; Note that this generates duplicate code for the two branches of evaluating the
+   ;; Behavior changes based on groundness!
+   ;;
+   ;; When the shape of the rator is unknown, we stage evaluation of the arguments
+   ;; and generate code where this evaluation comes first. This is a different evaluation
+   ;; order than we use when the proc is statically-recognizable as a primitive, and
+   ;; when the unstaged interpreter encounters a primitive.
+   (fresh (proc a*)
+     (eval-expo rator env proc)
+     (eval-listo rands env a*)
+     (later (callo proc val a*)))
+   ;;
+   ;; Another possibility, generating duplicate code for the two branches of evaluating the
    ;; arguments. We would need something a little higher-order to avoid that.
-   (fresh (proc)
+   #;(fresh (proc)
      (eval-expo rator env proc)
      (later (conde
              [(fresh (prim a*)
@@ -85,15 +97,6 @@
                 (now (eval-listo rands env a*))
                 (callo proc val a*))])))
 
-   ;; Behavior changes based on groundness!
-   ;; When the shape of the rator is unknown, we stage evaluation of the arguments
-   ;; and generate code where this evaluation comes first. This is a different evaluation
-   ;; order than we use when the proc is statically-recognizable as a primitive, and
-   ;; when the unstaged interpreter encounters a primitive.
-   #;(fresh (proc a*)
-     (eval-expo rator env proc)
-     (eval-listo rands env a*)
-     (later (callo proc val a*)))
    
    ;; statically-recognizable primitive application
    ([prim]
@@ -266,13 +269,13 @@
     [(== prim-id 'car)]
     [(later (fresh (d)
               (== `((,val . ,d)) a*)
-              (not-tago val)))])
+              (now (not-tago/gen val))))])
    ([]
     [(== prim-id 'cdr)]
     [(later
       (fresh (a)
         (== `((,a . ,val)) a*)
-        (not-tago a)))])
+        (now (not-tago/gen a))))])
    ([]
     [(== prim-id 'not)]
     [(later
@@ -321,7 +324,7 @@
                ((fresh (a d)
                   (== `(,a . ,d) v)
                   (== #t val)
-                  (not-tago a)))
+                  (now (not-tago/gen a))))
                ((fresh (a d)
                   (== `(,a . ,d) v)
                   (== #f val)
@@ -434,7 +437,7 @@
 
 (defrel/generator (var-p-match var mval penv penv-out)
   (fresh (val)
-    (later (not-tago mval))
+    (not-tago/gen mval)
     (later (== mval val))
     (var-p-match-extend var val penv penv-out)))
 
@@ -545,7 +548,7 @@
      (== penv penv-out)])
    ([p]
     [(== (list 'unquote p) quasi-p)]
-    [(later (not-tago mval)) ;; TODO: why do we need this?
+    [(not-tago/gen mval) ;; TODO: why do we need this?
      (p-no-match p mval penv penv-out)])
    ([a d]
     [(== `(,a . ,d) quasi-p)
