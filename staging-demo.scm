@@ -34,16 +34,15 @@
 (run* (q) (u-minio '(hello 1) q))
 (run* (q) (u-minio q '(SYM 1)))
 
-(defrel (minio expr val)
-  (staged
-   (condg
-    #:fallback (later (u-minio expr val))
-    ([] [(numbero expr)] [(later (== expr val))])
-    ([] [(symbolo expr)] [(later (== 'SYM val))])
-    ([e1 e2 v1 v2] [(== `(,e1 ,e2) expr)]
-     [(later (== `(,v1 ,v2) val))
-      (minio e1 v1)
-      (minio e2 v2)]))))
+(defrel/generator (minio expr val)
+  (condg
+   #:fallback (later (u-minio expr val))
+   ([] [(numbero expr)] [(later (== expr val))])
+   ([] [(symbolo expr)] [(later (== 'SYM val))])
+   ([e f r v] [(== `(,e ,f) expr)]
+    [(later (== `(,r ,v) val))
+     (minio e r)
+     (minio f v)])))
 
 (run* (q) (staged (minio '(hello 1) q)))
 (generated-code)
