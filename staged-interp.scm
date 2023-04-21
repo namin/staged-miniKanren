@@ -68,6 +68,35 @@
        (== proc `(prim . ,prim-id))
        (u-eval-primo prim-id a* val)))))
 
+(defrel/generator (eval-appo rator rands env val)
+  (condg
+   #:fallback
+   (fresh (proc a*)
+     (eval-expo rator env proc)
+     (eval-listo rands env a*)
+     (later (callo proc val a*)))
+   
+   ;; statically-recognizable primitive application
+   ([prim]
+    [(symbolo rator)
+     (lookupo rator env `(prim . ,prim))]
+    [(fresh (proc a*)
+       (eval-primo prim a* val)
+       (eval-listo rands env a*))])
+    
+   ;; general application
+   ([]
+    [(conde
+      ((symbolo rator)
+       (fresh (p tag)
+         (lookupo rator env `(,tag . ,p))
+         (=/= 'prim tag)))
+      ((fresh (a d) (== (cons a d) rator))))]
+    [(fresh (proc a*)
+       (eval-expo rator env proc)
+       (eval-listo rands env a*)
+       (later (callo proc val a*)))])))
+
 (defrel/generator (eval-expo expr env val)
   (condg
     #:fallback (later (u-eval-expo expr env val))
@@ -99,30 +128,15 @@
      [(later (fresh (rep)
                (== `(closure ,rep) val)
                (== rep (partial-apply eval-apply x body env))))])
-    
-     ;; statically-recognizable primitive application
-    ([rator rands a* prim]
-     [(== `(,rator . ,rands) expr)
-      (symbolo rator)
-      (lookupo rator env `(prim . ,prim))]
-     [(fresh (proc)
-        (eval-primo prim a* val)
-        (eval-listo rands env a*))])
-    
-    ;; general application
-    ([rator rands a*]
+
+    ;; application
+    ([rator rands a* rator-v]
      [(== `(,rator . ,rands) expr)
       (conde
-        ((symbolo rator)
-         (fresh (proc p tag)
-           (lookupo rator env proc)
-           (== `(,tag . ,p) proc)
-           (=/= 'prim tag)))
-        ((fresh (a d) (== (cons a d) rator))))]
-     [(fresh (proc)
-        (eval-expo rator env proc)
-        (eval-listo rands env a*)
-        (later (callo proc val a*)))])
+       ((symbolo rator)
+        (lookupo rator env rator-v))
+       ((fresh (a d) (== (cons a d) rator))))]
+     [(eval-appo rator rands env val)])
     
     ;; match
     ([against-expr clauses]
