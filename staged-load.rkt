@@ -16,10 +16,8 @@
 (include "staged-apply-racket.rkt")
 (include "staged-apply.scm")
 (include "condg.rktl")
-;;(include "staged-interp.scm")
 (include "staged-utils.scm")
 (include "staged-run.scm")
-;;(include "unstaged-interp.scm")
 (include "test-check.scm")
 
 (define (mapo fo xs ys)
