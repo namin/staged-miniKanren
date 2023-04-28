@@ -81,7 +81,7 @@ for name in all_names:
                         gain = (1.0*times['unstaged']) / min_time
                         s += '$%.3f$' % gain
                     else:
-                        gain = 5*60 / min_time
+                        gain = 5*60*1000 / min_time
                         s += '\\timeout{>$%.3f$}' % gain
 
             s += '\\\\'
