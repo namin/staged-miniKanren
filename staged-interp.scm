@@ -562,3 +562,8 @@
 
 (defrel/generator (evalo-staged expr val)
   (eval-expo expr initial-env val))
+
+(defrel/generator (evalo-staged/env-exts expr x* a* val)
+  (fresh (env^)
+    (ext-env*o x* a* initial-env env^)
+    (eval-expo expr env^ val)))

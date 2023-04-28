@@ -3,7 +3,8 @@
 (provide
  evalo-staged
  eval-expo
-
+ evalo-staged/env-exts
+ 
  evalo-unstaged
  u-eval-expo)
 

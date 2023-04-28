@@ -1,4 +1,11 @@
-(define evalo evalo-unstaged)
+#lang racket/base
+
+(require "generator-lang2.rkt"
+         "staged-interp.rkt"
+         "test-check.rkt"
+         racket/pretty)
+
+(defrel (evalo e v) (evalo-unstaged e v))
 
 ;; # Background
 
@@ -38,32 +45,33 @@
         ((== q 6))))
   '(5))
 
-(define (appendo xs ys zs)
-  (conde
-    ((== xs '()) (== ys zs))
-    ((fresh (xa xd zd)
-       (== xs (cons xa xd))
-       (== zs (cons xa zd))
-       (appendo xd ys zd)))))
+(let ()
+  (defrel (appendo xs ys zs)
+    (conde
+     ((== xs '()) (== ys zs))
+     ((fresh (xa xd zd)
+        (== xs (cons xa xd))
+        (== zs (cons xa zd))
+        (appendo xd ys zd)))))
 
-(test
-    (run* (q) (appendo '(a b) '(c d e) q))
-  '((a b c d e)))
+  (test
+   (run* (q) (appendo '(a b) '(c d e) q))
+   '((a b c d e)))
 
-(test
-    (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
-  '(
-    (() (a b c d e))
-    ((a) (b c d e))
-    ((a b) (c d e))
-    ((a b c) (d e))
-    ((a b c d) (e))
-    ((a b c d e) ())
-    ))
+  (test
+   (run* (q) (fresh (x y) (== q (list x y)) (appendo x y '(a b c d e))))
+   '(
+     (() (a b c d e))
+     ((a) (b c d e))
+     ((a b) (c d e))
+     ((a b c) (d e))
+     ((a b c d) (e))
+     ((a b c d e) ())
+     ))
 
-(test
-    (run* (x y z) (appendo `(a  . ,x) `(,y e) `(a b c d ,z)))
-  '(((b c) d e)))
+  (test
+   (run* (x y z) (appendo `(a  . ,x) `(,y e) `(a b c d ,z)))
+   '(((b c) d e))))
 
 (test
     (run* (q)
@@ -168,8 +176,9 @@
 ;; ### run-staged
 
 (test
-    (run-staged 1 (q)
-      (l== q 1))
+    (run 1 (q)
+      (staged
+        (later (== q 1))))
   '(1))
 
 #|
@@ -184,28 +193,30 @@
 |#
 
 (todo "later conde"
-    (run-staged 2 (q)
-      (later `(conde
-                ((== ,(expand q) 1))
-                ((== ,(expand q) 2)))))
+    (run 2 (q)
+      (staged
+        (later (conde
+                 ((== q 1))
+                 ((== q 2))))))
   '(1 2))
 
 ;; ## Staged Relational Interpreter
 
 (test
-    (run-staged 1 (q)
-      (evalo-staged
-       `(letrec ((map (lambda (f l)
-                        (if (null? l)
-                            '()
-                            (cons (f (car l))
-                                  (map f (cdr l)))))))
-          (map (lambda (x) ,q) '(a b c)))
-       '((a . a) (b . b) (c . c))))
-  '((cons x x)))
+ (run 1 (q)
+      (staged
+       (evalo-staged
+        `(letrec ((map (lambda (f l)
+                         (if (null? l)
+                             '()
+                             (cons (f (car l))
+                                   (map f (cdr l)))))))
+           (map (lambda (x) ,q) '(a b c)))
+        '((a . a) (b . b) (c . c)))))
+ '((cons x x)))
 
 (test
-    (run 1 (q)
+ (run 1 (q)
       (evalo-unstaged
        `(letrec ((map (lambda (f l)
                         (if (null? l)
@@ -214,33 +225,41 @@
                                   (map f (cdr l)))))))
           (map (lambda (x) ,q) '(a b c)))
        '((a . a) (b . b) (c . c))))
-  '((cons x x)))
+ '((cons x x)))
 
 
 ;; ### `appendo` as a staged relation
 
-(define-staged-relation (appendo xs ys zs)
-  (evalo-staged
-   `(letrec ((append
-              (lambda (xs ys)
-                (if (null? xs)
-                    ys
-                    (cons (car xs)
-                          (append (cdr xs) ys))))))
-      (append ',xs ',ys))
-   zs))
+(defrel (appendo xs ys zs)
+  (staged
+   (evalo-staged
+    `(letrec ((append
+               (lambda (xs ys)
+                 (if (null? xs)
+                     ys
+                     (cons (car xs)
+                           (append (cdr xs) ys))))))
+       (append ',xs ',ys))
+    zs)))
 
-res ;; contains the generated code
+(pretty-print (generated-code)) ;; contains the generated code
 
 ;; generated code using environment extension at the top level
-(gen 'append '(xs ys)
-     `(letrec ((append
+(defrel (appendo/env-exts xs ys zs)
+  (staged
+   (evalo-staged/env-exts
+    '(letrec ((append
                 (lambda (xs ys)
                   (if (null? xs)
                       ys
                       (cons (car xs)
                             (append (cdr xs) ys))))))
-        (append xs ys)))
+        (append xs ys))
+    '(xs ys)
+    `(,xs ,ys)
+    zs)))
+
+(pretty-print (generated-code))
 
 (test
     (run* (q) (appendo '(a b) '(c d e) q))
@@ -258,30 +277,32 @@ res ;; contains the generated code
     ))
 
 
-(define-staged-relation (context-ido e res)
-  (evalo-staged
-   `(letrec ((id (lambda (x) x)))
-      ,e)
-   res))
+(defrel (context-ido e res)
+  (staged
+   (evalo-staged
+    `(letrec ((id (lambda (x) x)))
+       ,e)
+    res)))
 
-res
+(pretty-print (generated-code))
 
 (test
     (run* (q) (context-ido `(id 1) q))
   '(1))
 
-(define-staged-relation (context-appendo e res)
-  (evalo-staged
-   `(letrec ((append
-              (lambda (xs ys)
-                (if (null? xs)
-                    ys
-                    (cons (car xs)
-                          (append (cdr xs) ys))))))
-      ,e)
-   res))
+(defrel (context-appendo e res)
+  (staged
+   (evalo-staged
+    `(letrec ((append
+               (lambda (xs ys)
+                 (if (null? xs)
+                     ys
+                     (cons (car xs)
+                           (append (cdr xs) ys))))))
+       ,e)
+    res)))
 
-res
+(pretty-print (generated-code))
 
 (test
     (run* (q) (context-appendo `(append '(a b) '(c d e)) q))
@@ -293,25 +314,27 @@ res
   1)
 
 (test
-    (run-staged 1 (q)
-      (evalo-staged
-       `(letrec ((append
-                  (lambda (xs ys)
-                    (if (null? xs) ys
-                        (cons (car xs) (append (cdr xs) ys))))))
-          (append '(1 2) '(3 4)))
-       q))
-  '((1 2 3 4)))
+ (run 1 (q)
+      (staged
+       (evalo-staged
+        `(letrec ((append
+                   (lambda (xs ys)
+                     (if (null? xs) ys
+                         (cons (car xs) (append (cdr xs) ys))))))
+           (append '(1 2) '(3 4)))
+        q)))
+ '((1 2 3 4)))
 
 (test
-    (run-staged 2 (q)
-      (evalo-staged
-       `(letrec ((append
-                  (lambda (xs ys)
-                    (if (null? xs) ys
-                        (cons (car xs) (append (cdr xs) ys))))))
-          (append ,q '(3 4)))
-       '(1 2 3 4)))
+    (run 2 (q)
+         (staged
+          (evalo-staged
+           `(letrec ((append
+                      (lambda (xs ys)
+                        (if (null? xs) ys
+                            (cons (car xs) (append (cdr xs) ys))))))
+              (append ,q '(3 4)))
+           '(1 2 3 4))))
   '('(1 2) (list 1 2)))
 
 (test
@@ -327,27 +350,28 @@ res
 
 ;; ### Theorem checker turned prover
 
-(define-staged-relation (proofo proof truth)
-  (evalo-staged
-   `(letrec ([member?
-              (lambda (x ls)
-                (if (null? ls) #f
-                    (if (equal? (car ls) x) #t
-                        (member? x (cdr ls)))))])
-      (letrec ([proof?
-                (lambda (proof)
-                  (match proof
-                    [`(,A ,assms assumption ()) (member? A assms)]
-                    [`(,B ,assms modus-ponens
-                          (((,A => ,B) ,assms ,r1 ,ants1)
-                           (,A ,assms ,r2 ,ants2)))
-                     (and (proof? (list (list A '=> B) assms r1 ants1))
-                          (proof? (list A assms r2 ants2)))]
-                    [`((,A => ,B) ,assms conditional
-                       ((,B (,A . ,assms) ,rule ,ants)))
-                     (proof? (list B (cons A assms) rule ants))]))])
-        (proof? ',proof)))
-   truth))
+(defrel (proofo proof truth)
+  (staged
+   (evalo-staged
+    `(letrec ([member?
+               (lambda (x ls)
+                 (if (null? ls) #f
+                     (if (equal? (car ls) x) #t
+                         (member? x (cdr ls)))))])
+       (letrec ([proof?
+                 (lambda (proof)
+                   (match proof
+                     [`(,A ,assms assumption ()) (member? A assms)]
+                     [`(,B ,assms modus-ponens
+                           (((,A => ,B) ,assms ,r1 ,ants1)
+                            (,A ,assms ,r2 ,ants2)))
+                      (and (proof? (list (list A '=> B) assms r1 ants1))
+                           (proof? (list A assms r2 ants2)))]
+                     [`((,A => ,B) ,assms conditional
+                                   ((,B (,A . ,assms) ,rule ,ants)))
+                      (proof? (list B (cons A assms) rule ants))]))])
+         (proof? ',proof)))
+    truth)))
 
 (test
     (run 1 (prf)
@@ -364,41 +388,41 @@ res
 
 ;; ### Quines with quasiquotes
 
-(define-staged-relation (quasi-quine-evalo expr val)
-  (evalo-staged
-   `(letrec ([eval-quasi (lambda (q eval)
-                           (match q
-                             [(? symbol? x) x]
-                             [`() '()]
-                             [`(,,'`unquote ,exp) (eval exp)]
-                             ;;[`(,`unquote ,exp) (eval exp)]
-                             [`(quasiquote ,datum) 'error]
-                             ;; ('error) in the 2017 ICFP Pearl, but
-                             ;; the code generator rejects this erroneous code!
-                             [`(,a . ,d)
-                              (cons (eval-quasi a eval) (eval-quasi d eval))]))])
-      (letrec ([eval-expr
-                (lambda (expr env)
-                  (match expr
-                    [`(quote ,datum) datum]
-                    [`(lambda (,(? symbol? x)) ,body)
-                     (lambda (a)
-                       (eval-expr body (lambda (y)
-                                         (if (equal? x y)
-                                             a
-                                             (env y)))))]
-                    [(? symbol? x) (env x)]
-                    [`(quasiquote ,datum)
-                     (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
-                    [`(,rator ,rand)
-                     ((eval-expr rator env) (eval-expr rand env))]))])
-        (eval-expr ',expr (lambda (y) 'error))))
-   val))
+(defrel (quasi-quine-evalo expr val)
+  (staged
+   (evalo-staged
+    `(letrec ([eval-quasi (lambda (q eval)
+                            (match q
+                              [(? symbol? x) x]
+                              [`() '()]
+                              [`(,,'`unquote ,exp) (eval exp)]
+                              ;;[`(,`unquote ,exp) (eval exp)]
+                              [`(quasiquote ,datum) 'error]
+                              ;; ('error) in the 2017 ICFP Pearl, but
+                              ;; the code generator rejects this erroneous code!
+                              [`(,a . ,d)
+                               (cons (eval-quasi a eval) (eval-quasi d eval))]))])
+       (letrec ([eval-expr
+                 (lambda (expr env)
+                   (match expr
+                     [`(quote ,datum) datum]
+                     [`(lambda (,(? symbol? x)) ,body)
+                      (lambda (a)
+                        (eval-expr body (lambda (y)
+                                          (if (equal? x y)
+                                              a
+                                              (env y)))))]
+                     [(? symbol? x) (env x)]
+                     [`(quasiquote ,datum)
+                      (eval-quasi datum (lambda (exp) (eval-expr exp env)))]
+                     [`(,rator ,rand)
+                      ((eval-expr rator env) (eval-expr rand env))]))])
+         (eval-expr ',expr (lambda (y) 'error))))
+    val)))
 
 (todo "a tiny bit slow, left for the benchmarks"
     (run 1 (q)
       (absento 'error q)
-      (absento 'closure q)
       (quasi-quine-evalo q q))
     `((((lambda (_.0) `(,_.0 ',_.0))
       '(lambda (_.0) `(,_.0 ',_.0)))
@@ -414,15 +438,16 @@ res
 ;; ### Theorem
 
 (test
-    (run-staged 1 (q)
-      (evalo-staged
-       `(letrec ((append
-                  (lambda (xs ys)
-                    (if (null? xs) ys
-                        (cons (car xs) (append (cdr xs) ys))))))
-          (append '(1 2) '(3 4)))
-       q))
-  '((1 2 3 4)))
+ (run 1 (q)
+      (staged
+       (evalo-staged
+        `(letrec ((append
+                   (lambda (xs ys)
+                     (if (null? xs) ys
+                         (cons (car xs) (append (cdr xs) ys))))))
+           (append '(1 2) '(3 4)))
+        q)))
+ '((1 2 3 4)))
 
 (test
     (run 1 (q)
@@ -438,19 +463,22 @@ res
 ;; # Implementation: Staged Relational Interpreter
 
 (test
-    (run-staged 1 (q)
-      (symbolo q)
-      (later `(numbero ,q)))
-  '())
+ (run 1 (q)
+      (staged
+       (fresh ()
+         (symbolo q)
+         (later (numbero q)))))
+ '())
 
 ;; # Synthesis
 
 (test
     (length
-     (run-staged 5 (q)
-       (evalo-staged
-        q
-        '(I love staged evaluation))))
+     (run 5 (q)
+          (staged
+           (evalo-staged
+            q
+            '(I love staged evaluation)))))
   5)
 
 (test
@@ -462,58 +490,60 @@ res
   5)
 
 (test
-    (run-staged 5 (q)
-      (evalo-staged
+ (run 5 (q)
+      (staged
+       (evalo-staged
         q
-        '(I love staged evaluation)))
+        '(I love staged evaluation))))
     (run 5 (q)
       (evalo-unstaged
        q
        '(I love staged evaluation))))
 
-(define-staged-relation (peano-synth-fib-acc-stepo step1 step2 ACC1 ACC2)
-  (evalo-staged
-   `(letrec ((zero?
-              (lambda (n)
-                (equal? 'z n))))
-      (letrec ((add1
-                (lambda (n)
-                  (cons 's n))))
-        (letrec ((sub1
-                  (lambda (n)
-                    (and (equal? (car n) 's)
-                         (cdr n)))))
-          (letrec ((+
-                    (lambda (n m)
-                      (if (zero? n)
-                          m
-                          (add1 (+ (sub1 n) m))))))
-            (letrec ((-
-                      (lambda (n m)
-                        (if (zero? m)
-                            n
-                            (sub1 (- n (sub1 m)))))))
-              (letrec ((fib-acc
-                        (lambda (n a1 a2)
-                          (if (zero? n)
-                              a1
-                              (if (zero? (sub1 n))
-                                  a2
-                                  (fib-acc (- n '(s . z)) ,step1 ,step2))))))
-                (list
-                 (fib-acc 'z ',ACC1 ',ACC2)
-                 (fib-acc '(s . z) ',ACC1 ',ACC2)
-                 (fib-acc '(s s . z) ',ACC1 ',ACC2)
-                 (fib-acc '(s s s . z) ',ACC1 ',ACC2)
-                 (fib-acc '(s s s s . z) ',ACC1 ',ACC2)
-                 (fib-acc '(s s s s s . z) ',ACC1 ',ACC2))
-                ))))))
-   '(z
-     (s . z)
-     (s . z)
-     (s s . z)
-     (s s s . z)
-     (s s s s s . z))))
+(defrel (peano-synth-fib-acc-stepo step1 step2 ACC1 ACC2)
+  (staged
+   (evalo-staged
+    `(letrec ((zero?
+               (lambda (n)
+                 (equal? 'z n))))
+       (letrec ((add1
+                 (lambda (n)
+                   (cons 's n))))
+         (letrec ((sub1
+                   (lambda (n)
+                     (and (equal? (car n) 's)
+                          (cdr n)))))
+           (letrec ((+
+                     (lambda (n m)
+                       (if (zero? n)
+                           m
+                           (add1 (+ (sub1 n) m))))))
+             (letrec ((-
+                       (lambda (n m)
+                         (if (zero? m)
+                             n
+                             (sub1 (- n (sub1 m)))))))
+               (letrec ((fib-acc
+                         (lambda (n a1 a2)
+                           (if (zero? n)
+                               a1
+                               (if (zero? (sub1 n))
+                                   a2
+                                   (fib-acc (- n '(s . z)) ,step1 ,step2))))))
+                 (list
+                  (fib-acc 'z ',ACC1 ',ACC2)
+                  (fib-acc '(s . z) ',ACC1 ',ACC2)
+                  (fib-acc '(s s . z) ',ACC1 ',ACC2)
+                  (fib-acc '(s s s . z) ',ACC1 ',ACC2)
+                  (fib-acc '(s s s s . z) ',ACC1 ',ACC2)
+                  (fib-acc '(s s s s s . z) ',ACC1 ',ACC2))
+                 ))))))
+    '(z
+      (s . z)
+      (s . z)
+      (s s . z)
+      (s s s . z)
+      (s s s s s . z)))))
 
 (time-test
  (run 1 (step1 step2 ACC1 ACC2)
