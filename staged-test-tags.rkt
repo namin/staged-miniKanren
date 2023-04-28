@@ -1,3 +1,7 @@
+#lang racket/base
+
+(provide (all-defined-out))
+
 (define absento-tags0
   '(absento (struct _.0)))
 

@@ -1,3 +1,10 @@
+#lang racket/load
+
+(require "generator-lang2.rkt"
+         "staged-interp.rkt"
+         "test-check.rkt"
+         "staged-test-tags.rkt")
+
 (record-bench 'staging 'eval-and-map-evalo)
 (defrel (eval-and-map-evalo expr val)
   (staged

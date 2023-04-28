@@ -1,6 +1,11 @@
 ;; TODO: constraints like absento and probably reification need to know about apply-rep.
 ;; TODO: need a story for letrec
 
+(struct apply-rep [name-staged name-dyn args proc]
+  #:prefab
+  #:constructor-name make-apply-rep)
+
+
 (define-syntax lreify-call
   (lambda (stx)
     (syntax-case stx ()

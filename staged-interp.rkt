@@ -2,6 +2,8 @@
 
 (provide
  evalo-staged
+ evalo-staged/env-exts
+ 
  eval-expo
  evalo-staged/env-exts
  

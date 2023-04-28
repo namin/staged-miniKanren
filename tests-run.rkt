@@ -1,9 +1,8 @@
-#lang racket
+#lang racket/base
 
 (require "generator-lang2.rkt"
          "staged-interp.rkt"
          "test-check.rkt")
-
 
 (test
     (run 1 (q)
