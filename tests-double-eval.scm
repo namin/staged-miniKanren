@@ -41,7 +41,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (eval-and-map-evalo `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
   `(((lambda (_.0) (cons _.0 _.0))
      $$
@@ -51,14 +51,14 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (eval-and-map-evalo `(map (lambda (x) ,q) '(a b c)) '((a . a) (b . b) (c . c))))
   '((cons x x)))
 
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -68,7 +68,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -85,7 +85,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -103,7 +103,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -124,7 +124,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -145,7 +145,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -244,7 +244,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -264,7 +264,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -284,7 +284,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -355,7 +355,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -373,7 +373,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (absento 'a q)
     (absento 'b q)
     (absento 'c q)
@@ -427,7 +427,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
-    (absento 'closure q)
+    (absento 'struct q)
     (quasi-quine-evalo q q))
   `((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
      $$
@@ -438,7 +438,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q)
-    (absento 'closure q)
+    (absento 'struct q)
     (staged (evalo-staged (quasi-quine-eval q) q)))
   `((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
      $$
@@ -449,7 +449,7 @@
 (time-test
  (run 1 (q)
    (absento 'error q)
-   (absento 'closure q)
+   (absento 'struct q)
    (evalo-unstaged (quasi-quine-eval q) q))
  `((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
     $$
@@ -486,8 +486,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q)
-    (absento 'closure q)
-    (absento 'rec-closure q)
+    (absento 'struct q)
     (ho-quine-interp-cons q q))
   `((((lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0) (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))
@@ -499,7 +498,7 @@
 (time-test
   (run 1 (q)
     (absento 'error q)
-    (absento 'rec-closure q)
+    (absento 'struct q)
     (evalo-unstaged
      (ho-quine-interp-cons-fun `(eval-expr ',q (lambda (y) 'error)))
      q))
@@ -547,7 +546,7 @@
 
 (record-bench 'staged 'ho-double-evalo)
 (time-test
- (run 1 (q) (absento 'error q) (absento 'closure q) (absento 'rec-closure q) (ho-double-evalo q q))
+ (run 1 (q) (absento 'error q) (absento 'struct q) (ho-double-evalo q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
@@ -558,8 +557,7 @@
 (time-test
  (run 1 (q)
    (absento 'error q)
-   (absento 'closure q)
-   (absento 'rec-closure q)
+   (absento 'struct q)
       (evalo-unstaged
        (ho-double-eval `(eval-expr ',q (lambda (y) 'error)))
        q))
