@@ -2,7 +2,8 @@
   (absento 'struct v))
 
 (defrel (not-tago v)
-  (=/= 'struct v))
+  (fresh () ;; the fresh is for tests-peano-fib to mysteriously not overfit
+    (=/= 'struct v)))
 
 (defrel (booleano t)
   (conde
