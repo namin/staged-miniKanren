@@ -1,13 +1,9 @@
 (defrel/generator (absent-tago/gen v)
-  (absento 'rec-closure v)
-  (absento 'closure v)
-  (absento 'prim v))
+  (absento 'struct v))
 
 ;; inlining these avoids an `inc` at runtime
 (defrel/generator (not-tago/gen v)
-  (=/= 'rec-closure v)
-  (=/= 'closure v)
-  (=/= 'prim v))
+  (=/= 'struct v))
 
 (defrel/generator (booleano/gen t)
   (conde
@@ -18,7 +14,7 @@
   (fresh (env^ env-self)
     ;; TODO
     ;; (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x* e env) (_ _)))
-    (== env-self `((,f . (val . (rec-closure ,rep))) . ,env))
+    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
     ;; TODO: should be condg-ified
     (conde
       ((symbolo x*)
@@ -31,7 +27,7 @@
   #:generator eval-apply-rec-staged
   (fresh (rep env^ env-self)
     (== rep (partial-apply eval-apply-rec f x* e env))
-    (== env-self `((,f . (val . (rec-closure ,rep))) . ,env))
+    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
     (conde
       ((symbolo x*)
        (== env^ `((,x* . (val . ,a*)) . ,env-self)))
@@ -60,13 +56,13 @@
 (defrel (callo proc val a*)
   (conde
     ((fresh (rep)
-       (== proc `(closure ,rep))
+       (== proc `(struct closure ,rep))
        (apply-partial rep eval-apply a* val)))
     ((fresh (rep)
-       (== proc `(rec-closure ,rep))
+       (== proc `(struct rec-closure ,rep))
        (apply-partial rep eval-apply-rec a* val)))
     ((fresh (prim-id)
-       (== proc `(prim . ,prim-id))
+       (== proc `(struct prim . ,prim-id))
        (u-eval-primo prim-id a* val)))))
 
 (defrel/generator (eval-appo rator rands env val)
@@ -89,11 +85,12 @@
      (eval-expo rator env proc)
      (later (conde
              [(fresh (prim a*)
-                (== `(prim . ,prim) proc)
+                (== `(struct prim . ,prim) proc)
                 (u-eval-primo prim a* val)
                 (now (eval-listo rands env a*)))]
              [(fresh (tag p a*)
-                (== `(,tag . ,p) proc)
+                (== `(struct ,tag . ,p) proc)
+                (=/= tag 'prim)
                 (now (eval-listo rands env a*))
                 (callo proc val a*))])))
 
@@ -101,7 +98,7 @@
    ;; statically-recognizable primitive application
    ([prim]
     [(symbolo rator)
-     (lookupo rator env `(prim . ,prim))]
+     (lookupo rator env `(struct prim . ,prim))]
     [(fresh (proc a*)
        (eval-primo prim a* val)
        (eval-listo rands env a*))])
@@ -111,7 +108,7 @@
     [(conde
       ((symbolo rator)
        (fresh (p tag)
-         (lookupo rator env `(,tag . ,p))
+         (lookupo rator env `(struct ,tag . ,p))
          (=/= 'prim tag)))
       ((fresh (a d) (== (cons a d) rator))))]
     [(fresh (proc a*)
@@ -148,7 +145,7 @@
         ((symbolo x))
         ((list-of-symbolso x)))]
      [(later (fresh (rep)
-               (== `(closure ,rep) val)
+               (== `(struct closure ,rep) val)
                (== rep (partial-apply eval-apply x body env))))])
 
     ;; application
@@ -173,7 +170,7 @@
      [(== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
       (not-in-envo 'letrec env)]
      [(fresh (rep env^)
-        (== env^ `((,f . (val . (rec-closure ,rep))) . ,env))
+        (== env^ `((,f . (val . (struct rec-closure ,rep))) . ,env))
         (later (== rep (partial-apply eval-apply-rec f x e env)))
         (eval-expo letrec-body env^ val))])
     
@@ -367,16 +364,16 @@
                 ((== #f v)
                  (now (oro `(,e2 . ,e-rest) env val))))))])))
 
-(define initial-env `((list . (val . (prim . list)))
-                      (not . (val . (prim . not)))
-                      (equal? . (val . (prim . equal?)))
-                      (symbol? . (val . (prim . symbol?)))
-                      (number? . (val . (prim . number?)))
-                      (pair? . (val . (prim . pair?)))
-                      (cons . (val . (prim . cons)))
-                      (null? . (val . (prim . null?)))
-                      (car . (val . (prim . car)))
-                      (cdr . (val . (prim . cdr)))
+(define initial-env `((list . (val . (struct prim . list)))
+                      (not . (val . (struct prim . not)))
+                      (equal? . (val . (struct prim . equal?)))
+                      (symbol? . (val . (struct prim . symbol?)))
+                      (number? . (val . (struct prim . number?)))
+                      (pair? . (val . (struct prim . pair?)))
+                      (cons . (val . (struct prim . cons)))
+                      (null? . (val . (struct prim . null?)))
+                      (car . (val . (struct prim . car)))
+                      (cdr . (val . (struct prim . cdr)))
                       . ,empty-env))
 
 (defrel (not-symbolo t)

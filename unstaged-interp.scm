@@ -1,14 +1,8 @@
 (defrel (absent-tago v)
-  (fresh ()
-    (absento 'rec-closure v)
-    (absento 'closure v)
-    (absento 'prim v)))
+  (absento 'struct v))
 
 (defrel (not-tago v)
-  (fresh ()
-    (=/= 'rec-closure v)
-    (=/= 'closure v)
-    (=/= 'prim v)))
+  (=/= 'struct v))
 
 (defrel (booleano t)
   (conde
@@ -16,10 +10,7 @@
     ((== #t t))))
 
 (defrel (pos-tago v)
-  (conde
-    ((== v 'rec-closure))
-    ((== v 'closure))
-    ((== v 'prim))))
+  (== v 'struct))
 
 ;; The definition of 'letrec' is based based on Dan Friedman's code,
 ;; using the "half-closure" approach from Reynold's definitional
@@ -40,7 +31,7 @@
 
     ((fresh (rep x body)
        (== `(lambda ,x ,body) expr)
-       (== `(closure ,rep) val)
+       (== `(struct closure,rep) val)
        (conde
          ;; Variadic
          ((symbolo x))
@@ -54,18 +45,18 @@
        (== `(,rator . ,rands) expr)
        (u-eval-expo rator env cfun)
        (conde
-         ((== `(closure ,rep) cfun)
+         ((== `(struct closure,rep) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*)
           )
-         ((== `(rec-closure ,rep) cfun)
+         ((== `(struct rec-closure ,rep) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*)
           ))))
 
     ((fresh (rator x* rands a* prim-id)
        (== `(,rator . ,rands) expr)
-       (u-eval-expo rator env `(prim . ,prim-id))
+       (u-eval-expo rator env `(struct prim . ,prim-id))
        (u-eval-primo prim-id a* val)
        (u-eval-listo rands env a*)))
     
@@ -102,7 +93,7 @@
          ((fresh (lam-expr z body rep)
             (== `(rec . ,lam-expr) b)
             (== `(lambda ,z ,body) lam-expr)
-            (== `(closure ,rep) t)
+            (== `(struct closure,rep) t)
             (== rep (partial-apply eval-apply z body env))
             ))))
       ((=/= x y)
@@ -281,16 +272,16 @@
       ((=/= #f t) (u-eval-expo e2 env val))
       ((== #f t) (u-eval-expo e3 env val)))))
 
-(define u-initial-env `((list . (val . (prim . list)))
-                      (not . (val . (prim . not)))
-                      (equal? . (val . (prim . equal?)))
-                      (symbol? . (val . (prim . symbol?)))
-                      (number? . (val . (prim . number?)))
-                      (pair? . (val . (prim . pair?)))
-                      (cons . (val . (prim . cons)))
-                      (null? . (val . (prim . null?)))
-                      (car . (val . (prim . car)))
-                      (cdr . (val . (prim . cdr)))
+(define u-initial-env `((list . (val . (struct prim . list)))
+                      (not . (val . (struct prim . not)))
+                      (equal? . (val . (struct prim . equal?)))
+                      (symbol? . (val . (struct prim . symbol?)))
+                      (number? . (val . (struct prim . number?)))
+                      (pair? . (val . (struct prim . pair?)))
+                      (cons . (val . (struct prim . cons)))
+                      (null? . (val . (struct prim . null?)))
+                      (car . (val . (struct prim . car)))
+                      (cdr . (val . (struct prim . cdr)))
                       . ,u-empty-env))
 
 (defrel (u-handle-matcho expr env val)

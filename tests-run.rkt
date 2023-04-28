@@ -253,7 +253,7 @@
       (staged
        (evalo-staged `((lambda () car)) q))
       )
-  '((prim . car)))
+  '((struct prim . car)))
 
 (test
     (run 1 (q)
