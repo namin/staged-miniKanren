@@ -31,7 +31,7 @@
 
     ((fresh (rep x body)
        (== `(lambda ,x ,body) expr)
-       (== `(struct closure,rep) val)
+       (== `(struct closure ,rep) val)
        (conde
          ;; Variadic
          ((symbolo x))
@@ -45,7 +45,7 @@
        (== `(,rator . ,rands) expr)
        (u-eval-expo rator env cfun)
        (conde
-         ((== `(struct closure,rep) cfun)
+         ((== `(struct closure ,rep) cfun)
           (u-eval-listo rands env a*)
           (callo cfun val a*)
           )
@@ -93,7 +93,7 @@
          ((fresh (lam-expr z body rep)
             (== `(rec . ,lam-expr) b)
             (== `(lambda ,z ,body) lam-expr)
-            (== `(struct closure,rep) t)
+            (== `(struct closure ,rep) t)
             (== rep (partial-apply eval-apply z body env))
             ))))
       ((=/= x y)
