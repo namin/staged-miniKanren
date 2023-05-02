@@ -1,11 +1,12 @@
-#lang racket/load
+#lang racket/base
 
 (require "generator-lang2.rkt"
          "staged-interp.rkt"
          "test-check.rkt"
-         "staged-test-tags.rkt")
+         "staged-test-tags.rkt"
+         racket/include)
 
-(load "tests-parsing-with-derivatives.scm")
-(load "tests-proof.scm")
-(load "tests-dl.scm")
-(load "tests-peano-fib.scm")
+(include "tests-parsing-with-derivatives.scm")
+(include "tests-proof.scm")
+(include "tests-dl.scm")
+(include "tests-peano-fib.scm")

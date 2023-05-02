@@ -1,4 +1,4 @@
-#lang racket/load
+#lang racket/base
 
 (require "generator-lang2.rkt"
          "staged-interp.rkt"
