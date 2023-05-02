@@ -16,4 +16,3 @@
 (include "condg.rktl")
 (include "staged-utils.scm")
 (include "staged-run.scm")
-(include "test-check.scm")

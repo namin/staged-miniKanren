@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require "staged-load.rkt")
+(require "staged-load.rkt"
+         "test-check.rkt")
 
 (test
     (run 1 (q) (condg (== 1 q) (() [(== 2 q)] [(== 1 1)])))
