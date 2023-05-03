@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "all.rkt")
+(require "../all.rkt")
 
 ;; Synthesizes a 'match'-based version of 'null?'
 (record-bench 'run-staged 'appendo-synth-0)

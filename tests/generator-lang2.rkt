@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require "generator-lang2.rkt"
-         "test-check.rkt")
+(require "../generator-lang2.rkt"
+         "../test-check.rkt")
 
 (defrel (unify-5 x)
   (== x 5))

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "all.rkt")
+(require "../all.rkt")
 
 (defrel (evalo e v) (evalo-unstaged e v))
 

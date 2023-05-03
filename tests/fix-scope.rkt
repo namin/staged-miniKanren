@@ -1,7 +1,7 @@
 #lang racket/base
 
-(require "staged-load.rkt"
-         "test-check.rkt")
+(require "../staged-load.rkt"
+         "../test-check.rkt")
 
 (test
     (fix-scope
