@@ -1,14 +1,15 @@
+
 #lang racket/base
 
 (provide
  evalo-staged
  evalo-staged/env-exts
- 
  eval-expo
- evalo-staged/env-exts
  
  evalo-unstaged
- u-eval-expo)
+ u-eval-expo
+
+ initial-env)
 
 (require "generator-lang2.rkt"
          racket/include)

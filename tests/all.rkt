@@ -4,6 +4,7 @@
 (require "generator-lang2.rkt")
 (require "doc.rkt")
 (require "staged-apply-letrec.rkt")
+(require "letrec-cross-stage.rkt")
 
 ;; these are looking at innards using staged-load.rkt
 (require "staged-apply.rkt")
