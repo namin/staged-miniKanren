@@ -1,9 +1,6 @@
 #lang racket/base
 
-(require "generator-lang2.rkt"
-         "staged-interp.rkt"
-         "test-check.rkt"
-         racket/pretty)
+(require "all.rkt")
 
 (defrel (evalo e v) (evalo-unstaged e v))
 

@@ -1,3 +1,7 @@
+#lang racket/base
+
+(require "all.rkt")
+
 (defrel (proofo proof truth)
   (staged
    (evalo-staged

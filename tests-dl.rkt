@@ -1,3 +1,7 @@
+#lang racket/base
+
+(require "all.rkt")
+
 ;; Adapted from the nnf code in 'The Semantic Web Explained' by Péter
 ;; Szeredi, Gergely Lukácsy, and Tamás Benkő. Cambridge University
 ;; Press, 2014.

@@ -1,9 +1,6 @@
 #lang racket/base
 
-(require "generator-lang2.rkt"
-         "staged-interp.rkt"
-         "test-check.rkt"
-         "staged-test-tags.rkt")
+(require "all.rkt")
 
 ;; Synthesizes a 'match'-based version of 'null?'
 (record-bench 'run-staged 'appendo-synth-0)

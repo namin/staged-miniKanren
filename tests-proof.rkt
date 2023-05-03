@@ -1,3 +1,7 @@
+#lang racket/base
+
+(require "all.rkt")
+
 (define-term-syntax-rule (prover body)
   `(letrec ([member?
              (lambda (x ls)

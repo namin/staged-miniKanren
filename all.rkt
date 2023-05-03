@@ -1,9 +1,13 @@
 #lang racket/base
 
-(require "generator-lang.rkt"
+(require "generator-lang2.rkt"
          "staged-interp.rkt"
-         "test-check.rkt")
+         "test-check.rkt"
+         "staged-test-tags.rkt"
+         racket/pretty)
 
-(provide (all-from-out "generator-lang.rkt"
+(provide (all-from-out "generator-lang2.rkt"
                        "staged-interp.rkt"
-                       "test-check.rkt"))
+                       "test-check.rkt"
+                       "staged-test-tags.rkt"
+                       racket/pretty))

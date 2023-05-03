@@ -1,9 +1,6 @@
 #lang racket/base
 
-(require "generator-lang2.rkt"
-         "staged-interp.rkt"
-         "test-check.rkt"
-         "staged-test-tags.rkt")
+(require "all.rkt")
 
 (record-bench 'staging 'eval-and-map-evalo)
 (defrel (eval-and-map-evalo expr val)
