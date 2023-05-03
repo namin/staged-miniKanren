@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "all.rkt")
+(require "../all.rkt")
 
 (defrel (proofo proof truth)
   (staged

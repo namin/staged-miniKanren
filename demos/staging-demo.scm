@@ -1,7 +1,12 @@
+#lang racket
+
+(require "../all.rkt")
+
 (run* (q)
   (staged
    (later (== q 1))))
-(generated-code)
+
+(pretty-write (generated-code))
 
 (run* (q)
   (staged
@@ -45,10 +50,10 @@
      (minio f v)])))
 
 (run* (q) (staged (minio '(hello 1) q)))
-(generated-code)
+(pretty-write (generated-code))
 
 (run* (q) (staged (minio q '(SYM 1))))
-(generated-code)
+(pretty-write (generated-code))
 
 (run 1 (q) (staged (fresh (a) (minio `(hello ,a) q))))
-(generated-code)
+(pretty-write (generated-code))
