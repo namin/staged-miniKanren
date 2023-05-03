@@ -106,7 +106,7 @@
     (numbero t1:term)
     (stringo t1:term)
 
-    (trace name:id t:term-var ...)
+    (trace name:id t:term-var ...+)
 
     (fresh (x:term-var ...) g:goal ...+)
     #:binding {(bind x) g}
@@ -272,7 +272,7 @@
      #'(i:project (x ...)
          (begin
            (displayln (list 'id x ...))
-           g:succeed))]
+           i:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)
@@ -337,7 +337,7 @@
      #'(i:project (x ...)
          (begin
            (displayln (list 'id x ...))
-           g:succeed))]
+           i:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)

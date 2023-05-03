@@ -12,107 +12,91 @@
 (include "../../faster-minikanren/racket-compatibility.scm")
 (include "../../faster-minikanren/mk.scm")
 
+;;
+;; Extensions to the data type of terms
+;;
+;;
+;; Term := ...
+;;       | ApplyRep      ; first-class partial relation application value
+;;
 
-(define (map-on-syntax-data f stx)
-  (let rec ((v stx))
-    (cond
-      ((syntax? v)
-       (datum->syntax v (rec (syntax-e v)) v v))
-      ((pair? v)
-       (cons (rec (car v)) (rec (cdr v))))
-      ((data? v)
-       (f (data-value v)))
-      (else v))))
+;; ApplyRep = (apply-rep Symbol Symbol Term (or #f SyntaxWithData Procedure))
+;; The proc is syntax at staging time and a procedure at runtime.
+;;
+;; called in mk.scm `unify` and `walk*`
+(struct apply-rep [name-staged name-dyn args proc]
+  #:prefab
+  #:constructor-name make-apply-rep)
 
-;; called from mk.scm `reify-S`
-(define (reify-S-syntax v S)
-  (cond
-    ((syntax? v)
-     (reify-S-syntax (syntax-e v) S))
-    ((pair? v)
-     (let ((S (reify-S-syntax (car v) S)))
-       (reify-S-syntax (cdr v) S)))
-    ((data? v)
-     (reify-S (data-value v) S))
-    (else S)))
-
-(define (do-expand t)
-  (map-on-syntax-data reflect-datum t))
-
-(define (unexpand x) x)
-(define (unexpand? x) (syntax? x))
-
-;; used in mk.scm `vars`
+;; A SyntaxWithData is a syntax object containing (data Term) structures
+;;  in some positions.
+;;
+;; called in mk.scm `vars`
 (struct data [value] #:transparent)
 
-
-(define (expand x) (data x))
-(define (expand? x) (data? x))
-
-(define (reflect-datum t)
-  (define (nonliteral-datum? t)
-    (or (var? t) (syntax? t) (apply-rep? t)))
-  
-  (define (needs-unquote? t)
+(define (map-syntax-with-data f stx)
+  (let rec ((v stx))
     (cond
-      ((nonliteral-datum? t) #t)
-      ((pair? t) (or (needs-unquote? (car t)) (needs-unquote? (cdr t))))
-      (else #f)))
-
-  (define (reflect-nonliteral-datum t)
-    (match t
-      [(? var?) (data t)]
-      [(? syntax? t) (do-expand t)]
-      [(apply-rep name-staged name-dyn args proc)
-       #`(make-apply-rep
-          #,(reflect-datum name-staged)
-          #,(reflect-datum name-dyn)
-          #,(reflect-datum args)
-          #,(reflect-datum proc))]))
-  
-  (define (reflect-quasi-contents t)
-    (match t
-      [(? nonliteral-datum?) #`,#,(reflect-nonliteral-datum t)]
-      [(cons a d)
-       (cons (reflect-quasi-contents a) (reflect-quasi-contents d))]
-      [t t]))
-
-  (cond
-    [(nonliteral-datum? t)
-     (reflect-nonliteral-datum t)]
-    [(needs-unquote? t)
-     #``#,(reflect-quasi-contents t)]
-    [else
-     #`'#,(reflect-quasi-contents t)]))
+      [(syntax? v)
+       (datum->syntax v (rec (syntax-e v)) v v)]
+      [(pair? v)
+       (cons (rec (car v)) (rec (cdr v)))]
+      [(data? v)
+       (f (data-value v))]
+      [else v])))
 
 ;; called from mk.scm `walk*`
 (define (walk*-syntax stx S)
-  (map-on-syntax-data (lambda (v) (data (walk* v S))) stx))
+  (map-syntax-with-data (lambda (v) (data (walk* v S))) stx))
 
-;; called from mk.scm `reify`
-(define walk-later-final
-  (lambda (L S)
-    (map do-expand (walk-later L S))))
 
-(define walk-later
-  (lambda (L S)
-    (map (lambda (stx) (walk* stx S)) (reverse L))))
 
-(define later
-  (lambda (x)
-    (lambda (st)
-      (state (state-S st) (state-C st) (cons x (state-L st))))))
+;;
+;; Basic "later" constraint and goal variants
+;;
 
-(define later-scope
-  (lambda (g out)
-    (lambda (st)
-      (bind*
-       (g (state (state-S st) (C-new-later-scope (state-C st)) '()))
-       generate-constraints
-       (lambda (st2)
-         ((fresh ()
-            (== out (walk-later (state-L st2) (state-S st2))))
-          st))))))
+(define (later x)
+  (lambda (st)
+    (state (state-S st) (state-C st) (cons x (state-L st)))))
+
+(define (later-binary-constraint constraint-id)
+  (lambda (t1 t2)
+    (later #`(#,constraint-id #,(data t1) #,(data t2)))))
+
+(define (later-unary-constraint constraint-id)
+  (lambda (t)
+    (later #`(#,constraint-id #,(data t)))))
+
+(define-values (l== l=/= labsento)
+  (apply values (map later-binary-constraint (list #'== #'=/= #'absento))))
+
+(define-values (lsymbolo lnumbero lstringo)
+  (apply values (map later-unary-constraint (list #'symbolo #'numbero #'stringo))))
+
+(define-syntax lapp
+  (syntax-rules ()
+    [(_ relation arg ...)
+     (later #`(relation #,(data arg) ...))]))
+
+(define lsucceed (later #'succeed))
+(define lfail (later #'fail))
+
+(define-syntax lconde
+  (syntax-rules ()
+    ((_ (g ...) ...)
+     (ldisj (fresh () g ...) ...))))
+
+(define (ldisj . gs-init)
+  (let recur ([gs gs-init] [gs-stx '()])
+    (if (null? gs)
+        (later #`(conde #,@(reverse gs-stx)))
+        (capture-later (car gs)
+                       (lambda (g-stx)
+                         (recur (cdr gs) (cons g-stx gs-stx)))))))
+
+;;
+;; Scoped lift capturing
+;;
 
 (define capture-later
   (lambda (g k)
@@ -126,18 +110,15 @@
          ((k (walk-later (state-L st2) (state-S st2)))
           st))))))
 
-(define (ldisj . gs-init)
-  (let recur ([gs gs-init] [gs-stx '()])
-    (if (null? gs)
-        (later #`(conde #,@(reverse gs-stx)))
-        (capture-later (car gs)
-                       (lambda (g-stx)
-                         (recur (cdr gs) (cons g-stx gs-stx)))))))
+(define walk-later
+  (lambda (L S)
+    (map (lambda (stx) (walk* stx S)) (reverse L))))
 
-(define-syntax lconde
-  (syntax-rules ()
-    ((_ (g ...) ...)
-     (ldisj (fresh () g ...) ...))))
+(define generate-constraints
+  (lambda (st)
+    (let* ([vars (remove-duplicates (C-vars (state-C st)))]
+           [new-stx (apply append (map (generate-var-constraints st) vars))])
+      (state (state-S st) (state-C st) (append (state-L st) (reverse new-stx))))))
 
 ;; TODO: this relies on internal details, only works for current set of type constraints.
 ;;  Should figure how to make generic in type constraints at least.
@@ -151,63 +132,36 @@
                (let ((cid (hash-ref 
                            (hasheq 'sym #'symbolo 'num #'numbero 'str #'stringo)
                            (type-constraint-reified (c-T c)))))
-                 (list #`(#,cid #,(expand v))))
+                 (list #`(#,cid #,(data v))))
                '())
-           (map (lambda (atom) #`(absento #,(expand atom) #,v)) (c-A c))
-           (map (lambda (d) #`(=/=* #,(expand d))) (c-D c)))))))
-
-(define generate-constraints
-  (lambda (st)
-    (let* ([vars (remove-duplicates (C-vars (state-C st)))]
-           [new-stx (apply append (map (generate-var-constraints st) vars))])
-      (state (state-S st) (state-C st) (append (state-L st) (reverse new-stx))))))
-
-(define (later-binary-constraint constraint-id)
-  (lambda (t1 t2) (later #`(#,constraint-id #,(expand t1) #,(expand t2)))))
-
-(define (later-unary-constraint constraint-id)
-  (lambda (t) (later #`(#,constraint-id #,(expand t)))))
-
-(define-values (l== l=/= labsento)
-  (apply values (map later-binary-constraint (list #'== #'=/= #'absento))))
-
-(define-values (lsymbolo lnumbero lstringo)
-  (apply values (map later-unary-constraint (list #'symbolo #'numbero #'stringo))))
-
-(define-syntax lapp
-  (syntax-rules ()
-    [(_ relation arg ...)
-     (later #`(relation #,(expand arg) ...))]))
-
-(define lfail (later #'fail))
-(define lsucceed (later #'succeed))
+           (map (lambda (atom) #`(absento #,(data atom) #,v)) (c-A c))
+           (map (lambda (d) #`(=/=* #,(data d))) (c-D c)))))))
 
 
-;; used in mk.scm `unify` and `walk*`
-(struct apply-rep [name-staged name-dyn args proc]
-  #:prefab
-  #:constructor-name make-apply-rep)
-
+;;
+;; Partial applications
+;;
 
 (define-syntax lreify-call
   (lambda (stx)
     (syntax-case stx ()
-        ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-         (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(y ...)))
-         (with-syntax
-          (((y-n ...) (generate-temporaries #'(y ...)))
-           ((y-n2 ...) (generate-temporaries #'(y ...))))
-          #'(fresh (y-n ...)
-              (capture-later
-               (fresh ()
-                 (l== y-n (unexpand #'y-n2)) ...
-                 (rel-staged rep x ... y-n ...))
-               (lambda (body)
-                 (l== rep (make-apply-rep
-                           'rel-staged 'rel-dyn (list x ...)
-                           (unexpand #`(lambda (y-n2 ...)
-                                        (fresh ()
-                                          . #,body)))))))))))))
+      ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
+       (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(y ...)))
+       (with-syntax
+           (((y-n ...) (generate-temporaries #'(y ...)))
+            ((y-n2 ...) (generate-temporaries #'(y ...))))
+         #'(fresh (y-n ...)
+             (capture-later
+              (fresh ()
+                (later #`(== #,(data y-n) y-n2))
+                ...
+                (rel-staged rep x ... y-n ...))
+              (lambda (body)
+                (l== rep (make-apply-rep
+                          'rel-staged 'rel-dyn (list x ...)
+                          #`(lambda (y-n2 ...)
+                              (fresh ()
+                                . #,body))))))))))))
 
 (define-syntax reify-call
   (lambda (stx)
@@ -239,7 +193,7 @@
                             ;;(printf "applying rep...~\n")
                             (let ((proc (apply-rep-proc rep)))
                               ;; TODO: unify to check names
-                              (if (or (not proc) (unexpand? proc))
+                              (if (or (not proc) (syntax? proc))
                                 (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
                                 (begin
                                   ;;(printf "calling proc...~\n")
@@ -249,35 +203,12 @@
 (define-syntax lapply-reified
   (syntax-rules ()
     ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-     (later #`(apply-reified #,(expand rep) ((rel-staged rel-dyn) (x ...) (#,(expand y) ...)))))))
+     (later #`(apply-reified #,(data rep) ((rel-staged rel-dyn) (x ...) (#,(data y) ...)))))))
 
 
-
-(define (evaluate-guard thunk-stream guard-stx)
-  (match (take 2 thunk-stream)
-    ['() #f]
-    [(list answer) answer]
-    [answers
-     'nondet
-     ;;(raise-syntax-error 'condg (format "guard produced too many answers: ~a" answers) guard-stx)
-     ]))
-
-(define (condg-runtime fallback clauses error-stx)
-  (lambda (st)
-    (let ((st (state-with-scope st (new-scope))))
-      (define candidates
-        (for/list ([clause clauses]
-                   #:do [(match-define (list guard-stream body guard-stx) (clause st))
-                         (define guard-answer (evaluate-guard (lambda () guard-stream) guard-stx))]
-                   #:when guard-answer)
-          (cons guard-answer body)))
-      (match candidates
-        ['() (raise-syntax-error #f "all guards failed" error-stx)]
-        [(list (cons guard-answer body))
-         (if (eq? 'nondet guard-answer)
-             (fallback st)
-             (body guard-answer))]
-        [_ (fallback st)]))))
+;;
+;; condg
+;;
 
 (define-syntax condg
   (syntax-parser
@@ -296,8 +227,113 @@
          ...)
        #'error-stx))))
 
+(define (condg-runtime fallback clauses error-stx)
+  (lambda (st)
+    (let ((st (state-with-scope st (new-scope))))
+      (define candidates
+        (for/list ([clause clauses]
+                   #:do [(match-define (list guard-stream body guard-stx) (clause st))
+                         (define guard-answer (evaluate-guard (lambda () guard-stream) guard-stx))]
+                   #:when guard-answer)
+          (cons guard-answer body)))
+      (match candidates
+        ['() (raise-syntax-error #f "all guards failed" error-stx)]
+        [(list (cons guard-answer body))
+         (if (eq? 'nondet guard-answer)
+             (fallback st)
+             (body guard-answer))]
+        [_ (fallback st)]))))
+
+(define (evaluate-guard thunk-stream guard-stx)
+  (match (take 2 thunk-stream)
+    ['() #f]
+    [(list answer) answer]
+    [answers 'nondet]))
 
 
+
+;;
+;; Reification
+;;
+
+;; (ListOf SyntaxWithData), Substitution -> (ListOf SyntaxWithDataVars)
+;;
+;; At reification time, walk* the lifted `later` syntax
+;; and reflect the data within it to syntax for expressions that
+;; construct the same data.
+;;
+;; The resulting syntax still contains data constructors containing
+;; logic variables.
+;;
+;; called from mk.scm `reify`
+(define walk-later-final
+  (lambda (L S)
+    (map reflect-data-in-syntax (walk-later L S))))
+
+;; SyntaxWithData -> SyntaxWithDataVars
+(define (reflect-data-in-syntax t)
+  (map-syntax-with-data reflect-datum t))
+
+;; Term -> SyntaxWithDataVars
+(define (reflect-datum t)
+  (define (nonliteral-datum? t)
+    (or (var? t) (syntax? t) (apply-rep? t)))
+  
+  (define (needs-unquote? t)
+    (cond
+      ((nonliteral-datum? t) #t)
+      ((pair? t) (or (needs-unquote? (car t)) (needs-unquote? (cdr t))))
+      (else #f)))
+
+  (define (reflect-nonliteral-datum t)
+    (match t
+      [(? var?) (data t)]
+      [(? syntax? t) (reflect-data-in-syntax t)]
+      [(apply-rep name-staged name-dyn args proc)
+       #`(make-apply-rep
+          #,(reflect-datum name-staged)
+          #,(reflect-datum name-dyn)
+          #,(reflect-datum args)
+          #,(reflect-datum proc))]))
+  
+  (define (reflect-quasi-contents t)
+    (match t
+      [(? nonliteral-datum?) #`,#,(reflect-nonliteral-datum t)]
+      [(cons a d)
+       (cons (reflect-quasi-contents a) (reflect-quasi-contents d))]
+      [t t]))
+
+  (cond
+    [(nonliteral-datum? t)
+     (reflect-nonliteral-datum t)]
+    [(needs-unquote? t)
+     #``#,(reflect-quasi-contents t)]
+    [else
+     #`'#,(reflect-quasi-contents t)]))
+
+
+;; SyntaxWithDataVars, ReifierSubst -> ReifierSubst
+;;
+;; Extends reify-S to traverse SyntaxWithDataVars. reify-S
+;; is responsible for constructing a reifier substitution
+;; that maps Vars to reified variable name symbols.
+;;
+;; called from mk.scm `reify-S`
+(define (reify-S-syntax v S)
+  (cond
+    [(syntax? v)
+     (reify-S-syntax (syntax-e v) S)]
+    [(pair? v)
+     (let ((S (reify-S-syntax (car v) S)))
+       (reify-S-syntax (cdr v) S))]
+    [(data? v)
+     (reify-S (data-value v) S)]
+    [else S]))
+
+
+;;
+;; Scope fixing
+;;
 
 ;; # Utilities for quick-fixing scope
 (define union
@@ -423,15 +459,20 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
   (lambda (t)
     (car (fix-scope2 (fix-scope1 t) '()))))
 
+
+;;
+;; Staging entry point
+;;
+
 (define (unique-result r)
   (cond
     ((null? r)
      (error 'gen "staging failed"))
     ((not (null? (cdr r)))
      (for-each
-       (lambda (i x) (printf "result ~a: ~a\n" (+ 1 i) x))
-       (iota (length r))
-       r)
+      (lambda (i x) (printf "result ~a: ~a\n" (+ 1 i) x))
+      (iota (length r))
+      r)
      (error 'gen "staging non-deterministic"))
     (else (car r))))
 (define (layer? tag r)
@@ -484,22 +525,22 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 (define res #f)
 
 (define (strip-data-from-syntax x)
-  (map-on-syntax-data (lambda (v) v) x))
+  (map-syntax-with-data (lambda (v) v) x))
 
 (define (to-datum x)
   (map syntax->datum (map strip-data-from-syntax x)))
 
 (define (gen-func r . inputs)
   (let ((r (unique-result r)))
-      (let ((cs (convert-constraints r))
-            (r (maybe-remove-constraints r)))
-        (unless (code-layer? r)
-          (error 'gen-func (format "no code generated: ~a" r)))
-        (set! res
-          (fix-scope-syntax
-            #`(lambda (#,@inputs)
-                (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r)))))
-        res)))
+    (let ((cs (convert-constraints r))
+          (r (maybe-remove-constraints r)))
+      (unless (code-layer? r)
+        (error 'gen-func (format "no code generated: ~a" r)))
+      (set! res
+            (fix-scope-syntax
+             #`(lambda (#,@inputs)
+                 (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r)))))
+      res)))
 
 (define-syntax-rule (generate-staged (var ...) goal)
   (eval-syntax
@@ -515,6 +556,12 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 
 (define (reset-generated-code!)
   (set! res #f))
+
+
+;;
+;; Staging entry point syntax
+;;
+
 
 (define-syntax run-staged
   (syntax-rules ()
