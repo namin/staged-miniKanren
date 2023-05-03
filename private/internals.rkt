@@ -24,9 +24,7 @@
 ;; The proc is syntax at staging time and a procedure at runtime.
 ;;
 ;; called in mk.scm `unify` and `walk*`
-(struct apply-rep [name-staged name-dyn args proc]
-  #:prefab
-  #:constructor-name make-apply-rep)
+(struct apply-rep [name-staged name-dyn args proc] #:prefab)
 
 ;; A SyntaxWithData is a syntax object containing (data Term) structures
 ;;  in some positions.
@@ -57,7 +55,7 @@
 
 (define (later x)
   (lambda (st)
-    (state (state-S st) (state-C st) (cons x (state-L st)))))
+    (state-with-L st (cons x (state-L st)))))
 
 (define (later-binary-constraint constraint-id)
   (lambda (t1 t2)
@@ -98,27 +96,24 @@
 ;; Scoped lift capturing
 ;;
 
-(define capture-later
-  (lambda (g k)
-    (lambda (st)
-      (bind*
-       (g (state-with-scope
-           (state (state-S st) (C-new-later-scope (state-C st)) '())
-           (new-scope)))
-       generate-constraints
-       (lambda (st2)
-         ((k (walk-later (state-L st2) (state-S st2)))
-          st))))))
+(define (capture-later g k)
+  (lambda (st-original)
+    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
+           [st-before (state-with-L st-before '())]
+           [st-before (state-with-scope st-before (new-scope))])
+      (bind
+       (g st-before)
+       (lambda (st-after)
+         (let ([captured-L (for/list ([stx (append (reverse (state-L st-after))
+                                                   (generate-constraints st-after))])
+                             (walk* stx (state-S st-after)))])
+           ((k captured-L)
+            st-original)))))))
 
-(define walk-later
-  (lambda (L S)
-    (map (lambda (stx) (walk* stx S)) (reverse L))))
 
-(define generate-constraints
-  (lambda (st)
-    (let* ([vars (remove-duplicates (C-vars (state-C st)))]
-           [new-stx (apply append (map (generate-var-constraints st) vars))])
-      (state (state-S st) (state-C st) (append (state-L st) (reverse new-stx))))))
+(define (generate-constraints st)
+  (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
+    (apply append (map (generate-var-constraints st) vars))))
 
 ;; TODO: this relies on internal details, only works for current set of type constraints.
 ;;  Should figure how to make generic in type constraints at least.
@@ -129,15 +124,14 @@
           st
           (append
            (if (c-T c)
-               (let ((cid (hash-ref 
-                           (hasheq 'sym #'symbolo 'num #'numbero 'str #'stringo)
-                           (type-constraint-reified (c-T c)))))
+               (let ((cid (hash-ref (hasheq 'sym #'symbolo 'num #'numbero 'str #'stringo)
+                                    (type-constraint-reified (c-T c)))))
                  (list #`(#,cid #,(data v))))
                '())
            (map (lambda (atom) #`(absento #,(data atom) #,v)) (c-A c))
            (map (lambda (d) #`(=/=* #,(data d))) (c-D c)))))))
 
-
+  
 ;;
 ;; Partial applications
 ;;
@@ -157,7 +151,7 @@
                 ...
                 (rel-staged rep x ... y-n ...))
               (lambda (body)
-                (l== rep (make-apply-rep
+                (l== rep (apply-rep
                           'rel-staged 'rel-dyn (list x ...)
                           #`(lambda (y-n2 ...)
                               (fresh ()
@@ -168,7 +162,7 @@
     (syntax-case stx ()
         ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
          (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(y ...)))
-         #'(== rep (make-apply-rep
+         #'(== rep (apply-rep
                     'rel-staged 'rel-dyn (list x ...)
                     #f))))))
 
@@ -185,7 +179,7 @@
                         ((cond
                            ((var? rep)
                             (fresh (x-n ...)
-                                   (== rep (make-apply-rep
+                                   (== rep (apply-rep
                                              'rel-staged 'rel-dyn (list x-n ...) ;
                                              #f))
                                    (rel-dyn x-n ... y ...)))
@@ -266,9 +260,9 @@
 ;; logic variables.
 ;;
 ;; called from mk.scm `reify`
-(define walk-later-final
-  (lambda (L S)
-    (map reflect-data-in-syntax (walk-later L S))))
+(define (walk-later-final st)
+  (for/list ([stx (reverse (state-L st))])
+    (reflect-data-in-syntax (walk* stx (state-S st)))))
 
 ;; SyntaxWithData -> SyntaxWithDataVars
 (define (reflect-data-in-syntax t)
@@ -290,7 +284,7 @@
       [(? var?) (data t)]
       [(? syntax? t) (reflect-data-in-syntax t)]
       [(apply-rep name-staged name-dyn args proc)
-       #`(make-apply-rep
+       #`(apply-rep
           #,(reflect-datum name-staged)
           #,(reflect-datum name-dyn)
           #,(reflect-datum args)
