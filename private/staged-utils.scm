@@ -146,7 +146,6 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 (define (convert-constraints r)
   (cond
     ((constraint-layer? r)
-     (printf "processing constraints: ~a\n" (cddr r))
      (process-constraints (cddr r)))
     (else '())))
 (define (process-constraints cs)
@@ -155,7 +154,6 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
     (else (append (process-constraint (car cs))
                   (process-constraints (cdr cs))))))
 (define (process-constraint c)
-  (printf "processing constraint: ~a\n" c)
   (cond
     ((eq? (car c) '=/=)
      (map (lambda (x) #`(=/= #,(miniexpand (caar x)) #,(miniexpand (cadar x))))
