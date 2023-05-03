@@ -290,7 +290,7 @@
         (with-syntax ([rel-dyn #'rel]
                       [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                       [(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(i:reify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+          #'(i:partial-apply v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (apply-partial v:id rel:id arg ...))
@@ -302,7 +302,7 @@
        (with-syntax ([rel-dyn #'rel]
                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                      [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:apply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+          #'(i:apply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
     
     [(_ (constraint:binary-constraint t1 t2))
@@ -395,7 +395,7 @@
         (with-syntax ([rel-dyn #'rel]
                       [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                       [(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(i:lreify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+          #'(i:lpartial-apply v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (apply-partial v:id rel:id arg ...))
@@ -407,7 +407,7 @@
        (with-syntax ([rel-dyn #'rel]
                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                      [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:lapply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+          #'(i:lapply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
    
     [(_ (constraint:binary-constraint t1 t2))

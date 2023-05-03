@@ -35,10 +35,10 @@
  lstringo
  labsento
 
- reify-call
- lreify-call
- apply-reified
- lapply-reified
+ partial-apply
+ lpartial-apply
+ apply-partial
+ lapply-partial
  
  generated-code
  reset-generated-code!

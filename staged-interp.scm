@@ -12,8 +12,8 @@
 
 (defrel/generator (eval-apply-rec-staged rep f x* e env a* res)
   (fresh (env^ env-self)
-    ;; TODO
-    ;; (lreify-call rep ((eval-apply-rec-staged eval-apply-rec-dyn) (f x* e env) (_ _)))
+    ;; TODO: should we do something like this?
+    ;; (== rep (partial-apply eval-apply-rec f x* e env))
     (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
     ;; TODO: should be condg-ified
     (conde

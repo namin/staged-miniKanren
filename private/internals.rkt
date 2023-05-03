@@ -136,7 +136,7 @@
 ;; Partial relation application
 ;;
 
-(define-syntax lreify-call
+(define-syntax lpartial-apply
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
@@ -144,6 +144,9 @@
      #'(fresh (y-n ...)
          (capture-later
           (fresh ()
+            ;; This is a little subtle. This unification ends up as code in the
+            ;; lambda body, but it has to be part of L in the capture to ensure
+            ;; that substitution extensions to `y-n` are captured in the walk.
             (later #`(== #,(data y-n) y-n2))
             ...
             (rel-staged rep x ... y-n ...))
@@ -154,14 +157,14 @@
                           (fresh ()
                             . #,body)))))))]))
 
-(define-syntax reify-call
+(define-syntax partial-apply
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~literal _) ...)))
      #'(== rep (apply-rep
                 'rel-staged 'rel-dyn (list x ...)
                 #f))]))
 
-(define-syntax apply-reified
+(define-syntax apply-partial
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))     
      #:with (x-n ...) (generate-temporaries #'(x ...))
@@ -186,10 +189,10 @@
                        (proc y ...)))))
               (else fail)) st)))]))
 
-(define-syntax lapply-reified
+(define-syntax lapply-partial
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))
-     #'(later #`(apply-reified #,(data rep) ((rel-staged rel-dyn) (x ...) (#,(data y) ...))))]))
+     #'(later #`(apply-partial #,(data rep) ((rel-staged rel-dyn) (x ...) (#,(data y) ...))))]))
 
 
 ;;
@@ -348,7 +351,7 @@ things to manipulate:
 reified logic variables, always in data position
 fresh syntax that is not quoted
 
-by the way we construct lambdas in lreify-call, the parameter names do not intersect with logic variables, so we don't need to consider lambda especially in fix scope.
+by the way we construct lambdas in lpartial-apply, the parameter names do not intersect with logic variables, so we don't need to consider lambda especially in fix scope.
 
 |#
 
