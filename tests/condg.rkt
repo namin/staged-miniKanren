@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../staged-load.rkt"
+(require "../private/main.rkt"
          "../test-check.rkt")
 
 (test

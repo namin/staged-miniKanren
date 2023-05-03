@@ -28,7 +28,7 @@
  run
  run*
 
- (rename-out [g:generated-code generated-code])
+ (rename-out [i:generated-code generated-code])
  
  quasiquote
  (for-space mk quasiquote)
@@ -44,8 +44,8 @@
                      racket/list
                      syntax/id-set)
          
-         (prefix-in g: "generator-lang.rkt")
-         (only-in "staged-load.rkt" generate-staged invoke-staged project succeed relation-body))
+         (prefix-in i: "private/internal-lang.rkt")
+         (only-in "private/main.rkt" generate-staged invoke-staged relation-body))
 
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)
@@ -180,12 +180,12 @@
   (host-interface/expression
     (run n:racket-expr (q:term-var ...+) g:goal ...+)
     #:binding {(bind q) g}
-    #'(g:run n (q ...) (compile-runtime-goal g) ...))
+    #'(i:run n (q ...) (compile-runtime-goal g) ...))
 
   (host-interface/expression
     (run* (q:term-var ...+) g:goal ...+)
     #:binding {(bind q) g}
-    #'(g:run* (q ...) (compile-runtime-goal g) ...)))
+    #'(i:run* (q ...) (compile-runtime-goal g) ...)))
 
 (begin-for-syntax
   (require syntax/transformer)
@@ -215,26 +215,26 @@
   (define-syntax-class binary-constraint
     #:literal-sets (goal-literals)
     (pattern ==
-      #:attr c #'g:==
-      #:attr l #'g:l==)
+      #:attr c #'i:==
+      #:attr l #'i:l==)
     (pattern =/=
-      #:attr c #'g:=/=
-      #:attr l #'g:l=/=)
+      #:attr c #'i:=/=
+      #:attr l #'i:l=/=)
     (pattern absento
-      #:attr c #'g:absento
-      #:attr l #'g:labsento))
+      #:attr c #'i:absento
+      #:attr l #'i:labsento))
 
   (define-syntax-class unary-constraint
     #:literal-sets (goal-literals)
     (pattern symbolo
-      #:attr c #'g:symbolo
-      #:attr l #'g:lsymbolo)
+      #:attr c #'i:symbolo
+      #:attr l #'i:lsymbolo)
     (pattern numbero
-      #:attr c #'g:numbero
-      #:attr l #'g:lnumbero)
+      #:attr c #'i:numbero
+      #:attr l #'i:lnumbero)
     (pattern stringo
-      #:attr c #'g:stringo
-      #:attr l #'g:lstringo))
+      #:attr c #'i:stringo
+      #:attr l #'i:lstringo))
 
   (define (free-vars-of-binding-form binder-vars body-goals)
     (define body-vars
@@ -269,10 +269,10 @@
     #:literal-sets (goal-literals)
 
     [(_ (trace id x ...))
-     #'(project (x ...)
+     #'(i:project (x ...)
          (begin
            (displayln (list 'id x ...))
-           succeed))]
+           g:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)
@@ -290,7 +290,7 @@
         (with-syntax ([rel-dyn #'rel]
                       [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                       [(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(g:reify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+          #'(i:reify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (apply-partial v:id rel:id arg ...))
@@ -302,7 +302,7 @@
        (with-syntax ([rel-dyn #'rel]
                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                      [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(g:apply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+          #'(i:apply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
     
     [(_ (constraint:binary-constraint t1 t2))
@@ -311,16 +311,16 @@
      #'(constraint.c (compile-term t))]
     
     [(_ (fresh (x:id ...) g ...))
-     #'(g:fresh (x ...) (compile-runtime-goal g) ...)]
+     #'(i:fresh (x ...) (compile-runtime-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(g:conde [(compile-runtime-goal g) ...] ...)]
+     #'(i:conde [(compile-runtime-goal g) ...] ...)]
     [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
      ;; preserve the srcloc for condg runtime errors
-     (syntax/loc #'stx (g:condg (compile-runtime-goal gl)
+     (syntax/loc #'stx (i:condg (compile-runtime-goal gl)
                                 ([x ...] [(compile-runtime-goal guard) ...]
                                          [(compile-runtime-goal body) ...]) ...))]
     [(_ fail)
-     #'g:fail]
+     #'i:fail]
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with staged-f (syntax-local-lift-expression #'(generate-staged (var ...) (compile-now-goal g)))
@@ -334,10 +334,10 @@
   (syntax-parser
     #:literal-sets (goal-literals)
     [(_ (trace id x ...))
-     #'(project (x ...)
+     #'(i:project (x ...)
          (begin
            (displayln (list 'id x ...))
-           succeed))]
+           g:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)
@@ -356,12 +356,12 @@
      #'(constraint.c (compile-term t))]
     
     [(_ (fresh (x:id ...) g ...))
-     #'(g:fresh (x ...) (compile-now-goal g) ...)]
+     #'(i:fresh (x ...) (compile-now-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(g:conde [(compile-now-goal g) ...] ...)]
+     #'(i:conde [(compile-now-goal g) ...] ...)]
     [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
      ;; preserve the srcloc for condg runtime errors
-     (syntax/loc #'stx (g:condg (compile-now-goal gl)
+     (syntax/loc #'stx (i:condg (compile-now-goal gl)
                                 ([x ...] [(compile-now-goal guard) ...]
                                          [(compile-now-goal body) ...]) ...))]
     [(_ fail) #'fail]
@@ -383,7 +383,7 @@
        [(runtime-rel arg-count)
         (when (not (= arg-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of arguments to relation" #'r))
-        #'(g:lapp r (compile-term arg) ...)]
+        #'(i:lapp r (compile-term arg) ...)]
        [_ (raise-syntax-error #f "generated-code relation application expects relation defined by defrel" #'r)])]
 
 
@@ -395,7 +395,7 @@
         (with-syntax ([rel-dyn #'rel]
                       [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                       [(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(g:lreify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+          #'(i:lreify-call v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (apply-partial v:id rel:id arg ...))
@@ -407,7 +407,7 @@
        (with-syntax ([rel-dyn #'rel]
                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                      [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(g:lapply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+          #'(i:lapply-reified v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
    
     [(_ (constraint:binary-constraint t1 t2))
@@ -416,10 +416,10 @@
      #'(constraint.l (compile-term t))]
     
     [(_ (fresh (x:id ...) g ...))
-     #'(g:fresh (x ...) (compile-later-goal g) ...)]
+     #'(i:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(g:lconde [(compile-later-goal g) ...] ...)]
-    [(_ fail) #'g:lfail]
+     #'(i:lconde [(compile-later-goal g) ...] ...)]
+    [(_ fail) #'i:lfail]
     
     [(_ (now g))
      #'(compile-now-goal g)]

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../generator-lang2.rkt"
+(require "../main.rkt"
          "../test-check.rkt")
 
 (defrel (unify-5 x)

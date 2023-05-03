@@ -5,7 +5,7 @@
          time-test
          todo)
 
-(require "staged-load.rkt"
+(require "private/main.rkt"
          (for-syntax racket/base syntax/parse))
 
 (define (tree-contains tree atom)
