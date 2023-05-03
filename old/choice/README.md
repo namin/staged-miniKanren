@@ -1,0 +1,1 @@
+Having `choice` in the interpreter is weird for tests that aren't designed to use it. Should we have feature flags for the interpreter?
