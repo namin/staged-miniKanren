@@ -1,95 +1,66 @@
-(define ts
-  (run 300 (expr val)
-    (evalo-unstaged expr val)))
+#lang racket/base
 
-(define (maybe-constraints t)
-  (if (constraint-layer? t)
-      (cddr t)
-      '()))
+(require "all.rkt"
+         racket/list
+         (only-in "staged-load.rkt"
+                  convert-constraints
+                  maybe-remove-constraints
+                  unique-result
+                  reified-expand
+                  fix-scope-syntax
+                  [fresh internal-fresh]))
 
-(define (conjunction-of gs)
-  (if (null? gs)
-      succeed
-      (fresh ()
-        (car gs)
-        (conjunction-of (cdr gs)))))
 
-(define (constraints2goal m cs)
-  (let ((goals (apply append (map (lambda (c) (constraint2goals m c)) cs))))
-    (conjunction-of goals)))
+;; (-> RunResult RunResult)
+;;
+;; Given a single result from an execution of the unstaged interpreter, including
+;; the pair (expr val) as the term and possibly including constraints, execute an
+;; equivalent query in the unstaged interpreter and return the result.
+(define (shake1 run-result)
+  (define expr+val (maybe-remove-constraints run-result))
+  (define constraint-goals (convert-constraints run-result))
 
-(define (to-sym x)
-  (string->symbol (string-append "x" (symbol->string x))))
+  (define staged-query-stx
+    #`(run 2 (expr val)
+           (staged
+            ;; hack: we are generating a query to evaluate in the surface langauge
+            ;; so we want references to surface language constraints, not the references
+            ;; to internal language constraints we get from convert-constraints.
+            ;; A similar issue with the internal-fresh.
+            #,(datum->syntax #'here
+                             (syntax->datum
+                              (fix-scope-syntax
+                               #`(internal-fresh ()
+                                                 #,@constraint-goals
+                                                 (== #,(reified-expand (car expr+val)) expr)
+                                                 (== #,(reified-expand (cadr expr+val)) val)
+                                                 (evalo-staged expr val))))))))
+  
+  ;; The query is a run 2, but we expect a single result. A given unstaged interpreter may
+  ;; be somewhat general; e.g. containing logic variables; the staged interpreter should
+  ;; generalize in the same way.
+  (unique-result
+   (eval-syntax
+    staged-query-stx)))
 
-(define (constraint2goals m c)
-  (cond
-    ((eq? (car c) '=/=)
-     (map (lambda (x) (=/= (caar x) (cadar x)))
-          (cdr c)))
-    ((eq? (car c) 'absento)
-     (map (lambda (x) (absento (car x) (cadr x)))
-          (cdr c)))
-    ((eq? (car c) 'sym)
-     (map (lambda (x) (== x (to-sym (cdr (assoc x m))))) (cdr c)))
-    ((eq? (car c) 'num)
-     (map (lambda (x) (numbero x)) (cdr c)))
-    (else (error 'constraint2goals (format "unexpected constraint: ~a" c)))))
+(module+ main
+  ;; Generate many (expr val) results from the unstaged interpreter
+  (define ts
+    (run 300 (expr val)
+         ;; We currently can't reflect apply-rep values to syntax, so don't
+         ;; use values with closures as tests.
+         (absento 'closure val)
+         (evalo-unstaged expr val)))
 
-(define (shake1 t)
-  (let* ((m (to-vars-map '() t))
-         (t (to-vars m t))
-         (cs (maybe-constraints t))
-         (t (maybe-remove-constraints t)))
-    (unique-result
-     (run-staged 2 (expr val)
-       (constraints2goal (map (lambda (kv) (cons (cdr kv) (car kv))) m) cs)
-       (== (car t) expr)
-       (evalo-staged expr val)
-       ;; TODO: figure out why == leads to error
-       ;; in Shake 344
-       ;;(l== (cadr t) val)
-       ;; We can't compare values because values are not the same
-       ;; e.g. for letrec Shake 125
-       ))))
+  ;; For each unstaged interpreter result, see if the staged interpreter produces the same
+  ;; result.
+  (define rs
+    (for/list ([t ts] [i (range (length ts))])
+      (printf "Shake ~a\n" i)
+      (shake1 t)))
 
-(define (to-vars-map m x)
-  (cond
-    ((reified-var? x)
-     (let ((e (assoc x m)))
-       (if e
-           m
-           (cons (cons x (var (new-scope))) m))))
-    ((pair? x)
-     (let ((m (to-vars-map m (car x))))
-       (to-vars-map m (cdr x))))
-    (else m)))
-
-(define (to-vars m x)
-  (cond
-    ((reified-var? x) (cdr (assoc x m)))
-    ((pair? x) (cons (to-vars m (car x)) (to-vars m (cdr x))))
-    (else x)))
-
-(define (nth xs n)
-  (car (last-pair (list-head xs (+ 1 n)))))
-#|
-(for-each
-  (lambda (t i)
-    (printf "Shake ~a\n" i)
-    (test
-      (maybe-remove-constraints (shake1 t))
-      (maybe-remove-constraints t)))
-  ts (iota (length ts)))
-|#
-
-(define rs
-  (map
-   (lambda (t i) (printf "Shake ~a\n" i)
-      (shake1 t))
-   ts (iota (length ts))))
-
-#|
-(test
-  rs
-  ts)
-|#
+  ;; The expr, val mapping from the staged interpreter should be the same as the unstaged interpreter
+  ;; in all cases.
+  (test
+   rs
+   ts))
