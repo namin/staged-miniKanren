@@ -133,71 +133,63 @@
 
   
 ;;
-;; Partial applications
+;; Partial relation application
 ;;
 
 (define-syntax lreify-call
-  (lambda (stx)
-    (syntax-case stx ()
-      ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-       (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(y ...)))
-       (with-syntax
-           (((y-n ...) (generate-temporaries #'(y ...)))
-            ((y-n2 ...) (generate-temporaries #'(y ...))))
-         #'(fresh (y-n ...)
-             (capture-later
-              (fresh ()
-                (later #`(== #,(data y-n) y-n2))
-                ...
-                (rel-staged rep x ... y-n ...))
-              (lambda (body)
-                (l== rep (apply-rep
-                          'rel-staged 'rel-dyn (list x ...)
-                          #`(lambda (y-n2 ...)
-                              (fresh ()
-                                . #,body))))))))))))
+  (syntax-parser
+    [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
+     #:with (y-n ...) (generate-temporaries #'(y ...))
+     #:with (y-n2 ...) (generate-temporaries #'(y ...))
+     #'(fresh (y-n ...)
+         (capture-later
+          (fresh ()
+            (later #`(== #,(data y-n) y-n2))
+            ...
+            (rel-staged rep x ... y-n ...))
+          (lambda (body)
+            (l== rep (apply-rep
+                      'rel-staged 'rel-dyn (list x ...)
+                      #`(lambda (y-n2 ...)
+                          (fresh ()
+                            . #,body)))))))]))
 
 (define-syntax reify-call
-  (lambda (stx)
-    (syntax-case stx ()
-        ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-         (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(y ...)))
-         #'(== rep (apply-rep
-                    'rel-staged 'rel-dyn (list x ...)
-                    #f))))))
+  (syntax-parser
+    [(_ rep ((rel-staged rel-dyn) (x ...) ((~literal _) ...)))
+     #'(== rep (apply-rep
+                'rel-staged 'rel-dyn (list x ...)
+                #f))]))
 
 (define-syntax apply-reified
-  (lambda (stx)
-    (syntax-case stx ()
-        ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-         (andmap (lambda (id) (free-identifier=? id #'_)) (syntax->list #'(x ...)))
-         (with-syntax
-          (((x-n ...) (generate-temporaries #'(x ...))))
-          #'(lambda (st)
-              (let ((rep (walk rep (state-S st))))
-                        ;;(printf "project~\n")
-                        ((cond
-                           ((var? rep)
-                            (fresh (x-n ...)
-                                   (== rep (apply-rep
-                                             'rel-staged 'rel-dyn (list x-n ...) ;
-                                             #f))
-                                   (rel-dyn x-n ... y ...)))
-                           ((apply-rep? rep)
-                            ;;(printf "applying rep...~\n")
-                            (let ((proc (apply-rep-proc rep)))
-                              ;; TODO: unify to check names
-                              (if (or (not proc) (syntax? proc))
-                                (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
-                                (begin
-                                  ;;(printf "calling proc...~\n")
-                                  (proc y ...)))))
-                           (else fail)) st))))))))
+  (syntax-parser
+    [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))     
+     #:with (x-n ...) (generate-temporaries #'(x ...))
+     #'(lambda (st)
+         (let ((rep (walk rep (state-S st))))
+           ;;(printf "project~\n")
+           ((cond
+              ((var? rep)
+               (fresh (x-n ...)
+                 (== rep (apply-rep
+                          'rel-staged 'rel-dyn (list x-n ...) ;
+                          #f))
+                 (rel-dyn x-n ... y ...)))
+              ((apply-rep? rep)
+               ;;(printf "applying rep...~\n")
+               (let ((proc (apply-rep-proc rep)))
+                 ;; TODO: unify to check names
+                 (if (or (not proc) (syntax? proc))
+                     (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
+                     (begin
+                       ;;(printf "calling proc...~\n")
+                       (proc y ...)))))
+              (else fail)) st)))]))
 
 (define-syntax lapply-reified
-  (syntax-rules ()
-    ((_ rep ((rel-staged rel-dyn) (x ...) (y ...)))
-     (later #`(apply-reified #,(data rep) ((rel-staged rel-dyn) (x ...) (#,(data y) ...)))))))
+  (syntax-parser
+    [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))
+     #'(later #`(apply-reified #,(data rep) ((rel-staged rel-dyn) (x ...) (#,(data y) ...))))]))
 
 
 ;;
