@@ -136,6 +136,14 @@
 ;; Partial relation application
 ;;
 
+(define-syntax partial-apply
+  (syntax-parser
+    [(_ rep ((rel-staged rel-dyn) (x ...) ((~literal _) ...)))
+     #'(partial-apply-rt rep 'rel-staged 'rel-dyn (list x ...))]))
+
+(define (partial-apply-rt rep rel-staged rel-dyn args)
+  (== rep (apply-rep rel-staged rel-dyn args #f)))
+
 (define-syntax lpartial-apply
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
@@ -157,37 +165,18 @@
                           (fresh ()
                             . #,body)))))))]))
 
-(define-syntax partial-apply
-  (syntax-parser
-    [(_ rep ((rel-staged rel-dyn) (x ...) ((~literal _) ...)))
-     #'(== rep (apply-rep
-                'rel-staged 'rel-dyn (list x ...)
-                #f))]))
-
 (define-syntax apply-partial
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))     
      #:with (x-n ...) (generate-temporaries #'(x ...))
-     #'(lambda (st)
-         (let ((rep (walk rep (state-S st))))
-           ;;(printf "project~\n")
-           ((cond
-              ((var? rep)
-               (fresh (x-n ...)
-                 (== rep (apply-rep
-                          'rel-staged 'rel-dyn (list x-n ...) ;
-                          #f))
-                 (rel-dyn x-n ... y ...)))
-              ((apply-rep? rep)
-               ;;(printf "applying rep...~\n")
-               (let ((proc (apply-rep-proc rep)))
-                 ;; TODO: unify to check names
-                 (if (or (not proc) (syntax? proc))
-                     (apply rel-dyn (append (apply-rep-args rep) (list y ...)))
-                     (begin
-                       ;;(printf "calling proc...~\n")
-                       (proc y ...)))))
-              (else fail)) st)))]))
+     #'(fresh (proc x-n ...)
+         (== rep (apply-rep 'rel-staged 'rel-dyn (list x-n ...) proc))
+         (lambda (st)
+           (let ([proc (walk proc (state-S st))])
+             ((if (procedure? proc)
+                  (proc y ...)
+                  (rel-dyn x-n ... y ...))
+              st))))]))
 
 (define-syntax lapply-partial
   (syntax-parser
@@ -207,8 +196,8 @@
        (lambda (st) (fallback st))
        (list
          (lambda (st)
-           (let ((scope (subst-scope (state-S st))))
-             (let ((x (var scope)) ...)
+           (let ([scope (subst-scope (state-S st))])
+             (let ([x (var scope)] ...)
                (list
                  (bind* (g0 st) g ...)
                  (lambda (st) (bind* (b0 st) b ...))
