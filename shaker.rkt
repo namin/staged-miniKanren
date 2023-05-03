@@ -11,6 +11,11 @@
                   [fresh internal-fresh]))
 
 
+;; Test the correspondence of the staged and unstaged interpreters by generating many
+;; expr, val pairs using the unstaged interpreter and verifying that the staged interpreter
+;; checks the same pairs successfully.
+
+
 ;; (-> RunResult RunResult)
 ;;
 ;; Given a single result from an execution of the unstaged interpreter, including
