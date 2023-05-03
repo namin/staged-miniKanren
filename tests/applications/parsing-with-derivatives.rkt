@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../all.rkt")
+(require "../../all.rkt")
 
 ;; Adapted from Matt Might's code for parsing with derivatives.
 

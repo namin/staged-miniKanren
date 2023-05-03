@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../all.rkt")
+(require "../../all.rkt")
 
 (test
  (run 1 (q)

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "parsing-with-derivatives.rkt")
-(require "proof.rkt")
-(require "dl.rkt")
-(require "peano-fib.rkt")
+(require "applications/parsing-with-derivatives.rkt")
+(require "applications/proof.rkt")
+(require "applications/dl.rkt")
+(require "applications/peano-fib.rkt")

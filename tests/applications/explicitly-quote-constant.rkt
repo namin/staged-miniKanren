@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../all.rkt")
+(require "../../all.rkt")
 
 ;; Adapted by Kanae Tsushima and Will Byrd from Indiana University's
 ;; old (~2004) compilers course exercise by R. Kent Dyvig, Daniel

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../all.rkt")
+(require "../../all.rkt")
 
 ;; Adapted from https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano.scm
 ;; and https://github.com/k-tsushima/Shin-Barliman/blob/master/transformations/peano-relational.scm

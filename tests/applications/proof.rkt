@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../all.rkt")
+(require "../../all.rkt")
 
 (define-term-syntax-rule (prover body)
   `(letrec ([member?

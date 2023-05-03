@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../all.rkt")
+(require "../../all.rkt")
 
 (record-bench 'staging 'eval-and-map-evalo)
 (defrel (eval-and-map-evalo expr val)

@@ -3,10 +3,11 @@
 (require "run.rkt")
 (require "generator-lang2.rkt")
 (require "doc.rkt")
-(require "staged-apply-letrec.rkt")
-(require "letrec-cross-stage.rkt")
 
-;; these are looking at innards using staged-load.rkt
-(require "staged-apply.rkt")
-(require "fix-scope.rkt")
-(require "condg.rkt")
+(require "interpreter/staged-apply-letrec.rkt")
+(require "interpreter/letrec-cross-stage.rkt")
+
+(require "language/condg.rkt")
+
+(require "internals/staged-apply.rkt")
+(require "internals/fix-scope.rkt")
