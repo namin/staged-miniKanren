@@ -24,6 +24,7 @@
        (f (data-value v)))
       (else v))))
 
+;; called from mk.scm `reify-S`
 (define (reify-S-syntax v S)
   (cond
     ((syntax? v)
@@ -41,7 +42,10 @@
 (define (unexpand x) x)
 (define (unexpand? x) (syntax? x))
 
+;; used in mk.scm `vars`
 (struct data [value] #:transparent)
+
+
 (define (expand x) (data x))
 (define (expand? x) (data? x))
 
@@ -81,16 +85,18 @@
     [else
      #`'#,(reflect-quasi-contents t)]))
 
+;; called from mk.scm `walk*`
 (define (walk*-syntax stx S)
   (map-on-syntax-data (lambda (v) (data (walk* v S))) stx))
+
+;; called from mk.scm `reify`
+(define walk-later-final
+  (lambda (L S)
+    (map do-expand (walk-later L S))))
 
 (define walk-later
   (lambda (L S)
     (map (lambda (stx) (walk* stx S)) (reverse L))))
-
-(define walk-later-final
-  (lambda (L S)
-    (map do-expand (walk-later L S))))
 
 (define later
   (lambda (x)
@@ -177,8 +183,7 @@
 (define lsucceed (later #'succeed))
 
 
-
-
+;; used in mk.scm `unify` and `walk*`
 (struct apply-rep [name-staged name-dyn args proc]
   #:prefab
   #:constructor-name make-apply-rep)
@@ -510,7 +515,6 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 
 (define (reset-generated-code!)
   (set! res #f))
-
 
 (define-syntax run-staged
   (syntax-rules ()
