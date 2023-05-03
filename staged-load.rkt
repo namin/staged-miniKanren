@@ -12,7 +12,8 @@
 (include "../faster-minikanren/racket-compatibility.scm")
 (include "../faster-minikanren/mk.scm")
 (include "../faster-miniKanren/staged-mk.scm")
-(include "staged-apply.scm")
-(include "condg.rktl")
-(include "staged-utils.scm")
-(include "staged-run.scm")
+
+(include "private/staged-apply.scm")
+(include "private/condg.scm")
+(include "private/staged-utils.scm")
+(include "private/staged-run.scm")
