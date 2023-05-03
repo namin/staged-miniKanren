@@ -170,9 +170,13 @@
     [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))     
      #:with (x-n ...) (generate-temporaries #'(x ...))
      #'(fresh (proc x-n ...)
+         ;; Note: the proc position doesn't actually unify, because a dynamic
+         ;; and staged rep should be unifiable but one will have #f and the other
+         ;; a procedure. So we have to walk the rep and check its field.
          (== rep (apply-rep 'rel-staged 'rel-dyn (list x-n ...) proc))
          (lambda (st)
-           (let ([proc (walk proc (state-S st))])
+           (let* ([rep (walk rep (state-S st))]
+                  [proc (apply-rep-proc rep)])
              ((if (procedure? proc)
                   (proc y ...)
                   (rel-dyn x-n ... y ...))
