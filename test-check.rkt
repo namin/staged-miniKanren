@@ -5,7 +5,7 @@
          time-test
          todo)
 
-(require "private/main.rkt"
+(require "private/internals.rkt"
          (for-syntax racket/base syntax/parse))
 
 (define (tree-contains tree atom)

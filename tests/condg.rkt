@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../private/main.rkt"
+(require "../private/internals.rkt"
          "../test-check.rkt")
 
 (test

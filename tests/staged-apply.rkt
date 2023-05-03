@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../private/main.rkt"
+(require "../private/internals.rkt"
          "../test-check.rkt")
 
 ;; For now we need dynamic and staged versions of the relation; when we have stage

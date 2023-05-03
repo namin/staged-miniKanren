@@ -45,7 +45,7 @@
                      syntax/id-set)
          
          (prefix-in i: "private/internal-lang.rkt")
-         (only-in "private/main.rkt" generate-staged invoke-staged relation-body))
+         (only-in "private/internals.rkt" generate-staged invoke-staged relation-body))
 
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "main.rkt")
+(require "internals.rkt")
 
 (provide
 
