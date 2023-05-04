@@ -45,7 +45,7 @@
                      syntax/id-set)
          
          (prefix-in i: "private/internal-lang.rkt")
-         (only-in "private/internals.rkt" generate-staged invoke-staged relation-body))
+         (only-in "private/internals.rkt" generate-staged relation-body))
 
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)
@@ -324,7 +324,7 @@
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with staged-f (syntax-local-lift-expression #'(generate-staged (var ...) (compile-now-goal g)))
-     #'(invoke-staged staged-f var ...)]
+     #'(staged-f var ...)]
 
     [(_ (~and stx (~or (later . _) (now . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]

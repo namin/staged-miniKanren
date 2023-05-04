@@ -507,10 +507,6 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 
   (eval-syntax stx))
 
-(define (invoke-staged f . args)
-  (apply f args))
-
-
 (define (generated-code)
   (and res (syntax->datum res)))
 
@@ -529,7 +525,7 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
        (printf "running first stage\n")
        (define f (generate-staged (q0 q ...) g0 g ...))
        (printf "running second stage\n")
-       (run n (q0 q ...) (invoke-staged f q0 q ...)))]))
+       (run n (q0 q ...) (f q0 q ...)))]))
 
 (define-syntax run-staged*
   (syntax-rules ()
@@ -538,7 +534,4 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 (define-syntax define-staged-relation
   (syntax-rules ()
     [(_ (name x0 x ...) g0 g ...)
-     (define name
-       (let ([f (time (generate-staged (x0 x ...) g0 g ...))])
-         (lambda (x0 x ...)
-           (invoke-staged f x0 x ...))))]))
+     (define name (time (generate-staged (x0 x ...) g0 g ...)))]))
