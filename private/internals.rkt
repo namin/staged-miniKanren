@@ -128,7 +128,7 @@
                                     (type-constraint-reified (c-T c)))))
                  (list #`(#,cid #,(data v))))
                '())
-           (map (lambda (atom) #`(absento #,(data atom) #,v)) (c-A c))
+           (map (lambda (atom) #`(absento #,(data atom) #,(data v))) (c-A c))
            (map (lambda (d) #`(=/=* #,(data d))) (c-D c)))))))
 
   
@@ -457,81 +457,50 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
       r)
      (error 'gen "staging non-deterministic"))
     (else (car r))))
-(define (layer? tag r)
-  (and (pair? r) (pair? (cdr r)) (eq? tag (cadr r))))
-(define (code-layer? r)
-  (layer? '!! r))
-(define (constraint-layer? r)
-  (layer? '$$ r))
-(define (maybe-remove-constraints r)
-  (if (constraint-layer? r)
-      (car r)
-      r))
-(define (convert-constraints r)
-  (cond
-    ((constraint-layer? r)
-     (process-constraints (cddr r)))
-    (else '())))
-(define (process-constraints cs)
-  (cond
-    ((null? cs) '())
-    (else (append (process-constraint (car cs))
-                  (process-constraints (cdr cs))))))
-(define (process-constraint c)
-  (cond
-    ((eq? (car c) '=/=)
-     (map (lambda (x) #`(=/= #,(miniexpand (caar x)) #,(miniexpand (cadar x))))
-          (cdr c)))
-    ((eq? (car c) 'absento)
-     (map (lambda (x) #`(absento #,(miniexpand (car x)) #,(miniexpand (cadr x))))
-          (cdr c)))
-    ((eq? (car c) 'sym)
-     (map (lambda (x) #`(symbolo #,x)) (cdr c)))
-    ((eq? (car c) 'num)
-     (map (lambda (x) #`(numbero #,x)) (cdr c)))
-    (else (error 'process-constraint (format "unexpected constraint: ~a" c)))))
 
-(define (miniexpand x)
-  (cond
-    ((reified-var? x) x)
-    (else #`(quote #,x))))
-(define (reified-expand x)
-  (cond
-    ((reified-var? x) (data x))
-    ((pair? x)
-     #`(cons
-        #,(reified-expand (car x))
-        #,(reified-expand (cdr x))))
-    (else #`(quote #,x))))
-;; # Helpers for turning functional procedure into relational one
 (define res #f)
 
-(define (strip-data-from-syntax x)
-  (map-syntax-with-data (lambda (v) v) x))
+(define-syntax generate-staged
+  (syntax-parser
+    [(_ (var ...) goal ...)
+     #:with (var2 ...) (generate-temporaries (attribute var))
+     #'(generate-staged-rt
+        (fresh (var ...)
+          (capture-later
+           (fresh ()
+             (later #`(== #,(data var) var2)) ...
+             goal ...)
+           (lambda (L)
+             (lambda (old-st)
+               L))))
+          #'(var2 ...))]))
 
-(define (to-datum x)
-  (map syntax->datum (map strip-data-from-syntax x)))
+(define (assign-vars v)
+  (let ((R (reify-S v (subst empty-subst-map nonlocal-scope))))
+    (walk* v R)))
 
-(define (gen-func r . inputs)
-  (let ((r (unique-result r)))
-    (let ((cs (convert-constraints r))
-          (r (maybe-remove-constraints r)))
-      (unless (code-layer? r)
-        (error 'gen-func (format "no code generated: ~a" r)))
-      (set! res
-            (fix-scope-syntax
-             #`(lambda (#,@inputs)
-                 (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r)))))
-      res)))
+(define (generate-staged-rt goal var-list)
+  (define result
+    (unique-result
+     (take 2
+           (suspend
+            (goal empty-state)))))
+  
+  
+  (define L (assign-vars (reflect-data-in-syntax result)))
 
-(define-syntax-rule (generate-staged (var ...) goal ...)
-  (eval-syntax
-   (gen-func
-    (run 100 (var ... bogus-var1 bogus-var2) goal ...)
-    'var ... 'bogus-var1 'bogus-var2)))
+  (define stx
+    (fix-scope-syntax
+     #`(lambda #,var-list
+       (fresh ()
+         #,@L))))
+
+  (set! res stx)
+
+  (eval-syntax stx))
 
 (define (invoke-staged f . args)
-  (apply f (append args (list 'bogus-1 'bogus-2))))
+  (apply f args))
 
 
 (define (generated-code)

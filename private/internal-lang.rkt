@@ -4,7 +4,6 @@
 
 (provide
 
- define-relation
  run run*
  == =/=
  fresh
