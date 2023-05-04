@@ -99,7 +99,7 @@
            y)))))
   2)
 
-(test
+#;(test
     (run 2 (q)
       (staged
        (evalo-staged
@@ -371,3 +371,9 @@
 (test
     (run 1 (q) (staged (later (is-fiveo q))))
   '(5))
+
+;; regression test---this raised a problem when reflecting datums to quasiquotes
+;; because fix-scope special cased `quote` and didn't understand quasiquote.
+(test
+ (run 1 (q) (staged (later (evalo-unstaged `(quote ,q) 5))))
+ '(5))

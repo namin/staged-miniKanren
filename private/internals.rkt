@@ -260,12 +260,6 @@
 (define (reflect-datum t)
   (define (nonliteral-datum? t)
     (or (var? t) (syntax? t) (apply-rep? t)))
-  
-  (define (needs-unquote? t)
-    (cond
-      ((nonliteral-datum? t) #t)
-      ((pair? t) (or (needs-unquote? (car t)) (needs-unquote? (cdr t))))
-      (else #f)))
 
   (define (reflect-nonliteral-datum t)
     (match t
@@ -277,21 +271,33 @@
           #,(reflect-datum name-dyn)
           #,(reflect-datum args)
           #,(reflect-datum proc))]))
-  
-  (define (reflect-quasi-contents t)
-    (match t
-      [(? nonliteral-datum?) #`,#,(reflect-nonliteral-datum t)]
-      [(cons a d)
-       (cons (reflect-quasi-contents a) (reflect-quasi-contents d))]
-      [t t]))
 
-  (cond
-    [(nonliteral-datum? t)
-     (reflect-nonliteral-datum t)]
-    [(needs-unquote? t)
-     #``#,(reflect-quasi-contents t)]
-    [else
-     #`'#,(reflect-quasi-contents t)]))
+  (struct literal [v] #:prefab)
+  (struct expr [v] #:prefab)
+
+  (define (to-expr-v v)
+    (match v
+      [(expr v) v]
+      [(literal v) #`(quote #,v)]))
+  
+  (define (reflect t)
+    (match t
+      [(? nonliteral-datum?) (expr (reflect-nonliteral-datum t))]
+      [(? list?)
+       (define els-refl (map reflect t))
+       (if (andmap literal? els-refl)
+           (literal (map literal-v els-refl))
+           (expr #`(list #,@(map to-expr-v els-refl))))]
+      [(cons a d)
+       (let ([a-refl (reflect a)] [d-refl (reflect d)])
+         (match* (a-refl d-refl)
+           [((literal a-lit) (literal d-lit))
+            (literal (cons a-lit d-lit))]
+           [(a d)
+            (expr #`(cons #,(to-expr-v a) #,(to-expr-v d)))]))]
+      [else (literal t)]))
+
+  (to-expr-v (reflect t)))
 
 
 ;; SyntaxWithDataVars, ReifierSubst -> ReifierSubst
@@ -479,21 +485,23 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
   (let ((R (reify-S v (subst empty-subst-map nonlocal-scope))))
     (walk* v R)))
 
+(require racket/pretty)
+
 (define (generate-staged-rt goal var-list)
   (define result
     (unique-result
      (take 2
            (suspend
             (goal empty-state)))))
-  
-  
-  (define L (assign-vars (reflect-data-in-syntax result)))
+ 
+  (define reflected (reflect-data-in-syntax result))
+  (define assigned (assign-vars reflected))
 
   (define stx
     (fix-scope-syntax
      #`(lambda #,var-list
        (fresh ()
-         #,@L))))
+         #,@assigned))))
 
   (set! res stx)
 
