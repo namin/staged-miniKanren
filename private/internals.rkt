@@ -9,8 +9,8 @@
          syntax/parse
          (for-syntax racket/base syntax/parse))
 
-(include "../../faster-minikanren/racket-compatibility.scm")
-(include "../../faster-minikanren/mk.scm")
+(include "faster-minikanren/racket-compatibility.scm")
+(include "faster-minikanren/mk.scm")
 
 ;;
 ;; Extensions to the data type of terms
