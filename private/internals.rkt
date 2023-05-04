@@ -524,14 +524,15 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
                  (fresh () #,@cs (== #,(reified-expand (car r)) (list #,@inputs)) . #,(caddr r)))))
       res)))
 
-(define-syntax-rule (generate-staged (var ...) goal)
+(define-syntax-rule (generate-staged (var ...) goal ...)
   (eval-syntax
    (gen-func
-    (run 100 (var ... bogus-var1 bogus-var2) goal)
+    (run 100 (var ... bogus-var1 bogus-var2) goal ...)
     'var ... 'bogus-var1 'bogus-var2)))
 
 (define (invoke-staged f . args)
   (apply f (append args (list 'bogus-1 'bogus-2))))
+
 
 (define (generated-code)
   (and res (syntax->datum res)))
@@ -544,44 +545,23 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 ;; Staging entry point syntax
 ;;
 
-
 (define-syntax run-staged
   (syntax-rules ()
-    ((_ n (q) g0 g ...)
-     (begin
+    [(_ n (q0 q ...) g0 g ...)
+     (let ()
        (printf "running first stage\n")
-       (let* ((f (gen-func
-                  (run 100 (q bogus-var) g0 g ...)
-                  'out 'bogus-var))
-              (e (eval-syntax f)))
-         (printf "running second stage\n")
-         (run n (q) (e q 'bogus-val)))))
-    ((_ n (q0 q1 q ...) g0 g ...)
-     (run-staged n (x)
-                 (fresh (q0 q1 q ...)
-                   g0 g ...
-                   (l== `(,q0 ,q1 ,q ...) x))))))
+       (define f (generate-staged (q0 q ...) g0 g ...))
+       (printf "running second stage\n")
+       (run n (q0 q ...) (invoke-staged f q0 q ...)))]))
 
 (define-syntax run-staged*
   (syntax-rules ()
-    ((_ (q0 q ...) g0 g ...) (run-staged #f (q0 q ...) g0 g ...))))
-
-(define-syntax define-relation
-  (syntax-rules ()
-    ((_ (name x ...) g0 g ...)
-     (define (name x ...)
-       (fresh () g0 g ...)))))
+    [(_ (q0 q ...) g0 g ...) (run-staged #f (q0 q ...) g0 g ...)]))
 
 (define-syntax define-staged-relation
   (syntax-rules ()
-    ((_ (name x0 x ...) g0 g ...)
-     (define name (staged-relation (x0 x ...) g0 g ...)))))
-
-(define-syntax staged-relation
-  (syntax-rules ()
-    [(_ (x0 x ...) g0 g ...)
-     (time
-      (eval-syntax
-       (gen-func
-        (run 100 (x0 x ...) g0 g ...)
-        'x0 'x ...)))]))
+    [(_ (name x0 x ...) g0 g ...)
+     (define name
+       (let ([f (time (generate-staged (x0 x ...) g0 g ...))])
+         (lambda (x0 x ...)
+           (invoke-staged f x0 x ...))))]))
