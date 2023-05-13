@@ -12,6 +12,226 @@
 (include "faster-minikanren/racket-compatibility.scm")
 (include "faster-minikanren/mk.scm")
 
+;; condg is fallback-if-nondet + conde, I think?
+
+;; StagingSearchResult is one of:
+(struct ss:interleave [ss-k])
+(struct ss:fail [])
+(struct ss:notify-success [ss-k])
+(struct ss:final-success [v ss-k])
+
+;; ss-k : StagingSearchResultK
+;; StagingSearchResultK = () -> StagingSearchResult
+
+;; StagingSearchSuccessK = (State) -> StagingSearchResult
+;; StagingGoal = (State, StagingSearchSuccessK) -> StagingSearchResult
+
+(define (initial-k st) (ss:one-result st))
+
+(define-syntax-rule
+  (ss:suspend e)
+  (ss:interleave (lambda () e)))
+
+(define (ss:conj2 g1 g2)
+  (lambda (st success-k)
+    (g1 st (lambda (st) (g2 st success-k)))))
+
+(define-syntax ss:conj
+  (syntax-rules ()
+    [(_ g1) g1]
+    [(_ g1 g ...) (ss:conj2 g1 (ss:conj g ...))]))
+
+(define-syntax-rule
+  (ss:fresh (x ...) g0 g ...)
+  (lambda (st success-k)
+    (ss:suspend
+     (let ((x (var (new-scope))) ...) ;; always use a new scope, so never use set-var-val!
+       ((ss:conj g0 g ...) st success-k)))))
+
+(define (ss:atomic runtime-g)
+  (lambda (st success-k)
+    (let ([res (runtime-g st)])
+      (if res
+          (success-k res)
+          (ss:fail)))))
+
+
+(define (ss:one-result v)
+  (ss:final-success v (lambda () (ss:fail))))
+
+(define (ss:maybe-fallback fallback-g g)
+  (lambda (st success-k)
+    (define (no-success-yet ss-k)
+      (displayln 'no-success-yet)
+      (match (ss-k)
+        [(ss:fail)
+         (ss:fail)]
+        [(ss:interleave ss-k^)
+         (ss:interleave (lambda () (no-success-yet ss-k^)))]
+        [(ss:notify-success ss-k^)
+         (displayln 'no-success-yet->one-success-notified)
+         (ss:notify-success
+          (lambda ()
+            (one-success-notified ss-k^)))]
+        [(ss:final-success _ _)
+         (error 'ss:maybe-fallback
+                "invariant violation; should get notify-success first")]))
+
+    (define (one-success-notified ss-k)
+      (match (ss-k)
+        [(ss:fail)
+         (ss:fail)]
+        [(ss:interleave ss-k^)
+         (ss:interleave (lambda () (one-success-notified ss-k^)))]
+        [(ss:notify-success ss-k^)
+         (displayln 'one-success-notified->fallback)
+         (fallback-g st success-k)]
+        [(ss:final-success v ss-k^)
+         (have-result v ss-k^)]))
+
+    (define (have-result v ss-k)
+      (displayln 'have-result)
+      (match (ss-k)
+        [(ss:fail)
+         (ss:one-result v)]
+        [(ss:interleave ss-k^)
+         (ss:interleave (lambda () (have-result v ss-k^)))]
+        [(ss:notify-success ss-k^)
+         (displayln 'have-result->fallback)
+         (fallback-g st success-k)]
+        [(ss:final-success v ss-k^)
+         (error 'ss:maybe-fallback
+                "invariant violation; should get notify-success first")]))
+
+    (define (success-k^ st)
+      (ss:notify-success (lambda () (success-k st))))
+    
+    (no-success-yet (lambda () (g st success-k^)))))
+
+(define (ss:disj2 g1 g2)
+  (lambda (st success-k)
+    (define (node ss-k1 ss-k2)
+      (match (ss-k1)
+        [(ss:fail)
+         (ss-k2)]
+        [(ss:interleave ss-k1^)
+         (ss:interleave (lambda () (node ss-k2 ss-k1^)))]
+        [(ss:notify-success ss-k1^)
+         (ss:notify-success (lambda () (node ss-k2 ss-k1^)))]
+        [(ss:final-success v ss-k1^)
+         (ss:final-success v (lambda () (node ss-k2 ss-k1^)))]))
+    (ss:suspend (node (lambda () (g1 st success-k)) (lambda () (g2 st success-k))))))
+
+(define-syntax ss:disj
+  (syntax-rules ()
+    [(_ g1) g1]
+    ;; associativity doesn't matter either way, at staging time we get all answers
+    [(_ g1 g ...) (ss:disj2 g1 (ss:disj g ...))]))
+
+(define-syntax-rule
+  (ss:conde (g ...) ...)
+  (ss:disj (ss:conj g ...) ...))
+
+(define (ss:take n ss-k)
+  (if (and n (zero? n))
+      '()
+      (match (ss-k)
+        [(ss:fail)
+         '()]
+        [(ss:interleave ss-k^)
+         (ss:take n ss-k^)]
+        [(ss:notify-success ss-k^)
+         (ss:take n ss-k^)]
+        [(ss:final-success v ss-k^)
+         (cons v (ss:take (and n (- n 1)) ss-k^))])))
+
+(define (ss:simple-run g)
+  (ss:take 2 (lambda () (g empty-state initial-k))))
+
+(define-syntax ss:generate-staged
+  (syntax-parser
+    [(_ (var ...) goal ...)
+     #:with (var2 ...) (generate-temporaries (attribute var))
+     #'(ss:generate-staged-rt
+        (ss:fresh (var ...)
+                  (ss:capture-later
+                   (ss:fresh ()
+                             (ss:atomic (later #`(== #,(data var) var2))) ...
+                             goal ...)
+                   (lambda (L)
+                     (lambda (old-st success-k)
+                       (success-k L)))))
+        #'(var2 ...))]))
+
+(define (ss:generate-staged-rt goal var-list)
+  (define result
+    (unique-result
+     (ss:take 2
+              (lambda ()
+                (goal empty-state initial-k)))))
+ 
+  (define reflected (reflect-data-in-syntax result))
+  (define assigned (assign-vars reflected))
+
+  (define stx
+    (fix-scope-syntax
+     #`(lambda #,var-list
+         (fresh ()
+           #,@assigned))))
+
+  (set! res stx)
+
+  (eval-syntax stx))
+
+(define (ss:capture-later g k)
+  (lambda (st-original success-k)
+    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
+           [st-before (state-with-L st-before '())]
+           [st-before (state-with-scope st-before (new-scope))])
+      (g st-before
+         (lambda (st-after)
+           (let ([captured-L (for/list ([stx (append (reverse (state-L st-after))
+                                                     (generate-constraints st-after))])
+                               (walk* stx (state-S st-after)))])
+             ((k captured-L)
+              st-original
+              success-k)))))))
+
+(define-syntax ss:lconde
+  (syntax-rules ()
+    ((_ (g ...) ...)
+     (ss:ldisj (ss:fresh () g ...) ...))))
+
+(define (ss:ldisj . gs-init)
+  (let recur ([gs gs-init] [gs-stx '()])
+    (if (null? gs)
+        (ss:atomic (later #`(conde #,@(reverse gs-stx))))
+        (ss:capture-later (car gs)
+                          (lambda (g-stx)
+                            (recur (cdr gs) (cons g-stx gs-stx)))))))
+
+(define-syntax ss:lpartial-apply
+  (syntax-parser
+    [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
+     #:with (y-n ...) (generate-temporaries #'(y ...))
+     #:with (y-n2 ...) (generate-temporaries #'(y ...))
+     #'(ss:fresh (y-n ...)
+         (ss:capture-later
+          (ss:fresh ()
+            ;; This is a little subtle. This unification ends up as code in the
+            ;; lambda body, but it has to be part of L in the capture to ensure
+            ;; that substitution extensions to `y-n` are captured in the walk.
+            (ss:atomic (later #`(== #,(data y-n) y-n2)))
+            ...
+            (rel-staged rep x ... y-n ...))
+          (lambda (body)
+            (ss:atomic
+             (l== rep (apply-rep
+                      'rel-staged 'rel-dyn (list x ...)
+                      #`(lambda (y-n2 ...)
+                          (fresh ()
+                            . #,body))))))))]))
+
 ;;
 ;; Extensions to the data type of terms
 ;;
@@ -194,20 +414,20 @@
 
 (define-syntax condg
   (syntax-parser
-   ((_ fallback ((x ...) (~and guard (g0 g ...)) (b0 b ...)) ...)
-    #:with error-stx this-syntax
-    #'(condg-runtime
-       (lambda (st) (fallback st))
-       (list
+    ((_ fallback ((x ...) (~and guard (g0 g ...)) (b0 b ...)) ...)
+     #:with error-stx this-syntax
+     #'(condg-runtime
+        (lambda (st) (fallback st))
+        (list
          (lambda (st)
            (let ([scope (subst-scope (state-S st))])
              (let ([x (var scope)] ...)
                (list
-                 (bind* (g0 st) g ...)
-                 (lambda (st) (bind* (b0 st) b ...))
-                 #'guard))))
+                (bind* (g0 st) g ...)
+                (lambda (st) (bind* (b0 st) b ...))
+                #'guard))))
          ...)
-       #'error-stx))))
+        #'error-stx))))
 
 (define (condg-runtime fallback clauses error-stx)
   (lambda (st)
@@ -360,43 +580,43 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 |#
 (define fix-scope1-syntax
   (syntax-parser
-   #:literals (fresh quote)
-   [(fresh (x ...+) goal ...)
-    (error 'fix-scope1-syntax "encountered fresh with variables")]
-   [(fresh () goal ...)
-    (define r (map fix-scope1-syntax (attribute goal)))
-    (define/syntax-parse (goal^ ...) (map first r))
-    (define/syntax-parse (var ...) (apply set-union (map second r)))
-    (list #'(fresh (var ...) goal^ ...) (list))]
-   [(quote datum)
-    (list this-syntax (list))]
-   [d
-    #:when (data? (syntax-e #'d))
-    (define var (data-value (syntax-e #'d)))
-    (list #`#,var (list var))]
-   [(a . d)
-    (define ra (fix-scope1-syntax #'a))
-    (define rd (fix-scope1-syntax #'d))
-    (list #`(#,(first ra) . #,(first rd)) (set-union (second ra) (second rd)))]
-   [_ (list this-syntax (list))]))
+    #:literals (fresh quote)
+    [(fresh (x ...+) goal ...)
+     (error 'fix-scope1-syntax "encountered fresh with variables")]
+    [(fresh () goal ...)
+     (define r (map fix-scope1-syntax (attribute goal)))
+     (define/syntax-parse (goal^ ...) (map first r))
+     (define/syntax-parse (var ...) (apply set-union (map second r)))
+     (list #'(fresh (var ...) goal^ ...) (list))]
+    [(quote datum)
+     (list this-syntax (list))]
+    [d
+     #:when (data? (syntax-e #'d))
+     (define var (data-value (syntax-e #'d)))
+     (list #`#,var (list var))]
+    [(a . d)
+     (define ra (fix-scope1-syntax #'a))
+     (define rd (fix-scope1-syntax #'d))
+     (list #`(#,(first ra) . #,(first rd)) (set-union (second ra) (second rd)))]
+    [_ (list this-syntax (list))]))
 
 (define fix-scope2-syntax
   (lambda (stx bound-vars)
     (syntax-parse
-     stx
-     #:literals (fresh quote)
-     [(fresh (x ...) goal ...)
-      (define xs (map syntax-e (attribute x)))
-      (define/syntax-parse (x^ ...) (set-subtract xs bound-vars))
-      (define bound-vars^ (set-union xs bound-vars))
-      (define/syntax-parse (goal^ ...)
-        (for/list ([g (attribute goal)]) (fix-scope2-syntax g bound-vars^)))
-      #'(fresh (x^ ...) goal^ ...)]
-     [(quote datum)
-      this-syntax]
-     [(a . d)
-      #`(#,(fix-scope2-syntax #'a bound-vars) . #,(fix-scope2-syntax #'d bound-vars))]
-     [_ this-syntax])))
+        stx
+      #:literals (fresh quote)
+      [(fresh (x ...) goal ...)
+       (define xs (map syntax-e (attribute x)))
+       (define/syntax-parse (x^ ...) (set-subtract xs bound-vars))
+       (define bound-vars^ (set-union xs bound-vars))
+       (define/syntax-parse (goal^ ...)
+         (for/list ([g (attribute goal)]) (fix-scope2-syntax g bound-vars^)))
+       #'(fresh (x^ ...) goal^ ...)]
+      [(quote datum)
+       this-syntax]
+      [(a . d)
+       #`(#,(fix-scope2-syntax #'a bound-vars) . #,(fix-scope2-syntax #'d bound-vars))]
+      [_ this-syntax])))
 
 (define fix-scope-syntax
   (lambda (stx)
@@ -414,8 +634,8 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
        (let ((r (map fix-scope1 (cddr t))))
          (let ((body (map car r))
                (vs (fold-right union
-			       (filter (lambda (x) (not (reified-var? x))) (cadr t))
-			       (map cadr r))))
+                               (filter (lambda (x) (not (reified-var? x))) (cadr t))
+                               (map cadr r))))
            (list `(fresh ,vs . ,body) (list)))))
       ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
        (let ((r (map fix-scope1 (cddr t))))
@@ -479,7 +699,7 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
            (lambda (L)
              (lambda (old-st)
                L))))
-          #'(var2 ...))]))
+        #'(var2 ...))]))
 
 (define (assign-vars v)
   (let ((R (reify-S v (subst empty-subst-map nonlocal-scope))))
@@ -500,8 +720,8 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
   (define stx
     (fix-scope-syntax
      #`(lambda #,var-list
-       (fresh ()
-         #,@assigned))))
+         (fresh ()
+           #,@assigned))))
 
   (set! res stx)
 

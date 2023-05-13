@@ -44,8 +44,7 @@
                      racket/list
                      syntax/id-set)
          
-         (prefix-in i: "private/internal-lang.rkt")
-         (only-in "private/internals.rkt" generate-staged relation-body))
+         (prefix-in i:  "private/internals.rkt"))
 
 (begin-for-syntax
   (struct runtime-rel [args-count] #:prefab)
@@ -141,7 +140,7 @@
      #'r]
     #:rhs
     [#'(lambda (arg ...)
-         (relation-body
+         (i:relation-body
            (compile-runtime-goal g) ...))])
 
   (host-interface/definition
@@ -153,7 +152,7 @@
      #'r]
     #:rhs
     [#'(lambda (arg ...)
-         (relation-body
+         (i:relation-body
            (compile-now-goal g) ...))])
 
   (nonterminal maybe-generator
@@ -174,7 +173,7 @@
      #'r]
     #:rhs
     [#'(lambda (now-arg ... later-arg ...)
-         (relation-body
+         (i:relation-body
            (compile-runtime-goal g) ...))])
 
   (host-interface/expression
@@ -316,14 +315,15 @@
      #'(i:conde [(compile-runtime-goal g) ...] ...)]
     [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
      ;; preserve the srcloc for condg runtime errors
-     (syntax/loc #'stx (i:condg (compile-runtime-goal gl)
+     (error 'compile-runtime-goal "not supported")
+     #;(syntax/loc #'stx (i:condg (compile-runtime-goal gl)
                                 ([x ...] [(compile-runtime-goal guard) ...]
                                          [(compile-runtime-goal body) ...]) ...))]
     [(_ fail)
      #'i:fail]
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
-     #:with staged-f (syntax-local-lift-expression #'(generate-staged (var ...) (compile-now-goal g)))
+     #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal g)))
      #'(staged-f var ...)]
 
     [(_ (~and stx (~or (later . _) (now . _))))
@@ -334,7 +334,8 @@
   (syntax-parser
     #:literal-sets (goal-literals)
     [(_ (trace id x ...))
-     #'(i:project (x ...)
+     (error 'compile-now-goal "not supported")
+     #;#'(i:project (x ...)
          (begin
            (displayln (list 'id x ...))
            i:succeed))]
@@ -351,20 +352,27 @@
      (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]
 
     [(_ (constraint:binary-constraint t1 t2))
-     #'(constraint.c (compile-term t1) (compile-term t2))]
+     #'(i:ss:atomic (constraint.c (compile-term t1) (compile-term t2)))]
     [(_ (constraint:unary-constraint t))
-     #'(constraint.c (compile-term t))]
+     #'(i:ss:atomic (constraint.c (compile-term t)))]
     
     [(_ (fresh (x:id ...) g ...))
-     #'(i:fresh (x ...) (compile-now-goal g) ...)]
+     #'(i:ss:fresh (x ...) (compile-now-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(i:conde [(compile-now-goal g) ...] ...)]
+     #'(i:ss:conde [(compile-now-goal g) ...] ...)]
     [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
      ;; preserve the srcloc for condg runtime errors
-     (syntax/loc #'stx (i:condg (compile-now-goal gl)
+     #;(syntax/loc #'stx (i:condg (compile-now-goal gl)
                                 ([x ...] [(compile-now-goal guard) ...]
-                                         [(compile-now-goal body) ...]) ...))]
-    [(_ fail) #'fail]
+                                         [(compile-now-goal body) ...]) ...))
+     #'(i:ss:maybe-fallback
+        (compile-now-goal gl)
+        (i:ss:conde
+         [(i:ss:fresh (x ...)
+                      (compile-now-goal guard) ...
+                      (compile-now-goal body) ...)]
+         ...))]
+    [(_ fail) #'(i:ss:atomic i:fail)]
 
     [(_ (later g))
      #'(compile-later-goal g)]
@@ -383,7 +391,7 @@
        [(runtime-rel arg-count)
         (when (not (= arg-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of arguments to relation" #'r))
-        #'(i:lapp r (compile-term arg) ...)]
+        #'(i:ss:atomic (i:lapp r (compile-term arg) ...))]
        [_ (raise-syntax-error #f "generated-code relation application expects relation defined by defrel" #'r)])]
 
 
@@ -395,7 +403,7 @@
         (with-syntax ([rel-dyn #'rel]
                       [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                       [(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(i:lpartial-apply v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+          #'(i:ss:lpartial-apply v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (apply-partial v:id rel:id arg ...))
@@ -407,19 +415,20 @@
        (with-syntax ([rel-dyn #'rel]
                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
                      [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:lapply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+          #'(i:ss:atomic
+             (i:lapply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...)))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
    
     [(_ (constraint:binary-constraint t1 t2))
-     #'(constraint.l (compile-term t1) (compile-term t2))]
+     #'(i:ss:atomic (constraint.l (compile-term t1) (compile-term t2)))]
     [(_ (constraint:unary-constraint t ))
-     #'(constraint.l (compile-term t))]
+     #'(i:ss:atomic (constraint.l (compile-term t)))]
     
     [(_ (fresh (x:id ...) g ...))
-     #'(i:fresh (x ...) (compile-later-goal g) ...)]
+     #'(i:ss:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(i:lconde [(compile-later-goal g) ...] ...)]
-    [(_ fail) #'i:lfail]
+     #'(i:ss:lconde [(compile-later-goal g) ...] ...)]
+    [(_ fail) #'(i:ss:atomic i:lfail)]
     
     [(_ (now g))
      #'(compile-now-goal g)]

@@ -124,14 +124,14 @@
     ([] [(numbero expr)] [(later (== expr val))])
 
     ;; variable reference
-    ([]
+    #;([]
      [(symbolo expr)]
      [(fresh (env-v)
         (lookupo expr env env-v)
         (later (== env-v val)))])
 
     ;; quote
-    ([v]
+    #;([v]
      [(== `(quote ,v) expr)
       (absent-tago/gen v)
       (not-in-envo 'quote env)]
@@ -140,16 +140,16 @@
     ;; lambda
     ([x body]
      [(== `(lambda ,x ,body) expr)
-      (not-in-envo 'lambda env)
+      #;(not-in-envo 'lambda env)
       (conde
-        ((symbolo x))
+        #;((symbolo x))
         ((list-of-symbolso x)))]
      [(later (fresh (rep)
                (== `(struct closure ,rep) val)
                (== rep (partial-apply eval-apply x body env))))])
 
     ;; application
-    ([rator rands a* rator-v]
+    #;([rator rands a* rator-v]
      [(== `(,rator . ,rands) expr)
       (conde
        ((symbolo rator)
@@ -158,7 +158,7 @@
      [(eval-appo rator rands env val)])
     
     ;; match
-    ([against-expr clauses]
+    #;([against-expr clauses]
      [(== `(match ,against-expr . ,clauses) expr)
       (not-in-envo 'match env)]
      [(fresh (mval)
@@ -166,7 +166,7 @@
         (match-clauses mval clauses env val))])
     
     ;; letrec
-    ([letrec-body f x e]
+    #;([letrec-body f x e]
      [(== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
       (not-in-envo 'letrec env)]
      [(fresh (rep env^)
@@ -175,13 +175,13 @@
         (eval-expo letrec-body env^ val))])
     
     ;; and
-    ([e*] [(== `(and . ,e*) expr) (not-in-envo 'and env)] [(ando e* env val)])
+    #;([e*] [(== `(and . ,e*) expr) (not-in-envo 'and env)] [(ando e* env val)])
     
     ;; or
-    ([e*] [(== `(or . ,e*) expr) (not-in-envo 'or env)] [(oro e* env val)])
+    #;([e*] [(== `(or . ,e*) expr) (not-in-envo 'or env)] [(oro e* env val)])
     
     ;; if
-    ([e1 e2 e3]
+    #;([e1 e2 e3]
      [(== `(if ,e1 ,e2 ,e3) expr) (not-in-envo 'if env)]
      [(fresh (t c2 c3)
         (eval-expo e1 env t)
