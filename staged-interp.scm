@@ -349,25 +349,15 @@
                  ((=/= #f v)
                   (now (ando `(,e2 . ,e-rest) env val))))))])))
 
-(provide oro u-oro)
-
 (defrel/generator (oro e* env val)
   (condg
     #:fallback (later (u-oro e* env val))
-    ([]
-     [(== '() e*)]
-     [(later (== #f val))])
-    ([e]
-     [(== `(,e) e*)]
-     [#;(eval-expo e env val)
-      (== e #t)
-      (later (== val #t))])
+    ([] [(== '() e*)] [(later (== #f val))])
+    ([e] [(== `(,e) e*)] [(eval-expo e env val)])
     ([e1 e2 e-rest]
      [(== `(,e1 ,e2 . ,e-rest) e*)]
      [(fresh (v c)
-        #;(eval-expo e1 env v)
-        (== e1 #t)
-        (later (== v #t))
+        (eval-expo e1 env v)
         (later (conde
                 ((=/= #f v)
                  (== v val))

@@ -35,6 +35,14 @@
 (run 1 (e1 e2)
   (staged (oro `(,e1 . ,e2) initial-env #t)))
 
+;; Terminates properly if I pull the branch out of the later conde.
+;; So the later conde is sinking the success notification from
+;; inside. We've gotta get that notification out without recursively exploring
+;; everything. We need the goal-like capture-later!
+;;
+;; Hmm, how do the later-conde branches interact? Like, we need all the
+;; branches to have an option I think. It's a conjunction.
+
 ;; (or anything) is a base case.
 ;; (or e1 e2 . e-rest) is the recursive case.
 ;;

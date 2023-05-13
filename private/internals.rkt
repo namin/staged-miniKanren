@@ -41,7 +41,7 @@
 ;success in g1 or g2 shouldn't make conj notify, but if we get to g3 success it should.
 ;But g3 is always nested within the first goal, so how do we know?
 
-;(define (displayln v) (void))
+(define (displayln v) (void))
 
 (define (ss:conj2 g1 g2)
   (lambda (st success-k)
@@ -286,6 +286,8 @@
 
   (eval-syntax stx))
 
+
+
 (define (ss:capture-later g k)
   (lambda (st-original success-k)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
@@ -294,18 +296,24 @@
       
       (define st-after (unique-result (ss:take 2 (lambda () (g st-before initial-k)))))
 
-      (let ([captured-L (for/list ([stx (append (reverse (state-L st-after))
-                                                (generate-constraints st-after))])
+      (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport
+                                                (reverse (state-L st-after)))])
                           (walk* stx (state-S st-after)))])
+
+        (println captured-L)
 
         ((k captured-L)
          st-original
          success-k)))))
 
+(define (ss:promise-success g)
+  (lambda (st success-k)
+    (ss:notify-success (seteq) (lambda () (ss:drop-one-notify (lambda () (g st success-k)))))))
+
 (define-syntax ss:lconde
   (syntax-rules ()
     ((_ (g ...) ...)
-     (ss:ldisj (ss:fresh () g ...) ...))))
+     (ss:promise-success (ss:ldisj (ss:fresh () g ...) ...)))))
 
 (define (ss:ldisj . gs-init)
   (let recur ([gs gs-init] [gs-stx '()])
@@ -320,7 +328,8 @@
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
-     #'(ss:fresh (y-n ...)
+     #'(ss:promise-success
+        (ss:fresh (y-n ...)
          (ss:capture-later
           (ss:fresh ()
             ;; This is a little subtle. This unification ends up as code in the
@@ -335,7 +344,7 @@
                       'rel-staged 'rel-dyn (list x ...)
                       #`(lambda (y-n2 ...)
                           (fresh ()
-                            . #,body))))))))]))
+                            . #,body)))))))))]))
 
 ;;
 ;; Extensions to the data type of terms
@@ -404,12 +413,12 @@
 (define lsucceed (later #'succeed))
 (define lfail (later #'fail))
 
-(define-syntax lconde
+#;(define-syntax lconde
   (syntax-rules ()
     ((_ (g ...) ...)
      (ldisj (fresh () g ...) ...))))
 
-(define (ldisj . gs-init)
+#;(define (ldisj . gs-init)
   (let recur ([gs gs-init] [gs-stx '()])
     (if (null? gs)
         (later #`(conde #,@(reverse gs-stx)))
@@ -421,7 +430,7 @@
 ;; Scoped lift capturing
 ;;
 
-(define (capture-later g k)
+#;(define (capture-later g k)
   (lambda (st-original)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
@@ -469,7 +478,7 @@
 (define (partial-apply-rt rep rel-staged rel-dyn args)
   (== rep (apply-rep rel-staged rel-dyn args #f)))
 
-(define-syntax lpartial-apply
+#;(define-syntax lpartial-apply
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
