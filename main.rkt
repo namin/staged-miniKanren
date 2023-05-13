@@ -371,7 +371,8 @@
          [(i:ss:fresh (x ...)
                       (compile-now-goal guard) ...
                       (compile-now-goal body) ...)]
-         ...))]
+         ...)
+        #'stx)]
     [(_ fail) #'(i:ss:atomic i:fail)]
 
     [(_ (later g))

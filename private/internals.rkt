@@ -17,7 +17,7 @@
 ;; StagingSearchResult is one of:
 (struct ss:interleave [ss-k])
 (struct ss:fail [])
-(struct ss:notify-success [ss-k])
+(struct ss:notify-success [tags ss-k])
 (struct ss:final-success [v ss-k])
 
 ;; ss-k : StagingSearchResultK
@@ -32,9 +32,92 @@
   (ss:suspend e)
   (ss:interleave (lambda () e)))
 
+;(conj
+; (disj
+;  g1
+;  g2)
+; g3)
+;
+;success in g1 or g2 shouldn't make conj notify, but if we get to g3 success it should.
+;But g3 is always nested within the first goal, so how do we know?
+
+;(define (displayln v) (void))
+
 (define (ss:conj2 g1 g2)
   (lambda (st success-k)
-    (g1 st (lambda (st) (g2 st success-k)))))
+    (define tag (gensym))
+    (ss:filter-notify tag
+     (lambda ()
+       (g1 st (lambda (st)
+                (ss:tag-notify tag (lambda () (g2 st success-k)))))))))
+
+;; like ss-k, except that ss:notify-success is only propagated when its tags
+;; include `tag`.
+(define (ss:filter-notify tag ss-k)
+  (match (ss-k)
+    [(ss:fail)
+     (ss:fail)]
+    [(ss:interleave ss-k^)
+     (ss:interleave (lambda () (ss:filter-notify tag ss-k^)))]
+    [(ss:notify-success tags ss-k^)
+     (if (set-member? tags tag)
+         (begin
+           (displayln 'propagating-notify-from-filter)
+           (ss:notify-success tags (lambda () (ss:filter-notify tag ss-k^))))
+         (begin
+           (displayln 'dropping-notify-filter)
+           (ss:filter-notify tag ss-k^)))]
+    [(ss:final-success v ss-k^)
+     (ss:final-success v (lambda () (ss:filter-notify tag ss-k^)))]))
+
+;; like ss-k, except that `tag` is added to the tags of every raised
+;; ss:notify-success.
+(define (ss:tag-notify tag ss-k)
+  (match (ss-k)
+    [(ss:fail)
+     (ss:fail)]
+    [(ss:interleave ss-k^)
+     (ss:interleave (lambda () (ss:tag-notify tag ss-k^)))]
+    [(ss:notify-success tags ss-k^)
+     (ss:notify-success (set-add tags tag) (lambda () (ss:tag-notify tag ss-k^)))]
+    [(ss:final-success v ss-k^)
+     (ss:final-success v (lambda () (ss:tag-notify tag ss-k^)))]))
+
+#;(define (ss:untag-notify tag ss-k)
+  (match (ss-k)
+    [(ss:fail)
+     (ss:fail)]
+    [(ss:interleave ss-k^)
+     (ss:interleave (lambda () (ss:tag-notify tag ss-k^)))]
+    [(ss:notify-success tags ss-k^)
+     (ss:notify-success (set-remove tags tag) (lambda () (ss:tag-notify tag ss-k^)))]
+    [(ss:final-success v ss-k^)
+     (ss:final-success v (lambda () (ss:tag-notify tag ss-k^)))]))
+
+(define (ss:drop-one-notify ss-k)
+  (match (ss-k)
+    [(ss:fail)
+     (ss:fail)]
+    [(ss:interleave ss-k^)
+     (ss:interleave (lambda () (ss:drop-one-notify ss-k^)))]
+    [(ss:notify-success tags ss-k^)
+     (displayln 'dropping-one-notify-from-fallback)
+     (ss-k^)]
+    [(ss:final-success v ss-k^)
+     (ss:final-success v (lambda () (ss:drop-one-notify ss-k^)))]))
+
+
+(define (ss:drop-all-notify ss-k)
+  (match (ss-k)
+    [(ss:fail)
+     (ss:fail)]
+    [(ss:interleave ss-k^)
+     (ss:interleave (lambda () (ss:drop-all-notify ss-k^)))]
+    [(ss:notify-success tags ss-k^)
+     (displayln 'dropping-all-notify-from-success-k)
+     (ss:drop-all-notify ss-k^)]
+    [(ss:final-success v ss-k^)
+     (ss:final-success v (lambda () (ss:drop-all-notify ss-k^)))]))
 
 (define-syntax ss:conj
   (syntax-rules ()
@@ -48,19 +131,28 @@
      (let ((x (var (new-scope))) ...) ;; always use a new scope, so never use set-var-val!
        ((ss:conj g0 g ...) st success-k)))))
 
-(define (ss:atomic runtime-g)
+(define-syntax-rule
+  (ss:atomic g)
+  (ss:atomic-rt g #'g))
+
+(define (ss:atomic-rt runtime-g stx)
   (lambda (st success-k)
     (let ([res (runtime-g st)])
       (if res
-          (success-k res)
+          (begin
+            (displayln 'atomic-success)
+            (displayln stx)
+            (ss:notify-success (seteq) (lambda () (success-k res))))
           (ss:fail)))))
 
 
 (define (ss:one-result v)
   (ss:final-success v (lambda () (ss:fail))))
-
-(define (ss:maybe-fallback fallback-g g)
+    
+(define (ss:maybe-fallback fallback-g g stx)
   (lambda (st success-k)
+    (define ignore-tag (gensym))
+    
     (define (no-success-yet ss-k)
       (displayln 'no-success-yet)
       (match (ss-k)
@@ -68,14 +160,19 @@
          (ss:fail)]
         [(ss:interleave ss-k^)
          (ss:interleave (lambda () (no-success-yet ss-k^)))]
-        [(ss:notify-success ss-k^)
+        [(ss:notify-success tags ss-k^)
          (displayln 'no-success-yet->one-success-notified)
+         (when (set-member? tags ignore-tag)
+           (error 'ss:maybe-fallback
+                  "invariant violation in no-success-yet; shouldn't see tagged notifies yet"))
          (ss:notify-success
+          tags
           (lambda ()
             (one-success-notified ss-k^)))]
-        [(ss:final-success _ _)
+        [(ss:final-success v _)
+         (displayln stx)
          (error 'ss:maybe-fallback
-                "invariant violation; should get notify-success first")]))
+                "invariant violation in no-success-yet; should get notify-success first")]))
 
     (define (one-success-notified ss-k)
       (match (ss-k)
@@ -83,9 +180,12 @@
          (ss:fail)]
         [(ss:interleave ss-k^)
          (ss:interleave (lambda () (one-success-notified ss-k^)))]
-        [(ss:notify-success ss-k^)
-         (displayln 'one-success-notified->fallback)
-         (fallback-g st success-k)]
+        [(ss:notify-success tags ss-k^)
+         (if (not (set-member? tags ignore-tag))
+             (begin
+               (displayln 'one-success-notified->fallback)
+               (ss:drop-one-notify (lambda () (fallback-g st success-k))))
+             (ss:notify-success tags (lambda () (one-success-notified ss-k^))))]
         [(ss:final-success v ss-k^)
          (have-result v ss-k^)]))
 
@@ -96,15 +196,18 @@
          (ss:one-result v)]
         [(ss:interleave ss-k^)
          (ss:interleave (lambda () (have-result v ss-k^)))]
-        [(ss:notify-success ss-k^)
-         (displayln 'have-result->fallback)
-         (fallback-g st success-k)]
+        [(ss:notify-success tags ss-k^)
+         (if (not (set-member? tags ignore-tag))
+             (begin
+               (displayln 'have-result->fallback)
+               (ss:drop-one-notify (lambda () (fallback-g st success-k))))
+             (ss:notify-success tags (lambda () (have-result v ss-k^))))]
         [(ss:final-success v ss-k^)
          (error 'ss:maybe-fallback
-                "invariant violation; should get notify-success first")]))
+                "invariant violation in have-result; should get notify-success first")]))
 
-    (define (success-k^ st)
-      (ss:notify-success (lambda () (success-k st))))
+    (define (success-k^ v)
+      (ss:tag-notify ignore-tag (lambda () (success-k v))))
     
     (no-success-yet (lambda () (g st success-k^)))))
 
@@ -116,8 +219,8 @@
          (ss-k2)]
         [(ss:interleave ss-k1^)
          (ss:interleave (lambda () (node ss-k2 ss-k1^)))]
-        [(ss:notify-success ss-k1^)
-         (ss:notify-success (lambda () (node ss-k2 ss-k1^)))]
+        [(ss:notify-success tags ss-k1^)
+         (ss:notify-success tags (lambda () (node ss-k1^ ss-k2)))]
         [(ss:final-success v ss-k1^)
          (ss:final-success v (lambda () (node ss-k2 ss-k1^)))]))
     (ss:suspend (node (lambda () (g1 st success-k)) (lambda () (g2 st success-k))))))
@@ -140,7 +243,7 @@
          '()]
         [(ss:interleave ss-k^)
          (ss:take n ss-k^)]
-        [(ss:notify-success ss-k^)
+        [(ss:notify-success tags ss-k^)
          (ss:take n ss-k^)]
         [(ss:final-success v ss-k^)
          (cons v (ss:take (and n (- n 1)) ss-k^))])))
@@ -188,14 +291,16 @@
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
            [st-before (state-with-scope st-before (new-scope))])
-      (g st-before
-         (lambda (st-after)
-           (let ([captured-L (for/list ([stx (append (reverse (state-L st-after))
-                                                     (generate-constraints st-after))])
-                               (walk* stx (state-S st-after)))])
-             ((k captured-L)
-              st-original
-              success-k)))))))
+      
+      (define st-after (unique-result (ss:take 2 (lambda () (g st-before initial-k)))))
+
+      (let ([captured-L (for/list ([stx (append (reverse (state-L st-after))
+                                                (generate-constraints st-after))])
+                          (walk* stx (state-S st-after)))])
+
+        ((k captured-L)
+         st-original
+         success-k)))))
 
 (define-syntax ss:lconde
   (syntax-rules ()
