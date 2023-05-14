@@ -97,10 +97,6 @@
     ;; application
     ((fresh (rator rands a* rator-v)
        (== `(,rator . ,rands) expr)
-       (conde
-         ((symbolo rator)
-          (lookupo rator env rator-v))
-         ((fresh (a d) (== (cons a d) rator))))
 
        (fallback
         ;; Behavior changes based on groundness!
