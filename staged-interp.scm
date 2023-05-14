@@ -66,8 +66,7 @@
        (u-eval-primo prim-id a* val)))))
 
 (defrel/generator (eval-appo rator rands env val)
-  (condg
-   #:fallback
+  (fallback
    ;; Behavior changes based on groundness!
    ;;
    ;; When the shape of the rator is unknown, we stage evaluation of the arguments
@@ -94,27 +93,25 @@
                 (now (eval-listo rands env a*))
                 (callo proc val a*))])))
 
-   
-   ;; statically-recognizable primitive application
-   ([prim]
-    [(symbolo rator)
-     (lookupo rator env `(struct prim . ,prim))]
-    [(fresh (proc a*)
-       (eval-primo prim a* val)
-       (eval-listo rands env a*))])
+   (conde
+     ;; statically-recognizable primitive application
+     ((fresh (prim proc a*)
+        (symbolo rator)
+        (lookupo rator env `(struct prim . ,prim))
+        (eval-primo prim a* val)
+        (eval-listo rands env a*)))
     
-   ;; general application
-   ([]
-    [(conde
-      ((symbolo rator)
-       (fresh (p tag)
-         (lookupo rator env `(struct ,tag . ,p))
-         (=/= 'prim tag)))
-      ((fresh (a d) (== (cons a d) rator))))]
-    [(fresh (proc a*)
-       (eval-expo rator env proc)
-       (eval-listo rands env a*)
-       (later (callo proc val a*)))])))
+     ;; general application
+     ((fresh (proc a*)
+        (conde
+          ((symbolo rator)
+           (fresh (p tag)
+             (lookupo rator env `(struct ,tag . ,p))
+             (=/= 'prim tag)))
+          ((fresh (a d) (== (cons a d) rator))))
+        (eval-expo rator env proc)
+        (eval-listo rands env a*)
+        (later (callo proc val a*)))))))
 
 (defrel/fallback (eval-expo expr env val) u-eval-expo
   (conde
