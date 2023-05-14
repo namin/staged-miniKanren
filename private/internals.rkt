@@ -100,11 +100,7 @@
      (let ((x (var (new-scope))) ...) ;; always use a new scope, so never use set-var-val!
        ((ss:conj g0 g ...) st success-k)))))
 
-(define-syntax-rule
-  (ss:atomic g)
-  (ss:atomic-rt g #'g))
-
-(define (ss:atomic-rt runtime-g stx)
+(define (ss:atomic runtime-g)
   (lambda (st success-k)
     (let ([res (runtime-g st)])
       (if res
@@ -115,7 +111,7 @@
 (define (ss:one-result v)
   (ss:final-success v (lambda () (ss:fail))))
     
-(define (ss:maybe-fallback fallback-g g stx)
+(define (ss:maybe-fallback fallback-g g)
   (lambda (st success-k)
     (define ignore-tag (gensym))
     
@@ -254,7 +250,7 @@
       
       (define st-after (unique-result (ss:take 2 (lambda () (g st-before initial-k)))))
 
-      (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport
+      (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
                                                 (reverse (state-L st-after)))])
                           (walk* stx (state-S st-after)))])
 

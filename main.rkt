@@ -116,7 +116,6 @@
                #'(condg #:fallback f ((~? [x ...] []) [guard ...] [body ...]) ...))
     (condg #:fallback g:goal c:condg-clause ...+)
     
-    
     (staged g:goal)
     (later g:goal)
     (now g:goal)
@@ -313,12 +312,6 @@
      #'(i:fresh (x ...) (compile-runtime-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(i:conde [(compile-runtime-goal g) ...] ...)]
-    [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
-     ;; preserve the srcloc for condg runtime errors
-     (error 'compile-runtime-goal "not supported")
-     #;(syntax/loc #'stx (i:condg (compile-runtime-goal gl)
-                                ([x ...] [(compile-runtime-goal guard) ...]
-                                         [(compile-runtime-goal body) ...]) ...))]
     [(_ fail)
      #'i:fail]
     [(_ (staged g))
@@ -326,7 +319,7 @@
      #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal g)))
      #'(staged-f var ...)]
 
-    [(_ (~and stx (~or (later . _) (now . _))))
+    [(_ (~and stx (~or (later . _) (now . _) (condg . _) (fallback . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
@@ -334,7 +327,7 @@
   (syntax-parser
     #:literal-sets (goal-literals)
     [(_ (trace id x ...))
-     (error 'compile-now-goal "not supported")
+     (error 'compile-now-goal "TODO not supported")
      #;#'(i:project (x ...)
          (begin
            (displayln (list 'id x ...))
@@ -361,18 +354,13 @@
     [(_ (conde [g ...] ...))
      #'(i:ss:conde [(compile-now-goal g) ...] ...)]
     [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
-     ;; preserve the srcloc for condg runtime errors
-     #;(syntax/loc #'stx (i:condg (compile-now-goal gl)
-                                ([x ...] [(compile-now-goal guard) ...]
-                                         [(compile-now-goal body) ...]) ...))
      #'(i:ss:maybe-fallback
         (compile-now-goal gl)
         (i:ss:conde
          [(i:ss:fresh (x ...)
                       (compile-now-goal guard) ...
                       (compile-now-goal body) ...)]
-         ...)
-        #'stx)]
+         ...))]
     [(_ fail) #'(i:ss:atomic i:fail)]
 
     [(_ (later g))
