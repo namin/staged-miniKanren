@@ -116,83 +116,84 @@
        (eval-listo rands env a*)
        (later (callo proc val a*)))])))
 
-(defrel/generator (eval-expo expr env val)
-  (condg
-    #:fallback (later (u-eval-expo expr env val))
-
+(defrel/fallback (eval-expo expr env val) u-eval-expo
+  (conde
     ;; number literal
-    ([] [(numbero expr)] [(later (== expr val))])
+    ((numbero expr) (later (== expr val)))
 
     ;; variable reference
-    ([]
-     [(symbolo expr)]
-     [(fresh (env-v)
-        (lookupo expr env env-v)
-        (later (== env-v val)))])
+    ((symbolo expr)
+     (fresh (env-v)
+       (lookupo expr env env-v)
+       (later (== env-v val))))
 
     ;; quote
-    ([v]
-     [(== `(quote ,v) expr)
-      (absent-tago/gen v)
-      (not-in-envo 'quote env)]
-     [(later (== val v))])
+    ((fresh (v)
+       (== `(quote ,v) expr)
+       (absent-tago/gen v)
+       (not-in-envo 'quote env)
+       (later (== val v))))
 
     ;; lambda
-    ([x body]
-     [(== `(lambda ,x ,body) expr)
-      (not-in-envo 'lambda env)
-      (conde
-        ((symbolo x))
-        ((list-of-symbolso x)))]
-     [(later (fresh (rep)
-               (== `(struct closure ,rep) val)
-               (== rep (partial-apply eval-apply x body env))))])
+    ((fresh (x body)
+       (== `(lambda ,x ,body) expr)
+       (not-in-envo 'lambda env)
+       (conde
+         ((symbolo x))
+         ((list-of-symbolso x)))
+       (later (fresh (rep)
+                (== `(struct closure ,rep) val)
+                (== rep (partial-apply eval-apply x body env))))))
 
     ;; application
-    ([rator rands a* rator-v]
-     [(== `(,rator . ,rands) expr)
-      (conde
-       ((symbolo rator)
-        (lookupo rator env rator-v))
-       ((fresh (a d) (== (cons a d) rator))))]
-     [(eval-appo rator rands env val)])
+    ((fresh (rator rands a* rator-v)
+       (== `(,rator . ,rands) expr)
+       (conde
+         ((symbolo rator)
+          (lookupo rator env rator-v))
+         ((fresh (a d) (== (cons a d) rator))))
+       (eval-appo rator rands env val)))
     
     ;; match
-    ([against-expr clauses]
-     [(== `(match ,against-expr . ,clauses) expr)
-      (not-in-envo 'match env)]
-     [(fresh (mval)
-        (eval-expo against-expr env mval)
-        (match-clauses mval clauses env val))])
+    ((fresh (against-expr clauses mval)
+       (== `(match ,against-expr . ,clauses) expr)
+       (not-in-envo 'match env)
+       (eval-expo against-expr env mval)
+       (match-clauses mval clauses env val)))
     
     ;; letrec
-    ([letrec-body f x e]
-     [(== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
-      (not-in-envo 'letrec env)]
-     [(fresh (rep env^)
-        (== env^ `((,f . (val . (struct rec-closure ,rep))) . ,env))
-        (later (== rep (partial-apply eval-apply-rec f x e env)))
-        (eval-expo letrec-body env^ val))])
+    ((fresh (letrec-body f x e rep env^)
+       (== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
+       (not-in-envo 'letrec env)
+       (== env^ `((,f . (val . (struct rec-closure ,rep))) . ,env))
+       (later (== rep (partial-apply eval-apply-rec f x e env)))
+       (eval-expo letrec-body env^ val)))
     
     ;; and
-    ([e*] [(== `(and . ,e*) expr) (not-in-envo 'and env)] [(ando e* env val)])
+    ((fresh (e*)
+       (== `(and . ,e*) expr)
+       (not-in-envo 'and env)
+       (ando e* env val)))
     
     ;; or
-    ([e*] [(== `(or . ,e*) expr) (not-in-envo 'or env)] [(oro e* env val)])
+    ((fresh (e*)
+       (== `(or . ,e*) expr)
+       (not-in-envo 'or env)
+       (oro e* env val)))
     
     ;; if
-    ([e1 e2 e3]
-     [(== `(if ,e1 ,e2 ,e3) expr) (not-in-envo 'if env)]
-     [(fresh (t c2 c3)
-        (eval-expo e1 env t)
-        (later (conde
-                 ((=/= #f t) (now (eval-expo e2 env val)))
-                 ((== #f t) (now (eval-expo e3 env val))))))])
+    ((fresh (e1 e2 e3 t)
+       (== `(if ,e1 ,e2 ,e3) expr)
+       (not-in-envo 'if env)
+       (eval-expo e1 env t)
+       (later (conde
+                ((=/= #f t) (now (eval-expo e2 env val)))
+                ((== #f t) (now (eval-expo e3 env val)))))))
     
     ;; boolean literals
-    ([] [(== #t expr)] [(later (== #t val))])
-    ([] [(== #f expr)] [(later (== #f val))]))
-  )
+    ((== #t expr) (later (== #t val)))
+    ((== #f expr) (later (== #f val)))
+  ))
 
 (define empty-env '())
 
@@ -220,15 +221,14 @@
        (=/= y x)
        (not-in-envo x rest)))))
 
-(defrel/generator (eval-listo expr env val)
-  (condg
-    #:fallback (later (u-eval-listo expr env val))
-    ([] [(== '() expr)] [(== '() val)])
-    ([a d v-a v-d]
-     [(== `(,a . ,d) expr)
-      (== `(,v-a . ,v-d) val)]
-     [(eval-expo a env v-a)
-      (eval-listo d env v-d)])))
+(defrel/fallback (eval-listo expr env val) u-eval-listo
+  (conde
+    ((== '() expr) (== '() val))
+    ((fresh (a d v-a v-d)
+       (== `(,a . ,d) expr)
+       (== `(,v-a . ,v-d) val)
+       (eval-expo a env v-a)
+       (eval-listo d env v-d)))))
 
 ;; need to make sure lambdas are well formed.
 ;; grammar constraints would be useful here!!!
