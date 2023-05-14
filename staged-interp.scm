@@ -196,14 +196,12 @@
 
 (define empty-env '())
 
-(defrel/generator (lookupo x env v)
-  (fallback
-   (later (u-lookupo x env v))
-   (fresh (y b rest)
-     (== `((,y . ,b) . ,rest) env)
-     (conde
-      [(== x y) (== `(val . ,v) b)]
-      [(=/= x y) (lookupo x rest v)]))))
+(defrel/fallback (lookupo x env v) u-lookupo
+  (fresh (y b rest)
+    (== `((,y . ,b) . ,rest) env)
+    (conde
+     [(== x y) (== `(val . ,v) b)]
+     [(=/= x y) (lookupo x rest v)])))
 
 (defrel/generator (match-lookupo/gen x env t)
   (fresh (y b rest)
@@ -350,20 +348,20 @@
                  ((=/= #f v)
                   (now (ando `(,e2 . ,e-rest) env val))))))])))
 
-(defrel/generator (oro e* env val)
-  (condg
-    #:fallback (later (u-oro e* env val))
-    ([] [(== '() e*)] [(later (== #f val))])
-    ([e] [(== `(,e) e*)] [(eval-expo e env val)])
-    ([e1 e2 e-rest]
-     [(== `(,e1 ,e2 . ,e-rest) e*)]
-     [(fresh (v c)
-        (eval-expo e1 env v)
-        (later (conde
+(defrel/fallback (oro e* env val) u-oro
+  (conde
+    ((== '() e*) (later (== #f val)))
+    ((fresh (e)
+       (== `(,e) e*)
+       (eval-expo e env val)))
+    ((fresh (e1 e2 e-rest v)
+       (== `(,e1 ,e2 . ,e-rest) e*)
+       (eval-expo e1 env v)
+       (later (conde
                 ((=/= #f v)
                  (== v val))
                 ((== #f v)
-                 (now (oro `(,e2 . ,e-rest) env val))))))])))
+                 (now (oro `(,e2 . ,e-rest) env val)))))))))
 
 (define initial-env `((list . (val . (struct prim . list)))
                       (not . (val . (struct prim . not)))

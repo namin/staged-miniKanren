@@ -26,6 +26,7 @@
  defrel
  defrel-partial
  defrel/generator
+ defrel/fallback
  run
  run*
 
@@ -490,3 +491,12 @@
           (syntax-rules ()
             [(_ . pat)
              template])))]))
+
+(define-syntax-rule
+  (defrel/fallback (name arg ...) fallback-name
+    g ...)
+  (defrel/generator (name arg ...)
+    (fallback
+     (later (fallback-name arg ...))
+     (fresh ()
+       g ...))))
