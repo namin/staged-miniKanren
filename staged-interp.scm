@@ -5,11 +5,6 @@
 (defrel/generator (not-tago/gen v)
   (=/= 'struct v))
 
-(defrel/generator (booleano/gen t)
-  (conde
-    ((== #f t))
-    ((== #t t))))
-
 (defrel/generator (eval-apply-rec-staged rep f x* e env a* res)
   (fresh (env^ env-self)
     ;; TODO: should we do something like this?
@@ -67,6 +62,13 @@
 
 (defrel/fallback (eval-expo expr env val) u-eval-expo
   (conde
+    ;; quote
+    ((fresh (v)
+       (== `(quote ,v) expr)
+       (absent-tago/gen v)
+       (not-in-envo 'quote env)
+       (later (== val v))))
+    
     ;; number literal
     ((numbero expr) (later (== expr val)))
 
@@ -75,13 +77,6 @@
      (fresh (env-v)
        (lookupo expr env env-v)
        (later (== env-v val))))
-
-    ;; quote
-    ((fresh (v)
-       (== `(quote ,v) expr)
-       (absent-tago/gen v)
-       (not-in-envo 'quote env)
-       (later (== val v))))
 
     ;; lambda
     ((fresh (x body)
@@ -145,45 +140,20 @@
              (later (callo proc val a*))))))))
     
     ;; match
-    ((fresh (against-expr clauses mval)
-       (== `(match ,against-expr . ,clauses) expr)
-       (not-in-envo 'match env)
-       (eval-expo against-expr env mval)
-       (match-clauses mval clauses env val)))
+    ((handle-matcho expr env val))
     
     ;; letrec
-    ((fresh (letrec-body f x e rep env^)
-       (== `(letrec ((,f (lambda ,x ,e))) ,letrec-body) expr)
+    ((fresh (letrec-body f x e rep)
+       (== `(letrec ((,f (lambda ,x ,e)))
+              ,letrec-body)
+           expr)
        (not-in-envo 'letrec env)
-       (== env^ `((,f . (val . (struct rec-closure ,rep))) . ,env))
        (later (== rep (partial-apply eval-apply-rec f x e env)))
-       (eval-expo letrec-body env^ val)))
-    
-    ;; and
-    ((fresh (e*)
-       (== `(and . ,e*) expr)
-       (not-in-envo 'and env)
-       (ando e* env val)))
-    
-    ;; or
-    ((fresh (e*)
-       (== `(or . ,e*) expr)
-       (not-in-envo 'or env)
-       (oro e* env val)))
-    
-    ;; if
-    ((fresh (e1 e2 e3 t)
-       (== `(if ,e1 ,e2 ,e3) expr)
-       (not-in-envo 'if env)
-       (eval-expo e1 env t)
-       (later (conde
-                ((=/= #f t) (now (eval-expo e2 env val)))
-                ((== #f t) (now (eval-expo e3 env val)))))))
-    
-    ;; boolean literals
-    ((== #t expr) (later (== #t val)))
-    ((== #f expr) (later (== #f val)))
-  ))
+       (eval-expo letrec-body
+                  `((,f . (val . (struct rec-closure ,rep))) . ,env)
+                  val)))
+
+    ((prim-expo expr env val))))
 
 (define empty-env '())
 
@@ -312,6 +282,24 @@
                 ((== '() v) (== #t val))
                 ((=/= '() v) (== #f val)))))]))
 
+(defrel/generator (prim-expo expr env val)
+  (conde
+    ((boolean-primo expr env val))
+    ((and-primo expr env val))
+    ((or-primo expr env val))
+    ((if-primo expr env val))))
+
+(defrel/generator (boolean-primo expr env val)
+  (conde
+    ((== #t expr) (later (== #t val)))
+    ((== #f expr) (later (== #f val)))))
+
+(defrel/generator (and-primo expr env val)
+  (fresh (e*)
+    (== `(and . ,e*) expr)
+    (not-in-envo 'and env)
+    (ando e* env val)))
+
 (defrel/fallback (ando e* env val) u-ando
   (conde
     ((== '() e*) (later (== #t val)))
@@ -326,6 +314,12 @@
                  (== #f val))
                 ((=/= #f v)
                  (now (ando `(,e2 . ,e-rest) env val)))))))))
+
+(defrel/generator (or-primo expr env val)
+  (fresh (e*)
+    (== `(or . ,e*) expr)
+    (not-in-envo 'or env)
+    (oro e* env val)))
 
 (defrel/fallback (oro e* env val) u-oro
   (conde
@@ -342,6 +336,15 @@
                 ((== #f v)
                  (now (oro `(,e2 . ,e-rest) env val)))))))))
 
+(defrel/generator (if-primo expr env val)
+  (fresh (e1 e2 e3 t)
+    (== `(if ,e1 ,e2 ,e3) expr)
+    (not-in-envo 'if env)
+    (eval-expo e1 env t)
+    (later (conde
+             ((=/= #f t) (now (eval-expo e2 env val)))
+             ((== #f t) (now (eval-expo e3 env val)))))))
+
 (define initial-env `((list . (val . (struct prim . list)))
                       (not . (val . (struct prim . not)))
                       (equal? . (val . (struct prim . equal?)))
@@ -354,6 +357,13 @@
                       (cdr . (val . (struct prim . cdr)))
                       . ,empty-env))
 
+(defrel/generator (handle-matcho expr env val)
+  (fresh (against-expr clauses mval)
+    (== `(match ,against-expr . ,clauses) expr)
+    (not-in-envo 'match env)
+    (eval-expo against-expr env mval)
+    (match-clauses mval clauses env val)))
+  
 (defrel (not-symbolo t)
   (conde
     ((== #f t))
@@ -383,6 +393,11 @@
     ((symbolo t) (not-tago/gen t))
     ((booleano/gen t))
     ((== '() t))))
+
+(defrel/generator (booleano/gen t)
+  (conde
+    ((== #f t))
+    ((== #t t))))
 
 (defrel/generator (regular-env-appendo env1 env2 env-out)
   (conde
