@@ -8,9 +8,7 @@
  evalo-unstaged
  u-eval-expo
 
- initial-env
-
- lookupo)
+ initial-env)
 
 (require "main.rkt"
          racket/include)

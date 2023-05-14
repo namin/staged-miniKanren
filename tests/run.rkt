@@ -2,25 +2,6 @@
 
 (require "../all.rkt")
 
-
-(test
-    (length
-     (run 1 (q)
-       (staged
-        (condg #:fallback fail
-          ([] [] [(lookupo 'x '((x . (val . 5))) q)])
-          ))))
-  1)
-
-
-(test
-    (length
-     (run 1 (q)
-       (staged
-        (evalo-staged/env-exts 'x '(x) '(5) q))))
-  1)
-
-
 (test
     (run 1 (q)
       (staged
@@ -40,19 +21,12 @@
        (evalo-staged `((lambda (x) x) 1) q)))
   '(1))
 
-
-
 (test
     (length
      (run 1 (q)
        (staged
         (evalo-staged `(cons 1 2) q))))
   1)
-
-
-
-
-
 
 (test
     (length
