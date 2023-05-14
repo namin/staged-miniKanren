@@ -542,7 +542,7 @@
       (s s s . z)
       (s s s s s . z)))))
 
-(test
+(time-test
  (run 1 (step1 step2 ACC1 ACC2)
    (peano-synth-fib-acc-stepo
     step1
