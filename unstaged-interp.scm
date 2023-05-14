@@ -75,8 +75,8 @@
          ((u-list-of-symbolso x)))
        (u-not-in-envo 'letrec env)
        (u-eval-expo letrec-body
-                  `((,p-name . (rec . (lambda ,x ,body))) . ,env)
-                  val)))
+                    `((,p-name . (rec . (lambda ,x ,body))) . ,env)
+                    val)))
     
     ((u-prim-expo expr env val))
     
