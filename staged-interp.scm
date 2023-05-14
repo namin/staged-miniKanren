@@ -15,7 +15,7 @@
     ;; TODO: should we do something like this?
     ;; (== rep (partial-apply eval-apply-rec f x* e env))
     (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
-    ;; TODO: should be condg-ified
+    ;; TODO: should be condg-ified?
     (conde
       ((symbolo x*)
        (== env^ `((,x* . (val . ,a*)) . ,env-self)))
@@ -250,103 +250,92 @@
        (symbolo x)
        (ext-env*o dx* da* env2 out)))))
 
-(defrel/generator (eval-primo prim-id a* val)
-  (condg
-   #:fallback (later (u-eval-primo prim-id a* val))
-   ([]
-    [(== prim-id 'list)]
-    [(later (== a* val))])
-   ([]
-    [(== prim-id 'cons)]
-    [(later (fresh (a d)
+(defrel/fallback (eval-primo prim-id a* val) u-eval-primo
+  (conde
+    [(== prim-id 'list)
+     (later (== a* val))]
+    [(== prim-id 'cons)
+     (later (fresh (a d)
               (== `(,a ,d) a*)
-              (== `(,a . ,d) val)))])
-   ([]
-    [(== prim-id 'car)]
-    [(later (fresh (d)
+              (== `(,a . ,d) val)))]
+    [(== prim-id 'car)
+     (later (fresh (d)
               (== `((,val . ,d)) a*)
-              (now (not-tago/gen val))))])
-   ([]
-    [(== prim-id 'cdr)]
-    [(later
+              (now (not-tago/gen val))))]
+    [(== prim-id 'cdr)
+     (later
       (fresh (a)
         (== `((,a . ,val)) a*)
-        (now (not-tago/gen a))))])
-   ([]
-    [(== prim-id 'not)]
-    [(later
+        (now (not-tago/gen a))))]
+    [(== prim-id 'not)
+     (later
       (fresh (b)
         (== `(,b) a*)
         (conde
           ((=/= #f b) (== #f val))
-          ((== #f b) (== #t val)))))])
-   ([]
-    [(== prim-id 'equal?)]
-    [(later (fresh (v1 v2)
+          ((== #f b) (== #t val)))))]
+    [(== prim-id 'equal?)
+     (later (fresh (v1 v2)
               (== `(,v1 ,v2) a*)
               (conde
                 [(== v1 v2) (== #t val)]
-                [(=/= v1 v2) (== #f val)])))])
-   ([]
-    [(== prim-id 'symbol?)]
-    [(later (fresh (v)
+                [(=/= v1 v2) (== #f val)])))]
+    [(== prim-id 'symbol?)
+     (later (fresh (v)
               (== `(,v) a*)
               (conde
-               ((symbolo v) (== #t val))
-               ((numbero v) (== #f val))
-               ((fresh (a d)
-                  (== `(,a . ,d) v)
-                  (== #f val)))
-               ((booleano v) (== #f val)))))])
-   ([]
-    [(== prim-id 'number?)]
-    [(later (fresh (v)
+                ((symbolo v) (== #t val))
+                ((numbero v) (== #f val))
+                ((fresh (a d)
+                   (== `(,a . ,d) v)
+                   (== #f val)))
+                ((booleano v) (== #f val)))))]
+    [(== prim-id 'number?)
+     (later (fresh (v)
               (== `(,v) a*)
               (conde
-               ((numbero v) (== #t val))
-               ((symbolo v) (== #f val))
-               ((fresh (a d)
-                  (== `(,a . ,d) v)
-                  (== #f val)))
-               ((booleano v) (== #f val)))))])
-   ([]
-    [(== prim-id 'pair?)]
-    [(later (fresh (v)
+                ((numbero v) (== #t val))
+                ((symbolo v) (== #f val))
+                ((fresh (a d)
+                   (== `(,a . ,d) v)
+                   (== #f val)))
+                ((booleano v) (== #f val)))))]
+    [(== prim-id 'pair?)
+     (later (fresh (v)
               (== `(,v) a*)
               (conde
-               ((symbolo v) (== #f val))
-               ((numbero v) (== #f val))
-               ((booleano v) (== #f val))
-               ((fresh (a d)
-                  (== `(,a . ,d) v)
-                  (== #t val)
-                  (now (not-tago/gen a))))
-               ((fresh (a d)
-                  (== `(,a . ,d) v)
-                  (== #f val)
-                  (pos-tago a))))))])
-   ([]
-    [(== prim-id 'null?)]
-    [(later (fresh (v)
+                ((symbolo v) (== #f val))
+                ((numbero v) (== #f val))
+                ((booleano v) (== #f val))
+                ((fresh (a d)
+                   (== `(,a . ,d) v)
+                   (== #t val)
+                   (now (not-tago/gen a))))
+                ((fresh (a d)
+                   (== `(,a . ,d) v)
+                   (== #f val)
+                   (pos-tago a))))))]
+    [(== prim-id 'null?)
+     (later (fresh (v)
               (== `(,v) a*)
               (conde
-               ((== '() v) (== #t val))
-               ((=/= '() v) (== #f val)))))])))
+                ((== '() v) (== #t val))
+                ((=/= '() v) (== #f val)))))]))
 
-(defrel/generator (ando e* env val)
-  (condg
-    #:fallback (later (u-ando e* env val))
-    ([] [(== '() e*)] [(later (== #t val))])
-    ([e] [(== `(,e) e*)] [(eval-expo e env val)])
-    ([e1 e2 e-rest]
-     [(== `(,e1 ,e2 . ,e-rest) e*)]
-     [(fresh (v c)
-        (eval-expo e1 env v)
-        (later (conde
-                 ((== #f v)
-                  (== #f val))
-                 ((=/= #f v)
-                  (now (ando `(,e2 . ,e-rest) env val))))))])))
+(defrel/fallback (ando e* env val) u-ando
+  (conde
+    ((== '() e*) (later (== #t val)))
+    ((fresh (e)
+       (== `(,e) e*)
+       (eval-expo e env val)))
+    ((fresh (e1 e2 e-rest v)
+       (== `(,e1 ,e2 . ,e-rest) e*)
+       (eval-expo e1 env v)
+       (later (conde
+                ((== #f v)
+                 (== #f val))
+                ((=/= #f v)
+                 (now (ando `(,e2 . ,e-rest) env val)))))))))
 
 (defrel/fallback (oro e* env val) u-oro
   (conde
