@@ -15,6 +15,7 @@
  symbolo
  fresh
  conde
+ fallback
  condg
  staged
  later
@@ -112,9 +113,11 @@
     
     (conde [g:goal ...+] ...+)
     
-    #;(~>/form (condg #:fallback f [(~optional (fresh x:id ...)) guard ...+ (~datum --) body ...] ...)
-               #'(condg #:fallback f ((~? [x ...] []) [guard ...] [body ...]) ...))
     (condg #:fallback g:goal c:condg-clause ...+)
+
+    (fallback
+     fb:goal
+     body:goal)
     
     (staged g:goal)
     (later g:goal)
@@ -353,7 +356,12 @@
      #'(i:ss:fresh (x ...) (compile-now-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(i:ss:conde [(compile-now-goal g) ...] ...)]
-    [(_ (~and stx (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...)))
+    
+    [(_ (fallback fb body))
+     #'(i:ss:maybe-fallback
+        (compile-now-goal fb)
+        (compile-now-goal body))]
+    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
      #'(i:ss:maybe-fallback
         (compile-now-goal gl)
         (i:ss:conde
@@ -361,6 +369,7 @@
                       (compile-now-goal guard) ...
                       (compile-now-goal body) ...)]
          ...))]
+    
     [(_ fail) #'(i:ss:atomic i:fail)]
 
     [(_ (later g))

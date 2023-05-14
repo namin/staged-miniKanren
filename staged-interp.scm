@@ -197,12 +197,13 @@
 (define empty-env '())
 
 (defrel/generator (lookupo x env v)
-  (fresh (y b rest)
-    (== `((,y . ,b) . ,rest) env)
-    (condg
-      #:fallback (later (u-lookupo x env v))
-      ([] [(== x y)] [(== `(val . ,v) b)])
-      ([] [(=/= x y)] [(lookupo x rest v)]))))
+  (fallback
+   (later (u-lookupo x env v))
+   (fresh (y b rest)
+     (== `((,y . ,b) . ,rest) env)
+     (conde
+      [(== x y) (== `(val . ,v) b)]
+      [(=/= x y) (lookupo x rest v)]))))
 
 (defrel/generator (match-lookupo/gen x env t)
   (fresh (y b rest)
