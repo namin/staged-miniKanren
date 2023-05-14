@@ -31,7 +31,7 @@
 
 (defrel/generator (eval-apply-staged rep x* body env a* val)
   (fresh (env^)
-    ;; TODO: should be condg-ified
+    ;; TODO: should be condg-ified?
     (conde
       ((symbolo x*)
        (== `((,x* . (val . ,a*)) . ,env) env^))
@@ -407,23 +407,22 @@
        (== `((,y . (val . ,v)) . ,res) env-out)
        (regular-env-appendo rest env2 res)))))
 
-(defrel/generator (match-clauses mval clauses env val)
-  (condg
-   #:fallback (later (u-match-clauses mval clauses env val))
+(defrel/fallback (match-clauses mval clauses env val) u-match-clauses
+  (conde
     ;; a match fails if no clause matches; in
     ;; unstaged this happens when reaching
     ;; match-clauses with an empty list of clauses.
     ;; in staged, defer to runtime.
-   ([]  [(== clauses '())] [(later fail)])
-   ([p result-expr d penv c-yes c-no]
-    [(== `((,p ,result-expr) . ,d) clauses)]
-    [(later (conde
-              [(now (fresh (env^)
-                      (p-match p mval '() penv)
-                      (regular-env-appendo penv env env^)
-                      (eval-expo result-expr env^ val)))]
-              [(now (p-no-match p mval '() penv))
-               (now (match-clauses mval d env val))]))])))
+    ((== clauses '()) (later fail))
+    ((fresh (p result-expr d penv c-yes c-no)
+       (== `((,p ,result-expr) . ,d) clauses)
+       (later (conde
+                [(now (fresh (env^)
+                        (p-match p mval '() penv)
+                        (regular-env-appendo penv env env^)
+                        (eval-expo result-expr env^ val)))]
+                [(now (p-no-match p mval '() penv))
+                 (now (match-clauses mval d env val))]))))))
 
 (defrel/generator (var-p-match var mval penv penv-out)
   (fresh (val)
@@ -431,127 +430,112 @@
     (later (== mval val))
     (var-p-match-extend var val penv penv-out)))
 
-(defrel/generator (var-p-match-extend var val penv penv-out)
-  (condg
-   #:fallback (later (u-var-p-match-extend var val penv penv-out))
-   ([env-v]
-    [(match-lookupo/gen var penv env-v)]
-    [(== penv penv-out)
-     (later (== env-v val))])
-   ([]
-    [(not-in-envo var penv)]
-    [(== `((,var . (val . ,val)) . ,penv) penv-out)])))
+(defrel/fallback (var-p-match-extend var val penv penv-out) u-var-p-match-extend
+  (conde
+    ((fresh (env-v)
+       (match-lookupo/gen var penv env-v)
+       (== penv penv-out)
+       (later (== env-v val))))
+    ((not-in-envo var penv)
+     (== `((,var . (val . ,val)) . ,penv) penv-out))))
 
-(defrel/generator (var-p-no-match var mval penv penv-out)
-  (condg
-   #:fallback (later (u-var-p-no-match var mval penv penv-out))
+(defrel/fallback (var-p-no-match var mval penv penv-out) u-var-p-no-match
+  (conde
     ;; a variable pattern cannot fail when it is
     ;; the first occurence of the name. unstaged
     ;; fails by failure of the lookupo below; in
     ;; staged we need to defer this failure to
     ;; runtime.
-   ([]
-    [(not-in-envo var penv)]
-    [(later fail)])
-   ([env-v]
-    [(== penv penv-out)
-     (match-lookupo/gen var penv env-v)]
-    [(later (=/= mval env-v))])))
+   ((not-in-envo var penv)
+    (later fail))
+   ((fresh (env-v)
+      (== penv penv-out)
+      (match-lookupo/gen var penv env-v)
+      (later (=/= mval env-v))))))
 
-(defrel/generator (p-match p mval penv penv-out)
-  (condg
-   #:fallback (later (u-p-match p mval penv penv-out))
-   ([]
-    [(self-eval-literalo p)]
-    [(later (== p mval))
-     (== penv penv-out)])
-   ([] [(symbolo p)] [(var-p-match p mval penv penv-out)])
-   ([var pred]
-    [(== `(? ,pred ,var) p)]
-    [(pred-match pred mval)
-     (var-p-match var mval penv penv-out)])
-   ([quasi-p]
-    [(== (list 'quasiquote quasi-p) p)]
-    [(quasi-p-match quasi-p mval penv penv-out)])))
+(defrel/fallback (p-match p mval penv penv-out) u-p-match
+  (conde
+    ((self-eval-literalo p)
+     (later (== p mval))
+     (== penv penv-out))
+    ((symbolo p) (var-p-match p mval penv penv-out))
+    ((fresh (var pred)
+       (== `(? ,pred ,var) p)
+       (pred-match pred mval)
+       (var-p-match var mval penv penv-out)))
+    ((fresh (quasi-p)
+       (== (list 'quasiquote quasi-p) p)
+       (quasi-p-match quasi-p mval penv penv-out)))))
 
-(defrel/generator (pred-match pred mval)
-  (condg
-   #:fallback (later (u-pred-match pred mval))
-   ([] [(== 'symbol? pred)] [(later (symbolo mval))])
-   ([] [(== 'number? pred)] [(later (numbero mval))])))
+(defrel/fallback (pred-match pred mval) u-pred-match
+  (conde
+   ((== 'symbol? pred) (later (symbolo mval)))
+   ((== 'number? pred) (later (numbero mval)))))
 
-(defrel/generator (p-no-match p mval penv penv-out)
-  (condg
-   #:fallback (later (u-p-no-match p mval penv penv-out))
-   ([]
-    [(self-eval-literalo p)]
-    [(later (=/= p mval))
-     (== penv penv-out)])
-   ([] [(symbolo p)] [(var-p-no-match p mval penv penv-out)])
-   ([var pred]
-    [(== `(? ,pred ,var) p)]
-    [(== penv penv-out)
-     (symbolo var)
-     (pred-no-match pred var mval penv penv-out)])
-   ([quasi-p] [(== (list 'quasiquote quasi-p) p)]
-    [(quasi-p-no-match quasi-p mval penv penv-out)])))
+(defrel/fallback (p-no-match p mval penv penv-out) u-p-no-match
+  (conde
+   ((self-eval-literalo p)
+    (later (=/= p mval))
+    (== penv penv-out))
+   ((symbolo p) (var-p-no-match p mval penv penv-out))
+   ((fresh (var pred)
+      (== `(? ,pred ,var) p)
+      (== penv penv-out)
+      (symbolo var)
+      (pred-no-match pred var mval penv penv-out)))
+   ((fresh (quasi-p)
+      (== (list 'quasiquote quasi-p) p)
+      (quasi-p-no-match quasi-p mval penv penv-out)))))
 
-(defrel/generator (pred-no-match pred var mval penv penv-out)
-  (condg
-   #:fallback (later (u-pred-no-match pred var mval penv penv-out))
-   ([]
-    [(== 'symbol? pred)]
-    [(later (conde
+(defrel/fallback (pred-no-match pred var mval penv penv-out) u-pred-no-match
+  (conde
+    ((== 'symbol? pred)
+     (later (conde
               [(not-symbolo mval)]
               [(symbolo mval)
-               (now (var-p-no-match var mval penv penv-out))]))])
-   ([]
-    [(== 'number? pred)]
-    [(later (conde
+               (now (var-p-no-match var mval penv penv-out))])))
+    ((== 'number? pred)
+     (later (conde
               [(not-numbero mval)]
               [(numbero mval)
-               (now (var-p-no-match var mval penv penv-out))]))])))
+               (now (var-p-no-match var mval penv penv-out))])))))
 
-(defrel/generator (quasi-p-match quasi-p mval penv penv-out)
-  (condg
-   #:fallback (later (u-quasi-p-match quasi-p mval penv penv-out))
-   ([]
-    [(literalo quasi-p)]
-    [(later (== quasi-p mval))
-     (== penv penv-out)])
-   ([p]
-    [(== (list 'unquote p) quasi-p)]
-    [(p-match p mval penv penv-out)])
-   ([a d v1 v2 penv^]
-    [(== `(,a . ,d) quasi-p)
-     (=/= 'unquote a)]
-    [(later (== `(,v1 . ,v2) mval))
-     (quasi-p-match a v1 penv penv^)
-     (quasi-p-match d v2 penv^ penv-out)])))
+(defrel/fallback (quasi-p-match quasi-p mval penv penv-out) u-quasi-p-match
+  (conde
+    ((literalo quasi-p)
+     (later (== quasi-p mval))
+     (== penv penv-out))
+    ((fresh (p)
+       (== (list 'unquote p) quasi-p)
+       (p-match p mval penv penv-out)))
+    ((fresh (a d v1 v2 penv^)
+       (== `(,a . ,d) quasi-p)
+       (=/= 'unquote a)
+       (later (== `(,v1 . ,v2) mval))
+       (quasi-p-match a v1 penv penv^)
+       (quasi-p-match d v2 penv^ penv-out)))))
 
-(defrel/generator (quasi-p-no-match quasi-p mval penv penv-out)
-  (condg
-   #:fallback (later (u-quasi-p-no-match quasi-p mval penv penv-out))
-   ([]
-    [(literalo quasi-p)]
-    [(later (=/= quasi-p mval))
-     (== penv penv-out)])
-   ([p]
-    [(== (list 'unquote p) quasi-p)]
-    [(not-tago/gen mval) ;; TODO: why do we need this?
-     (p-no-match p mval penv penv-out)])
-   ([a d]
-    [(== `(,a . ,d) quasi-p)
-     (=/= 'unquote a)]
-    [(later (conde
-             [(now (== penv penv-out)) ;; TODO: could this get lost?
-              (u-literalo mval)]
-             [(fresh (penv^ v1 v2)
-                (== `(,v1 . ,v2) mval)
-                (conde
-                 [(now (quasi-p-no-match a v1 penv penv-out))]
-                 [(now (quasi-p-match a v1 penv penv^))
-                  (now (quasi-p-no-match d v2 penv^ penv-out))]))]))])))
+(defrel/fallback (quasi-p-no-match quasi-p mval penv penv-out) u-quasi-p-no-match
+  (conde
+    ((literalo quasi-p)
+     (later (=/= quasi-p mval))
+     (== penv penv-out))
+    ((fresh (p)
+       (== (list 'unquote p) quasi-p)
+       (not-tago/gen mval) ;; TODO: why do we need this?
+       (p-no-match p mval penv penv-out)))
+    ((fresh (a d)
+       (== `(,a . ,d) quasi-p)
+       (=/= 'unquote a)
+       (later (conde
+                [(now (== penv penv-out)) ;; TODO: could this get lost?
+                 (u-literalo mval)]
+                [(fresh (penv^ v1 v2)
+                   (== `(,v1 . ,v2) mval)
+                   (conde
+                     [(now (quasi-p-no-match a v1 penv penv-out))]
+                     [(now (quasi-p-match a v1 penv penv^))
+                      (now (quasi-p-no-match d v2 penv^ penv-out))]))]))))))
 
 (defrel/generator (evalo-staged expr val)
   (eval-expo expr initial-env val))

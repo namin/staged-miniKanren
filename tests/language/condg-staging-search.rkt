@@ -12,27 +12,25 @@
 
 (defrel (rt x y)
   (conde
-   [(== x 1) (== y 1)]
-   [(== x 2) (== y 2)]))
+    [(== x 1) (== y 1)]
+    [(== x 2) (== y 2)]))
 
 (defrel/generator (st x y)
-  (condg
-   #:fallback (later (rt x y))
-   ([]
-    [(== x 1)]
-    [(later (== y 1))])
-   ([]
-    [(== x 2)]
-    [(later (== y 2))
-     (fresh (a b)
-       (condg
-        #:fallback (later (rt a b))
-        ([]
-         [(== a 5)]
-         [(later (== b 1))])
-        ([]
-         [(== a 6)]
-         [(later (== b 2))])))])))
+  (fallback
+   (later (rt x y))
+   (conde
+     ((== x 1)
+      (later (== y 1)))
+     ((== x 2)
+      (later (== y 2))
+      (fresh (a b)
+        (fallback
+         (later (rt a b))
+         (conde
+           ((== a 5)
+            (later (== b 1)))
+           ((== a 6)
+            (later (== b 2))))))))))
 
 #;(run 1 (q) (fresh (y) (staged (st 1 q))))
 
@@ -60,6 +58,9 @@
   (== a b))
 
 (run 1 (q)
-     (staged (condg #:fallback (later (== q 3))
-                    [[] [] [(later (== q (partial-apply r 5)))]]
-                    [[] [] [(later (== q 1))]])))
+  (staged
+   (fallback
+    (later (== q 3))
+    (conde
+      ((later (== q (partial-apply r 5))))
+      ((later (== q 1)))))))

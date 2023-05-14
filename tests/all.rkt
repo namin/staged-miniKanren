@@ -7,6 +7,6 @@
 (require "interpreter/staged-apply-letrec.rkt")
 (require "interpreter/letrec-cross-stage.rkt")
 
-(require "language/condg.rkt")
+(require "language/fallback.rkt")
 
 (require "internals/fix-scope.rkt")

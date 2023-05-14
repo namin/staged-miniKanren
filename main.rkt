@@ -16,7 +16,6 @@
  fresh
  conde
  fallback
- condg
  staged
  later
  now
@@ -114,8 +113,6 @@
     
     (conde [g:goal ...+] ...+)
     
-    (condg #:fallback g:goal c:condg-clause ...+)
-
     (fallback
      fb:goal
      body:goal)
@@ -129,10 +126,6 @@
     (#%rel-app r:relation-name arg:term ...)
     (~> (r:id arg ...)
         #'(#%rel-app r arg ...)))
-
-  (nonterminal condg-clause
-    ([x:term-var ...] [guard:goal ...] [body:goal ...])
-    #:binding {(bind x) guard body})
   
   (host-interface/definition
     (defrel (r:relation-name arg:term-var ...)
@@ -249,19 +242,11 @@
   
   (define (free-vars goal-stx)
     (syntax-parse goal-stx
-      #:literals (#%term-var quote fresh condg)
+      #:literals (#%term-var quote fresh)
       [(#%term-var x) (immutable-free-id-set (list #'x))]
       [(quote _) (immutable-free-id-set)]
       [(fresh (x ...) g ...)
        (free-vars-of-binding-form (attribute x) (attribute g))]
-      [(condg #:fallback gl clauses ...)
-       (apply free-id-set-union
-              (for/list ([clause (attribute clauses)])
-                (define/syntax-parse ([x:id ...] [guard ...] [body ...]) clause)
-                (free-id-set-union
-                 (free-vars #'gl)
-                 (free-vars-of-binding-form (attribute x)
-                                            (append (attribute guard) (attribute body))))))]
       [(a . d)
        (free-id-set-union (free-vars #'a) (free-vars #'d))]
       [_ (immutable-free-id-set)])))
@@ -323,7 +308,7 @@
      #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal g)))
      #'(staged-f var ...)]
 
-    [(_ (~and stx (~or (later . _) (now . _) (condg . _) (fallback . _))))
+    [(_ (~and stx (~or (later . _) (now . _) (fallback . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
@@ -362,14 +347,6 @@
      #'(i:ss:maybe-fallback
         (compile-now-goal fb)
         (compile-now-goal body))]
-    [(_ (condg #:fallback gl ([x:id ...] [guard ...] [body ...]) ...))
-     #'(i:ss:maybe-fallback
-        (compile-now-goal gl)
-        (i:ss:conde
-         [(i:ss:fresh (x ...)
-                      (compile-now-goal guard) ...
-                      (compile-now-goal body) ...)]
-         ...))]
     
     [(_ fail) #'(i:ss:atomic i:fail)]
 
@@ -432,7 +409,7 @@
     [(_ (now g))
      #'(compile-now-goal g)]
     
-    [(_ (~and stx (~or (condg . _)
+    [(_ (~and stx (~or (fallback . _)
                        (staged . _)
                        (later . _))))
      (raise-syntax-error #f "not supported in generated code" #'stx)]

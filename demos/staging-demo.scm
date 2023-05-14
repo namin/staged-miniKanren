@@ -10,19 +10,21 @@
 
 (run* (q)
   (staged
-   (condg
-    #:fallback (later (== q 3))
-    ([] [(== q 1)] [(later (== q 1))])
-    ([] [(== q 2)] [(later (== q 2))]))))
+   (fallback
+    (later (== q 3))
+    (conde
+      ((== q 1) (later (== q 1)))
+      ((== q 2) (later (== q 2)))))))
 
 (run* (q)
   (staged
    (fresh ()
      (== q 1)
-     (condg
-      #:fallback (later (== q 3))
-      ([] [(== q 1)] [(later (== q 1))])
-      ([] [(== q 2)] [(later (== q 2))])))))
+     (fallback
+      (later (== q 3))
+      (conde
+        ((== q 1) (later (== q 1)))
+        ((== q 2) (later (== q 2))))))))
 
 (defrel (u-minio expr val)
   (conde
@@ -40,14 +42,16 @@
 (run* (q) (u-minio q '(SYM 1)))
 
 (defrel/generator (minio expr val)
-  (condg
-   #:fallback (later (u-minio expr val))
-   ([] [(numbero expr)] [(later (== expr val))])
-   ([] [(symbolo expr)] [(later (== 'SYM val))])
-   ([e f r v] [(== `(,e ,f) expr)]
-    [(later (== `(,r ,v) val))
-     (minio e r)
-     (minio f v)])))
+  (fallback
+   (later (u-minio expr val))
+   (conde
+     ((numbero expr) (later (== expr val)))
+     ((symbolo expr) (later (== 'SYM val)))
+     ((fresh (e f r v)
+        (== `(,e ,f) expr)
+        (later (== `(,r ,v) val))
+        (minio e r)
+        (minio f v))))))
 
 (run* (q) (staged (minio '(hello 1) q)))
 (pretty-write (generated-code))
