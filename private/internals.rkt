@@ -31,15 +31,6 @@
   (ss:suspend e)
   (ss:interleave (lambda () e)))
 
-;(conj
-; (disj
-;  g1
-;  g2)
-; g3)
-;
-;success in g1 or g2 shouldn't make conj notify, but if we get to g3 success it should.
-;But g3 is always nested within the first goal, so how do we know?
-
 (define (ss:conj2 g1 g2)
   (lambda (st success-k)
     (define tag (gensym))
