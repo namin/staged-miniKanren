@@ -300,8 +300,6 @@
                                                 (reverse (state-L st-after)))])
                           (walk* stx (state-S st-after)))])
 
-        (println captured-L)
-
         ((k captured-L)
          st-original
          success-k)))))
@@ -413,12 +411,12 @@
 (define lsucceed (later #'succeed))
 (define lfail (later #'fail))
 
-#;(define-syntax lconde
+(define-syntax lconde
   (syntax-rules ()
     ((_ (g ...) ...)
      (ldisj (fresh () g ...) ...))))
 
-#;(define (ldisj . gs-init)
+(define (ldisj . gs-init)
   (let recur ([gs gs-init] [gs-stx '()])
     (if (null? gs)
         (later #`(conde #,@(reverse gs-stx)))
@@ -430,7 +428,7 @@
 ;; Scoped lift capturing
 ;;
 
-#;(define (capture-later g k)
+(define (capture-later g k)
   (lambda (st-original)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
@@ -478,7 +476,7 @@
 (define (partial-apply-rt rep rel-staged rel-dyn args)
   (== rep (apply-rep rel-staged rel-dyn args #f)))
 
-#;(define-syntax lpartial-apply
+(define-syntax lpartial-apply
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
