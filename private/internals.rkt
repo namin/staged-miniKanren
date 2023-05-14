@@ -41,8 +41,6 @@
 ;success in g1 or g2 shouldn't make conj notify, but if we get to g3 success it should.
 ;But g3 is always nested within the first goal, so how do we know?
 
-(define (displayln v) (void))
-
 (define (ss:conj2 g1 g2)
   (lambda (st success-k)
     (define tag (gensym))
@@ -61,12 +59,8 @@
      (ss:interleave (lambda () (ss:filter-notify tag ss-k^)))]
     [(ss:notify-success tags ss-k^)
      (if (set-member? tags tag)
-         (begin
-           (displayln 'propagating-notify-from-filter)
-           (ss:notify-success tags (lambda () (ss:filter-notify tag ss-k^))))
-         (begin
-           (displayln 'dropping-notify-filter)
-           (ss:filter-notify tag ss-k^)))]
+         (ss:notify-success tags (lambda () (ss:filter-notify tag ss-k^)))
+         (ss:filter-notify tag ss-k^))]
     [(ss:final-success v ss-k^)
      (ss:final-success v (lambda () (ss:filter-notify tag ss-k^)))]))
 
@@ -83,17 +77,6 @@
     [(ss:final-success v ss-k^)
      (ss:final-success v (lambda () (ss:tag-notify tag ss-k^)))]))
 
-#;(define (ss:untag-notify tag ss-k)
-  (match (ss-k)
-    [(ss:fail)
-     (ss:fail)]
-    [(ss:interleave ss-k^)
-     (ss:interleave (lambda () (ss:tag-notify tag ss-k^)))]
-    [(ss:notify-success tags ss-k^)
-     (ss:notify-success (set-remove tags tag) (lambda () (ss:tag-notify tag ss-k^)))]
-    [(ss:final-success v ss-k^)
-     (ss:final-success v (lambda () (ss:tag-notify tag ss-k^)))]))
-
 (define (ss:drop-one-notify ss-k)
   (match (ss-k)
     [(ss:fail)
@@ -101,23 +84,9 @@
     [(ss:interleave ss-k^)
      (ss:interleave (lambda () (ss:drop-one-notify ss-k^)))]
     [(ss:notify-success tags ss-k^)
-     (displayln 'dropping-one-notify-from-fallback)
      (ss-k^)]
     [(ss:final-success v ss-k^)
      (ss:final-success v (lambda () (ss:drop-one-notify ss-k^)))]))
-
-
-(define (ss:drop-all-notify ss-k)
-  (match (ss-k)
-    [(ss:fail)
-     (ss:fail)]
-    [(ss:interleave ss-k^)
-     (ss:interleave (lambda () (ss:drop-all-notify ss-k^)))]
-    [(ss:notify-success tags ss-k^)
-     (displayln 'dropping-all-notify-from-success-k)
-     (ss:drop-all-notify ss-k^)]
-    [(ss:final-success v ss-k^)
-     (ss:final-success v (lambda () (ss:drop-all-notify ss-k^)))]))
 
 (define-syntax ss:conj
   (syntax-rules ()
@@ -139,10 +108,7 @@
   (lambda (st success-k)
     (let ([res (runtime-g st)])
       (if res
-          (begin
-            (displayln 'atomic-success)
-            (displayln stx)
-            (ss:notify-success (seteq) (lambda () (success-k res))))
+          (ss:notify-success (seteq) (lambda () (success-k res)))
           (ss:fail)))))
 
 
@@ -154,14 +120,12 @@
     (define ignore-tag (gensym))
     
     (define (no-success-yet ss-k)
-      (displayln 'no-success-yet)
       (match (ss-k)
         [(ss:fail)
          (ss:fail)]
         [(ss:interleave ss-k^)
          (ss:interleave (lambda () (no-success-yet ss-k^)))]
         [(ss:notify-success tags ss-k^)
-         (displayln 'no-success-yet->one-success-notified)
          (when (set-member? tags ignore-tag)
            (error 'ss:maybe-fallback
                   "invariant violation in no-success-yet; shouldn't see tagged notifies yet"))
@@ -170,7 +134,6 @@
           (lambda ()
             (one-success-notified ss-k^)))]
         [(ss:final-success v _)
-         (displayln stx)
          (error 'ss:maybe-fallback
                 "invariant violation in no-success-yet; should get notify-success first")]))
 
@@ -182,15 +145,12 @@
          (ss:interleave (lambda () (one-success-notified ss-k^)))]
         [(ss:notify-success tags ss-k^)
          (if (not (set-member? tags ignore-tag))
-             (begin
-               (displayln 'one-success-notified->fallback)
-               (ss:drop-one-notify (lambda () (fallback-g st success-k))))
+             (ss:drop-one-notify (lambda () (fallback-g st success-k)))
              (ss:notify-success tags (lambda () (one-success-notified ss-k^))))]
         [(ss:final-success v ss-k^)
          (have-result v ss-k^)]))
 
     (define (have-result v ss-k)
-      (displayln 'have-result)
       (match (ss-k)
         [(ss:fail)
          (ss:one-result v)]
@@ -198,9 +158,7 @@
          (ss:interleave (lambda () (have-result v ss-k^)))]
         [(ss:notify-success tags ss-k^)
          (if (not (set-member? tags ignore-tag))
-             (begin
-               (displayln 'have-result->fallback)
-               (ss:drop-one-notify (lambda () (fallback-g st success-k))))
+             (ss:drop-one-notify (lambda () (fallback-g st success-k)))
              (ss:notify-success tags (lambda () (have-result v ss-k^))))]
         [(ss:final-success v ss-k^)
          (error 'ss:maybe-fallback
