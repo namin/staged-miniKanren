@@ -12,7 +12,6 @@
 (include "faster-minikanren/racket-compatibility.scm")
 (include "faster-minikanren/mk.scm")
 
-;; condg is fallback-if-nondet + conde, I think?
 
 ;; StagingSearchResult is one of:
 (struct ss:interleave [ss-k])
@@ -205,98 +204,9 @@
 (define (ss:simple-run g)
   (ss:take 2 (lambda () (g empty-state initial-k))))
 
-(define-syntax ss:generate-staged
-  (syntax-parser
-    [(_ (var ...) goal ...)
-     #:with (var2 ...) (generate-temporaries (attribute var))
-     #'(ss:generate-staged-rt
-        (ss:fresh (var ...)
-                  (ss:capture-later
-                   (ss:fresh ()
-                             (ss:atomic (later #`(== #,(data var) var2))) ...
-                             goal ...)
-                   (lambda (L)
-                     (lambda (old-st success-k)
-                       (success-k L)))))
-        #'(var2 ...))]))
-
-(define (ss:generate-staged-rt goal var-list)
-  (define result
-    (unique-result
-     (ss:take 2
-              (lambda ()
-                (goal empty-state initial-k)))))
- 
-  (define reflected (reflect-data-in-syntax result))
-  (define assigned (assign-vars reflected))
-
-  (define stx
-    (fix-scope-syntax
-     #`(lambda #,var-list
-         (fresh ()
-           #,@assigned))))
-
-  (set! res stx)
-
-  (eval-syntax stx))
-
-
-
-(define (ss:capture-later g k)
-  (lambda (st-original success-k)
-    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
-           [st-before (state-with-L st-before '())]
-           [st-before (state-with-scope st-before (new-scope))])
-      
-      (define st-after (unique-result (ss:take 2 (lambda () (g st-before initial-k)))))
-
-      (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
-                                                (reverse (state-L st-after)))])
-                          (walk* stx (state-S st-after)))])
-
-        ((k captured-L)
-         st-original
-         success-k)))))
-
 (define (ss:promise-success g)
   (lambda (st success-k)
     (ss:notify-success (seteq) (lambda () (ss:drop-one-notify (lambda () (g st success-k)))))))
-
-(define-syntax ss:lconde
-  (syntax-rules ()
-    ((_ (g ...) ...)
-     (ss:promise-success (ss:ldisj (ss:fresh () g ...) ...)))))
-
-(define (ss:ldisj . gs-init)
-  (let recur ([gs gs-init] [gs-stx '()])
-    (if (null? gs)
-        (ss:atomic (later #`(conde #,@(reverse gs-stx))))
-        (ss:capture-later (car gs)
-                          (lambda (g-stx)
-                            (recur (cdr gs) (cons g-stx gs-stx)))))))
-
-(define-syntax ss:lpartial-apply
-  (syntax-parser
-    [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
-     #:with (y-n ...) (generate-temporaries #'(y ...))
-     #:with (y-n2 ...) (generate-temporaries #'(y ...))
-     #'(ss:promise-success
-        (ss:fresh (y-n ...)
-         (ss:capture-later
-          (ss:fresh ()
-            ;; This is a little subtle. This unification ends up as code in the
-            ;; lambda body, but it has to be part of L in the capture to ensure
-            ;; that substitution extensions to `y-n` are captured in the walk.
-            (ss:atomic (later #`(== #,(data y-n) y-n2)))
-            ...
-            (rel-staged rep x ... y-n ...))
-          (lambda (body)
-            (ss:atomic
-             (l== rep (apply-rep
-                      'rel-staged 'rel-dyn (list x ...)
-                      #`(lambda (y-n2 ...)
-                          (fresh ()
-                            . #,body)))))))))]))
 
 ;;
 ;; Extensions to the data type of terms
@@ -365,37 +275,38 @@
 (define lsucceed (later #'succeed))
 (define lfail (later #'fail))
 
-(define-syntax lconde
+(define-syntax ss:lconde
   (syntax-rules ()
     ((_ (g ...) ...)
-     (ldisj (fresh () g ...) ...))))
+     (ss:promise-success (ss:ldisj (ss:fresh () g ...) ...)))))
 
-(define (ldisj . gs-init)
+(define (ss:ldisj . gs-init)
   (let recur ([gs gs-init] [gs-stx '()])
     (if (null? gs)
-        (later #`(conde #,@(reverse gs-stx)))
-        (capture-later (car gs)
-                       (lambda (g-stx)
-                         (recur (cdr gs) (cons g-stx gs-stx)))))))
+        (ss:atomic (later #`(conde #,@(reverse gs-stx))))
+        (ss:capture-later (car gs)
+                          (lambda (g-stx)
+                            (recur (cdr gs) (cons g-stx gs-stx)))))))
 
 ;;
 ;; Scoped lift capturing
 ;;
 
-(define (capture-later g k)
-  (lambda (st-original)
+(define (ss:capture-later g k)
+  (lambda (st-original success-k)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
            [st-before (state-with-scope st-before (new-scope))])
-      (bind
-       (g st-before)
-       (lambda (st-after)
-         (let ([captured-L (for/list ([stx (append (reverse (state-L st-after))
-                                                   (generate-constraints st-after))])
-                             (walk* stx (state-S st-after)))])
-           ((k captured-L)
-            st-original)))))))
+      
+      (define st-after (unique-result (ss:take 2 (lambda () (g st-before initial-k)))))
 
+      (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
+                                                (reverse (state-L st-after)))])
+                          (walk* stx (state-S st-after)))])
+
+        ((k captured-L)
+         st-original
+         success-k)))))
 
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
@@ -430,26 +341,28 @@
 (define (partial-apply-rt rep rel-staged rel-dyn args)
   (== rep (apply-rep rel-staged rel-dyn args #f)))
 
-(define-syntax lpartial-apply
+(define-syntax ss:lpartial-apply
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
-     #'(fresh (y-n ...)
-         (capture-later
-          (fresh ()
+     #'(ss:promise-success
+        (ss:fresh (y-n ...)
+         (ss:capture-later
+          (ss:fresh ()
             ;; This is a little subtle. This unification ends up as code in the
             ;; lambda body, but it has to be part of L in the capture to ensure
             ;; that substitution extensions to `y-n` are captured in the walk.
-            (later #`(== #,(data y-n) y-n2))
+            (ss:atomic (later #`(== #,(data y-n) y-n2)))
             ...
             (rel-staged rep x ... y-n ...))
           (lambda (body)
-            (l== rep (apply-rep
+            (ss:atomic
+             (l== rep (apply-rep
                       'rel-staged 'rel-dyn (list x ...)
                       #`(lambda (y-n2 ...)
                           (fresh ()
-                            . #,body)))))))]))
+                            . #,body)))))))))]))
 
 (define-syntax apply-partial
   (syntax-parser
@@ -472,53 +385,6 @@
   (syntax-parser
     [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))
      #'(later #`(apply-partial #,(data rep) ((rel-staged rel-dyn) (x ...) (#,(data y) ...))))]))
-
-
-;;
-;; condg
-;;
-
-(define-syntax condg
-  (syntax-parser
-    ((_ fallback ((x ...) (~and guard (g0 g ...)) (b0 b ...)) ...)
-     #:with error-stx this-syntax
-     #'(condg-runtime
-        (lambda (st) (fallback st))
-        (list
-         (lambda (st)
-           (let ([scope (subst-scope (state-S st))])
-             (let ([x (var scope)] ...)
-               (list
-                (bind* (g0 st) g ...)
-                (lambda (st) (bind* (b0 st) b ...))
-                #'guard))))
-         ...)
-        #'error-stx))))
-
-(define (condg-runtime fallback clauses error-stx)
-  (lambda (st)
-    (let ((st (state-with-scope st (new-scope))))
-      (define candidates
-        (for/list ([clause clauses]
-                   #:do [(match-define (list guard-stream body guard-stx) (clause st))
-                         (define guard-answer (evaluate-guard (lambda () guard-stream) guard-stx))]
-                   #:when guard-answer)
-          (cons guard-answer body)))
-      (match candidates
-        ['() (raise-syntax-error #f "all guards failed" error-stx)]
-        [(list (cons guard-answer body))
-         (if (eq? 'nondet guard-answer)
-             (fallback st)
-             (body guard-answer))]
-        [_ (fallback st)]))))
-
-(define (evaluate-guard thunk-stream guard-stx)
-  (match (take 2 thunk-stream)
-    ['() #f]
-    [(list answer) answer]
-    [answers 'nondet]))
-
-
 
 ;;
 ;; Reification
@@ -752,33 +618,32 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 
 (define res #f)
 
-(define-syntax generate-staged
+(define-syntax ss:generate-staged
   (syntax-parser
     [(_ (var ...) goal ...)
      #:with (var2 ...) (generate-temporaries (attribute var))
-     #'(generate-staged-rt
-        (fresh (var ...)
-          (capture-later
-           (fresh ()
-             (later #`(== #,(data var) var2)) ...
-             goal ...)
-           (lambda (L)
-             (lambda (old-st)
-               L))))
+     #'(ss:generate-staged-rt
+        (ss:fresh (var ...)
+                  (ss:capture-later
+                   (ss:fresh ()
+                             (ss:atomic (later #`(== #,(data var) var2))) ...
+                             goal ...)
+                   (lambda (L)
+                     (lambda (old-st success-k)
+                       (success-k L)))))
         #'(var2 ...))]))
+
 
 (define (assign-vars v)
   (let ((R (reify-S v (subst empty-subst-map nonlocal-scope))))
     (walk* v R)))
 
-(require racket/pretty)
-
-(define (generate-staged-rt goal var-list)
+(define (ss:generate-staged-rt goal var-list)
   (define result
     (unique-result
-     (take 2
-           (suspend
-            (goal empty-state)))))
+     (ss:take 2
+              (lambda ()
+                (goal empty-state initial-k)))))
  
   (define reflected (reflect-data-in-syntax result))
   (define assigned (assign-vars reflected))
@@ -809,7 +674,7 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
     [(_ n (q0 q ...) g0 g ...)
      (let ()
        (printf "running first stage\n")
-       (define f (generate-staged (q0 q ...) g0 g ...))
+       (define f (ss:generate-staged (q0 q ...) g0 g ...))
        (printf "running second stage\n")
        (run n (q0 q ...) (f q0 q ...)))]))
 
@@ -820,4 +685,4 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 (define-syntax define-staged-relation
   (syntax-rules ()
     [(_ (name x0 x ...) g0 g ...)
-     (define name (time (generate-staged (x0 x ...) g0 g ...)))]))
+     (define name (time (ss:generate-staged (x0 x ...) g0 g ...)))]))

@@ -9,5 +9,4 @@
 
 (require "language/condg.rkt")
 
-(require "internals/staged-apply.rkt")
 (require "internals/fix-scope.rkt")
