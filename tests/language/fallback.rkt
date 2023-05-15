@@ -70,6 +70,12 @@
  '(1))
 
 
+;; Recognizing the need to fall back here is made tricky by the recursion nesting
+;; fallback forms. For some fallback to fall back, it has to know that both its base
+;; and recursive cases can succeed. But its recursive case contains a nested fallback
+;; form with the same challenge! We can only successfully fall back if the inner fallback
+;; reports out that it has a base-case branch that can succeed, thus allowing the outer
+;; fallback form to know it has at least two solutions.
 (defrel/generator (membero x l log)
   (fallback
    (later (== log 'fallback))
@@ -81,13 +87,6 @@
        [(=/= x first)
         (== log `(commit-recursive-case . ,log-rest))
         (membero x rest log-rest)]))))
-
-;; Recognizing the need to fall back here is made tricky by the recursion nesting
-;; fallback forms. For some fallback to fall back, it has to know that both its base
-;; and recursive cases can succeed. But its recursive case contains a nested fallback
-;; form with the same challenge! We can only successfully fall back if the inner fallback
-;; reports out that it has a base-case branch that can succeed, thus allowing the outer
-;; fallback form to know it has at least two solutions.
 (test
  (run 1 (q)
    (staged
@@ -95,7 +94,33 @@
       (membero 'x `(y . ,l) q))))
  '((commit-recursive-case . fallback)))
 
+;; Regression test: success of the first goal in a conjunct must not notify
+;; success of the whole conjunction.
+;;
+;; In this example the first unification in the first branch (== q 2) will
+;; succeed, but the overall branch will fail. We don't want to notify-success
+;; for this branch and thus end up falling back.
+(test
+ (run 1 (q)
+      (staged
+       (fresh (x)
+         (== x 3)
+         (fallback
+          (later (== 1 q))
+          (conde
+            ((== q 2) (== x 2) (later (== q 2)))
+            ((== q 3) (== x 3) (later (== q 3))))))))
+ '(3))
 
+;; Regression test: success of the fallback goal should not cause an outer
+;; fallback form to double-count.
+;;
+;; Here both branches of the inner disjunction will succeed. The first such
+;; success will cause the inner fallback form to notify success outward. Subsequently
+;; the other success will cause the inner disjunction to fall back to the fallback
+;; goal. The fallback goal will notify success; the fallback form needs to throw
+;; that notify out to avoid making the outer fallback think this second outer branch
+;; succeeded twice.
 (defrel/generator (r x y outer inner)
   (fallback
    (later (== outer 'outer-fallback))
@@ -111,20 +136,38 @@
           (later (== inner 'inner-commit-1)))
          ((== y 2)
           (later (== inner 'inner-commit-2)))))))))
-
-
-;; TODO: not sure why I thought this was tricky or worth a test. I think some
-;; bugs were leading the whole thing to fall back. I guess multiple successes
-;; from the second branch being notified to the outer could lead to outer fall back?
-;;
-;; The second branch of the outer disjunction should commit, while
-;; the inner disjunction should fall back.
 (test
  (run 1 (outer inner)
    (staged
     (fresh (y)
       (r 2 y outer inner))))
  '((outer-commit-2 inner-fallback)))
+
+;; However, a second success from the fallback goal *should* be notified to the
+;; surrounding fallback form, leading it to fall back.
+(defrel/generator (r2 x y outer inner)
+  (fallback
+   (later (== outer 'outer-fallback))
+   (conde
+     ((== x 1)
+      (later (== outer 'outer-commit-1)))
+     ((== x 2)
+      (later (== outer 'outer-commit-2))
+      (fallback
+       (conde
+         [(later (== inner 'inner-fallback-1))]
+         [(later (== inner 'inner-fallback-2))])
+       (conde
+         ((== y 1)
+          (later (== inner 'inner-commit-1)))
+         ((== y 2)
+          (later (== inner 'inner-commit-2)))))))))
+(test
+ (run 1 (outer inner)
+   (staged
+    (fresh (y)
+      (r2 2 y outer inner))))
+ '((outer-fallback _.0)))
 
 
 ;; Regression test: partial-apply needs to notify success to trigger fallback of
@@ -149,9 +192,9 @@
        ((later (== q 1)))))))
  '(3))
 
-;; Similarly, later conde needs to notify. Currently it does this by promising and
-;; requring success of everything within, but TODO: I'd like to change this to only
-;; succeed if the conjunction generating all branches succeeds.
+;; Regresssion test: similarly, later conde needs to notify. Currently it does this by
+;; promising and requring success of everything within, but TODO: I'd like to change this
+;; to only succeed if the conjunction generating all branches succeeds.
 (test
  (run 1 (q)
    (staged
