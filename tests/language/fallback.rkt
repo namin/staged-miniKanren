@@ -76,17 +76,21 @@
 ;; form with the same challenge! We can only successfully fall back if the inner fallback
 ;; reports out that it has a base-case branch that can succeed, thus allowing the outer
 ;; fallback form to know it has at least two solutions.
+;;
+;; Also notice that we still need interleaving search here! A depth-first-search would
+;; just keep going deeper into the recursive case, because it is ordered first. It
+;; would never discover the base-case successes that allow us to fall back.
 (defrel/generator (membero x l log)
   (fallback
    (later (== log 'fallback))
    (fresh (first rest log-rest)
      (== `(,first . ,rest) l)
      (conde
-       [(== x first)
-        (== log 'commit-base-case)]
        [(=/= x first)
         (== log `(commit-recursive-case . ,log-rest))
-        (membero x rest log-rest)]))))
+        (membero x rest log-rest)]
+       [(== x first)
+        (== log 'commit-base-case)]))))
 (test
  (run 1 (q)
    (staged
@@ -106,11 +110,37 @@
        (fresh (x)
          (== x 3)
          (fallback
-          (later (== 1 q))
+          (later (== q 1))
           (conde
             ((== q 2) (== x 2) (later (== q 2)))
             ((== q 3) (== x 3) (later (== q 3))))))))
  '(3))
+;; But once the whole conjunction has succeeded we do need the notify to make
+;; it out.
+(test
+ (run 1 (q)
+      (staged
+       (fresh (x)
+         (fallback
+          (later (== q 1))
+          (conde
+            ((== q 2) (== x 2) (later (== q 2)))
+            ((== q 3) (== x 3) (later (== q 3))))))))
+ '(1))
+
+;; Regression test: notify-success while evaluating a conjunct outside of and after
+;; a fallback (in the success continuation given to the fallback) should not be
+;; counted by the fallback as indicating nondeterminism.
+(test
+ (run 1 (x y)
+      (staged
+       (fresh ()
+         (fallback
+          (later (== x 1))
+          (later (== x 2)))
+         (== y 3))))
+ '((2 3)))
+
 
 ;; Regression test: success of the fallback goal should not cause an outer
 ;; fallback form to double-count.
