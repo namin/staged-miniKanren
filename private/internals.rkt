@@ -167,7 +167,7 @@
          (ss:notify-success tags (lambda () (node ss-k1^ ss-k2)))]
         [(ss:final-success v ss-k1^)
          (ss:final-success v (lambda () (node ss-k2 ss-k1^)))]))
-    (ss:suspend (node (lambda () (g1 st success-k)) (lambda () (g2 st success-k))))))
+    (node (lambda () (g1 st success-k)) (lambda () (g2 st success-k)))))
 
 (define-syntax ss:disj
   (syntax-rules ()
@@ -177,7 +177,12 @@
 
 (define-syntax-rule
   (ss:conde (g ...) ...)
-  (ss:disj (ss:conj g ...) ...))
+  (lambda (st success-k)
+    ;; need to make sure the goals g don't evaluate before we get through
+    ;; this suspend, lest a recursion unfold immediately and infinitely.
+    (ss:suspend
+     ((ss:disj (ss:conj g ...) ...)
+      st success-k))))
 
 (define (ss:take n ss-k)
   (if (and n (zero? n))

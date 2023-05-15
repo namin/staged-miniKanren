@@ -98,6 +98,44 @@
       (membero 'x `(y . ,l) q))))
  '((commit-recursive-case . fallback)))
 
+(defrel/generator (nevero)
+  (conde
+    [(== 1 2)]
+    [(nevero)]))
+(test
+ (run 1 (q)
+   (staged
+    (fallback
+     (later (== q 'fallback-1))
+     (conde
+       [(== q 1)]
+       [(fallback
+         (later (== q 'fallback-2))
+         (conde
+           [(== q 2)]
+           [(nevero)]))]))))
+ '(fallback-1))
+
+;; `fallback` can assume that there is eventually either nondeterminism or all
+;; branches terminate; programmers must not write non-productive, nonterminating
+;; computations.
+;;
+;; However, based on the `membero` example above we can see that fallback cannot
+;; simply run all its branches to completion before returning anything.
+ 
+;; As seen above we can't 
+(test
+ (run 1 (x y)
+   (staged
+    (fresh ()
+      (fallback
+       (later (== x 'fallback))
+       (conde
+         [(== x 1)]
+         [(fresh () (fresh () (fresh () (fresh () (== x 2)))))]))
+      (== y 1))))
+ '((fallback 1)))
+
 ;; Regression test: success of the first goal in a conjunct must not notify
 ;; success of the whole conjunction.
 ;;
