@@ -3,72 +3,70 @@
 (require "../../main.rkt"
          "../../test-check.rkt")
 
-;; When there's only one branch, we should get that answer rather than fall back.
+;; When there's only one branch, produce that answer.
 (test
  (run 1 (q)
       (staged
        (fallback
-        (later (== q 1))
+        (later (== q 'fallback))
         (conde
-          ((== q 2) (later (== q 2)))))))
- '(2))
+          ((== q 'single-branch) (later (== q 'single-branch)))))))
+ '(single-branch))
 
-;; When there are multiple successful branches we should discard their results and fall back.
+;; When there are multiple successful branches, fall back.
 (test
  (run 1 (q)
       (staged
        (fallback
-        (later (== 1 q))
+        (later (== q 'fallback))
         (conde
-          ((== q 2) (later (== q 2)))
-          ((== q 3) (later (== q 3)))))))
- '(1))
+          ((== q 'branch-1) (later (== q 'branch-1)))
+          ((== q 'branch-2) (later (== q 'branch-2)))))))
+ '(fallback))
 
-;; When only one branch can succeed because of previous constraints, we should get that answer
-;; rather than fall back.
+;; When only one branch can succeed because of previous constraints, produce that answer.
 (test
  (run 1 (q)
       (staged
-       (fresh ()
-         (== q 3)
+       (fresh (x)
+         (== x 1)
          (fallback
-          (later (== q 1))
+          (later (== q 'fallback))
           (conde
-            ((== q 2) (later (== q 2)))
-            ((== q 3) (later (== q 3))))))))
- '(3))
+            ((== x 1) (later (== q 'branch-1)))
+            ((== x 2) (later (== q 'branch-2))))))))
+ '(branch-1))
 
 ;; Results can also be filtered after the branch but before returning from the fallback.
 (test
  (run 1 (q)
    (staged
     (fallback
-     (later (== q 1))
-     (fresh ()
+     (later (== q 'fallback))
+     (fresh (x)
        (conde
-         ((== q 2) (later (== q 2)))
-         ((== q 3) (later (== q 3))))
-       (== q 3)))))
- '(3))
+         ((== x 1) (later (== q 'branch-1)))
+         ((== x 2) (later (== q 'branch-2))))
+       (== x 2)))))
+ '(branch-2))
 
 ;; After exiting the fallback form, it is too late for new information to filter branches
 ;; and avoid fallback.
-;;
-;; TODO: is this a good thing? One could also imagine following a branch all the way through
-;; to the halt continuation before committing to the fallback... But I think this would lead
-;; to diverging searches at staging time when you wanted to defer the divergence to runtime.
 (test
  (run 1 (q)
       (staged
        (fresh (x)
          (fallback
-          (later (== q 1))
+          (later (== q 'fallback))
           (conde
-            ((== x 2) (later (== q 2)))
-            ((== x 3) (later (== q 3)))))
-         (== x 3))))
- '(1))
-
+            ((== x 1) (later (== q 'branch-1)))
+            ((== x 2) (later (== q 'branch-2)))))
+         (== x 2))))
+ '(fallback))
+;; TODO: is this a good thing? One could also imagine ensuring multiple branches are
+;; successful all the way through to the halt continuation before committing to fall
+;; back. But I think that would lead to diverging searches at staging time when you
+;; want to defer the divergence to runtime.
 
 ;; Recognizing the need to fall back here is made tricky by the recursion nesting
 ;; fallback forms. For some fallback to fall back, it has to know that both its base
@@ -87,22 +85,22 @@
      (== `(,first . ,rest) l)
      (conde
        [(=/= x first)
-        (== log `(commit-recursive-case . ,log-rest))
+        (== log `(recursive-case . ,log-rest))
         (membero x rest log-rest)]
        [(== x first)
-        (== log 'commit-base-case)]))))
+        (== log 'base-case)]))))
 (test
  (run 1 (q)
    (staged
     (fresh (l)
       (membero 'x `(y . ,l) q))))
- '((commit-recursive-case . fallback)))
+ '((recursive-case . fallback)))
 
 ;; In this example the possibilities of q = 1 and q = 2 should be enough to
 ;; trigger the outer fallback, even though the `nevero` never terminates.
 (defrel/generator (nevero)
   (conde
-    [(== 1 2)]
+    [fail]
     [(nevero)]))
 (test
  (run 1 (q)
@@ -110,11 +108,11 @@
     (fallback
      (later (== q 'fallback-1))
      (conde
-       [(== q 1)]
+       [(== q 'branch-1)]
        [(fallback
          (later (== q 'fallback-2))
          (conde
-           [(== q 2)]
+           [(== q 'branch-2)]
            [(nevero)]))]))))
  '(fallback-1))
 
@@ -128,57 +126,58 @@
     (fallback
      (later (== q 'fallback-1))
      (conde
-       [(== q 1)]
-       [(fallback
-         (later (== q 'fallback-2))
-         (conde
-           [(== q 2)]
-           [(nevero)]))
-        (== q 2)]))))
+       [(== q 'branch-1)]
+       [(fresh (x)
+          (fallback
+           (later (== q 'fallback-2))
+           (conde
+             [(== x 2) (== q 'branch-2)]
+             [(nevero)]))
+          (== x 2))]))))
  '(fallback-1))
 
 ;; Regression test: success of the first goal in a conjunct must not notify
 ;; success of the whole conjunction.
 ;;
-;; In this example the first unification in the first branch (== q 2) will
+;; In this example the first goal (== 1 1) in the first branch will
 ;; succeed, but the overall branch will fail. We don't want to notify-success
 ;; for this branch and thus end up falling back.
 (test
  (run 1 (q)
       (staged
        (fresh (x)
-         (== x 3)
+         (== x 2)
          (fallback
-          (later (== q 1))
+          (later (== q 'fallback))
           (conde
-            ((== q 2) (== x 2) (later (== q 2)))
-            ((== q 3) (== x 3) (later (== q 3))))))))
- '(3))
-;; But once the whole conjunction has succeeded we do need the notify to make
+            ((== 1 1) (== x 1) (later (== q 'branch-1)))
+            ((== x 2) (later (== q 'branch-2))))))))
+ '(branch-2))
+;; But when the whole conjunction succeeds we do need the notify to make
 ;; it out.
 (test
  (run 1 (q)
       (staged
        (fresh (x)
          (fallback
-          (later (== q 1))
+          (later (== q 'fallback))
           (conde
-            ((== q 2) (== x 2) (later (== q 2)))
-            ((== q 3) (== x 3) (later (== q 3))))))))
- '(1))
+            ((== 1 1) (== x 1) (later (== q 'branch-1)))
+            ((== x 2) (later (== q 'branch-2))))))))
+ '(fallback))
 
 ;; Regression test: notify-success while evaluating a conjunct outside of and after
-;; a fallback (in the success continuation given to the fallback) should not be
+;; a fallback (that is, in the success continuation given to the fallback) should not be
 ;; counted by the fallback as indicating nondeterminism.
 (test
- (run 1 (x y)
+ (run 1 (x)
       (staged
        (fresh ()
          (fallback
-          (later (== x 1))
-          (later (== x 2)))
-         (== y 3))))
- '((2 3)))
+          (later (== x 'fallback))
+          (later (== x 'only-answer)))
+         (== 1 1))))
+ '(only-answer))
 
 
 ;; Regression test: success of the fallback goal should not cause an outer
