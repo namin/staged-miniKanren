@@ -70,6 +70,32 @@
  '(1))
 
 
+(defrel/generator (membero x l log)
+  (fallback
+   (later (== log 'fallback))
+   (fresh (first rest log-rest)
+     (== `(,first . ,rest) l)
+     (conde
+       [(== x first)
+        (== log 'commit-base-case)]
+       [(=/= x first)
+        (== log `(commit-recursive-case . ,log-rest))
+        (membero x rest log-rest)]))))
+
+;; Recognizing the need to fall back here is made tricky by the recursion nesting
+;; fallback forms. For some fallback to fall back, it has to know that both its base
+;; and recursive cases can succeed. But its recursive case contains a nested fallback
+;; form with the same challenge! We can only successfully fall back if the inner fallback
+;; reports out that it has a base-case branch that can succeed, thus allowing the outer
+;; fallback form to know it has at least two solutions.
+(test
+ (run 1 (q)
+   (staged
+    (fresh (l)
+      (membero 'x `(y . ,l) q))))
+ '((commit-recursive-case . fallback)))
+
+
 (defrel/generator (r x y outer inner)
   (fallback
    (later (== outer 'outer-fallback))
@@ -87,7 +113,6 @@
           (later (== inner 'inner-commit-2)))))))))
 
 
-
 ;; TODO: not sure why I thought this was tricky or worth a test. I think some
 ;; bugs were leading the whole thing to fall back. I guess multiple successes
 ;; from the second branch being notified to the outer could lead to outer fall back?
@@ -100,6 +125,7 @@
     (fresh (y)
       (r 2 y outer inner))))
  '((outer-commit-2 inner-fallback)))
+
 
 ;; Regression test: partial-apply needs to notify success to trigger fallback of
 ;; surrounding branches; initially it did not. Right now, it uses ss:promise-success
