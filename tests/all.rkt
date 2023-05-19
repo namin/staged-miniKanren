@@ -8,5 +8,6 @@
 (require "interpreter/letrec-cross-stage.rkt")
 
 (require "language/fallback.rkt")
+(require "language/gather.rkt")
 
 (require "internals/fix-scope.rkt")

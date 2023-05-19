@@ -411,7 +411,9 @@
     [(_ (fresh (x:id ...) g ...))
      #'(i:ss:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(i:ss:lconde [(compile-later-goal g) ...] ...)]
+     #'(i:ss:gather
+        (i:ss:conde
+         [(compile-later-goal g) ...] ...))]
     [(_ fail) #'(i:ss:atomic i:lfail)]
     
     [(_ (now g))

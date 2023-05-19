@@ -157,16 +157,26 @@
 
 (define (ss:gather g)
   (lambda (st-original success-k)
+    (define (no-success-yet ss-k)
+      (match (ss-k)
+        [(ss:fail)
+         (ss:fail)]
+        [(ss:interleave ss-k^)
+         (ss:interleave (lambda () (no-success-yet ss-k^)))]
+        [(ss:notify-success tags ss-k^)
+         (ss:notify-success tags (lambda () (accumulating '() ss-k^)))]
+        [(ss:final-success v ss-k^)
+         (error 'ss:gather
+                "invariant violation in no-success-yet; should get notify-success first")]))
+        
     (define (accumulating acc ss-k)
       (match (ss-k)
         [(ss:fail)
-         (if (null? acc)
-             (ss:fail)
-             (final-result (reverse acc)))]
+         (final-result (reverse acc))]
         [(ss:interleave ss-k^)
          (ss:interleave (lambda () (accumulating acc ss-k^)))]
         [(ss:notify-success tags ss-k^)
-         (ss:notify-success tags (lambda () (accumulating acc ss-k^)))]
+         (accumulating acc ss-k^)]
         [(ss:final-success v ss-k^)
          (accumulating (cons v acc) ss-k^)]))
 
@@ -180,6 +190,13 @@
           st-original
           success-k))))
 
+    (no-success-yet
+     (lambda ()
+       ((ss:capture-later g)
+        st-original success-k)))))
+
+(define (ss:capture-later g)
+  (lambda (st-original success-k)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
            [st-before (state-with-scope st-before (new-scope))])
@@ -190,9 +207,7 @@
                             (walk* stx (state-S st-after)))])
           (ss:notify-success (seteq) (lambda () (ss:one-result captured-L)))))
       
-      (accumulating
-       '()
-       (lambda () (g st-before success-k^))))))
+      (g st-before success-k^))))
 
 
 (define (ss:disj2 g1 g2)
@@ -311,24 +326,11 @@
 (define lsucceed (later #'succeed))
 (define lfail (later #'fail))
 
-(define-syntax ss:lconde
-  (syntax-rules ()
-    ((_ (g ...) ...)
-     (ss:promise-success (ss:ldisj (ss:fresh () g ...) ...)))))
-
-(define (ss:ldisj . gs-init)
-  (let recur ([gs gs-init] [gs-stx '()])
-    (if (null? gs)
-        (ss:atomic (later #`(conde #,@(reverse gs-stx))))
-        (ss:capture-later (car gs)
-                          (lambda (g-stx)
-                            (recur (cdr gs) (cons g-stx gs-stx)))))))
-
 ;;
 ;; Scoped lift capturing
 ;;
 
-(define (ss:capture-later g k)
+(define (ss:capture-later-old g k)
   (lambda (st-original success-k)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
@@ -384,7 +386,7 @@
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
      #'(ss:promise-success
         (ss:fresh (y-n ...)
-         (ss:capture-later
+         (ss:capture-later-old
           (ss:fresh ()
             ;; This is a little subtle. This unification ends up as code in the
             ;; lambda body, but it has to be part of L in the capture to ensure
@@ -660,7 +662,7 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
      #:with (var2 ...) (generate-temporaries (attribute var))
      #'(ss:generate-staged-rt
         (ss:fresh (var ...)
-                  (ss:capture-later
+                  (ss:capture-later-old
                    (ss:fresh ()
                              (ss:atomic (later #`(== #,(data var) var2))) ...
                              goal ...)

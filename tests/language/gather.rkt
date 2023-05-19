@@ -3,17 +3,29 @@
 (require "../../all.rkt")
 
 (test
- (run* (q)
-   (staged
-    (fresh (x)
-      (== x 3)
-      (conde
-        ((gather
-          (conde
-            ((== x 1) (later (== q 'branch-1)))
-            ((== x 2) (later (== q 'branch-2))))))
-        ((== x 3) (later (== q 'branch-3)))))))
- '(branch-3))
+ (length
+  (run* (q)
+    (staged
+     (fresh (x)
+       (gather
+        (conde
+          ((== x 1) (later (== q 'branch-1)))
+          ((== x 2) (later (== q 'branch-2)))))))))
+ 2)
+
+
+(test
+ (length
+  (run* (q)
+    (staged
+     (fallback
+      (later (== q 'fallback))
+      (fresh (x)
+        (gather
+         (conde
+           ((== x 1) (later (== q 'branch-1)))
+           ((== x 2) (later (== q 'branch-2))))))))))
+ 2)
 
 (test
  (run* (q)
@@ -27,15 +39,21 @@
  '(branch-2))
 
 (test
- (length
-  (run* (q)
-    (staged
-     (fresh (x)
-       (gather
-        (conde
-          ((== x 1) (later (== q 'branch-1)))
-          ((== x 2) (later (== q 'branch-2)))))))))
- 2)
+ (run* (q)
+   (staged
+    (fresh (x)
+      (== x 3)
+      (conde
+        ((gather
+          (conde
+            ((== x 1) (later (== q 'branch-1)))
+            ((== x 2) (later (== q 'branch-2))))))
+        ((== x 3) (later (== q 'branch-3)))))))
+ '(branch-3))
+
+
+
+
 
 (test
  (length
