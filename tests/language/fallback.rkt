@@ -79,6 +79,9 @@
 ;; all the branches to determine if there is nondeterminism! With that strategy, the
 ;; inner fallback form would fail to terminate. Instead, the computation terminates when
 ;; the outer fallback finds out about the success of branch-2 and triggers fallback-1.
+;; TODO: make sure we interleave in this case, because why not
+#;(defrel/generator (nevero)
+    (nevero))
 (defrel/generator (nevero)
   (conde
     [fail]
