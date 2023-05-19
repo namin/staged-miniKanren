@@ -16,6 +16,7 @@
  fresh
  conde
  fallback
+ gather
  staged
  time-staged
  later
@@ -114,9 +115,8 @@
     
     (conde [g:goal ...+] ...+)
     
-    (fallback
-     fb:goal
-     body:goal)
+    (fallback fb:goal body:goal)
+    (gather body:goal)
     
     (staged g:goal)
     (time-staged g:goal)
@@ -313,7 +313,7 @@
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with staged-f (syntax-local-lift-expression #'(time (i:ss:generate-staged (var ...) (compile-now-goal g))))
      #'(staged-f var ...)]
-    [(_ (~and stx (~or (later . _) (now . _) (fallback . _))))
+    [(_ (~and stx (~or (later . _) (now . _) (fallback . _) (gather . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
@@ -352,6 +352,9 @@
      #'(i:ss:maybe-fallback
         (compile-now-goal fb)
         (compile-now-goal body))]
+
+    [(_ (gather body))
+     #'(i:ss:gather (compile-now-goal body))]
     
     [(_ fail) #'(i:ss:atomic i:fail)]
 
@@ -415,6 +418,7 @@
      #'(compile-now-goal g)]
     
     [(_ (~and stx (~or (fallback . _)
+                       (gather . _)
                        (staged . _)
                        (later . _))))
      (raise-syntax-error #f "not supported in generated code" #'stx)]

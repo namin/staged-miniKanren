@@ -155,6 +155,46 @@
     
     (no-success-yet (lambda () (g st success-k^)))))
 
+(define (ss:gather g)
+  (lambda (st-original success-k)
+    (define (accumulating acc ss-k)
+      (match (ss-k)
+        [(ss:fail)
+         (if (null? acc)
+             (ss:fail)
+             (final-result (reverse acc)))]
+        [(ss:interleave ss-k^)
+         (ss:interleave (lambda () (accumulating acc ss-k^)))]
+        [(ss:notify-success tags ss-k^)
+         (ss:notify-success tags (lambda () (accumulating acc ss-k^)))]
+        [(ss:final-success v ss-k^)
+         (accumulating (cons v acc) ss-k^)]))
+
+    (define (final-result results)
+      (ss:drop-one-notify
+       (lambda ()
+         ((ss:atomic
+           (later #`(conde
+                      #,@(for/list ([result results])
+                           #`[#,@result]))))
+          st-original
+          success-k))))
+
+    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
+           [st-before (state-with-L st-before '())]
+           [st-before (state-with-scope st-before (new-scope))])
+      
+      (define (success-k^ st-after)
+        (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
+                                                  (reverse (state-L st-after)))])
+                            (walk* stx (state-S st-after)))])
+          (ss:notify-success (seteq) (lambda () (ss:one-result captured-L)))))
+      
+      (accumulating
+       '()
+       (lambda () (g st-before success-k^))))))
+
+
 (define (ss:disj2 g1 g2)
   (lambda (st success-k)
     (define (node ss-k1 ss-k2)
