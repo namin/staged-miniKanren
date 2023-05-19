@@ -4,7 +4,7 @@
 
 (record-bench 'staging 'eval-and-map-evalo)
 (defrel (eval-and-map-evalo expr val)
-  (staged
+  (time-staged
    (evalo-staged
     `(letrec ([map (lambda (f l)
                      (if (null? l)
@@ -240,7 +240,7 @@
 
 (record-bench 'staging 'eval-and-map-and-list-evalo)
 (defrel (eval-and-map-and-list-evalo expr val)
-  (staged
+  (time-staged
    (evalo-staged
     (eval-and-map-and-list-eval `(eval-expr ',expr (lambda (y) 'error)))
     val)))
@@ -424,7 +424,7 @@
 
 (record-bench 'staging 'quasi-quine-evalo)
 (defrel (quasi-quine-evalo expr val)
-  (staged
+  (time-staged
    (evalo-staged (quasi-quine-eval expr) val)))
 
 (record-bench 'staged 'quasi-quine-evalo)
@@ -481,7 +481,7 @@
 
 (record-bench 'staging 'ho-quine-interp-cons)
 (defrel (ho-quine-interp-cons expr val)
-  (staged
+  (time-staged
    (evalo-staged
     (ho-quine-interp-cons-fun `(eval-expr ',expr (lambda (y) 'error)))
     val)))
@@ -539,7 +539,7 @@
 
 (record-bench 'staging 'ho-double-evalo)
 (defrel (ho-double-evalo expr val)
-  (staged
+  (time-staged
     (evalo-staged
      (ho-double-eval `(eval-expr ',expr (lambda (y) 'error)))
      val)))
@@ -655,7 +655,7 @@
              ,letrec-body)))
 (record-bench 'staging 'map-in-double-eval)
 (defrel (map-in-double-eval expr val)
-  (staged
+  (time-staged
     (evalo-staged
      (map-in-double-eval-fun `(eval-expr ',expr '()))
      val)))
@@ -722,7 +722,7 @@
 
 (record-bench 'staging 'double-evalo)
 (defrel (double-evalo expr val)
-  (staged
+  (time-staged
    (evalo-staged
     `(letrec ([lookup
                (lambda (x env)
@@ -820,7 +820,7 @@
 
 (record-bench 'staging 'double-evalo-variadic-list-fo)
 (defrel (double-evalo-variadic-list-fo expr val)
-  (staged
+  (time-staged
     (evalo-staged
      (double-evalo-variadic-list-fo-fun `(eval-expr ',expr '()))
      val)))
@@ -874,7 +874,7 @@
              ,letrec-body)))
 (record-bench 'staging 'double-evalo-variadic-list-fo-better)
 (defrel (double-evalo-variadic-list-fo-less-ridiculous expr val)
-  (staged
+  (time-staged
     (evalo-staged
      (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',expr '()))
      val)))
@@ -930,7 +930,7 @@
 
 (record-bench 'staging 'double-evalo-variadic-list-ho)
 (defrel (double-evalo-variadic-list-ho expr val)
-  (staged
+  (time-staged
     (evalo-staged
      (double-evalo-variadic-list-ho-fun `(eval-expr ',expr '()))
      val)))
@@ -981,7 +981,7 @@
 
 (record-bench 'staging 'double-evalo-cons)
 (defrel (double-evalo-cons expr val)
-  (staged
+  (time-staged
     (evalo-staged
      (double-evalo-cons-fun `(eval-expr ',expr '()))
      val)))

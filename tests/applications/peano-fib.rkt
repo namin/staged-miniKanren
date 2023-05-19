@@ -282,7 +282,7 @@
 
 (record-bench 'staging 'peano-synth-fib-aps)
 (defrel (peano-synth-fib-apso e ACC1 ACC2 result)
-  (staged
+  (time-staged
    (evalo-staged
     `(letrec ((zero?
                (lambda (n)
@@ -396,9 +396,9 @@
      (s . z))))
 
 
-;;(record-bench 'staging 'peano-synth-fib-aps-step)
+(record-bench 'staging 'peano-synth-fib-aps-step)
 (defrel (peano-synth-fib-aps-stepo step1 step2 ACC1 ACC2 result)
-  (staged
+  (time-staged
    (evalo-staged
     `(letrec ((zero?
                (lambda (n)
@@ -617,7 +617,7 @@
 
 (record-bench 'staging 'peano-fib)
 (defrel (fib-apso n a1 a2 result)
-  (staged
+  (time-staged
    (evalo-staged
     (peano-fib `(fib-aps ',n ',a1 ',a2))
     result)))
