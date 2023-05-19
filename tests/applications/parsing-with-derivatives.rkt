@@ -124,14 +124,14 @@
 
 (record-bench 'staging 'parse)
 (defrel (d/dc-o re c parse-result)
-  (staged
+  (time-staged
    (evalo-staged
     (parse `(d/dc ',re ',c))
     parse-result)))
 
 ;;(record-bench 'staging 'match)
 (defrel (regex-matcho pattern data parse-result)
-  (staged
+  (time-staged
    (evalo-staged
     (parse `(regex-match ',pattern ',data))
     parse-result)))

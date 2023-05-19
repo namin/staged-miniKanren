@@ -35,7 +35,7 @@
 
 (record-bench 'staging 'proofo)
 (defrel (proofo prf b)
-  (staged
+  (time-staged
    (evalo-staged
     (prover `(proof? ',prf))
     b)))

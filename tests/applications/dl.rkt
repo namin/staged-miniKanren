@@ -49,7 +49,7 @@
 
 (record-bench 'staging 'nnf)
 (defrel (nnfo concept nnf-concept)
-  (staged
+  (time-staged
    (evalo-staged
     (nnf concept)
     nnf-concept)))
