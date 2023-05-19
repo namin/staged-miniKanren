@@ -192,9 +192,9 @@
 (todo "later conde"
     (run 2 (q)
       (staged
-        (later (conde
-                 ((== q 1))
-                 ((== q 2))))))
+        (gather (conde
+                  ((later (== q 1)))
+                  ((later (== q 2)))))))
   '(1 2))
 
 ;; ## Staged Relational Interpreter

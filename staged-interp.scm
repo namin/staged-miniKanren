@@ -109,16 +109,16 @@
         ;; arguments. We would need something a little higher-order to avoid the duplication.
         #;(fresh (proc)
             (eval-expo rator env proc)
-            (later (conde
+            (gather (conde
                      [(fresh (prim a*)
-                        (== `(struct prim . ,prim) proc)
-                        (u-eval-primo prim a* val)
-                        (now (eval-listo rands env a*)))]
+                        (later (== `(struct prim . ,prim) proc))
+                        (later (u-eval-primo prim a* val))
+                        (eval-listo rands env a*))]
                      [(fresh (tag p a*)
-                        (== `(struct ,tag . ,p) proc)
-                        (=/= tag 'prim)
-                        (now (eval-listo rands env a*))
-                        (callo proc val a*))])))
+                        (later (== `(struct ,tag . ,p) proc))
+                        (later (=/= tag 'prim))
+                        (eval-listo rands env a*)
+                        (later (callo proc val a*)))])))
 
         (conde
           ;; statically-recognizable primitive application
@@ -219,14 +219,13 @@
               (== `(,a ,d) a*)
               (== `(,a . ,d) val)))]
     [(== prim-id 'car)
-     (later (fresh (d)
-              (== `((,val . ,d)) a*)
-              (now (not-tago/gen val))))]
+     (fresh (d)
+       (later (== `((,val . ,d)) a*))
+       (not-tago/gen val))]
     [(== prim-id 'cdr)
-     (later
-      (fresh (a)
-        (== `((,a . ,val)) a*)
-        (now (not-tago/gen a))))]
+     (fresh (a)
+       (later (== `((,a . ,val)) a*))
+       (not-tago/gen a))]
     [(== prim-id 'not)
      (later
       (fresh (b)
@@ -270,7 +269,7 @@
                 ((fresh (a d)
                    (== `(,a . ,d) v)
                    (== #t val)
-                   (now (not-tago/gen a))))
+                   (not-tago a)))
                 ((fresh (a d)
                    (== `(,a . ,d) v)
                    (== #f val)
@@ -309,11 +308,11 @@
     ((fresh (e1 e2 e-rest v)
        (== `(,e1 ,e2 . ,e-rest) e*)
        (eval-expo e1 env v)
-       (later (conde
-                ((== #f v)
-                 (== #f val))
-                ((=/= #f v)
-                 (now (ando `(,e2 . ,e-rest) env val)))))))))
+       (gather (conde
+                 ((later (== #f v))
+                  (later (== #f val)))
+                 ((later (=/= #f v))
+                  (ando `(,e2 . ,e-rest) env val))))))))
 
 (defrel/generator (or-primo expr env val)
   (fresh (e*)
@@ -330,20 +329,20 @@
     ((fresh (e1 e2 e-rest v)
        (== `(,e1 ,e2 . ,e-rest) e*)
        (eval-expo e1 env v)
-       (later (conde
-                ((=/= #f v)
-                 (== v val))
-                ((== #f v)
-                 (now (oro `(,e2 . ,e-rest) env val)))))))))
+       (gather (conde
+                 ((later (=/= #f v))
+                  (later (== v val)))
+                 ((later (== #f v))
+                  (oro `(,e2 . ,e-rest) env val))))))))
 
 (defrel/generator (if-primo expr env val)
   (fresh (e1 e2 e3 t)
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
     (eval-expo e1 env t)
-    (later (conde
-             ((=/= #f t) (now (eval-expo e2 env val)))
-             ((== #f t) (now (eval-expo e3 env val)))))))
+    (gather (conde
+              ((later (=/= #f t)) (eval-expo e2 env val))
+              ((later (== #f t)) (eval-expo e3 env val))))))
 
 (define initial-env `((list . (val . (struct prim . list)))
                       (not . (val . (struct prim . not)))
@@ -416,13 +415,13 @@
     ((== clauses '()) (later fail))
     ((fresh (p result-expr d penv c-yes c-no)
        (== `((,p ,result-expr) . ,d) clauses)
-       (later (conde
-                [(now (fresh (env^)
-                        (p-match p mval '() penv)
-                        (regular-env-appendo penv env env^)
-                        (eval-expo result-expr env^ val)))]
-                [(now (p-no-match p mval '() penv))
-                 (now (match-clauses mval d env val))]))))))
+       (gather (conde
+                 [(fresh (env^)
+                    (p-match p mval '() penv)
+                    (regular-env-appendo penv env env^)
+                    (eval-expo result-expr env^ val))]
+                 [(p-no-match p mval '() penv)
+                  (match-clauses mval d env val)]))))))
 
 (defrel/generator (var-p-match var mval penv penv-out)
   (fresh (val)
@@ -490,15 +489,15 @@
 (defrel/fallback (pred-no-match pred var mval penv penv-out) u-pred-no-match
   (conde
     ((== 'symbol? pred)
-     (later (conde
-              [(not-symbolo mval)]
-              [(symbolo mval)
-               (now (var-p-no-match var mval penv penv-out))])))
+     (gather (conde
+               [(later (not-symbolo mval))]
+               [(later (symbolo mval))
+                (var-p-no-match var mval penv penv-out)])))
     ((== 'number? pred)
-     (later (conde
-              [(not-numbero mval)]
-              [(numbero mval)
-               (now (var-p-no-match var mval penv penv-out))])))))
+     (gather (conde
+               [(later (not-numbero mval))]
+               [(later (numbero mval))
+                (var-p-no-match var mval penv penv-out)])))))
 
 (defrel/fallback (quasi-p-match quasi-p mval penv penv-out) u-quasi-p-match
   (conde
@@ -527,15 +526,15 @@
     ((fresh (a d)
        (== `(,a . ,d) quasi-p)
        (=/= 'unquote a)
-       (later (conde
-                [(now (== penv penv-out)) ;; TODO: could this get lost?
-                 (u-literalo mval)]
-                [(fresh (penv^ v1 v2)
-                   (== `(,v1 . ,v2) mval)
-                   (conde
-                     [(now (quasi-p-no-match a v1 penv penv-out))]
-                     [(now (quasi-p-match a v1 penv penv^))
-                      (now (quasi-p-no-match d v2 penv^ penv-out))]))]))))))
+       (gather (conde
+                 [(== penv penv-out) ;; TODO: could this get lost?
+                  (later (u-literalo mval))]
+                 [(fresh (penv^ v1 v2)
+                    (later (== `(,v1 . ,v2) mval))
+                    (conde
+                      [(quasi-p-no-match a v1 penv penv-out)]
+                      [(quasi-p-match a v1 penv penv^)
+                       (quasi-p-no-match d v2 penv^ penv-out)]))]))))))
 
 (defrel/generator (evalo-staged expr val)
   (eval-expo expr initial-env val))

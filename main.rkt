@@ -20,7 +20,6 @@
  staged
  time-staged
  later
- now
  fail
  trace
 
@@ -121,7 +120,6 @@
     (staged g:goal)
     (time-staged g:goal)
     (later g:goal)
-    (now g:goal)
     
     fail
 
@@ -313,7 +311,7 @@
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with staged-f (syntax-local-lift-expression #'(time (i:ss:generate-staged (var ...) (compile-now-goal g))))
      #'(staged-f var ...)]
-    [(_ (~and stx (~or (later . _) (now . _) (fallback . _) (gather . _))))
+    [(_ (~and stx (~or (later . _) (fallback . _) (gather . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
@@ -362,8 +360,7 @@
      #'(compile-later-goal g)]
 
     [(_ (~and stx (~or (apply-partial . _)
-                       (staged . _)
-                       (now . _))))
+                       (staged . _))))
      (raise-syntax-error #f "not supported in generator code" #'stx)]    
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
@@ -415,9 +412,6 @@
         (i:ss:conde
          [(compile-later-goal g) ...] ...))]
     [(_ fail) #'(i:ss:atomic i:lfail)]
-    
-    [(_ (now g))
-     #'(compile-now-goal g)]
     
     [(_ (~and stx (~or (fallback . _)
                        (gather . _)

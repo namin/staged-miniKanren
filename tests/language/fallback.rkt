@@ -323,10 +323,10 @@
      (later (== q 4))
      (conde
        ((later (== q 1)))
-       ((later
+       ((gather
          (conde
-           [(now (== q 2)) (== q 2)]
-           [(now (== q 3)) (== q 3)])))))))
+           [(== q 2) (later (== q 2))]
+           [(== q 3) (later (== q 3))])))))))
  '(4))
 
 
