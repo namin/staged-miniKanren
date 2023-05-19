@@ -1,8 +1,8 @@
 (defrel/generator (absent-tago/gen v)
   (absento 'struct v))
 
-;; inlining these avoids an `inc` at runtime
-(defrel/generator (not-tago/gen v)
+;; avoids an `inc` at runtime vs not-tago that has a fresh ()
+(defrel (not-tago/gen v)
   (=/= 'struct v))
 
 (defrel/generator (eval-apply-rec-staged rep f x* e env a* res)
@@ -221,11 +221,11 @@
     [(== prim-id 'car)
      (fresh (d)
        (later (== `((,val . ,d)) a*))
-       (not-tago/gen val))]
+       (later (not-tago/gen val)))]
     [(== prim-id 'cdr)
      (fresh (a)
        (later (== `((,a . ,val)) a*))
-       (not-tago/gen a))]
+       (later (not-tago/gen a)))]
     [(== prim-id 'not)
      (later
       (fresh (b)
@@ -269,7 +269,7 @@
                 ((fresh (a d)
                    (== `(,a . ,d) v)
                    (== #t val)
-                   (not-tago a)))
+                   (not-tago/gen a)))
                 ((fresh (a d)
                    (== `(,a . ,d) v)
                    (== #f val)
@@ -389,7 +389,7 @@
 (defrel/generator (literalo t)
   (conde
     ((numbero t))
-    ((symbolo t) (not-tago/gen t))
+    ((symbolo t) (later (not-tago/gen t)))
     ((booleano/gen t))
     ((== '() t))))
 
@@ -425,7 +425,7 @@
 
 (defrel/generator (var-p-match var mval penv penv-out)
   (fresh (val)
-    (not-tago/gen mval)
+    (later (not-tago/gen mval))
     (later (== mval val))
     (var-p-match-extend var val penv penv-out)))
 
@@ -521,7 +521,7 @@
      (== penv penv-out))
     ((fresh (p)
        (== (list 'unquote p) quasi-p)
-       (not-tago/gen mval) ;; TODO: why do we need this?
+       (later (not-tago/gen mval)) ;; TODO: why do we need this?
        (p-no-match p mval penv penv-out)))
     ((fresh (a d)
        (== `(,a . ,d) quasi-p)
