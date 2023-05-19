@@ -17,6 +17,7 @@
  conde
  fallback
  staged
+ time-staged
  later
  now
  fail
@@ -118,6 +119,7 @@
      body:goal)
     
     (staged g:goal)
+    (time-staged g:goal)
     (later g:goal)
     (now g:goal)
     
@@ -307,7 +309,10 @@
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal g)))
      #'(staged-f var ...)]
-
+    [(_ (time-staged g))
+     #:with (var ...) (free-id-set->list (free-vars #'g))
+     #:with staged-f (syntax-local-lift-expression #'(time (i:ss:generate-staged (var ...) (compile-now-goal g))))
+     #'(staged-f var ...)]
     [(_ (~and stx (~or (later . _) (now . _) (fallback . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
