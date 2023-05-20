@@ -63,4 +63,22 @@
          (later (== q 'branch-1)))]
       [(later (== q 'branch-2))])))
  '(branch-2))
-      
+
+
+(defrel-partial (equalo [a b] [c])
+  #:generator equalo-staged
+  (conde
+    [(== a b) (== c #t)]
+    [(=/= a b) (== c #f)]))
+
+(defrel/generator (equalo-staged rep a b c)
+  (conde
+    [(== a b) (later (== c #t))]
+    [(=/= a b) (later (== c #f))]))
+
+;; Right now this is an error. Should it be? Or should the generator use gather
+;; or fallback if it should not be?
+#;(run 1 (q)
+  (staged
+   (fresh (a b rep)
+     (later (== rep (partial-apply equalo a b))))))
