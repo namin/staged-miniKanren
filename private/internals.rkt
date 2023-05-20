@@ -325,23 +325,6 @@
 ;; Scoped lift capturing
 ;;
 
-(define (ss:capture-later-old g k)
-  (lambda (st-original success-k)
-    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
-           [st-before (state-with-L st-before '())]
-           [st-before (state-with-scope st-before (new-scope))])
-      
-      (define st-after (unique-result (ss:take 2 (lambda () (g st-before initial-k)))))
-
-      (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
-                                                (reverse (state-L st-after)))])
-                          (walk* stx (state-S st-after)))])
-
-        ((k captured-L)
-         st-original
-         success-k)))))
-
-
 (define (ss:capture-later g)
   (lambda (st-original success-k)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
@@ -680,7 +663,7 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
      #:with (var2 ...) (generate-temporaries (attribute var))
      #'(ss:generate-staged-rt
         (ss:fresh (var ...)
-                  (ss:capture-later-old
+                  (ss:capture-later-and-then
                    (ss:fresh ()
                              (ss:atomic (later #`(== #,(data var) var2))) ...
                              goal ...)

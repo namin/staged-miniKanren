@@ -80,7 +80,7 @@
 ;; inner fallback form would fail to terminate. Instead, the computation terminates when
 ;; the outer fallback finds out about the success of branch-2 and triggers fallback-1.
 (defrel/generator (nevero)
-    (nevero))
+  (nevero))
 (test
  (run 1 (q)
    (staged
