@@ -1,12 +1,6 @@
 #lang racket/base
 
-(require "../all.rkt")
-
-(test
-    (run 1 (q)
-      (staged
-       (later (== q 1))))
-  '(1))
+(require "../../all.rkt")
 
 (test
     (length
@@ -367,13 +361,6 @@
        (evalo-staged '(match '(hello) [`(hello ,x) 1] [`(,x) 2]) q)))
   '(2)
   )
-
-(defrel (is-fiveo arg)
-  (== arg 5))
-
-(test
-    (run 1 (q) (staged (later (is-fiveo q))))
-  '(5))
 
 ;; regression test---this raised a problem when reflecting datums to quasiquotes
 ;; because fix-scope special cased `quote` and didn't understand quasiquote.
