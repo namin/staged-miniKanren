@@ -188,9 +188,16 @@
       (ss:drop-one-notify
        (lambda ()
          ((ss:atomic
-           (later #`(conde
-                      #,@(for/list ([result results])
-                           #`[#,@result]))))
+           ;; Generate the simplest code we can to avoid suspends, etc at runtime
+           (later (if (= (length results) 1)
+                      (let ([result (car results)])
+                        (if (= (length result) 1)
+                            (car result)
+                            ;; TODO: would a fresh () be okay here or would it break scope fixing?
+                            #`(conj #,@result)))
+                      #`(conde
+                          #,@(for/list ([result results])
+                               #`[#,@result])))))
           st-original
           success-k))))
 
@@ -201,6 +208,11 @@
      (lambda ()
        ((ss:capture-later g)
         st-original success-k^)))))
+
+(define-syntax conj
+  (syntax-rules ()
+    [(_ g) g]
+    [(_ g0 g ...) (lambda (st) (bind* (g0 st) g ...))]))
 
 (define (ss:disj2 g1 g2)
   (lambda (st success-k)
