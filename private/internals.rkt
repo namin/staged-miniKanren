@@ -256,9 +256,6 @@
         [(ss:final-success v ss-k^)
          (cons v (ss:take (and n (- n 1)) ss-k^))])))
 
-(define (ss:simple-run g)
-  (ss:take 2 (lambda () (g empty-state initial-k))))
-
 (define-syntax ss:project
   (syntax-rules ()
     ((_ (x ...) g g* ...)
@@ -714,26 +711,3 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 
 (define (reset-generated-code!)
   (set! res #f))
-
-
-;;
-;; Staging entry point syntax
-;;
-
-(define-syntax run-staged
-  (syntax-rules ()
-    [(_ n (q0 q ...) g0 g ...)
-     (let ()
-       (printf "running first stage\n")
-       (define f (ss:generate-staged (q0 q ...) g0 g ...))
-       (printf "running second stage\n")
-       (run n (q0 q ...) (f q0 q ...)))]))
-
-(define-syntax run-staged*
-  (syntax-rules ()
-    [(_ (q0 q ...) g0 g ...) (run-staged #f (q0 q ...) g0 g ...)]))
-
-(define-syntax define-staged-relation
-  (syntax-rules ()
-    [(_ (name x0 x ...) g0 g ...)
-     (define name (time (ss:generate-staged (x0 x ...) g0 g ...)))]))
