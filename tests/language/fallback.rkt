@@ -79,13 +79,8 @@
 ;; all the branches to determine if there is nondeterminism! With that strategy, the
 ;; inner fallback form would fail to terminate. Instead, the computation terminates when
 ;; the outer fallback finds out about the success of branch-2 and triggers fallback-1.
-;; TODO: make sure we interleave in this case, because why not
-#;(defrel/generator (nevero)
-    (nevero))
 (defrel/generator (nevero)
-  (conde
-    [fail]
-    [(nevero)]))
+    (nevero))
 (test
  (run 1 (q)
    (staged
@@ -296,7 +291,7 @@
 ;; to notify before even running the partial's generator, and unique-result to require
 ;; that generator to succeed.  TODO: in the future I would like to make it okay for the
 ;; generator to fail.
-(defrel/generator (p-g a b)
+(defrel/generator (p-g rep a b)
   (later (== a b)))
 
 (defrel-partial (p [a] [b])
@@ -307,11 +302,23 @@
  (run 1 (q)
    (staged
     (fallback
-     (later (== q 3))
+     (later (== q 'fallback))
      (conde
-       ((later (== q (partial-apply p 5))))
-       ((later (== q 1)))))))
- '(3))
+       ((fresh (rep)
+          (later (== rep (partial-apply p 5)))
+          (== q 'branch-1)))
+       ((later (== q 'branch-2)))))))
+ '(fallback))
+
+(test
+ (run 1 (q)
+   (staged
+    (fallback
+     (later (== q 'fallback))
+     (fresh (rep)
+       (later (== rep (partial-apply p 'partial-value)))
+       (later (apply-partial rep p q))))))
+ '(partial-value))
 
 ;; Similarly, later conde needs to notify. Currently it does this by
 ;; promising and requring success of everything within, but TODO: I'd like to change this

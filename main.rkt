@@ -148,7 +148,7 @@
      #'r]
     #:rhs
     [#'(lambda (arg ...)
-         (i:relation-body
+         (i:ss:fresh () ;; don't care about avoiding suspends at staging time
            (compile-now-goal g) ...))])
 
   (nonterminal maybe-generator
@@ -319,11 +319,11 @@
   (syntax-parser
     #:literal-sets (goal-literals)
     [(_ (trace id x ...))
-     (error 'compile-now-goal "TODO not supported")
-     #;#'(i:project (x ...)
+     ;(error 'compile-now-goal "TODO not supported")
+     #'(i:ss:project (x ...)
          (begin
            (displayln (list 'id x ...))
-           i:succeed))]
+           (i:ss:atomic (i:== 1 1))))]
     
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)

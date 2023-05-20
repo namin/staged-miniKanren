@@ -90,7 +90,11 @@
      (let ((x (var (new-scope))) ...) ;; always use a new scope, so never use set-var-val!
        ((ss:conj g0 g ...) st success-k)))))
 
-(define (ss:atomic runtime-g)
+(define-syntax-rule
+  (ss:atomic g)
+  (ss:atomic-rt g #'g))
+
+(define (ss:atomic-rt runtime-g stx)
   (lambda (st success-k)
     (let ([res (runtime-g st)])
       (if res
@@ -146,7 +150,7 @@
          (if (not (set-member? tags ignore-tag))
              (ss:drop-one-notify (lambda () (fallback-g st success-k)))
              (ss:notify-success tags (lambda () (have-result v ss-k^))))]
-        [(ss:final-success v ss-k^)
+        [(ss:final-success v2 ss-k^)
          (error 'ss:maybe-fallback
                 "invariant violation in have-result; should get notify-success first")]))
 
@@ -190,25 +194,13 @@
           st-original
           success-k))))
 
+    (define (success-k^ captured-L)
+      (ss:notify-success (seteq) (lambda () (ss:one-result captured-L))))
+    
     (no-success-yet
      (lambda ()
        ((ss:capture-later g)
-        st-original success-k)))))
-
-(define (ss:capture-later g)
-  (lambda (st-original success-k)
-    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
-           [st-before (state-with-L st-before '())]
-           [st-before (state-with-scope st-before (new-scope))])
-      
-      (define (success-k^ st-after)
-        (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
-                                                  (reverse (state-L st-after)))])
-                            (walk* stx (state-S st-after)))])
-          (ss:notify-success (seteq) (lambda () (ss:one-result captured-L)))))
-      
-      (g st-before success-k^))))
-
+        st-original success-k^)))))
 
 (define (ss:disj2 g1 g2)
   (lambda (st success-k)
@@ -255,9 +247,12 @@
 (define (ss:simple-run g)
   (ss:take 2 (lambda () (g empty-state initial-k))))
 
-(define (ss:promise-success g)
-  (lambda (st success-k)
-    (ss:notify-success (seteq) (lambda () (ss:drop-one-notify (lambda () (g st success-k)))))))
+(define-syntax ss:project
+  (syntax-rules ()
+    ((_ (x ...) g g* ...)
+     (lambda (st success-k)
+       (let ((x (walk* x (state-S st))) ...)
+         ((ss:fresh () g g* ...) st success-k))))))
 
 ;;
 ;; Extensions to the data type of terms
@@ -346,6 +341,30 @@
          st-original
          success-k)))))
 
+
+(define (ss:capture-later g)
+  (lambda (st-original success-k)
+    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
+           [st-before (state-with-L st-before '())]
+           [st-before (state-with-scope st-before (new-scope))])
+      
+      (define (success-k^ st-after)
+        (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
+                                                  (reverse (state-L st-after)))])
+                            (walk* stx (state-S st-after)))])
+          (success-k captured-L)))
+      
+      (g st-before success-k^))))
+
+(define (ss:capture-later-and-then g k)
+  (lambda (st success-k)
+    ((ss:capture-later g)
+     st
+     (lambda (v)
+       ;; g will have notified, but then we're having the goal
+       ;; produced by k replace that answer, so drop one.
+       (ss:drop-one-notify (lambda () ((k v) st success-k)))))))
+
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
     (apply append (map (generate-var-constraints st) vars))))
@@ -384,9 +403,8 @@
     [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
-     #'(ss:promise-success
-        (ss:fresh (y-n ...)
-         (ss:capture-later-old
+     #'(ss:fresh (y-n ...)
+         (ss:capture-later-and-then
           (ss:fresh ()
             ;; This is a little subtle. This unification ends up as code in the
             ;; lambda body, but it has to be part of L in the capture to ensure
@@ -400,7 +418,7 @@
                       'rel-staged 'rel-dyn (list x ...)
                       #`(lambda (y-n2 ...)
                           (fresh ()
-                            . #,body)))))))))]))
+                            . #,body))))))))]))
 
 (define-syntax apply-partial
   (syntax-parser
