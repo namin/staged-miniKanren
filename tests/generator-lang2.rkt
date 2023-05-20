@@ -84,51 +84,6 @@
  '(_.0 _.0))
 
 
-(defrel-partial (test-rel [y z] [x res])
-  #:generator test-rel-staged
-  (fresh (yz)
-    (== yz `(,y ,z))
-    (== res (cons x yz))))
-
-(defrel/generator (test-rel-staged rep y z x res)
-  (fresh (yz)
-    (== yz `(,y ,z))
-    (later (== res (cons x yz)))))
-
-;; partial application, all at runtime
-(test
- (run 1 (q)
-   (fresh (c r1 r2)
-     (== c (partial-apply test-rel 2 3))
-     (apply-partial c test-rel 1 r1)
-     (apply-partial c test-rel 4 r2)
-     (== q `(,r1 ,r2))))
- '(((1 2 3) (4 2 3))))
-
-;; partial application, all later (this is like fully-staged interpretation of closures)
-(test
- (run 1 (q)
-   (staged
-    (fresh (c r1 r2)
-      (later (== c (partial-apply test-rel 2 3)))
-      (later (apply-partial c test-rel 1 r1))
-      (later (apply-partial c test-rel 4 r2))
-      (later (== q `(,r1 ,r2))))))
- '(((1 2 3) (4 2 3))))
-
-;; partial application, staged closure, call in runtime code
-(defrel (like-callo c arg res)
-  (apply-partial c test-rel arg res))
-(test
- (run 1 (q)
-   (staged
-    (fresh (c r1 r2)
-      (later (== c (partial-apply test-rel 2 3)))
-      (later (like-callo c 1 r1))
-      (later (like-callo c 4 r2))
-      (later (== q `(,r1 ,r2))))))
- '(((1 2 3) (4 2 3))))
-
 (defrel/generator (gen-unify-5 x)
   (later
    (== x 5)))

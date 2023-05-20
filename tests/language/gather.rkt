@@ -1,8 +1,9 @@
 #lang racket/base
 
-(require "../../all.rkt")
+(require "../../main.rkt"
+         "../../test-check.rkt")
 
-;; when there are two branches that succeed, generate a conde with two branches
+;; When the goal produces two answers, generate a conde with two branches
 (test
  (length
   (run* (q)
@@ -14,7 +15,7 @@
           ((== x 2) (later (== q 'branch-2)))))))))
  2)
 
-;; when gather captures multiple successes, a surrounding fallback should
+;; When gather captures multiple successes, a surrounding fallback should
 ;; not trigger
 (test
  (length
@@ -29,7 +30,7 @@
            ((== x 2) (later (== q 'branch-2))))))))))
  2)
 
-;; when some branches succeed and some fail, the constructed goal has
+;; When some branches succeed and some fail, the constructed goal has
 ;; branches for those that succeeded.
 (test
  (run* (q)
@@ -47,6 +48,8 @@
  '(branch-2 branch-3))
 (generated-code)
 
+;; When the goal produces only one answer, the constructed goal has no branch at all,
+;; just that one goal.
 (test
  (run* (q)
    (staged
@@ -62,6 +65,7 @@
  '(branch-2))
 (generated-code)
 
+;; When the goal fails, the gather fails.
 (test
  (run* (q)
    (staged
@@ -90,11 +94,10 @@
           ((== y 2) (later (== q2 'branch-2)))))))))
  4)
 
+;; Gather notifies surrounding fallbacks to enable fallback in situations
+;; where the goal doesn't terminate.
 (defrel/generator (nevero)
-  (conde
-    [fail]
-    [(nevero)]))
-
+  (nevero))
 (test
  (run* (q)
    (staged
@@ -107,3 +110,4 @@
            ((later (== q 'branch-2)))
            ((nevero)))))))))
  '(fallback))
+
