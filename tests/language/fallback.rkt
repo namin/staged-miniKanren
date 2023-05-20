@@ -224,7 +224,7 @@
  '(only-answer))
 ;; However, the notification must propagate out to trigger outer fallbacks.
 ;;
-;; See success-k^ and the (set-member? tags ignore-tag) checks inside ss:maybe-fallback.
+;; See success-k^ and the (set-member? tags ignore-tag) checks inside ss:fallback.
 
 
 ;; Success of the fallback goal should not cause an outer
@@ -282,7 +282,7 @@
     (fresh (y)
       (r2 2 y outer inner))))
  '((outer-fallback _.0)))
-;; See ss:drop-one-notify and its use in ss:maybe-fallback in the implementation.
+;; See ss:drop-one-notify and its use in ss:fallback in the implementation.
 
 
 

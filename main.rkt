@@ -323,7 +323,7 @@
      #'(i:ss:project (x ...)
          (begin
            (displayln (list 'id x ...))
-           (i:ss:atomic (i:== 1 1))))]
+           (i:ss:atomic i:succeed)))]
     
     [(_ (#%rel-app r:id arg ...))
      (match (symbol-table-ref relation-info #'r)
@@ -347,7 +347,7 @@
      #'(i:ss:conde [(compile-now-goal g) ...] ...)]
     
     [(_ (fallback fb body))
-     #'(i:ss:maybe-fallback
+     #'(i:ss:fallback
         (compile-now-goal fb)
         (compile-now-goal body))]
 
@@ -372,7 +372,7 @@
        [(runtime-rel arg-count)
         (when (not (= arg-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of arguments to relation" #'r))
-        #'(i:ss:atomic (i:lapp r (compile-term arg) ...))]
+        #'(i:lapp r (compile-term arg) ...)]
        [_ (raise-syntax-error #f "generated-code relation application expects relation defined by defrel" #'r)])]
 
 
@@ -393,17 +393,16 @@
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
-       (with-syntax ([rel-dyn #'rel]
-                     [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
-                     [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:ss:atomic
-             (i:lapply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...)))))]
+        (with-syntax ([rel-dyn #'rel]
+                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
+                      [(now-placeholders ...) (make-list now-args-count #'_)])
+          #'(i:lapply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
    
     [(_ (constraint:binary-constraint t1 t2))
-     #'(i:ss:atomic (constraint.l (compile-term t1) (compile-term t2)))]
-    [(_ (constraint:unary-constraint t ))
-     #'(i:ss:atomic (constraint.l (compile-term t)))]
+     #'(constraint.l (compile-term t1) (compile-term t2))]
+    [(_ (constraint:unary-constraint t))
+     #'(constraint.l (compile-term t))]
     
     [(_ (fresh (x:id ...) g ...))
      #'(i:ss:fresh (x ...) (compile-later-goal g) ...)]
@@ -411,7 +410,7 @@
      #'(i:ss:gather
         (i:ss:conde
          [(compile-later-goal g) ...] ...))]
-    [(_ fail) #'(i:ss:atomic i:lfail)]
+    [(_ fail) #'i:lfail]
     
     [(_ (~and stx (~or (fallback . _)
                        (gather . _)
