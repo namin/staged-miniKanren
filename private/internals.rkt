@@ -55,8 +55,42 @@
 ;; StagingSearchResult is one of:
 (struct ss:interleave [ss-k])
 (struct ss:fail [])
+(struct ss:simple-success [v ss-k])
 (struct ss:notify-success [tags ss-k])
 (struct ss:final-success [v ss-k])
+
+(define (ss:split-simple g)
+  (lambda (st success-k)
+    (define (process-split-simple ss-k)
+      (match (ss-k)
+        [(ss:fail)
+         (ss:fail)]
+        [(ss:interleave ss-k^)
+         (ss:interleave (lambda () (process-split-simple ss-k^)))]
+        [(ss:simple-success v ss-k^)
+         (ss:notify-success
+          (seteq)
+          (lambda ()
+            (process-split-simple (lambda () (stream-append (lambda () (success-k v)) ss-k^)))))]
+        [(ss:notify-success tags ss-k^)
+         (ss:notify-success tags (lambda () (process-split-simple ss-k^)))]
+        [(ss:final-success v ss-k^)
+         (ss:final-success v (lambda () (process-split-simple ss-k^)))]))
+    (process-split-simple (lambda () (g st success-k)))))
+
+(define (stream-append ss-k1 ss-k2)
+  (match (ss-k1)
+    [(ss:fail)
+     (ss-k2)]
+    [(ss:interleave ss-k1^)
+     (ss:interleave (lambda () (stream-append ss-k2 ss-k1^)))]
+    [(ss:simple-success v ss-k1^)
+     (ss:simple-success v (lambda () (stream-append ss-k2 ss-k1^)))]
+    [(ss:notify-success tags ss-k1^)
+     (ss:notify-success tags (lambda () (stream-append ss-k1^ ss-k2)))]
+    [(ss:final-success v ss-k1^)
+     (ss:final-success v (lambda () (stream-append ss-k2 ss-k1^)))]))
+
 
 ;; ss-k : StagingSearchResultK
 ;; StagingSearchResultK = () -> StagingSearchResult
@@ -72,10 +106,10 @@
 
 (define (ss:atomic runtime-g)
   (lambda (st success-k)
-    (let ([res (runtime-g st)])
-      (if res
-          (ss:initial-notify-success (lambda () (success-k res)))
-          (ss:fail)))))
+     (let ([res (runtime-g st)])
+       (if res
+           (ss:simple-success res (lambda () (ss:fail)))
+           (ss:fail)))))
 
 (define (ss:initial-notify-success ss-k)
   (ss:notify-success (seteq) ss-k))
@@ -111,7 +145,7 @@
          (ss:interleave (lambda () (one-success-notified ss-k^)))]
         [(ss:notify-success tags ss-k^)
          (if (not (set-member? tags ignore-tag))
-             (ss:drop-one-notify (lambda () (fallback-g st success-k)))
+             (ss:drop-one-notify (lambda () ((ss:split-simple fallback-g) st success-k)))
              (ss:notify-success tags (lambda () (one-success-notified ss-k^))))]
         [(ss:final-success v ss-k^)
          (have-result v ss-k^)]))
@@ -124,7 +158,7 @@
          (ss:interleave (lambda () (have-result v ss-k^)))]
         [(ss:notify-success tags ss-k^)
          (if (not (set-member? tags ignore-tag))
-             (ss:drop-one-notify (lambda () (fallback-g st success-k)))
+             (ss:drop-one-notify (lambda () ((ss:split-simple fallback-g) st success-k)))
              (ss:notify-success tags (lambda () (have-result v ss-k^))))]
         [(ss:final-success v2 ss-k^)
          (error 'ss:fallback
@@ -133,7 +167,7 @@
     (define (success-k^ v)
       (ss:tag-notify ignore-tag (lambda () (success-k v))))
     
-    (no-success-yet (lambda () (g st success-k^)))))
+    (no-success-yet (lambda () ((ss:split-simple g) st success-k^)))))
 
 ;; like ss-k, except that `tag` is added to the tags of every raised
 ;; ss:notify-success.
@@ -189,15 +223,16 @@
       (ss:drop-one-notify
        (lambda ()
          (;; Generate the simplest code we can to avoid suspends, etc at runtime
-          (ss:later (if (= (length results) 1)
-                        (let ([result (car results)])
-                          (if (= (length result) 1)
-                              (car result)
-                              ;; TODO: would a fresh () be okay here or would it break scope fixing?
-                              #`(conj #,@result)))
-                        #`(conde
-                            #,@(for/list ([result results])
-                                 #`[#,@result]))))
+          (ss:split-simple
+           (ss:later (if (= (length results) 1)
+                         (let ([result (car results)])
+                           (if (= (length result) 1)
+                               (car result)
+                               ;; TODO: would a fresh () be okay here or would it break scope fixing?
+                               #`(conj #,@result)))
+                         #`(conde
+                             #,@(for/list ([result results])
+                                  #`[#,@result])))))
           st-original
           success-k))))
 
@@ -234,26 +269,28 @@
 (define (ss:conj2 g1 g2)
   (lambda (st success-k)
     (define tag (gensym))
-    (ss:filter-notify tag
+
+    (define (conj-process-stream ss-k)
+      (match (ss-k)
+        [(ss:fail)
+         (ss:fail)]
+        [(ss:interleave ss-k^)
+         (ss:interleave (lambda () (conj-process-stream ss-k^)))]
+        [(ss:simple-success v ss-k^)
+         (stream-append (lambda () (g2 v success-k)) (lambda () (conj-process-stream ss-k^)))]
+        [(ss:notify-success tags ss-k^)
+         (if (set-member? tags tag)
+             (ss:notify-success tags (lambda () (conj-process-stream ss-k^)))
+             (conj-process-stream ss-k^))]
+        [(ss:final-success v ss-k^)
+         (ss:final-success v (lambda () (conj-process-stream ss-k^)))]))
+
+    (define (conj-success-k^ st)
+      (ss:tag-notify tag (lambda () ((ss:split-simple g2) st success-k))))
+    
+    (conj-process-stream
      (lambda ()
-       (g1 st (lambda (st)
-                (ss:tag-notify tag (lambda () (g2 st success-k)))))))))
-
-;; like ss-k, except that ss:notify-success is only propagated when its tags
-;; include `tag`.
-(define (ss:filter-notify tag ss-k)
-  (match (ss-k)
-    [(ss:fail)
-     (ss:fail)]
-    [(ss:interleave ss-k^)
-     (ss:interleave (lambda () (ss:filter-notify tag ss-k^)))]
-    [(ss:notify-success tags ss-k^)
-     (if (set-member? tags tag)
-         (ss:notify-success tags (lambda () (ss:filter-notify tag ss-k^)))
-         (ss:filter-notify tag ss-k^))]
-    [(ss:final-success v ss-k^)
-     (ss:final-success v (lambda () (ss:filter-notify tag ss-k^)))]))
-
+       (g1 st conj-success-k^)))))
 
 (define-syntax-rule
   (ss:conde (g ...) ...)
@@ -272,17 +309,7 @@
 
 (define (ss:disj2 g1 g2)
   (lambda (st success-k)
-    (define (node ss-k1 ss-k2)
-      (match (ss-k1)
-        [(ss:fail)
-         (ss-k2)]
-        [(ss:interleave ss-k1^)
-         (ss:interleave (lambda () (node ss-k2 ss-k1^)))]
-        [(ss:notify-success tags ss-k1^)
-         (ss:notify-success tags (lambda () (node ss-k1^ ss-k2)))]
-        [(ss:final-success v ss-k1^)
-         (ss:final-success v (lambda () (node ss-k2 ss-k1^)))]))
-    (node (lambda () (g1 st success-k)) (lambda () (g2 st success-k)))))
+    (stream-append (lambda () (g1 st success-k)) (lambda () (g2 st success-k)))))
 
 
 (define (ss:take n ss-k)
@@ -354,7 +381,7 @@
                             (walk* stx (state-S st-after)))])
           (success-k captured-L)))
       
-      (g st-before success-k^))))
+      ((ss:split-simple g) st-before success-k^))))
 
 (define (ss:capture-later-and-then g k)
   (lambda (st success-k)
@@ -363,7 +390,7 @@
      (lambda (v)
        ;; g will have notified, but then we're having the goal
        ;; produced by k replace that answer, so drop one.
-       (ss:drop-one-notify (lambda () ((k v) st success-k)))))))
+       (ss:drop-one-notify (lambda () ((ss:split-simple (k v)) st success-k)))))))
 
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
@@ -405,13 +432,13 @@
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
      #'(ss:fresh (y-n ...)
          (ss:capture-later-and-then
-          (ss:fresh ()
-            ;; This is a little subtle. This unification ends up as code in the
-            ;; lambda body, but it has to be part of L in the capture to ensure
-            ;; that substitution extensions to `y-n` are captured in the walk.
-            (ss:later #`(== #,(data y-n) y-n2))
-            ...
-            (rel-staged rep x ... y-n ...))
+           (ss:fresh ()
+                     ;; This is a little subtle. This unification ends up as code in the
+                     ;; lambda body, but it has to be part of L in the capture to ensure
+                     ;; that substitution extensions to `y-n` are captured in the walk.
+                     (ss:later #`(== #,(data y-n) y-n2))
+                     ...
+                     (rel-staged rep x ... y-n ...))
           (lambda (body)
             (l== rep (apply-rep
                       'rel-staged 'rel-dyn (list x ...)
