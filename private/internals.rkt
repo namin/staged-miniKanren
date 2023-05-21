@@ -59,7 +59,7 @@
 (struct ss:notify-success [tags ss-k])
 (struct ss:final-success [v ss-k])
 
-(define (ss:split-simple g)
+(define (ss:split-simple-success g)
   (lambda (st success-k)
     (define (process-split-simple ss-k)
       (match (ss-k)
@@ -145,7 +145,7 @@
          (ss:interleave (lambda () (one-success-notified ss-k^)))]
         [(ss:notify-success tags ss-k^)
          (if (not (set-member? tags ignore-tag))
-             (ss:drop-one-notify (lambda () ((ss:split-simple fallback-g) st success-k)))
+             (do-fallback)
              (ss:notify-success tags (lambda () (one-success-notified ss-k^))))]
         [(ss:final-success v ss-k^)
          (have-result v ss-k^)]))
@@ -158,16 +158,19 @@
          (ss:interleave (lambda () (have-result v ss-k^)))]
         [(ss:notify-success tags ss-k^)
          (if (not (set-member? tags ignore-tag))
-             (ss:drop-one-notify (lambda () ((ss:split-simple fallback-g) st success-k)))
+             (do-fallback)
              (ss:notify-success tags (lambda () (have-result v ss-k^))))]
         [(ss:final-success v2 ss-k^)
          (error 'ss:fallback
                 "invariant violation in have-result; should get notify-success first")]))
 
+    (define (do-fallback)
+      (ss:drop-one-notify (lambda () ((ss:split-simple-success fallback-g) st success-k))))
+    
     (define (success-k^ v)
       (ss:tag-notify ignore-tag (lambda () (success-k v))))
     
-    (no-success-yet (lambda () ((ss:split-simple g) st success-k^)))))
+    (no-success-yet (lambda () ((ss:split-simple-success g) st success-k^)))))
 
 ;; like ss-k, except that `tag` is added to the tags of every raised
 ;; ss:notify-success.
@@ -223,7 +226,7 @@
       (ss:drop-one-notify
        (lambda ()
          (;; Generate the simplest code we can to avoid suspends, etc at runtime
-          (ss:split-simple
+          (ss:split-simple-success
            (ss:later (if (= (length results) 1)
                          (let ([result (car results)])
                            (if (= (length result) 1)
@@ -286,7 +289,7 @@
          (ss:final-success v (lambda () (conj-process-stream ss-k^)))]))
 
     (define (conj-success-k^ st)
-      (ss:tag-notify tag (lambda () ((ss:split-simple g2) st success-k))))
+      (ss:tag-notify tag (lambda () ((ss:split-simple-success g2) st success-k))))
     
     (conj-process-stream
      (lambda ()
@@ -381,7 +384,7 @@
                             (walk* stx (state-S st-after)))])
           (success-k captured-L)))
       
-      ((ss:split-simple g) st-before success-k^))))
+      ((ss:split-simple-success g) st-before success-k^))))
 
 (define (ss:capture-later-and-then g k)
   (lambda (st success-k)
@@ -390,7 +393,7 @@
      (lambda (v)
        ;; g will have notified, but then we're having the goal
        ;; produced by k replace that answer, so drop one.
-       (ss:drop-one-notify (lambda () ((ss:split-simple (k v)) st success-k)))))))
+       (ss:drop-one-notify (lambda () ((ss:split-simple-success (k v)) st success-k)))))))
 
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
