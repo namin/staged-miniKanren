@@ -111,3 +111,20 @@
            ((nevero)))))))))
  '(fallback))
 
+
+(todo "here we fail to realize we should fall back!"
+ (run* (q)
+   (staged
+    (fallback
+     (later (== q 'fallback))
+     (conde
+       ((== q 'branch-1))
+       ((gather
+         (conde
+           ((later (== q 'branch-2)))
+           ((nevero))))
+        (== 1 1))))))
+ '(fallback))
+
+
+
