@@ -387,10 +387,11 @@
            [st-before (state-with-L st-before '())]
            [st-before (state-with-S st-before (new-subst-with-empty-exts (state-S st-before)))]
            [st-before (state-with-scope st-before (new-scope))])
+      (define initial-var-idx (var-idx (var 'capture-later)))
       
       (define (success-k^ st-after)
         (let ([captured-L (append (walk*-L (generate-constraints st-after) st-after)
-                                  (generate-subst-exts st-after)
+                                  (generate-subst-exts st-after initial-var-idx)
                                   (walk*-L (reverse (state-L st-after)) st-after))])
           (success-k captured-L)))
       
@@ -405,11 +406,12 @@
   (subst (subst-map S) (subst-scope S) '()))
 
 (define generate-subst-exts
-  (lambda (st)
+  (lambda (st initial-var-idx)
     (let* ((S (state-S st))
            (exts (subst-exts S)))
-      (map (lambda (b) #`(== #,(data (car b)) #,(walk* (data (cdr b)) (state-S st))))
-           (reverse exts)))))
+      (for/list ([b (reverse exts)]
+                 #:when (<= (var-idx (car b)) initial-var-idx))
+        #`(== #,(data (car b)) #,(walk* (data (cdr b)) (state-S st)))))))
 
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
