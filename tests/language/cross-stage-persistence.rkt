@@ -31,6 +31,14 @@
           (later (== q 2))])))))
  '(1))
 
+;; Regression test: assignment to a previously-constrained variable results in an
+;; empty constraint record. Make sure that constraint reflection doesn't break.
+(test (run* (q)
+        (staged
+         (fresh (x )
+           (symbolo x) (== x 'a) (later (== x q)))))
+      '(a))
+
 ;; However, when a constraint applies to a variable that is not relevant to runtime,
 ;; we'd like to avoid reflecting runtime code for it.
 ;;
