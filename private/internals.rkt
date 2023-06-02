@@ -405,7 +405,7 @@
   (lambda (v)
     (let ([c (lookup-c st v)])
       (if (eq? c empty-c)
-          st
+          '()
           (append
            (if (c-T c)
                (let ((cid (hash-ref (hasheq 'sym #'symbolo 'num #'numbero 'str #'stringo)
