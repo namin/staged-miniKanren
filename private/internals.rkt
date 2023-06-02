@@ -372,20 +372,6 @@
 ;; Scoped lift capturing
 ;;
 
-(define (ss:capture-later g)
-  (lambda (st-original success-k)
-    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
-           [st-before (state-with-L st-before '())]
-           [st-before (state-with-scope st-before (new-scope))])
-      
-      (define (success-k^ st-after)
-        (let ([captured-L (for/list ([stx (append (generate-constraints st-after) ;; TODO: changed order here, backport?
-                                                  (reverse (state-L st-after)))])
-                            (walk* stx (state-S st-after)))])
-          (success-k captured-L)))
-      
-      ((ss:split-simple-success g) st-before success-k^))))
-
 (define (ss:capture-later-and-then g k)
   (lambda (st success-k)
     ((ss:capture-later g)
@@ -394,6 +380,36 @@
        ;; g will have notified, but then we're having the goal
        ;; produced by k replace that answer, so drop one.
        (ss:drop-one-notify (lambda () ((ss:split-simple-success (k v)) st success-k)))))))
+
+(define (ss:capture-later g)
+  (lambda (st-original success-k)
+    (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
+           [st-before (state-with-L st-before '())]
+           [st-before (state-with-S st-before (new-subst-with-empty-exts (state-S st-before)))]
+           [st-before (state-with-scope st-before (new-scope))])
+      
+      (define (success-k^ st-after)
+        (let ([captured-L (append (walk*-L (generate-constraints st-after) st-after)
+                                  (generate-subst-exts st-after)
+                                  (walk*-L (reverse (state-L st-after)) st-after))])
+          (success-k captured-L)))
+      
+      ((ss:split-simple-success g) st-before success-k^))))
+
+
+(define (walk*-L L st)
+  (for/list ([stx L])
+    (walk* stx (state-S st))))
+
+(define (new-subst-with-empty-exts S)
+  (subst (subst-map S) (subst-scope S) '()))
+
+(define generate-subst-exts
+  (lambda (st)
+    (let* ((S (state-S st))
+           (exts (subst-exts S)))
+      (map (lambda (b) #`(== #,(data (car b)) #,(walk* (data (cdr b)) (state-S st))))
+           (reverse exts)))))
 
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
@@ -720,7 +736,7 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 
 
 (define (assign-vars v)
-  (let ((R (reify-S v (subst empty-subst-map nonlocal-scope))))
+  (let ((R (reify-S v (subst empty-subst-map nonlocal-scope '()))))
     (walk* v R)))
 
 (define (ss:generate-staged-rt goal var-list)

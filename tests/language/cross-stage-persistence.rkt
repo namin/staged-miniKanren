@@ -70,24 +70,20 @@
 
 ;; Like the above, but illustrates the substitution extension problem
 ;; without the other bug.
-(todo "now in later conde bug"
-      (run 2 (q)
+(test (run 2 (q)
         (staged
          (fresh (x y)
-           (== q x)
+           (later (== q x))
            (gather
             (conde
               [(== x 1) (later (== y 1))]
               [(== x 2) (later (== y 1))])))))
       '(1 2))
 
-;; TODO: this one is even harder! There's no way to tell at the end of capture-later
+
+;; This one is even harder! There's no way to tell at the end of capture-later
 ;; that the value of x will end up being relevant to the later stage.
-;;
-;; I think we have to reflect all store / substitution extensions and then do dead
-;; code elimination on the final program.
-(todo "now in later conde bug"
-      (run 2 (q)
+(test (run 2 (q)
         (staged
          (fresh (x y)
            (gather
