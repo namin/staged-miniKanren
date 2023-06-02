@@ -83,6 +83,11 @@
 
 ;; This one is even harder! There's no way to tell at the end of capture-later
 ;; that the value of x will end up being relevant to the later stage.
+;;
+;; This works now because we save extensions for all variables created before
+;; the capture-later, regardless of whether they have yet been shown to be relevant
+;; to runtime. That may in general generate constraints that aren't actually needed
+;; at runtime, but in practice it seems to work okay.
 (test (run 2 (q)
         (staged
          (fresh (x y)
