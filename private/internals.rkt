@@ -47,6 +47,15 @@
 (define (walk*-syntax stx S)
   (map-syntax-with-data (lambda (v) (data (walk* v S))) stx))
 
+;; modified version of == that adds extensions to subst-exts
+(define (==/staging-time u v)
+  (lambda (st)
+    (let-values (((S^ added) (unify u v (state-S st))))
+      (if S^
+          (let* ((new-exts (append added (subst-exts S^)))
+                 (S^ (subst (subst-map S^) (subst-scope S^) new-exts)))
+            (and-foldl update-constraints (state-with-S st S^) added))
+          #f))))
 
 ;;
 ;; Staging-time search

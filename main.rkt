@@ -336,6 +336,8 @@
     [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
      (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]
 
+    [(_ (== t1 t2))
+     #'(i:ss:atomic (i:==/staging-time (compile-term t1) (compile-term t2)))]
     [(_ (constraint:binary-constraint t1 t2))
      #'(i:ss:atomic (constraint.c (compile-term t1) (compile-term t2)))]
     [(_ (constraint:unary-constraint t))
