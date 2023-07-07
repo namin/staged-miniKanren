@@ -24,6 +24,7 @@
  trace
 
  defrel
+ defrel/multistage/explicit
  defrel-partial/multistage/explicit
  defrel/generator
  defrel/fallback
@@ -62,10 +63,11 @@
   (define (check-simple-rel name use-stage use-args)
     (match (symbol-table-ref relation-info name)
       [(simple-rel def-stage def-arg-count)
-       (when (not (eq? def-stage use-stage)) ;; TODO: deal with multistage!
-         (raise-syntax-error #f "def stage should match use stage for relation" name def-stage use-stage))
+       (unless (or (eq? def-stage 'multistage) (eq? def-stage use-stage))
+         (raise-syntax-error #f (format "def stage ~a should match use stage ~a for relation" def-stage use-stage) name))
        (when (not (= def-arg-count (length use-args)))
-         (raise-syntax-error #f "wrong number of arguments to relation" name))]
+         (raise-syntax-error #f "wrong number of arguments to relation" name))
+       def-stage]
        [_ (raise-syntax-error #f "relation application expects relation" name)]))
   )
 
@@ -163,6 +165,22 @@
     [#'(lambda (arg ...)
          (i:ss:fresh () ;; don't care about avoiding suspends at staging time
            (compile-now-goal g) ...))])
+
+  (host-interface/definition
+   (defrel/multistage/explicit (r:relation-name arg:term-var ...)
+     #:runtime g:goal
+     #:staging-time gen:goal)
+   #:binding [(export r) {(bind arg) g gen}]
+   #:lhs
+   [(register-simple-rel! #'r 'multistage (attribute arg))
+    #'r]
+   #:rhs
+   [#'(i:multistage-rel-value
+       (lambda (arg ...)
+         (compile-runtime-goal g))
+       (lambda (arg ...)
+         (compile-now-goal gen)))])
+
 
   (host-interface/definition
     (defrel-partial/multistage/explicit
@@ -274,8 +292,10 @@
            i:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
-     (check-simple-rel #'r 'runtime (attribute arg))
-     #'(r (compile-term arg) ...)]
+     (let ((def-stage (check-simple-rel #'r 'runtime (attribute arg))))
+       (if (eq? def-stage 'multistage)
+           #'((i:multistage-rel-value-runtime r) (compile-term arg) ...)
+           #'(r (compile-term arg) ...)))]
     
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
@@ -330,8 +350,10 @@
            (i:ss:atomic i:succeed)))]
     
     [(_ (#%rel-app r:id arg ...))
-     (check-simple-rel #'r 'staging-time (attribute arg))
-     #'(r (compile-term arg) ...)]
+     (let ((def-stage (check-simple-rel #'r 'staging-time (attribute arg))))
+       (if (eq? def-stage 'multistage)
+           #'((i:multistage-rel-value-staging-time r) (compile-term arg) ...)
+           #'(r (compile-term arg) ...)))]
 
     [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
      (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]

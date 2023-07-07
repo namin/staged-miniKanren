@@ -5,6 +5,7 @@
 (require "language/fallback.rkt")
 (require "language/gather.rkt")
 (require "language/cross-stage-persistence.rkt")
+(require "language/multistage.rkt")
 
 (require "internals/fix-scope.rkt")
 
