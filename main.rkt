@@ -49,12 +49,26 @@
          (prefix-in i:  "private/internals.rkt"))
 
 (begin-for-syntax
-  (struct runtime-rel [args-count] #:prefab)
-  (struct generator-rel [args-count] #:prefab)
+  ;; stage is one of: runtime, staging-time, multistage
+  (struct simple-rel [stage args-count] #:prefab)
+  ;;(struct partial-rel [stage args1-count args2-count] #:prefab)
   (struct partial-rel [now-args-count later-args-count] #:prefab)
 
   (define-persistent-symbol-table relation-info)
-  (define-persistent-symbol-table defrel-partial-generator))
+  (define-persistent-symbol-table defrel-partial-generator)
+
+  (define (register-simple-rel! name stage args)
+    (symbol-table-set! relation-info name (simple-rel stage (length args))))
+
+  (define (check-simple-rel name use-stage use-args)
+    (match (symbol-table-ref relation-info name)
+      [(simple-rel def-stage def-arg-count)
+       (when (not (eq? def-stage use-stage)) ;; TODO: deal with multistage!
+         (raise-syntax-error #f "def stage should match use stage for relation" name def-stage use-stage))
+       (when (not (= def-arg-count (length use-args)))
+         (raise-syntax-error #f "wrong number of arguments to relation" name))]
+       [_ (raise-syntax-error #f "relation application expects relation" name)]))
+  )
 
 (syntax-spec
   (binding-class term-var)
@@ -132,7 +146,7 @@
       g:goal ...+)
     #:binding [(export r) {(bind arg) g}]
     #:lhs
-    [(symbol-table-set! relation-info #'r (runtime-rel (length (attribute arg))))
+    [(register-simple-rel! #'r 'runtime (attribute arg))
      #'r]
     #:rhs
     [#'(lambda (arg ...)
@@ -144,7 +158,7 @@
       g:goal ...+)
     #:binding [(export r) {(bind arg) g}]
     #:lhs
-    [(symbol-table-set! relation-info #'r (generator-rel (length (attribute arg))))
+    [(register-simple-rel! #'r 'staging-time (attribute arg))
      #'r]
     #:rhs
     [#'(lambda (arg ...)
@@ -262,12 +276,8 @@
            i:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
-     (match (symbol-table-ref relation-info #'r)
-       [(runtime-rel arg-count)
-        (when (not (= arg-count (length (attribute arg))))
-          (raise-syntax-error #f "wrong number of arguments to relation" #'r))
-        #'(r (compile-term arg) ...)]
-       [_ (raise-syntax-error #f "runtime relation application expects relation defined by defrel" #'r)])]
+     (check-simple-rel #'r 'runtime (attribute arg))
+     #'(r (compile-term arg) ...)]
     
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
@@ -326,12 +336,8 @@
            (i:ss:atomic i:succeed)))]
     
     [(_ (#%rel-app r:id arg ...))
-     (match (symbol-table-ref relation-info #'r)
-       [(generator-rel arg-count)
-        (when (not (= arg-count (length (attribute arg))))
-          (raise-syntax-error #f "wrong number of arguments to relation" #'r))
-        #'(r (compile-term arg) ...)]
-       [_ (raise-syntax-error #f "generator relation application expects relation defined by defrel/generator" #'r)])]
+     (check-simple-rel #'r 'staging-time (attribute arg))
+     #'(r (compile-term arg) ...)]
 
     [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
      (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]
@@ -370,13 +376,8 @@
   (syntax-parser
     #:literal-sets (goal-literals)
     [(_ (#%rel-app r:id arg ...))
-     (match (symbol-table-ref relation-info #'r)
-       [(runtime-rel arg-count)
-        (when (not (= arg-count (length (attribute arg))))
-          (raise-syntax-error #f "wrong number of arguments to relation" #'r))
-        #'(i:lapp r (compile-term arg) ...)]
-       [_ (raise-syntax-error #f "generated-code relation application expects relation defined by defrel" #'r)])]
-
+     (check-simple-rel #'r 'runtime (attribute arg))
+     #'(i:lapp r (compile-term arg) ...)]
 
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
