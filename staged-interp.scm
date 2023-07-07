@@ -5,7 +5,17 @@
 (defrel (not-tago/gen v)
   (=/= 'struct v))
 
-(defrel/generator (eval-apply-rec-staged rep f x* e env a* res)
+(defrel-partial/multistage/explicit (eval-apply-rec rep [f x* e env] [a* res])
+  #:runtime
+  (fresh (rep env^ env-self)
+    (== rep (partial-apply eval-apply-rec f x* e env))
+    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
+    (conde
+      ((symbolo x*)
+       (== env^ `((,x* . (val . ,a*)) . ,env-self)))
+      ((u-ext-env*o x* a* env-self env^)))
+    (u-eval-expo e env^ res))
+  #:staging-time
   (fresh (env^ env-self)
     ;; TODO: should we do something like this?
     ;; (== rep (partial-apply eval-apply-rec f x* e env))
@@ -18,18 +28,15 @@
        (ext-env*o x* a* env-self env^)))
     (eval-expo e env^ res)))
 
-(defrel-partial (eval-apply-rec [f x* e env] [a* res])
-  #:generator eval-apply-rec-staged
-  (fresh (rep env^ env-self)
-    (== rep (partial-apply eval-apply-rec f x* e env))
-    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
+(defrel-partial/multistage/explicit (eval-apply rep [x* body env] [a* val])
+  #:runtime
+  (fresh (env^)
     (conde
       ((symbolo x*)
-       (== env^ `((,x* . (val . ,a*)) . ,env-self)))
-      ((u-ext-env*o x* a* env-self env^)))
-    (u-eval-expo e env^ res)))
-
-(defrel/generator (eval-apply-staged rep x* body env a* val)
+       (== `((,x* . (val . ,a*)) . ,env) env^))
+      ((u-ext-env*o x* a* env env^)))
+    (u-eval-expo body env^ val))
+  #:staging-time
   (fresh (env^)
     ;; TODO: should be condg-ified?
     (conde
@@ -38,15 +45,6 @@
       ((list-of-symbolso x*)
        (ext-env*o x* a* env env^)))
     (eval-expo body env^ val)))
-
-(defrel-partial (eval-apply [x* body env] [a* val])
-  #:generator eval-apply-staged
-  (fresh (env^)
-    (conde
-      ((symbolo x*)
-       (== `((,x* . (val . ,a*)) . ,env) env^))
-      ((u-ext-env*o x* a* env env^)))
-    (u-eval-expo body env^ val)))
 
 (defrel (callo proc val a*)
   (conde

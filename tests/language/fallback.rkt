@@ -291,12 +291,11 @@
 ;; to notify before even running the partial's generator, and unique-result to require
 ;; that generator to succeed.  TODO: in the future I would like to make it okay for the
 ;; generator to fail.
-(defrel/generator (p-g rep a b)
+(defrel-partial/multistage/explicit (p rep [a] [b])
+  #:runtime
+  (== a b)
+  #:staging-time
   (later (== a b)))
-
-(defrel-partial (p [a] [b])
-  #:generator p-g
-  (== a b))
 
 (test
  (run 1 (q)

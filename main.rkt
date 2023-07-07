@@ -24,7 +24,7 @@
  trace
 
  defrel
- defrel-partial
+ defrel-partial/multistage/explicit
  defrel/generator
  defrel/fallback
  run
@@ -51,8 +51,7 @@
 (begin-for-syntax
   ;; stage is one of: runtime, staging-time, multistage
   (struct simple-rel [stage args-count] #:prefab)
-  ;;(struct partial-rel [stage args1-count args2-count] #:prefab)
-  (struct partial-rel [now-args-count later-args-count] #:prefab)
+  (struct partial-rel [stage args1-count args2-count] #:prefab)
 
   (define-persistent-symbol-table relation-info)
   (define-persistent-symbol-table defrel-partial-generator)
@@ -165,26 +164,25 @@
          (i:ss:fresh () ;; don't care about avoiding suspends at staging time
            (compile-now-goal g) ...))])
 
-  (nonterminal maybe-generator
-    id:relation-name
-    (~datum #f))
-  
   (host-interface/definition
-    (defrel-partial
-      (r:relation-name [now-arg:term-var ...+] [later-arg:term-var ...+])
-      #:generator gen:maybe-generator
-      g:goal ...+)
-    #:binding [(export r) {(bind now-arg later-arg) g}]
+    (defrel-partial/multistage/explicit
+      (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
+      #:runtime g:goal
+      #:staging-time gen:goal)
+    #:binding [(export r) {(bind rep now-arg later-arg) g gen}]
     #:lhs
     [(symbol-table-set!
       relation-info #'r
-      (partial-rel (length (attribute now-arg)) (length (attribute later-arg))))
-     (symbol-table-set! defrel-partial-generator #'r (syntax-parse #'gen [#f #f] [g:id #'g]))
+      (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
      #'r]
     #:rhs
-    [#'(lambda (now-arg ... later-arg ...)
-         (i:relation-body
-           (compile-runtime-goal g) ...))])
+    [#'(i:partial-rel-value
+        (lambda (rep now-arg ... later-arg ...)
+          (i:relation-body
+           (compile-runtime-goal g)))
+        (lambda (rep now-arg ... later-arg ...)
+          (i:relation-body
+           (compile-now-goal gen))))])
 
   (host-interface/expression
     (run n:racket-expr (q:term-var ...+) g:goal ...+)
@@ -281,25 +279,21 @@
     
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
-       [(partial-rel now-args-count later-args-count)
+       [(partial-rel stage now-args-count later-args-count)
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
-        (with-syntax ([rel-dyn #'rel]
-                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
-                      [(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(i:partial-apply v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+        (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)])
+          #'(i:partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (apply-partial v:id rel:id arg ...))
      (match (symbol-table-ref relation-info #'rel)
-       [(partial-rel now-args-count later-args-count)
+       [(partial-rel stage now-args-count later-args-count)
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
-       (with-syntax ([rel-dyn #'rel]
-                     [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
-                     [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:apply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+       (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)])
+          #'(i:apply-partial v (rel (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
     
     [(_ (constraint:binary-constraint t1 t2))
@@ -381,25 +375,21 @@
 
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
-       [(partial-rel now-args-count later-args-count)
+       [(partial-rel stage now-args-count later-args-count)
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
-        (with-syntax ([rel-dyn #'rel]
-                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
-                      [(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(i:ss:lpartial-apply v ((rel-staged rel-dyn) ((compile-term arg) ...) (later-placeholders ...))))]
+        (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)])
+          #'(i:ss:lpartial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (apply-partial v:id rel:id arg ...))
      (match (symbol-table-ref relation-info #'rel)
-       [(partial-rel now-args-count later-args-count)
+       [(partial-rel stage now-args-count later-args-count)
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
-        (with-syntax ([rel-dyn #'rel]
-                      [rel-staged (compile-reference (symbol-table-ref defrel-partial-generator #'rel))]
-                      [(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:lapply-partial v ((rel-staged rel-dyn) (now-placeholders ...) ((compile-term arg) ...))))]
+        (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)])
+          #'(i:lapply-partial v (rel (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
    
     [(_ (constraint:binary-constraint t1 t2))

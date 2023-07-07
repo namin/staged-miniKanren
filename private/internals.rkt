@@ -447,17 +447,19 @@
 ;; Partial relation application
 ;;
 
+(struct partial-rel-value [runtime staging-time] #:prefab)
+
 (define-syntax partial-apply
   (syntax-parser
-    [(_ rep ((rel-staged rel-dyn) (x ...) ((~literal _) ...)))
-     #'(partial-apply-rt rep 'rel-staged 'rel-dyn (list x ...))]))
+    [(_ rep (rel (x ...) ((~literal _) ...)))
+     #'(partial-apply-rt rep 'rel (list x ...))]))
 
-(define (partial-apply-rt rep rel-staged rel-dyn args)
-  (== rep (apply-rep rel-staged rel-dyn args #f)))
+(define (partial-apply-rt rep rel args)
+  (== rep (apply-rep rel rel args #f))) ;; TODO: maybe have just one rel
 
 (define-syntax ss:lpartial-apply
   (syntax-parser
-    [(_ rep ((rel-staged rel-dyn) (x ...) ((~and y (~literal _)) ...)))     
+    [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
      #'(ss:fresh (y-n ...)
@@ -468,35 +470,35 @@
                      ;; that substitution extensions to `y-n` are captured in the walk.
                      (ss:later #`(== #,(data y-n) y-n2))
                      ...
-                     (rel-staged rep x ... y-n ...))
+                     ((partial-rel-value-staging-time rel) rep x ... y-n ...))
           (lambda (body)
             (l== rep (apply-rep
-                      'rel-staged 'rel-dyn (list x ...)
+                      'rel 'rel (list x ...)
                       #`(lambda (y-n2 ...)
                           (fresh ()
                             . #,body)))))))]))
 
 (define-syntax apply-partial
   (syntax-parser
-    [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))     
+    [(_ rep (rel ((~and x (~literal _)) ...) (y ...)))     
      #:with (x-n ...) (generate-temporaries #'(x ...))
      #'(fresh (proc x-n ...)
          ;; Note: the proc position doesn't actually unify, because a dynamic
          ;; and staged rep should be unifiable but one will have #f and the other
          ;; a procedure. So we have to walk the rep and check its field.
-         (== rep (apply-rep 'rel-staged 'rel-dyn (list x-n ...) proc))
+         (== rep (apply-rep 'rel 'rel (list x-n ...) proc))
          (lambda (st)
            (let* ([rep (walk rep (state-S st))]
                   [proc (apply-rep-proc rep)])
              ((if (procedure? proc)
                   (proc y ...)
-                  (rel-dyn x-n ... y ...))
+                  ((partial-rel-value-runtime rel) rep x-n ... y ...))
               st))))]))
 
 (define-syntax lapply-partial
   (syntax-parser
-    [(_ rep ((rel-staged rel-dyn) ((~and x (~literal _)) ...) (y ...)))
-     #'(ss:later #`(apply-partial #,(data rep) ((rel-staged rel-dyn) (x ...) (#,(data y) ...))))]))
+    [(_ rep (rel ((~and x (~literal _)) ...) (y ...)))
+     #'(ss:later #`(apply-partial #,(data rep) (rel (x ...) (#,(data y) ...))))]))
 
 ;;
 ;; Reification

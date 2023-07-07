@@ -3,14 +3,13 @@
 (require "../../main.rkt"
          "../../test-check.rkt")
 
-(defrel-partial (test-rel [y z] [x res])
-  #:generator test-rel-staged
+(defrel-partial/multistage/explicit (test-rel rep [y z] [x res])
+  #:runtime
   (fresh (yz)
     (== y z)
     (== yz `(,y ,z))
-    (== res (cons x yz))))
-
-(defrel/generator (test-rel-staged rep y z x res)
+    (== res (cons x yz)))
+  #:staging-time
   (fresh (yz)
     (== y z)
     (== yz `(,y ,z))
@@ -65,13 +64,12 @@
  '(branch-2))
 
 
-(defrel-partial (equalo [a b] [c])
-  #:generator equalo-staged
+(defrel-partial/multistage/explicit (equalo rep [a b] [c])
+  #:runtime
   (conde
     [(== a b) (== c #t)]
-    [(=/= a b) (== c #f)]))
-
-(defrel/generator (equalo-staged rep a b c)
+    [(=/= a b) (== c #f)])
+  #:staging-time
   (conde
     [(== a b) (later (== c #t))]
     [(=/= a b) (later (== c #f))]))
