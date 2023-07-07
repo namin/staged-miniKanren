@@ -176,7 +176,7 @@
       (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
      #'r]
     #:rhs
-    [#'(i:partial-rel-value
+    [#'(i:multistage-rel-value
         (lambda (rep now-arg ... later-arg ...)
           (i:relation-body
            (compile-runtime-goal g)))
