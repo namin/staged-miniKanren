@@ -166,7 +166,7 @@
      [(== x y) (== `(val . ,v) b)]
      [(=/= x y) (lookupo x rest v)])))
 
-(defrel/generator (match-lookupo/gen x env t)
+(defrel/multistage (match-lookupo/gen x env t)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
@@ -175,7 +175,7 @@
       ((=/= x y)
        (match-lookupo/gen x rest t)))))
 
-(defrel/generator (not-in-envo x env)
+(defrel/multistage (not-in-envo x env)
   (conde
     ((== empty-env env))
     ((fresh (y b rest)
@@ -383,24 +383,24 @@
     ((fresh (a d)
        (== `(,a . ,d) t)))))
 
-(defrel/generator (self-eval-literalo t)
+(defrel/multistage (self-eval-literalo t)
   (conde
     ((numbero t))
     ((booleano/gen t))))
 
-(defrel/generator (literalo t)
+(defrel/multistage (literalo t)
   (conde
     ((numbero t))
     ((symbolo t) (later (not-tago/gen t)))
     ((booleano/gen t))
     ((== '() t))))
 
-(defrel/generator (booleano/gen t)
+(defrel/multistage (booleano/gen t)
   (conde
     ((== #f t))
     ((== #t t))))
 
-(defrel/generator (regular-env-appendo env1 env2 env-out)
+(defrel/multistage (regular-env-appendo env1 env2 env-out)
   (conde
     ((== empty-env env1) (== env2 env-out))
     ((fresh (y v rest res)
@@ -408,7 +408,7 @@
        (== `((,y . (val . ,v)) . ,res) env-out)
        (regular-env-appendo rest env2 res)))))
 
-(defrel/fallback (match-clauses mval clauses env val) u-match-clauses
+(defrel/multistage/fallback (match-clauses mval clauses env val)
   (conde
     ;; a match fails if no clause matches; in
     ;; unstaged this happens when reaching
@@ -425,13 +425,13 @@
                  [(p-no-match p mval '() penv)
                   (match-clauses mval d env val)]))))))
 
-(defrel/generator (var-p-match var mval penv penv-out)
+(defrel/multistage (var-p-match var mval penv penv-out)
   (fresh (val)
     (later (not-tago/gen mval))
     (later (== mval val))
     (var-p-match-extend var val penv penv-out)))
 
-(defrel/fallback (var-p-match-extend var val penv penv-out) u-var-p-match-extend
+(defrel/multistage/fallback (var-p-match-extend var val penv penv-out)
   (conde
     ((fresh (env-v)
        (match-lookupo/gen var penv env-v)
@@ -440,7 +440,7 @@
     ((not-in-envo var penv)
      (== `((,var . (val . ,val)) . ,penv) penv-out))))
 
-(defrel/fallback (var-p-no-match var mval penv penv-out) u-var-p-no-match
+(defrel/multistage/fallback (var-p-no-match var mval penv penv-out)
   (conde
     ;; a variable pattern cannot fail when it is
     ;; the first occurence of the name. unstaged
@@ -454,7 +454,7 @@
       (match-lookupo/gen var penv env-v)
       (later (=/= mval env-v))))))
 
-(defrel/fallback (p-match p mval penv penv-out) u-p-match
+(defrel/multistage/fallback (p-match p mval penv penv-out)
   (conde
     ((self-eval-literalo p)
      (later (== p mval))
@@ -468,12 +468,12 @@
        (== (list 'quasiquote quasi-p) p)
        (quasi-p-match quasi-p mval penv penv-out)))))
 
-(defrel/fallback (pred-match pred mval) u-pred-match
+(defrel/multistage/fallback (pred-match pred mval)
   (conde
    ((== 'symbol? pred) (later (symbolo mval)))
    ((== 'number? pred) (later (numbero mval)))))
 
-(defrel/fallback (p-no-match p mval penv penv-out) u-p-no-match
+(defrel/multistage/fallback (p-no-match p mval penv penv-out)
   (conde
    ((self-eval-literalo p)
     (later (=/= p mval))
@@ -488,7 +488,7 @@
       (== (list 'quasiquote quasi-p) p)
       (quasi-p-no-match quasi-p mval penv penv-out)))))
 
-(defrel/fallback (pred-no-match pred var mval penv penv-out) u-pred-no-match
+(defrel/multistage/fallback (pred-no-match pred var mval penv penv-out)
   (conde
     ((== 'symbol? pred)
      (gather (conde
@@ -501,7 +501,7 @@
                [(later (numbero mval))
                 (var-p-no-match var mval penv penv-out)])))))
 
-(defrel/fallback (quasi-p-match quasi-p mval penv penv-out) u-quasi-p-match
+(defrel/multistage/fallback (quasi-p-match quasi-p mval penv penv-out)
   (conde
     ((literalo quasi-p)
      (later (== quasi-p mval))
@@ -516,7 +516,7 @@
        (quasi-p-match a v1 penv penv^)
        (quasi-p-match d v2 penv^ penv-out)))))
 
-(defrel/fallback (quasi-p-no-match quasi-p mval penv penv-out) u-quasi-p-no-match
+(defrel/multistage/fallback (quasi-p-no-match quasi-p mval penv penv-out)
   (conde
     ((literalo quasi-p)
      (later (=/= quasi-p mval))
