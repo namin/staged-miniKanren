@@ -297,15 +297,19 @@
     (not-in-envo 'and env)
     (ando e* env val)))
 
+(defrel/multistage/explicit (ms-eval-expo expr env val)
+  #:runtime (u-eval-expo expr env val)
+  #:staging-time (eval-expo expr env val))
+
 (defrel/multistage/fallback (ando e* env val)
   (conde
     ((== '() e*) (later (== #t val)))
     ((fresh (e)
        (== `(,e) e*)
-       (eval-expo e env val)))
+       (ms-eval-expo e env val)))
     ((fresh (e1 e2 e-rest v)
        (== `(,e1 ,e2 . ,e-rest) e*)
-       (eval-expo e1 env v)
+       (ms-eval-expo e1 env v)
        (gather (conde
                  ((later (== #f v))
                   (later (== #f val)))
