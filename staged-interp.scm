@@ -1,3 +1,7 @@
+(defrel/multistage/explicit (eval-expo expr env val)
+  #:runtime (u-eval-expo expr env val)
+  #:staging-time (s-eval-expo expr env val))
+
 (defrel/generator (absent-tago/gen v)
   (absento 'struct v))
 
@@ -58,7 +62,7 @@
        (== proc `(struct prim . ,prim-id))
        (u-eval-primo prim-id a* val)))))
 
-(defrel/fallback (eval-expo expr env val) u-eval-expo
+(defrel/fallback (s-eval-expo expr env val) u-eval-expo
   (conde
     ;; quote
     ((fresh (v)
@@ -297,19 +301,15 @@
     (not-in-envo 'and env)
     (ando e* env val)))
 
-(defrel/multistage/explicit (ms-eval-expo expr env val)
-  #:runtime (u-eval-expo expr env val)
-  #:staging-time (eval-expo expr env val))
-
 (defrel/multistage/fallback (ando e* env val)
   (conde
     ((== '() e*) (later (== #t val)))
     ((fresh (e)
        (== `(,e) e*)
-       (ms-eval-expo e env val)))
+       (eval-expo e env val)))
     ((fresh (e1 e2 e-rest v)
        (== `(,e1 ,e2 . ,e-rest) e*)
-       (ms-eval-expo e1 env v)
+       (eval-expo e1 env v)
        (gather (conde
                  ((later (== #f v))
                   (later (== #f val)))
