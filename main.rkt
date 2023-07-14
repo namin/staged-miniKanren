@@ -430,8 +430,8 @@
      [(_ (conde [g ...] ...))
       #'(i:conde [(compile-now-for-runtime-goal g) ...] ...)]
      
-     [(_ (fallback fb body))
-      #'(compile-now-for-runtime-goal fb)]
+     [(_ (~and stx (fallback fb body)))
+      (raise-syntax-error #f "fallback not supported in multistage code" #'stx)]
 
      [(_ (gather body))
       #'(compile-now-for-runtime-goal body)]
@@ -561,8 +561,13 @@
 (define-syntax-rule
   (defrel/multistage/fallback (name arg ...)
     g ...)
-  (defrel/multistage (name arg ...)
-    (fallback
-     (later (name arg ...))
-     (fresh ()
-       g ...))))
+  (begin
+    (defrel/multistage/explicit (name arg ...)
+      #:runtime
+      (internal arg ...)
+      #:staging-time
+      (fallback
+       (later (internal arg ...))
+       (internal arg ...)))
+    (defrel/multistage (internal arg ...)
+      g ...)))
