@@ -29,6 +29,7 @@
  defrel-partial/multistage/explicit
  defrel/generator
  defrel/fallback
+ defrel/multistage/fallback
  run
  run*
 
@@ -450,8 +451,10 @@
   (syntax-parser
     #:literal-sets (goal-literals)
     [(_ (#%rel-app r:id arg ...))
-     (check-simple-rel #'r 'runtime (attribute arg))
-     #'(i:lapp r (compile-term arg) ...)]
+     (let ((def-stage (check-simple-rel #'r 'runtime (attribute arg))))
+       (if (eq? def-stage 'multistage)
+           #'(i:lapp (i:multistage-rel-value-runtime r) (compile-term arg) ...)
+           #'(i:lapp r (compile-term arg) ...)))]
 
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
@@ -552,5 +555,14 @@
   (defrel/generator (name arg ...)
     (fallback
      (later (fallback-name arg ...))
+     (fresh ()
+       g ...))))
+
+(define-syntax-rule
+  (defrel/multistage/fallback (name arg ...)
+    g ...)
+  (defrel/multistage (name arg ...)
+    (fallback
+     (later (name arg ...))
      (fresh ()
        g ...))))

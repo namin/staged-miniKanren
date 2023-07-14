@@ -297,7 +297,7 @@
     (not-in-envo 'and env)
     (ando e* env val)))
 
-(defrel/fallback (ando e* env val) u-ando
+(defrel/multistage/fallback (ando e* env val)
   (conde
     ((== '() e*) (later (== #t val)))
     ((fresh (e)
