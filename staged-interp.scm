@@ -322,7 +322,7 @@
     (not-in-envo 'or env)
     (oro e* env val)))
 
-(defrel/fallback (oro e* env val) u-oro
+(defrel/multistage/fallback (oro e* env val)
   (conde
     ((== '() e*) (later (== #f val)))
     ((fresh (e)
