@@ -19,3 +19,17 @@
     (staged
      (unify-mystery q)))
   '(6))
+
+(defrel/multistage (unify5 x)
+  (later (== x 5)))
+
+(test
+  (run* (q)
+    (unify5 q))
+  '(5))
+
+(test
+  (run* (q)
+    (staged
+     (unify5 q)))
+  '(5))

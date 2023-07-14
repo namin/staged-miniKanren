@@ -24,6 +24,7 @@
  trace
 
  defrel
+ defrel/multistage
  defrel/multistage/explicit
  defrel-partial/multistage/explicit
  defrel/generator
@@ -166,6 +167,22 @@
          (i:ss:fresh () ;; don't care about avoiding suspends at staging time
            (compile-now-goal g) ...))])
 
+  (host-interface/definition
+   (defrel/multistage (r:relation-name arg:term-var ...)
+     g:goal ...+)
+   #:binding [(export r) {(bind arg) g}]
+   #:lhs
+   [(register-simple-rel! #'r 'multistage (attribute arg))
+    #'r]
+   #:rhs
+   [#'(i:multistage-rel-value
+       (lambda (arg ...)
+         (i:relation-body
+          (compile-now-for-runtime-goal g)) ...)
+       (lambda (arg ...)
+         (i:relation-body
+          (compile-now-goal g)) ...))])
+    
   (host-interface/definition
    (defrel/multistage/explicit (r:relation-name arg:term-var ...)
      #:runtime g:goal
@@ -387,6 +404,47 @@
                        (staged . _))))
      (raise-syntax-error #f "not supported in generator code" #'stx)]    
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
+
+(define-syntax compile-now-for-runtime-goal
+  (lambda (stx)
+    (define/syntax-parse (_ now-goal) stx)
+    (syntax-parse stx
+     #:literal-sets (goal-literals)
+     [(_ (trace id x ...))
+      (error 'compile-now-for-runtime-goal "TODO not supported")]
+     [(_ (#%rel-app r:id arg ...))
+      #'(compile-runtime-goal now-goal)]
+     [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
+      (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]
+
+     [(_ (== t1 t2))
+      #'(compile-runtime-goal now-goal)]
+     [(_ (constraint:binary-constraint t1 t2))
+      #'(compile-runtime-goal now-goal)]
+     [(_ (constraint:unary-constraint t))
+      #'(compile-runtime-goal now-goal)]
+     
+     [(_ (fresh (x:id ...) g ...))
+      #'(i:fresh (x ...) (compile-now-for-runtime-goal g) ...)]
+     [(_ (conde [g ...] ...))
+      #'(i:conde [(compile-now-for-runtime-goal g) ...] ...)]
+     
+     [(_ (fallback fb body))
+      #'(compile-now-for-runtime-goal fb)]
+
+     [(_ (gather body))
+      #'(compile-now-for-runtime-goal body)]
+     
+     [(_ fail)
+      #'(compile-runtime-goal now-goal)]
+
+     [(_ (later g))
+      #'(compile-runtime-goal g)]
+
+     [(_ (~and stx (~or (apply-partial . _)
+                        (staged . _))))
+      (raise-syntax-error #f "not supported in generator code" #'stx)]    
+     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)])))
 
 (define-syntax compile-later-goal
   (syntax-parser
