@@ -181,7 +181,7 @@
        (symbolo x)
        (ext-env*o dx* da* env2 out)))))
 
-(defrel/fallback (eval-primo prim-id a* val) u-eval-primo
+(defrel/multistage/fallback (eval-primo prim-id a* val)
   (conde
     [(== prim-id 'list)
      (later (== a* val))]
@@ -252,19 +252,19 @@
                 ((== '() v) (== #t val))
                 ((=/= '() v) (== #f val)))))]))
 
-(defrel/generator (prim-expo expr env val)
+(defrel/multistage (prim-expo expr env val)
   (conde
     ((boolean-primo expr env val))
     ((and-primo expr env val))
     ((or-primo expr env val))
     ((if-primo expr env val))))
 
-(defrel/generator (boolean-primo expr env val)
+(defrel/multistage (boolean-primo expr env val)
   (conde
     ((== #t expr) (later (== #t val)))
     ((== #f expr) (later (== #f val)))))
 
-(defrel/generator (and-primo expr env val)
+(defrel/multistage (and-primo expr env val)
   (fresh (e*)
     (== `(and . ,e*) expr)
     (not-in-envo 'and env)
@@ -285,7 +285,7 @@
                  ((later (=/= #f v))
                   (ando `(,e2 . ,e-rest) env val))))))))
 
-(defrel/generator (or-primo expr env val)
+(defrel/multistage (or-primo expr env val)
   (fresh (e*)
     (== `(or . ,e*) expr)
     (not-in-envo 'or env)
@@ -306,7 +306,7 @@
                  ((later (== #f v))
                   (oro `(,e2 . ,e-rest) env val))))))))
 
-(defrel/generator (if-primo expr env val)
+(defrel/multistage (if-primo expr env val)
   (fresh (e1 e2 e3 t)
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
@@ -327,7 +327,7 @@
                       (cdr . (val . (struct prim . cdr)))
                       . ,empty-env))
 
-(defrel/generator (handle-matcho expr env val)
+(defrel/multistage (handle-matcho expr env val)
   (fresh (against-expr clauses mval)
     (== `(match ,against-expr . ,clauses) expr)
     (not-in-envo 'match env)
@@ -507,10 +507,10 @@
                       [(quasi-p-match a v1 penv penv^)
                        (quasi-p-no-match d v2 penv^ penv-out)]))]))))))
 
-(defrel/generator (evalo-staged expr val)
+(defrel/multistage (evalo-staged expr val)
   (eval-expo expr initial-env val))
 
-(defrel/generator (evalo-staged/env-exts expr x* a* val)
+(defrel/multistage (evalo-staged/env-exts expr x* a* val)
   (fresh (env^)
     (ext-env*o x* a* initial-env env^)
     (eval-expo expr env^ val)))
