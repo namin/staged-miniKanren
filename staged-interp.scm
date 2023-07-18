@@ -1,3 +1,10 @@
+(defrel (pos-tago v)
+  (== v 'struct))
+
+(defrel (booleano t)
+  (conde
+    ((== #f t))
+    ((== #t t))))
 
 (defrel/multistage (absent-tago/gen v)
   (absento 'struct v))
@@ -35,7 +42,7 @@
        (apply-partial rep eval-apply-rec a* val)))
     ((fresh (prim-id)
        (== proc `(struct prim . ,prim-id))
-       (u-eval-primo prim-id a* val)))))
+       (eval-primo prim-id a* val)))))
 
 
 (defrel/multistage/explicit (handle-appo rator rands env val)
@@ -488,7 +495,7 @@
        (=/= 'unquote a)
        (gather (conde
                  [(== penv penv-out) ;; TODO: could this get lost?
-                  (later (u-literalo mval))]
+                  (later (literalo mval))]
                  [(fresh (penv^ v1 v2)
                     (later (== `(,v1 . ,v2) mval))
                     (conde
