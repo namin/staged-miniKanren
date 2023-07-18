@@ -6,25 +6,6 @@
 
 (require "main.rkt")
 
-(defrel-partial (u-eval-apply rep [x* body env] [a* val])
-  (fresh (env^)
-    ;; TODO: do we need a fallback?
-    (conde
-      ((symbolo x*)
-       (== `((,x* . (val . ,a*)) . ,env) env^))
-      ((u-ext-env*o x* a* env env^)))
-    (u-eval-expo body env^ val)))
-
-(defrel-partial (u-eval-apply-rec rep [f x* e env] [a* res])
-  (fresh (env^ env-self)
-    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
-    ;; TODO: do we need a fallback?
-    (conde
-      ((symbolo x*)
-       (== env^ `((,x* . (val . ,a*)) . ,env-self)))
-      ((u-ext-env*o x* a* env-self env^)))
-    (u-eval-expo e env^ res)))
-
 (defrel (absent-tago v)
   (absento 'struct v))
 
@@ -40,9 +21,22 @@
 (defrel (pos-tago v)
   (== v 'struct))
 
-;; The definition of 'letrec' is based based on Dan Friedman's code,
-;; using the "half-closure" approach from Reynold's definitional
-;; interpreters.
+(defrel-partial (u-eval-apply rep [x* body env] [a* val])
+  (fresh (env^)
+    (conde
+      ((symbolo x*)
+       (== `((,x* . (val . ,a*)) . ,env) env^))
+      ((u-ext-env*o x* a* env env^)))
+    (u-eval-expo body env^ val)))
+
+(defrel-partial (u-eval-apply-rec rep [f x* e env] [a* res])
+  (fresh (env^ env-self)
+    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
+    (conde
+      ((symbolo x*)
+       (== env^ `((,x* . (val . ,a*)) . ,env-self)))
+      ((u-ext-env*o x* a* env-self env^)))
+    (u-eval-expo e env^ res)))
 
 (defrel (u-evalo expr val)
   (u-eval-expo expr u-initial-env val))
