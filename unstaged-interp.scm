@@ -1,3 +1,10 @@
+#lang racket/base
+
+(provide
+  evalo-unstaged
+  u-eval-expo)
+
+(require "main.rkt")
 
 (defrel-partial/multistage/explicit (u-eval-apply rep [x* body env] [a* val])
   #:runtime
@@ -7,7 +14,7 @@
       ((symbolo x*)
        (== `((,x* . (val . ,a*)) . ,env) env^))
       ((u-ext-env*o x* a* env env^)))
-    (eval-expo body env^ val))
+    (u-eval-expo body env^ val))
   #:staging-time (== 1 2))
 
 (defrel-partial/multistage/explicit (u-eval-apply-rec rep [f x* e env] [a* res])
@@ -19,7 +26,7 @@
       ((symbolo x*)
        (== env^ `((,x* . (val . ,a*)) . ,env-self)))
       ((u-ext-env*o x* a* env-self env^)))
-    (eval-expo e env^ res))
+    (u-eval-expo e env^ res))
   #:staging-time (== 1 2))
 
 (defrel (absent-tago v)

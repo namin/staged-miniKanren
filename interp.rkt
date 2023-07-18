@@ -12,7 +12,5 @@
  
  initial-env)
 
-(require "main.rkt"
-         racket/include)
-(include "unstaged-interp.scm")
+(require "unstaged-interp.scm")
 (require "staged-interp.scm")
