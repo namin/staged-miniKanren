@@ -1,8 +1,5 @@
-(defrel/multistage/explicit (eval-expo expr env val)
-  #:runtime (u-eval-expo expr env val)
-  #:staging-time (s-eval-expo expr env val))
 
-(defrel/generator (absent-tago/gen v)
+(defrel/multistage (absent-tago/gen v)
   (absento 'struct v))
 
 ;; avoids an `inc` at runtime vs not-tago that has a fresh ()
@@ -40,7 +37,13 @@
        (== proc `(struct prim . ,prim-id))
        (u-eval-primo prim-id a* val)))))
 
-(defrel/fallback (s-eval-expo expr env val) u-eval-expo
+(defrel/multistage/explicit (eval-expo expr env val)
+  #:runtime (u-eval-expo expr env val)
+  #:staging-time (fallback
+                  (later (u-eval-expo expr env val))
+                  (s-eval-expo expr env val)))
+
+(defrel/multistage (s-eval-expo expr env val)
   (conde
     ;; quote
     ((fresh (v)
@@ -163,7 +166,7 @@
 
 ;; Need to make sure lambdas are well formed.
 ;; Grammar constraints would be useful here!
-(defrel/generator (list-of-symbolso los)
+(defrel/multistage (list-of-symbolso los)
   (conde
     ((== '() los))
     ((fresh (a d)

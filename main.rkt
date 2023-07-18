@@ -451,7 +451,8 @@
       #'(i:conde [(compile-now-for-runtime-goal g) ...] ...)]
      
      [(_ (~and stx (fallback fb body)))
-      (raise-syntax-error #f "fallback not supported in multistage code" #'stx)]
+      #;(raise-syntax-error #f "fallback not supported in multistage code" #'stx)
+      #'(compile-now-for-runtime-goal fb)]
 
      [(_ (gather body))
       #'(compile-now-for-runtime-goal body)]

@@ -63,6 +63,8 @@
     
     ((u-handle-matcho expr env val))
 
+    ;; TODO: this works differently than staged letrecs. Switch to using
+    ;; runtime part of eval-apply-rec?
     ((fresh (p-name x body letrec-body)
        ;; single-function variadic letrec version
        (== `(letrec ((,p-name (lambda ,x ,body)))
