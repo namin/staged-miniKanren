@@ -37,20 +37,51 @@
        (== proc `(struct prim . ,prim-id))
        (u-eval-primo prim-id a* val)))))
 
-(defrel/multistage/explicit (eval-expo expr env val)
-  #:runtime (u-eval-expo expr env val)
-  #:staging-time (fallback
-                  (later (u-eval-expo expr env val))
-                  (s-eval-expo expr env val)))
 
-(defrel/multistage (s-eval-expo expr env val)
+(defrel/multistage/explicit (handle-appo rator rands env val)
+  #:runtime
+  (fresh (a* cfun rep proc prim-id)
+    (eval-expo rator env cfun)
+    (conde
+      ((== `(struct prim . ,prim-id) cfun)
+       (eval-primo prim-id a* val)
+       (eval-listo rands env a*))
+      ((== `(struct closure ,rep) cfun)
+       (eval-listo rands env a*)
+       (callo cfun val a*))
+      ((== `(struct rec-closure ,rep) cfun)
+       (eval-listo rands env a*)
+       (callo cfun val a*))))
+  #:staging-time
+  (fallback
+   (later (handle-appo rator rands env val))
+   (conde
+     ;; statically-recognizable primitive application
+     ((fresh (prim proc a*)
+        (lookupo rator env `(struct prim . ,prim))
+        (eval-primo prim a* val)
+        (eval-listo rands env a*)))
+    
+     ;; general application
+     ((fresh (proc a*)
+        (conde
+          ((symbolo rator)
+           (fresh (p tag)
+             (lookupo rator env `(struct ,tag . ,p))
+             (=/= 'prim tag)))
+          ((fresh (a d) (== (cons a d) rator))))
+        (eval-expo rator env proc)
+        (eval-listo rands env a*)
+        (later (callo proc val a*)))))))
+
+(defrel/multistage/fallback (eval-expo expr env val)
   (conde
     ;; quote
     ((fresh (v)
        (== `(quote ,v) expr)
+       (later (== val v))
        (absent-tago/gen v)
-       (not-in-envo 'quote env)
-       (later (== val v))))
+       (not-in-envo 'quote env)))
     
     ;; number literal
     ((numbero expr) (later (== expr val)))
@@ -58,69 +89,23 @@
     ;; variable reference
     ((symbolo expr)
      (fresh (env-v)
-       (lookupo expr env env-v)
-       (later (== env-v val))))
-
-    ;; lambda
-    ((fresh (x body)
-       (== `(lambda ,x ,body) expr)
-       (not-in-envo 'lambda env)
-       (conde
-         ((symbolo x))
-         ((list-of-symbolso x)))
-       (later (fresh (rep)
-                (== `(struct closure ,rep) val)
-                (== rep (partial-apply eval-apply x body env))))))
+       (later (== env-v val))
+       (lookupo expr env env-v)))
 
     ;; application
     ((fresh (rator rands a* rator-v)
        (== `(,rator . ,rands) expr)
-
-       (fallback
-        ;; Behavior changes based on groundness!
-        ;;
-        ;; When the shape of the rator is unknown, we stage evaluation of the arguments
-        ;; and generate code where this evaluation comes first. This is a different evaluation
-        ;; order than we use when the proc is statically-recognizable as a primitive, and
-        ;; when the unstaged interpreter encounters a primitive.
-        (fresh (proc a*)
-          (eval-expo rator env proc)
-          (eval-listo rands env a*)
-          (later (callo proc val a*)))
-        ;;
-        ;; Another possibility, generating duplicate code for the two branches of evaluating the
-        ;; arguments. We would need something a little higher-order to avoid the duplication.
-        #;(fresh (proc)
-            (eval-expo rator env proc)
-            (gather (conde
-                     [(fresh (prim a*)
-                        (later (== `(struct prim . ,prim) proc))
-                        (later (u-eval-primo prim a* val))
-                        (eval-listo rands env a*))]
-                     [(fresh (tag p a*)
-                        (later (== `(struct ,tag . ,p) proc))
-                        (later (=/= tag 'prim))
-                        (eval-listo rands env a*)
-                        (later (callo proc val a*)))])))
-
-        (conde
-          ;; statically-recognizable primitive application
-          ((fresh (prim proc a*)
-             (lookupo rator env `(struct prim . ,prim))
-             (eval-primo prim a* val)
-             (eval-listo rands env a*)))
+       (handle-appo rator rands env val)))
     
-          ;; general application
-          ((fresh (proc a*)
-             (conde
-               ((symbolo rator)
-                (fresh (p tag)
-                  (lookupo rator env `(struct ,tag . ,p))
-                  (=/= 'prim tag)))
-               ((fresh (a d) (== (cons a d) rator))))
-             (eval-expo rator env proc)
-             (eval-listo rands env a*)
-             (later (callo proc val a*))))))))
+    ;; lambda
+    ((fresh (x body rep)
+       (== `(lambda ,x ,body) expr)
+       (later (== `(struct closure ,rep) val))
+       (conde
+         ((symbolo x))
+         ((list-of-symbolso x)))
+       (not-in-envo 'lambda env)
+       (later (== rep (partial-apply eval-apply x body env)))))
     
     ;; match
     ((handle-matcho expr env val))
@@ -363,7 +348,8 @@
 (defrel/multistage (literalo t)
   (conde
     ((numbero t))
-    ((symbolo t) (later (not-tago/gen t)))
+    ;; in the runtime version the delay from this fresh seems useful to peano-synth-fib-acc-stepo somehow.
+    ((symbolo t) (fresh () (later (not-tago/gen t))))
     ((booleano/gen t))
     ((== '() t))))
 
@@ -398,10 +384,10 @@
                   (match-clauses mval d env val)]))))))
 
 (defrel/multistage (var-p-match var mval penv penv-out)
-  (fresh (val)
+  (fresh ()
+    (symbolo var)
     (later (not-tago/gen mval))
-    (later (== mval val))
-    (var-p-match-extend var val penv penv-out)))
+    (var-p-match-extend var mval penv penv-out)))
 
 (defrel/multistage/fallback (var-p-match-extend var val penv penv-out)
   (conde

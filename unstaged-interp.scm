@@ -1,3 +1,4 @@
+
 (defrel (absent-tago v)
   (absento 'struct v))
 
@@ -20,6 +21,20 @@
 (defrel (u-evalo expr val)
   (u-eval-expo expr u-initial-env val))
 
+(defrel (u-handle-appo rator rands env val)
+  (fresh (a* cfun rep proc prim-id)
+    (u-eval-expo rator env cfun)
+    (conde
+      ((== `(struct prim . ,prim-id) cfun)
+       (u-eval-primo prim-id a* val)
+       (u-eval-listo rands env a*))
+      ((== `(struct closure ,rep) cfun)
+       (u-eval-listo rands env a*)
+       (callo cfun val a*))
+      ((== `(struct rec-closure ,rep) cfun)
+       (u-eval-listo rands env a*)
+       (callo cfun val a*)))))
+
 (defrel (u-eval-expo expr env val)
   (conde
     ((== `(quote ,val) expr)
@@ -30,6 +45,10 @@
 
     ((symbolo expr) (u-lookupo expr env val))
 
+    ((fresh (rator rands)
+       (== `(,rator . ,rands) expr)
+       (u-handle-appo rator rands env val)))
+    
     ((fresh (rep x body)
        (== `(lambda ,x ,body) expr)
        (== `(struct closure ,rep) val)
@@ -42,42 +61,16 @@
        (== rep (partial-apply eval-apply x body env))
        ))
     
-    ((fresh (rator rands a* cfun rep proc)
-       (== `(,rator . ,rands) expr)
-       (u-eval-expo rator env cfun)
-       (conde
-         ((== `(struct closure ,rep) cfun)
-          (u-eval-listo rands env a*)
-          (callo cfun val a*)
-          )
-         ((== `(struct rec-closure ,rep) cfun)
-          (u-eval-listo rands env a*)
-          (callo cfun val a*)
-          ))))
-
-    ((fresh (rator x* rands a* prim-id)
-       (== `(,rator . ,rands) expr)
-       (u-eval-expo rator env `(struct prim . ,prim-id))
-       (u-eval-primo prim-id a* val)
-       (u-eval-listo rands env a*)))
-    
     ((u-handle-matcho expr env val))
 
-    ;; TODO: this works differently than staged letrecs. Switch to using
-    ;; runtime part of eval-apply-rec?
-    ((fresh (p-name x body letrec-body)
-       ;; single-function variadic letrec version
-       (== `(letrec ((,p-name (lambda ,x ,body)))
+    ((fresh (letrec-body f x e rep)
+       (== `(letrec ((,f (lambda ,x ,e)))
               ,letrec-body)
            expr)
-       (conde
-         ; Variadic
-         ((symbolo x))
-         ; Multiple argument
-         ((u-list-of-symbolso x)))
        (u-not-in-envo 'letrec env)
+       (== rep (partial-apply eval-apply-rec f x e env))
        (u-eval-expo letrec-body
-                    `((,p-name . (rec . (lambda ,x ,body))) . ,env)
+                    `((,f . (val . (struct rec-closure ,rep))) . ,env)
                     val)))
     
     ((u-prim-expo expr env val))
@@ -91,14 +84,7 @@
     (== `((,y . ,b) . ,rest) env)
     (conde
       ((== x y)
-       (conde
-         ((== `(val . ,t) b))
-         ((fresh (lam-expr z body rep)
-            (== `(rec . ,lam-expr) b)
-            (== `(lambda ,z ,body) lam-expr)
-            (== `(struct closure ,rep) t)
-            (== rep (partial-apply eval-apply z body env))
-            ))))
+       (== `(val . ,t) b))
       ((=/= x y)
        (u-lookupo x rest t)))))
 
@@ -290,7 +276,7 @@
 (defrel (u-handle-matcho expr env val)
   (fresh (against-expr mval clause clauses)
     (== `(match ,against-expr ,clause . ,clauses) expr)
-    (u-not-in-envo 'match env)
+    (not-in-envo 'match env)
     (u-eval-expo against-expr env mval)
     (u-match-clauses mval `(,clause . ,clauses) env val)))
 
@@ -320,7 +306,7 @@
 (defrel (u-literalo t)
   (conde
     ((numbero t))
-    ((symbolo t) (not-tago t))
+    ((symbolo t) (fresh () (not-tago/gen t)))
     ((u-booleano t))
     ((== '() t))))
 
@@ -342,17 +328,17 @@
     (== `((,p ,result-expr) . ,d) clauses)
     (conde
       ((fresh (env^)
-         (u-p-match p mval '() penv)
-         (u-regular-env-appendo penv env env^)
+         (p-match p mval '() penv)
+         (regular-env-appendo penv env env^)
          (u-eval-expo result-expr env^ val)))
-      ((u-p-no-match p mval '() penv)
+      ((p-no-match p mval '() penv)
        (u-match-clauses mval d env val)))))
 
 (defrel (u-var-p-match var mval penv penv-out)
   (fresh ()
     (symbolo var)
-    (not-tago mval)
-    (u-var-p-match-extend var mval penv penv-out)))
+    (not-tago/gen mval)
+    (var-p-match-extend var mval penv penv-out)))
 
 (defrel (u-var-p-match-extend var val penv penv-out)
   (conde
@@ -370,14 +356,14 @@
 
 (defrel (u-p-match p mval penv penv-out)
   (conde
-    ((u-self-eval-literalo p)
+    ((self-eval-literalo p)
      (== p mval)
      (== penv penv-out))
-    ((u-var-p-match p mval penv penv-out))
+    ((var-p-match p mval penv penv-out))
     ((fresh (var pred)
       (== `(? ,pred ,var) p)
-      (u-pred-match pred mval)
-      (u-var-p-match var mval penv penv-out)))
+      (pred-match pred mval)
+      (var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
       (u-quasi-p-match quasi-p mval penv penv-out)))))
@@ -421,7 +407,7 @@
   (conde
     ((== quasi-p mval)
      (== penv penv-out)
-     (u-literalo quasi-p))
+     (literalo quasi-p))
     ((fresh (p)
       (== (list 'unquote p) quasi-p)
       (u-p-match p mval penv penv-out)))
