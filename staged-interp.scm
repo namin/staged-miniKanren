@@ -9,45 +9,23 @@
 (defrel (not-tago/gen v)
   (=/= 'struct v))
 
-(defrel-partial/multistage/explicit (eval-apply-rec rep [f x* e env] [a* res])
-  #:runtime
-  (fresh (rep env^ env-self)
-    (== rep (partial-apply eval-apply-rec f x* e env))
-    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
-    (conde
-      ((symbolo x*)
-       (== env^ `((,x* . (val . ,a*)) . ,env-self)))
-      ((u-ext-env*o x* a* env-self env^)))
-    (u-eval-expo e env^ res))
-  #:staging-time
+(defrel-partial/multistage (eval-apply-rec rep [f x* e env] [a* res])
   (fresh (env^ env-self)
-    ;; TODO: should we do something like this?
-    ;; (== rep (partial-apply eval-apply-rec f x* e env))
     (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
-    ;; TODO: should be condg-ified?
+    ;; TODO: do we need a fallback?
     (conde
       ((symbolo x*)
        (== env^ `((,x* . (val . ,a*)) . ,env-self)))
-      ((list-of-symbolso x*)
-       (ext-env*o x* a* env-self env^)))
+      ((ext-env*o x* a* env-self env^)))
     (eval-expo e env^ res)))
 
-(defrel-partial/multistage/explicit (eval-apply rep [x* body env] [a* val])
-  #:runtime
+(defrel-partial/multistage (eval-apply rep [x* body env] [a* val])
   (fresh (env^)
+    ;; TODO: do we need a fallback?
     (conde
       ((symbolo x*)
        (== `((,x* . (val . ,a*)) . ,env) env^))
-      ((u-ext-env*o x* a* env env^)))
-    (u-eval-expo body env^ val))
-  #:staging-time
-  (fresh (env^)
-    ;; TODO: should be condg-ified?
-    (conde
-      ((symbolo x*)
-       (== `((,x* . (val . ,a*)) . ,env) env^))
-      ((list-of-symbolso x*)
-       (ext-env*o x* a* env env^)))
+      ((ext-env*o x* a* env env^)))
     (eval-expo body env^ val)))
 
 (defrel (callo proc val a*)
@@ -159,21 +137,12 @@
 
 (define empty-env '())
 
-(defrel/fallback (lookupo x env v) u-lookupo
+(defrel/multistage/fallback (lookupo x env v)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
      [(== x y) (== `(val . ,v) b)]
      [(=/= x y) (lookupo x rest v)])))
-
-(defrel/multistage (match-lookupo/gen x env t)
-  (fresh (y b rest)
-    (== `((,y . ,b) . ,rest) env)
-    (conde
-      ((== x y)
-       (== `(val . ,t) b))
-      ((=/= x y)
-       (match-lookupo/gen x rest t)))))
 
 (defrel/multistage (not-in-envo x env)
   (conde
@@ -183,7 +152,7 @@
        (=/= y x)
        (not-in-envo x rest)))))
 
-(defrel/fallback (eval-listo expr env val) u-eval-listo
+(defrel/multistage/fallback (eval-listo expr env val)
   (conde
     ((== '() expr) (== '() val))
     ((fresh (a d v-a v-d)
@@ -192,8 +161,8 @@
        (eval-expo a env v-a)
        (eval-listo d env v-d)))))
 
-;; need to make sure lambdas are well formed.
-;; grammar constraints would be useful here!!!
+;; Need to make sure lambdas are well formed.
+;; Grammar constraints would be useful here!
 (defrel/generator (list-of-symbolso los)
   (conde
     ((== '() los))
@@ -202,7 +171,7 @@
        (symbolo a)
        (list-of-symbolso d)))))
 
-(defrel/generator (ext-env*o x* a* env out)
+(defrel/multistage (ext-env*o x* a* env out)
   (conde
     ((== '() x*) (== '() a*) (== env out))
     ((fresh (x a dx* da* env2)
@@ -434,7 +403,7 @@
 (defrel/multistage/fallback (var-p-match-extend var val penv penv-out)
   (conde
     ((fresh (env-v)
-       (match-lookupo/gen var penv env-v)
+       (lookupo var penv env-v)
        (== penv penv-out)
        (later (== env-v val))))
     ((not-in-envo var penv)
@@ -451,7 +420,7 @@
     (later fail))
    ((fresh (env-v)
       (== penv penv-out)
-      (match-lookupo/gen var penv env-v)
+      (lookupo var penv env-v)
       (later (=/= mval env-v))))))
 
 (defrel/multistage/fallback (p-match p mval penv penv-out)

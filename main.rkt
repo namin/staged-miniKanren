@@ -26,6 +26,7 @@
  defrel
  defrel/multistage
  defrel/multistage/explicit
+ defrel-partial/multistage
  defrel-partial/multistage/explicit
  defrel/generator
  defrel/fallback
@@ -179,10 +180,10 @@
    [#'(i:multistage-rel-value
        (lambda (arg ...)
          (i:relation-body
-          (compile-now-for-runtime-goal g)) ...)
+          (compile-now-for-runtime-goal g) ...))
        (lambda (arg ...)
          (i:relation-body
-          (compile-now-goal g)) ...))])
+          (compile-now-goal g) ...)))])
     
   (host-interface/definition
    (defrel/multistage/explicit (r:relation-name arg:term-var ...)
@@ -219,6 +220,25 @@
         (lambda (rep now-arg ... later-arg ...)
           (i:relation-body
            (compile-now-goal gen))))])
+
+  (host-interface/definition
+    (defrel-partial/multistage
+      (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
+        g:goal ...)
+    #:binding [(export r) {(bind rep now-arg later-arg) g}]
+    #:lhs
+    [(symbol-table-set!
+      relation-info #'r
+      (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
+     #'r]
+    #:rhs
+    [#'(i:multistage-rel-value
+        (lambda (rep now-arg ... later-arg ...)
+          (i:relation-body
+           (compile-now-for-runtime-goal g) ...))
+        (lambda (rep now-arg ... later-arg ...)
+          (i:relation-body
+           (compile-now-goal g) ...)))])
 
   (host-interface/expression
     (run n:racket-expr (q:term-var ...+) g:goal ...+)
