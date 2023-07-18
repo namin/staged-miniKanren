@@ -1,24 +1,21 @@
 #lang racket/base
 
 (provide
-  evalo-unstaged
-  u-eval-expo)
+ evalo-unstaged
+ u-eval-expo)
 
 (require "main.rkt")
 
-(defrel-partial/multistage/explicit (u-eval-apply rep [x* body env] [a* val])
-  #:runtime
+(defrel-partial (u-eval-apply rep [x* body env] [a* val])
   (fresh (env^)
     ;; TODO: do we need a fallback?
     (conde
       ((symbolo x*)
        (== `((,x* . (val . ,a*)) . ,env) env^))
       ((u-ext-env*o x* a* env env^)))
-    (u-eval-expo body env^ val))
-  #:staging-time (== 1 2))
+    (u-eval-expo body env^ val)))
 
-(defrel-partial/multistage/explicit (u-eval-apply-rec rep [f x* e env] [a* res])
-  #:runtime
+(defrel-partial (u-eval-apply-rec rep [f x* e env] [a* res])
   (fresh (env^ env-self)
     (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
     ;; TODO: do we need a fallback?
@@ -26,8 +23,7 @@
       ((symbolo x*)
        (== env^ `((,x* . (val . ,a*)) . ,env-self)))
       ((u-ext-env*o x* a* env-self env^)))
-    (u-eval-expo e env^ res))
-  #:staging-time (== 1 2))
+    (u-eval-expo e env^ res)))
 
 (defrel (absent-tago v)
   (absento 'struct v))
@@ -304,16 +300,16 @@
       ((== #f t) (u-eval-expo e3 env val)))))
 
 (define u-initial-env `((list . (val . (struct prim . list)))
-                      (not . (val . (struct prim . not)))
-                      (equal? . (val . (struct prim . equal?)))
-                      (symbol? . (val . (struct prim . symbol?)))
-                      (number? . (val . (struct prim . number?)))
-                      (pair? . (val . (struct prim . pair?)))
-                      (cons . (val . (struct prim . cons)))
-                      (null? . (val . (struct prim . null?)))
-                      (car . (val . (struct prim . car)))
-                      (cdr . (val . (struct prim . cdr)))
-                      . ,u-empty-env))
+                        (not . (val . (struct prim . not)))
+                        (equal? . (val . (struct prim . equal?)))
+                        (symbol? . (val . (struct prim . symbol?)))
+                        (number? . (val . (struct prim . number?)))
+                        (pair? . (val . (struct prim . pair?)))
+                        (cons . (val . (struct prim . cons)))
+                        (null? . (val . (struct prim . null?)))
+                        (car . (val . (struct prim . car)))
+                        (cdr . (val . (struct prim . cdr)))
+                        . ,u-empty-env))
 
 (defrel (u-handle-matcho expr env val)
   (fresh (against-expr mval clause clauses)
@@ -403,12 +399,12 @@
      (== penv penv-out))
     ((u-var-p-match p mval penv penv-out))
     ((fresh (var pred)
-      (== `(? ,pred ,var) p)
-      (u-pred-match pred mval)
-      (u-var-p-match var mval penv penv-out)))
+       (== `(? ,pred ,var) p)
+       (u-pred-match pred mval)
+       (u-var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
-      (== (list 'quasiquote quasi-p) p)
-      (u-quasi-p-match quasi-p mval penv penv-out)))))
+       (== (list 'quasiquote quasi-p) p)
+       (u-quasi-p-match quasi-p mval penv penv-out)))))
 
 (defrel (u-pred-match pred mval)
   (conde
@@ -429,8 +425,8 @@
        (symbolo var)
        (u-pred-no-match pred var mval penv penv-out)))
     ((fresh (quasi-p)
-      (== (list 'quasiquote quasi-p) p)
-      (u-quasi-p-no-match quasi-p mval penv penv-out)))))
+       (== (list 'quasiquote quasi-p) p)
+       (u-quasi-p-no-match quasi-p mval penv penv-out)))))
 
 (defrel (u-pred-no-match pred var mval penv penv-out)
   (conde
@@ -451,8 +447,8 @@
      (== penv penv-out)
      (u-literalo quasi-p))
     ((fresh (p)
-      (== (list 'unquote p) quasi-p)
-      (u-p-match p mval penv penv-out)))
+       (== (list 'unquote p) quasi-p)
+       (u-p-match p mval penv penv-out)))
     ((fresh (a d v1 v2 penv^)
        (== `(,a . ,d) quasi-p)
        (== `(,v1 . ,v2) mval)

@@ -26,6 +26,7 @@
  defrel
  defrel/multistage
  defrel/multistage/explicit
+ defrel-partial
  defrel-partial/multistage
  defrel-partial/multistage/explicit
  defrel/generator
@@ -200,7 +201,25 @@
        (lambda (arg ...)
          (compile-now-goal gen)))])
 
-
+  (host-interface/definition
+   (defrel-partial
+     (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
+     g:goal ...)
+   #:binding [(export r) {(bind rep now-arg later-arg) g}]
+   #:lhs
+   [(symbol-table-set!
+     relation-info #'r
+     (partial-rel 'runtime (length (attribute now-arg)) (length (attribute later-arg))))
+    #'r]
+   #:rhs
+   [#'(i:multistage-rel-value
+       (lambda (rep now-arg ... later-arg ...)
+        (i:relation-body
+         (compile-runtime-goal g) ...))
+       (lambda args
+         ;; statics should prevent this from being reached.
+         (error 'defrel-partial "defined for runtime only but called from staging time")))])
+  
   (host-interface/definition
     (defrel-partial/multistage/explicit
       (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
