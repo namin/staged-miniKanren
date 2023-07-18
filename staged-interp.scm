@@ -1,3 +1,14 @@
+#lang racket/base
+
+(require "main.rkt")
+
+(provide
+ evalo-staged
+ evalo-staged/env-exts
+ eval-expo
+ 
+ initial-env)
+
 (defrel (pos-tago v)
   (== v 'struct))
 

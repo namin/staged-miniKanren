@@ -6,11 +6,11 @@
 (test
  (run 1 (q)
       (fresh (v)
-        (u-eval-expo
+        (eval-expo
          '(f 1)
          `((f . (val . ,v)) . ,initial-env)
          1)
-        (u-eval-expo
+        (eval-expo
          `(lambda (x) ,q)
          initial-env
          v)))
@@ -21,7 +21,7 @@
  (run 1 (q)
       (staged
        (fresh (v)
-         (later (u-eval-expo
+         (later (eval-expo
                  '(f 1)
                  `((f . (val . ,v)) . ,initial-env)
                  1))
@@ -35,11 +35,11 @@
 (test
  (run 1 (q)
       (fresh (v)
-        (u-eval-expo
+        (eval-expo
          '(f 1)
          `((f . (val . ,v)) . ,initial-env)
          1)
-        (u-eval-expo
+        (eval-expo
          `(letrec ([g (lambda (x) ,q)]) g)
          initial-env
          v)))
@@ -50,7 +50,7 @@
  (run 1 (q)
       (staged
        (fresh (v)
-         (later (u-eval-expo
+         (later (eval-expo
                  '(f 1)
                  `((f . (val . ,v)) . ,initial-env)
                  1))

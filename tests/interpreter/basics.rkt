@@ -313,14 +313,16 @@
        (evalo-staged '(list 1 2 3) q)))
   '((1 2 3)))
 
-
+;; Because this is a cross-stage test, and the staged and unstaged
+;; are now separate, use the runtime interp generated from staged instead
+;; of evalo-unstaged.
 (test
     (length
      (run 1 (q p e)
        (staged
         (fresh ()
           (eval-expo `(x 1) `((x . (val . ,p))) q)
-          (later (evalo-unstaged
+          (later (evalo-staged
                   `(letrec ((f ,e)) f) p))))))
   1)
 

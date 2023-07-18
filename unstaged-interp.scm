@@ -1,4 +1,27 @@
 
+(defrel-partial/multistage/explicit (u-eval-apply rep [x* body env] [a* val])
+  #:runtime
+  (fresh (env^)
+    ;; TODO: do we need a fallback?
+    (conde
+      ((symbolo x*)
+       (== `((,x* . (val . ,a*)) . ,env) env^))
+      ((u-ext-env*o x* a* env env^)))
+    (eval-expo body env^ val))
+  #:staging-time (== 1 2))
+
+(defrel-partial/multistage/explicit (u-eval-apply-rec rep [f x* e env] [a* res])
+  #:runtime
+  (fresh (env^ env-self)
+    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
+    ;; TODO: do we need a fallback?
+    (conde
+      ((symbolo x*)
+       (== env^ `((,x* . (val . ,a*)) . ,env-self)))
+      ((u-ext-env*o x* a* env-self env^)))
+    (eval-expo e env^ res))
+  #:staging-time (== 1 2))
+
 (defrel (absent-tago v)
   (absento 'struct v))
 
@@ -30,10 +53,22 @@
        (u-eval-listo rands env a*))
       ((== `(struct closure ,rep) cfun)
        (u-eval-listo rands env a*)
-       (callo cfun val a*))
+       (u-callo cfun val a*))
       ((== `(struct rec-closure ,rep) cfun)
        (u-eval-listo rands env a*)
-       (callo cfun val a*)))))
+       (u-callo cfun val a*)))))
+
+(defrel (u-callo proc val a*)
+  (conde
+    ((fresh (rep)
+       (== proc `(struct closure ,rep))
+       (apply-partial rep u-eval-apply a* val)))
+    ((fresh (rep)
+       (== proc `(struct rec-closure ,rep))
+       (apply-partial rep u-eval-apply-rec a* val)))
+    ((fresh (prim-id)
+       (== proc `(struct prim . ,prim-id))
+       (u-eval-primo prim-id a* val)))))
 
 (defrel (u-eval-expo expr env val)
   (conde
@@ -58,7 +93,7 @@
          ;; Multi-argument
          ((u-list-of-symbolso x)))
        (u-not-in-envo 'lambda env)
-       (== rep (partial-apply eval-apply x body env))
+       (== rep (partial-apply u-eval-apply x body env))
        ))
     
     ((u-handle-matcho expr env val))
@@ -68,7 +103,7 @@
               ,letrec-body)
            expr)
        (u-not-in-envo 'letrec env)
-       (== rep (partial-apply eval-apply-rec f x e env))
+       (== rep (partial-apply u-eval-apply-rec f x e env))
        (u-eval-expo letrec-body
                     `((,f . (val . (struct rec-closure ,rep))) . ,env)
                     val)))
@@ -276,7 +311,7 @@
 (defrel (u-handle-matcho expr env val)
   (fresh (against-expr mval clause clauses)
     (== `(match ,against-expr ,clause . ,clauses) expr)
-    (not-in-envo 'match env)
+    (u-not-in-envo 'match env)
     (u-eval-expo against-expr env mval)
     (u-match-clauses mval `(,clause . ,clauses) env val)))
 
@@ -306,7 +341,7 @@
 (defrel (u-literalo t)
   (conde
     ((numbero t))
-    ((symbolo t) (fresh () (not-tago/gen t)))
+    ((symbolo t) (fresh () (not-tago t)))
     ((u-booleano t))
     ((== '() t))))
 
@@ -328,17 +363,17 @@
     (== `((,p ,result-expr) . ,d) clauses)
     (conde
       ((fresh (env^)
-         (p-match p mval '() penv)
-         (regular-env-appendo penv env env^)
+         (u-p-match p mval '() penv)
+         (u-regular-env-appendo penv env env^)
          (u-eval-expo result-expr env^ val)))
-      ((p-no-match p mval '() penv)
+      ((u-p-no-match p mval '() penv)
        (u-match-clauses mval d env val)))))
 
 (defrel (u-var-p-match var mval penv penv-out)
   (fresh ()
     (symbolo var)
-    (not-tago/gen mval)
-    (var-p-match-extend var mval penv penv-out)))
+    (not-tago mval)
+    (u-var-p-match-extend var mval penv penv-out)))
 
 (defrel (u-var-p-match-extend var val penv penv-out)
   (conde
@@ -356,14 +391,14 @@
 
 (defrel (u-p-match p mval penv penv-out)
   (conde
-    ((self-eval-literalo p)
+    ((u-self-eval-literalo p)
      (== p mval)
      (== penv penv-out))
-    ((var-p-match p mval penv penv-out))
+    ((u-var-p-match p mval penv penv-out))
     ((fresh (var pred)
       (== `(? ,pred ,var) p)
-      (pred-match pred mval)
-      (var-p-match var mval penv penv-out)))
+      (u-pred-match pred mval)
+      (u-var-p-match var mval penv penv-out)))
     ((fresh (quasi-p)
       (== (list 'quasiquote quasi-p) p)
       (u-quasi-p-match quasi-p mval penv penv-out)))))
@@ -407,7 +442,7 @@
   (conde
     ((== quasi-p mval)
      (== penv penv-out)
-     (literalo quasi-p))
+     (u-literalo quasi-p))
     ((fresh (p)
       (== (list 'unquote p) quasi-p)
       (u-p-match p mval penv penv-out)))
