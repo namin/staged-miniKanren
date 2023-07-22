@@ -209,7 +209,7 @@ of lambda.
 
 Note that terms and term variables don't need to be assigned a stage.
       
-3. partial-apply, apply-partial to add just enough first-class code to reuse staged code for
+3. partial-apply, finish-partial to add just enough first-class code to reuse staged code for
 interpreted closure bodies without breaking relationality.
 
 

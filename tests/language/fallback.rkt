@@ -316,7 +316,7 @@
      (later (== q 'fallback))
      (fresh (rep)
        (later (== rep (partial-apply p 'partial-value)))
-       (later (apply-partial rep p q))))))
+       (later (finish-apply rep p q))))))
  '(partial-value))
 
 ;; Similarly, later conde needs to notify. Currently it does this by

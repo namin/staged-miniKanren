@@ -23,8 +23,8 @@
  (run 1 (q)
    (fresh (c r1 r2)
      (== c (partial-apply test-rel 2 2))
-     (apply-partial c test-rel 1 r1)
-     (apply-partial c test-rel 4 r2)
+     (finish-apply c test-rel 1 r1)
+     (finish-apply c test-rel 4 r2)
      (== q `(,r1 ,r2))))
  '(((1 2 2) (4 2 2))))
 
@@ -34,14 +34,14 @@
    (staged
     (fresh (c r1 r2)
       (later (== c (partial-apply test-rel 2 2)))
-      (later (apply-partial c test-rel 1 r1))
-      (later (apply-partial c test-rel 4 r2))
+      (later (finish-apply c test-rel 1 r1))
+      (later (finish-apply c test-rel 4 r2))
       (later (== q `(,r1 ,r2))))))
  '(((1 2 2) (4 2 2))))
 
 ;; Mixed stage, like with a staged closure called in runtime code
 (defrel (like-callo c arg res)
-  (apply-partial c test-rel arg res))
+  (finish-apply c test-rel arg res))
 (test
  (run 1 (q)
    (staged
@@ -58,7 +58,7 @@
    (staged
     (conde
       [(fresh (c)
-         (later (== c (partial-apply test-rel 2 3)))
+         (== c (specialize-partial-apply test-rel 2 3))
          (later (== q 'branch-1)))]
       [(later (== q 'branch-2))])))
  '(branch-2))

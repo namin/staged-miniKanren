@@ -7,7 +7,7 @@
  #;racket-term
  define-term-syntax-rule
  ==
- apply-partial
+ finish-apply
  =/=
  absento
  stringo
@@ -111,14 +111,15 @@
         #'(quote n))
     (~> b:boolean
         #'(quote b)))
-  
+
   (nonterminal goal
     #:bind-literal-set goal-literals
 
     (== v:term-var ((~datum partial-apply) rel:relation-name arg:term ...))
+    (== v:term-var ((~datum specialize-partial-apply) rel:relation-name arg:term ...))
     (== t1:term t2:term)
   
-    (apply-partial v:term-var rel:relation-name arg:term ...)
+    (finish-apply v:term-var rel:relation-name arg:term ...)
 
     (=/= t1:term t2:term)
     (absento t1:term t2:term)
@@ -362,16 +363,19 @@
         (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)])
           #'(i:partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
+
+    [(_ (~and stx (== v:id ((~datum specialize-partial-apply) rel:id arg ...))))
+     (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     
-    [(_ (apply-partial v:id rel:id arg ...))
+    [(_ (finish-apply v:id rel:id arg ...))
      (match (symbol-table-ref relation-info #'rel)
        [(partial-rel stage now-args-count later-args-count)
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
        (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:apply-partial v (rel (now-placeholders ...) ((compile-term arg) ...))))]
-       [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
+          #'(i:finish-apply v (rel (now-placeholders ...) ((compile-term arg) ...))))]
+       [_ (raise-syntax-error #f "finish-apply expects relation defined by defrel-partial" #'r)])]
     
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.c (compile-term t1) (compile-term t2))]
@@ -413,7 +417,16 @@
            #'(r (compile-term arg) ...)))]
 
     [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
-     (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]
+     (raise-syntax-error #f "partial-apply not supported in staging-time code" #'stx)]
+
+    [(_ (== v:id ((~datum specialize-partial-apply) rel:id arg ...)))
+     (match (symbol-table-ref relation-info #'rel)
+       [(partial-rel stage now-args-count later-args-count)
+        (when (not (= now-args-count (length (attribute arg))))
+          (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
+        (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)])
+          #'(i:ss:specialize-partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
+       [_ (raise-syntax-error #f "specialize-partial-apply expects relation defined by defrel-partial" #'r)])]
 
     [(_ (== t1 t2))
      #'(i:ss:atomic (i:==/staging-time (compile-term t1) (compile-term t2)))]
@@ -440,52 +453,56 @@
     [(_ (later g))
      #'(compile-later-goal g)]
 
-    [(_ (~and stx (~or (apply-partial . _)
+    [(_ (~and stx (~or (finish-apply . _)
                        (staged . _))))
-     (raise-syntax-error #f "not supported in generator code" #'stx)]    
+     (raise-syntax-error #f "not supported in staging-time code" #'stx)]    
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
 (define-syntax compile-now-for-runtime-goal
   (lambda (stx)
     (define/syntax-parse (_ now-goal) stx)
     (syntax-parse stx
-     #:literal-sets (goal-literals)
-     [(_ (trace id x ...))
-      (error 'compile-now-for-runtime-goal "TODO not supported")]
-     [(_ (#%rel-app r:id arg ...))
-      #'(compile-runtime-goal now-goal)]
-     [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
-      (raise-syntax-error #f "partial-apply not supported in generator code" #'stx)]
+      #:literal-sets (goal-literals)
+      [(_ (trace id x ...))
+       (error 'compile-now-for-runtime-goal "TODO not supported")]
+      [(_ (#%rel-app r:id arg ...))
+       #'(compile-runtime-goal now-goal)]
+      
+      [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
+       (raise-syntax-error #f "partial-apply not supported in staging-time code" #'stx)]
+      [(_ (== v:id ((~datum specialize-partial-apply) rel:id arg ...)))
+       #'(compile-runtime-goal (== v (partial-apply rel arg ...)))]
 
-     [(_ (== t1 t2))
-      #'(compile-runtime-goal now-goal)]
-     [(_ (constraint:binary-constraint t1 t2))
-      #'(compile-runtime-goal now-goal)]
-     [(_ (constraint:unary-constraint t))
-      #'(compile-runtime-goal now-goal)]
+      
+      [(_ (== t1 t2))
+       #'(compile-runtime-goal now-goal)]
+      [(_ (constraint:binary-constraint t1 t2))
+       #'(compile-runtime-goal now-goal)]
+      [(_ (constraint:unary-constraint t))
+       #'(compile-runtime-goal now-goal)]
      
-     [(_ (fresh (x:id ...) g ...))
-      #'(i:fresh (x ...) (compile-now-for-runtime-goal g) ...)]
-     [(_ (conde [g ...] ...))
-      #'(i:conde [(compile-now-for-runtime-goal g) ...] ...)]
+      [(_ (fresh (x:id ...) g ...))
+       #'(i:fresh (x ...) (compile-now-for-runtime-goal g) ...)]
+      [(_ (conde [g ...] ...))
+       #'(i:conde [(compile-now-for-runtime-goal g) ...] ...)]
      
-     [(_ (~and stx (fallback fb body)))
-      #;(raise-syntax-error #f "fallback not supported in multistage code" #'stx)
-      #'(compile-now-for-runtime-goal fb)]
+      [(_ (~and stx (fallback fb body)))
+       #;(raise-syntax-error #f "fallback not supported in multistage code" #'stx)
+       #'(compile-now-for-runtime-goal fb)]
 
-     [(_ (gather body))
-      #'(compile-now-for-runtime-goal body)]
+      [(_ (gather body))
+       #'(compile-now-for-runtime-goal body)]
      
-     [(_ fail)
-      #'(compile-runtime-goal now-goal)]
+      [(_ fail)
+       #'(compile-runtime-goal now-goal)]
 
-     [(_ (later g))
-      #'(compile-runtime-goal g)]
+      [(_ (later g))
+       #'(compile-runtime-goal g)]
 
-     [(_ (~and stx (~or (apply-partial . _)
-                        (staged . _))))
-      (raise-syntax-error #f "not supported in generator code" #'stx)]    
-     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)])))
+      [(_ (~and stx (~or (finish-apply . _)
+                         (staged . _))))
+       (raise-syntax-error #f "not supported in generator code" #'stx)]    
+      [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)])))
 
 (define-syntax compile-later-goal
   (syntax-parser
@@ -502,18 +519,21 @@
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
         (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)])
-          #'(i:ss:lpartial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
+          #'(i:lpartial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
+
+    [(_ (~and stx (== v:id ((~datum specialize-partial-apply) rel:id arg ...))))
+     (raise-syntax-error #f "not supported in generated code" #'stx)]
     
-    [(_ (apply-partial v:id rel:id arg ...))
+    [(_ (finish-apply v:id rel:id arg ...))
      (match (symbol-table-ref relation-info #'rel)
        [(partial-rel stage now-args-count later-args-count)
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
         (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)])
-          #'(i:lapply-partial v (rel (now-placeholders ...) ((compile-term arg) ...))))]
-       [_ (raise-syntax-error #f "apply-partial expects relation defined by defrel-partial" #'r)])]
+          #'(i:lfinish-apply v (rel (now-placeholders ...) ((compile-term arg) ...))))]
+       [_ (raise-syntax-error #f "finish-apply expects relation defined by defrel-partial" #'r)])]
    
     [(_ (constraint:binary-constraint t1 t2))
      #'(constraint.l (compile-term t1) (compile-term t2))]

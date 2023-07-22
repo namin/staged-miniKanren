@@ -47,10 +47,10 @@
   (conde
     ((fresh (rep)
        (== proc `(struct closure ,rep))
-       (apply-partial rep eval-apply a* val)))
+       (finish-apply rep eval-apply a* val)))
     ((fresh (rep)
        (== proc `(struct rec-closure ,rep))
-       (apply-partial rep eval-apply-rec a* val)))
+       (finish-apply rep eval-apply-rec a* val)))
     ((fresh (prim-id)
        (== proc `(struct prim . ,prim-id))
        (eval-primo prim-id a* val)))))
@@ -123,7 +123,7 @@
          ((symbolo x))
          ((list-of-symbolso x)))
        (not-in-envo 'lambda env)
-       (later (== rep (partial-apply eval-apply x body env)))))
+       (== rep (specialize-partial-apply eval-apply x body env))))
     
     ;; match
     ((handle-matcho expr env val))
@@ -134,7 +134,7 @@
               ,letrec-body)
            expr)
        (not-in-envo 'letrec env)
-       (later (== rep (partial-apply eval-apply-rec f x e env)))
+       (== rep (specialize-partial-apply eval-apply-rec f x e env))
        (eval-expo letrec-body
                   `((,f . (val . (struct rec-closure ,rep))) . ,env)
                   val)))

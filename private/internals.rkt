@@ -373,6 +373,11 @@
     [(_ relation arg ...)
      (ss:later #`(relation #,(data arg) ...))]))
 
+(define-syntax lpartial-apply
+  (syntax-rules ()
+    [(_ rep (rel (x ...) (under ...)))
+     (ss:later #`(partial-apply #,(data rep) (rel (#,(data x) ...) (under ...))))]))
+
 (define lsucceed (ss:later #'succeed))
 (define lfail (ss:later #'fail))
 
@@ -460,7 +465,7 @@
 (define (partial-apply-rt rep rel args)
   (== rep (apply-rep rel rel args #f))) ;; TODO: maybe have just one rel
 
-(define-syntax ss:lpartial-apply
+(define-syntax ss:specialize-partial-apply
   (syntax-parser
     [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
@@ -481,7 +486,7 @@
                           (fresh ()
                             . #,body)))))))]))
 
-(define-syntax apply-partial
+(define-syntax finish-apply
   (syntax-parser
     [(_ rep (rel ((~and x (~literal _)) ...) (y ...)))     
      #:with (x-n ...) (generate-temporaries #'(x ...))
@@ -498,10 +503,10 @@
                   ((multistage-rel-value-runtime rel) rep x-n ... y ...))
               st))))]))
 
-(define-syntax lapply-partial
+(define-syntax lfinish-apply
   (syntax-parser
     [(_ rep (rel ((~and x (~literal _)) ...) (y ...)))
-     #'(ss:later #`(apply-partial #,(data rep) (rel (x ...) (#,(data y) ...))))]))
+     #'(ss:later #`(finish-apply #,(data rep) (rel (x ...) (#,(data y) ...))))]))
 
 ;;
 ;; Reification

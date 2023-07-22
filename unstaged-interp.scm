@@ -59,10 +59,10 @@
   (conde
     ((fresh (rep)
        (== proc `(struct closure ,rep))
-       (apply-partial rep u-eval-apply a* val)))
+       (finish-apply rep u-eval-apply a* val)))
     ((fresh (rep)
        (== proc `(struct rec-closure ,rep))
-       (apply-partial rep u-eval-apply-rec a* val)))
+       (finish-apply rep u-eval-apply-rec a* val)))
     ((fresh (prim-id)
        (== proc `(struct prim . ,prim-id))
        (u-eval-primo prim-id a* val)))))
