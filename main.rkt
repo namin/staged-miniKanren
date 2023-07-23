@@ -464,7 +464,7 @@
     (syntax-parse stx
       #:literal-sets (goal-literals)
       [(_ (trace id x ...))
-       (error 'compile-now-for-runtime-goal "TODO not supported")]
+       #'(compile-runtime-goal now-goal)]
       [(_ (#%rel-app r:id arg ...))
        #'(compile-runtime-goal now-goal)]
       
