@@ -29,7 +29,7 @@
 (define (record-bench phase name . args)
   (when (generated-code)
     (printf "generated code u-eval-expo count: ~a~%"
-            (tree-count (generated-code) 'u-eval-expo)))
+            (tree-count (generated-code) 'internal)))
   (if (null? args)
       (printf "BENCH ~a ~a\n" phase name)
       (printf "BENCH ~a ~a ~a\n" phase name (car args)))
