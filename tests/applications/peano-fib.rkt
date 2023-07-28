@@ -531,6 +531,7 @@
                      a2
                      (fib-aps (- n '(s . z)) ,B ,C))))
           fib-acc)
+      (absento 'match fib-acc)
       (evalo-staged
        (peano-synth-fib-aps fib-acc ACC1 ACC2)
        '(z
@@ -704,16 +705,16 @@
      (peano-fib `(fib-aps ,q 'z '(s . z)))
      '(s s s s s s s s s s s s s . z))))
  '('(s s s s s s s . z)
-  ((letrec ((_.0 (lambda _.1 _.2))) '(s s s s s s s . z))
-   $$
-   (=/= ((_.0 quote))))
-  ((match _.0 (_.0 '(s s s s s s s . z)) . _.1) $$ (num _.0))
-  (and '(s s s s s s s . z))
-  ((match _.0 (_.1 '(s s s s s s s . z)) . _.2)
-   $$
-   (=/= ((_.1 quote)))
-   (num _.0)
-   (sym _.1))))
+   ((letrec ((_.0 (lambda _.1 _.2))) '(s s s s s s s . z))
+    $$
+    (=/= ((_.0 quote))))
+   (((lambda _.0 '(s s s s s s s . z))) $$ (=/= ((_.0 quote))) (sym _.0))
+   (((lambda _.0 '(s s s s s s s . z)) _.1)
+    $$
+    (=/= ((_.0 quote)))
+    (num _.1)
+    (sym _.0))
+   ((lambda () '(s s s s s s s . z)))))
 
 (record-bench 'unstaged 'peano-fib 4)
 (time-test
