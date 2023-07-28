@@ -6,6 +6,8 @@
  evalo-staged
  evalo-staged/env-exts
  eval-expo
+
+eval-rands-and-applyo
  
  initial-env)
 
@@ -43,54 +45,29 @@
       ((ext-env*o x* a* env env^)))
     (eval-expo body env^ val)))
 
-(defrel (callo proc val a*)
+(defrel/multistage/fallback (handle-appo rator rands env val)
   (conde
-    ((fresh (rep)
-       (== proc `(struct closure ,rep))
-       (finish-apply rep eval-apply a* val)))
-    ((fresh (rep)
-       (== proc `(struct rec-closure ,rep))
-       (finish-apply rep eval-apply-rec a* val)))
-    ((fresh (prim-id)
-       (== proc `(struct prim . ,prim-id))
-       (eval-primo prim-id a* val)))))
+    ((fresh (proc)
+       (symbolo rator)
+       (lookupo rator env proc)
+       (eval-rands-and-applyo proc rands env val)))
+    ((fresh (a d proc)
+       (== (cons a d) rator)
+       (eval-expo rator env proc)
+       (later (eval-rands-and-applyo proc rands env val))))))
 
-
-(defrel/multistage/explicit (handle-appo rator rands env val)
-  #:runtime
-  (fresh (a* cfun rep proc prim-id)
-    (eval-expo rator env cfun)
+(defrel/multistage/fallback (eval-rands-and-applyo proc rands env val)
+  (fresh (a* rep)
     (conde
-      ((== `(struct prim . ,prim-id) cfun)
-       (eval-primo prim-id a* val)
+      ((== `(struct prim . ,rep) proc)
+       (eval-primo rep a* val)
        (eval-listo rands env a*))
-      ((== `(struct closure ,rep) cfun)
+      ((== `(struct closure ,rep) proc)
        (eval-listo rands env a*)
-       (callo cfun val a*))
-      ((== `(struct rec-closure ,rep) cfun)
+       (later (finish-apply rep eval-apply a* val)))
+      ((== `(struct rec-closure ,rep) proc)
        (eval-listo rands env a*)
-       (callo cfun val a*))))
-  #:staging-time
-  (fallback
-   (later (handle-appo rator rands env val))
-   (conde
-     ;; statically-recognizable primitive application
-     ((fresh (prim proc a*)
-        (lookupo rator env `(struct prim . ,prim))
-        (eval-primo prim a* val)
-        (eval-listo rands env a*)))
-    
-     ;; general application
-     ((fresh (proc a*)
-        (conde
-          ((symbolo rator)
-           (fresh (p tag)
-             (lookupo rator env `(struct ,tag . ,p))
-             (=/= 'prim tag)))
-          ((fresh (a d) (== (cons a d) rator))))
-        (eval-expo rator env proc)
-        (eval-listo rands env a*)
-        (later (callo proc val a*)))))))
+       (later (finish-apply rep eval-apply-rec a* val))))))
 
 (defrel/multistage/fallback (eval-expo expr env val)
   (conde
