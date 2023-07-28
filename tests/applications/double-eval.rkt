@@ -282,7 +282,7 @@
                                            (map proc '(d e f))))
                                    (lambda (x) ,q))
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
-  '((cons x (cons (cons x '()) (cons x '())))))
+  '((list x (cons x '()) x)))
 
 (record-bench 'unstaged 'eval-and-map-and-list-evalo)
 (time-test
