@@ -134,3 +134,143 @@
       (evalo-later `(amb 1 ,e)
                    1))))
  '((_.0 $$ (absento (1 _.0)))))
+
+
+;; Broader conclusion from this example:
+
+;; Because at runtime when any branch succeeds, we get that answer from a run 1,
+;; rather than just diverging... this means that staging always has to terminate
+;; if there's a chance of any branch in the program succeeding at runtime... which
+;; is presumably all the cases we care about.
+
+;; So, every staged program to be correct needs to come with a termination argument.
+
+;; The termination argument that we use for a staged interpreter with fallback and
+;; gather is... feasible but subtle. Not the most usable, and it's only really feasible
+;; because the staging time portion is just a simple, structurally recursive function.
+;; If we were staging something where the staging-time portion is a terminating
+;; function but that requires a more complex termination argument than structural
+;; recursion, or where the staging-time portion is a relation in multiple arguments,
+;; that may not work with the tools we have.
+
+;; Are there other designs for a staged miniKanren where proving / reasoning about
+;; termination would be much easier?
+;;
+;; Candidates...
+;;
+;; -- condg --
+;;
+;; How do you argue termination with `condg`?
+;;
+;; Possibilities with a interpreter implemented with condg:
+;;  1. Everything fails; terminate.
+;;  2. The guards (which should be finite computations) of multiple clauses succeed.
+;;      fallback and terminate.
+;;  3. One guard succeeds. We commit to that clause and evaluate the recursive calls.
+;;     Thus termination of the overall call depends on termination of these recursions
+;;     in this one clause.
+;;         What argument do we use that these will terminate?
+;;              Structural recursion again. Eventually we'll exhaust the ground syntax
+;;              and fallback with case 2 above, or we'll hit a base case of the
+;;              interpreter.
+;;
+;; So the argument is again structural recursion. Why is it easier to reason about
+;; with condg than with fallback?
+;;   The decision about whether we are going to fallback depends only on the
+;;   (always-terminating) guards and not on the recursive bodies.
+;;
+;;   This is at least easier to think about.
+;;
+;; Does it change what we can easily express? Or do we have to follow basically the
+;; same rules of making staging-time computation be limited to act as a structurally
+;; recursive function with a base case, with other computation
+;; deferred to runtime, and where each call only examines one argument at a time.
+;;    Constraints between arguments can lead to failure; when that failure closes
+;;    off all base cases but not all recursive cases then the termination argument
+;;    for the fallback search does not hold.
+;;         Is this a problem for the termination argument for the condg search?
+;;               Well, in case 3 we still need a base case. We could still end up
+;;               in an infinite recursion where all base cases fail but a recursive
+;;               case appears possible.
+
+;; Concretely, an interpreter with variable reference and `car`, where the intitial
+;; environment has some lists to destruct. The only base cases is variable reference.
+;; In an empty initial enviornment or when the expected value doesn't match the
+;; environment value this case can fail.
+#;(defrel/multistage/condg-fallback (eval-var-car e env v)
+    ([]
+     [(symbolo e)
+      (lookupo e env v)]
+     [])
+    ([e1 v1 d]
+     [(== e `(car ,e1))
+      (== v1 `(,v . ,d))]
+     [(evalo e1 env v1)]))
+;; So this query could diverge at staging time:
+;; (eval-var-car e '() 5)
+
+;; Okay, making this interpeter always terminate. What does it take?
+;; Just doing a later on the values isn't enough because lookup always fails
+;; in an empty environment.
+#;(defrel/multistage/condg-fallback (eval-var-car2 e env v)
+    ([v2]
+     [(symbolo e)
+      (later (== v v2))
+      (lookupo e env v2)]
+     [])
+    ([e1 v1 d]
+     [(== e `(car ,e1))
+      (later (== v1 `(,v . ,d)))]
+     [(eval-var-car2 e1 env v1)]))
+
+;; What about putting lookupo in the body, but no laters?
+;; Then multiple guards succeed and we fall back.
+#;(defrel/multistage/condg-fallback (eval-var-car3 e env v)
+    ([v2]
+     [(symbolo e)
+      (== v v2)]
+     [(lookupo e env v)])
+    ([e1 v1 d]
+     [(== e `(car ,e1))
+      (== v1 `(,v . ,d))]
+     [(eval-var-car3 e1 env v1)]))
+
+;; If this was done with fallbacks, the symbol case isn't a reliable
+;; base case to ensure termination.
+(defrel/multistage/fallback (eval-var-car4 e env v)
+  (conde
+    ((fresh (v2)
+       (symbolo e)
+       (== v v2)
+       (lookupo e env v)))
+    ((fresh (e1 v1 d)
+       (== e `(car ,e1))
+       (== v1 `(,v . ,d))
+       (eval-var-car4 e1 env v1)))))
+
+(defrel/multistage/fallback (lookupo x env v)
+  (fresh (y b rest)
+    (== `((,y . ,b) . ,rest) env)
+    (conde
+     [(== x y) (== v b)]
+     [(=/= x y) (lookupo x rest v)])))
+
+;; This diverges!
+#;(run 1 (e) (staged (eval-var-car4 e '() 5)))
+
+;; The situation here is worse, because there isn't a way to modify the
+;; interpreter to make it terminate while still doing the lookupo at staging
+;; time.
+
+;; Note however that this is an example where the unstaged diverges too.
+;; So for this *really* to be a problem, we need to construct a case where
+;; the runtime would terminate but this is still a problem. I don't
+;; think that's so hard using `gather`.
+#;(run 1 (e) (eval-var-car4 e '() 5))
+
+;; So as a conclusion, the fallback approach has additional problems for relations
+;; without sufficiently simple base cases. The tradeoff might still be worth it,
+;; though.
+
+;; Either a combination of fallback with quasiquoted conde rather than gather,
+;; or gather with condg could escape this problem perhaps.
