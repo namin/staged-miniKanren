@@ -65,11 +65,11 @@
  '((_.0 $$ (absento (1 _.0)))))
 ;; Diverges:
 #;(run 1 (e)
-  (staged
-   (fresh ()
-     (absento 1 e)
-     (evalo `(amb 1 ,e)
-            1))))
+    (staged
+     (fresh ()
+       (absento 1 e)
+       (evalo `(amb 1 ,e)
+              1))))
 
 ;; To work around this problem, we delay all unifications with the
 ;; value until runtime with `later`. As a result, the following are
@@ -235,8 +235,8 @@
       (== v1 `(,v . ,d))]
      [(eval-var-car3 e1 env v1)]))
 
-;; If this was done with fallbacks, the symbol case isn't a reliable
-;; base case to ensure termination.
+;; Done with fallbacks, the symbol case isn't a reliable base case to ensure
+;; termination.
 (defrel/multistage/fallback (eval-var-car4 e env v)
   (conde
     ((fresh (v2)
@@ -252,25 +252,63 @@
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
-     [(== x y) (== v b)]
-     [(=/= x y) (lookupo x rest v)])))
+      [(== x y) (== v b)]
+      [(=/= x y) (lookupo x rest v)])))
 
-;; This diverges!
+;; So, this diverges!
 #;(run 1 (e) (staged (eval-var-car4 e '() 5)))
 
-;; The situation here is worse, because there isn't a way to modify the
-;; interpreter to make it terminate while still doing the lookupo at staging
-;; time.
+;; And, constructing the case where runtime does terminate, using `gather`...
+(defrel/multistage/fallback (eval-var-car5 e env v)
+  (conde
+    ((fresh (v2)
+       (symbolo e)
+       (later (== v v2))
+       (lookupo e env v)))
+    ((fresh (e1 v1 d)
+       (== e `(car ,e1))
+       (later (== v1 `(,v . ,d)))
+       (eval-var-car5 e1 env v1)))
+    ((fresh (e1 e2)
+       (== e `(amb ,e1 ,e2))
+       (gather
+        (conde
+          ((eval-var-car5 e1 env v))
+          ((eval-var-car5 e2 env v))))))))
 
-;; Note however that this is an example where the unstaged diverges too.
-;; So for this *really* to be a problem, we need to construct a case where
-;; the runtime would terminate but this is still a problem. I don't
-;; think that's so hard using `gather`.
-#;(run 1 (e) (eval-var-car4 e '() 5))
+(run 1 (e)
+  (fresh ()
+    (absento 'x e)
+    (eval-var-car5 `(amb x ,e) '((x . 5)) 5)))
+
+;; Diverges:
+#;(run 1 (e)
+  (staged
+   (fresh ()
+     (absento 'x e)
+     (eval-var-car5 `(amb x ,e) '((x . 5)) 5))))
+
+;; There isn't an obvious way to modify the interpreter to only do
+;; the lookup after committing to the symbol case, while still doing the lookup at
+;; staging-time.
+
+;; `condg` is more workable for this case because we can make it fall back as
+;; "potentially non-deterministic" even in the case where if we evaluated further
+;; we would find that only one branch, or even no branch at all succeeds.
+;;
+;; An "approximate" fallback. Whereas the only way to get `fallback` to fallback
+;; is to actually defer stuff to runtime.
+;;
+;; It feels like we could have a kind of "cut" analogy that says "yeah, assume this
+;; could work if you get this far and count it".
+
 
 ;; So as a conclusion, the fallback approach has additional problems for relations
-;; without sufficiently simple base cases. The tradeoff might still be worth it,
-;; though.
+;; without sufficiently simple base cases. You have to prove that there will always
+;; be a base case that can succeed, and sometimes that may not be true.
+
+;; The tradeoff might still be worth it, though. The syntactic simplicity of
+;; transforming an interpreter is really nice!
 
 ;; Either a combination of fallback with quasiquoted conde rather than gather,
 ;; or gather with condg could escape this problem perhaps.
