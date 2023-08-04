@@ -22,10 +22,12 @@
         (conde
           ((evalo e1 v))
           ((evalo e2 v))))))))
-     
-(run 1 (v)
-  (staged (evalo '(car (cons 1 2))
-                 v)))
+
+(test
+ (run 1 (v)
+   (staged (evalo '(car (cons 1 2))
+                  v)))
+ '(1))
 
 ;; Try to generate an expression that produces a symbol; no case in the
 ;; interpreter does this. All the cases for introduction forms fail. There
@@ -54,11 +56,13 @@
 ;; would succeed for a run 1.
 
 ;; An example:
-(run 1 (e)
-  (fresh ()
-    (absento 1 e)
-    (evalo `(amb 1 ,e)
-           1)))
+(test
+ (run 1 (e)
+   (fresh ()
+     (absento 1 e)
+     (evalo `(amb 1 ,e)
+            1)))
+ '((_.0 $$ (absento (1 _.0)))))
 ;; Diverges:
 #;(run 1 (e)
   (staged
@@ -114,15 +118,19 @@
           ((evalo-later e1 v))
           ((evalo-later e2 v))))))))
 
-(run 1 (e)
-  (fresh ()
-    (absento 1 e)
-    (evalo-later `(amb 1 ,e)
-                 1)))
-
-(run 1 (e)
-  (staged
+(test
+ (run 1 (e)
    (fresh ()
      (absento 1 e)
      (evalo-later `(amb 1 ,e)
-                  1))))
+                  1)))
+ '((_.0 $$ (absento (1 _.0)))))
+
+(test
+ (run 1 (e)
+   (staged
+    (fresh ()
+      (absento 1 e)
+      (evalo-later `(amb 1 ,e)
+                   1))))
+ '((_.0 $$ (absento (1 _.0)))))
