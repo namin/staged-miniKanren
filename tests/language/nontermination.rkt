@@ -276,21 +276,71 @@
           ((eval-var-car5 e1 env v))
           ((eval-var-car5 e2 env v))))))))
 
-(run 1 (e)
-  (fresh ()
-    (absento 'x e)
-    (eval-var-car5 `(amb x ,e) '((x . 5)) 5)))
+(test
+ (run 1 (e)
+   (fresh ()
+     (absento 'x e)
+     (eval-var-car5 `(amb x ,e) '((x . 5)) 5)))
+ '((_.0 $$ (absento (x _.0)))))
 
 ;; Diverges:
 #;(run 1 (e)
-  (staged
-   (fresh ()
-     (absento 'x e)
-     (eval-var-car5 `(amb x ,e) '((x . 5)) 5))))
+    (staged
+     (fresh ()
+       (absento 'x e)
+       (eval-var-car5 `(amb x ,e) '((x . 5)) 5))))
 
 ;; There isn't an obvious way to modify the interpreter to only do
 ;; the lookup after committing to the symbol case, while still doing the lookup at
 ;; staging-time.
+
+;; Well, there is a way, but it's tricky:
+(defrel/multistage/fallback (eval-var-car6 e env v)
+  (conde
+    ((fresh (v2)
+       (symbolo e)
+       (later (== v v2))
+       (lookupo e env v)))
+    ;; this is the added clause, to provide a base case
+    ;; when `e` is a symbol but is not in the `env`
+    ((symbolo e)
+     (not-in-envo e env)
+     (later fail))
+    ((fresh (e1 v1 d)
+       (== e `(car ,e1))
+       (later (== v1 `(,v . ,d)))
+       (eval-var-car6 e1 env v1)))
+    ((fresh (e1 e2)
+       (== e `(amb ,e1 ,e2))
+       (gather
+        (conde
+          ((eval-var-car6 e1 env v))
+          ((eval-var-car6 e2 env v))))))))
+(defrel/multistage (not-in-envo x env)
+  (conde
+    ((== '() env))
+    ((fresh (y b rest)
+       (== `((,y . ,b) . ,rest) env)
+       (=/= y x)
+       (not-in-envo x rest)))))
+
+
+(test
+ (run 1 (e)
+   (fresh ()
+     (absento 'x e)
+     (eval-var-car6 `(amb x ,e) '((x . 5)) 5)))
+ '((_.0 $$ (absento (x _.0)))))
+
+;; now this terminates
+(test
+ (run 1 (e)
+   (staged
+    (fresh ()
+      (absento 'x e)
+      (eval-var-car6 `(amb x ,e) '((x . 5)) 5))))
+ '((_.0 $$ (absento (x _.0)))))
+
 
 ;; `condg` is more workable for this case because we can make it fall back as
 ;; "potentially non-deterministic" even in the case where if we evaluated further
