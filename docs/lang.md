@@ -1,11 +1,15 @@
 # The Staged miniKanren Language
 
+## 0. write a vanilla interpreter
+
 ## 1. write a staged interpreter that only staged fully ground programs
 
 - `staged`
 - `later`
 - `defrel/generator`
 - `gather`
+
+example interpreter with `list` and `amb`.
 
 ## 2. what if the program isn't fully ground?
 
@@ -72,6 +76,3 @@ staging-time goal sg :=
 multistage goal mg :=
 | sg
 | (fallback mg)
-
-
-
