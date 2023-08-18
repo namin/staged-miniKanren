@@ -23,6 +23,14 @@
   (run* (v) (eval-ambo '(amb 1 2) v))
   '(1 2))
 
+(test
+  (run* (v) (eval-ambo '(amb 1 (amb 2 3)) v))
+  '(1 2 3))
+
+(test
+  (run* (v) (eval-ambo '(cons (amb 1 2) (amb 3 4)) v))
+  '((1 . 3) (1 . 4) (2 . 3) (2 . 4)))
+
 (defrel/generator (gen-eval-ambo e v)
   (conde
     ((numbero e)
@@ -42,9 +50,7 @@
 (test
   (run* (v) (staged (gen-eval-ambo '(amb 1 2) v)))
   '(1 2))
-(test
-  (generated-code)
-  '(lambda (v7) (fresh (_.0) (== _.0 v7) (conde ((== '1 _.0)) ((== '2 _.0))))))
+(pretty-print (generated-code))
 
 ;; non-deterministic
 ;; (run 2 (e v) (staged (gen-eval-ambo `(cons (amb 1 2) ,e) v)))
