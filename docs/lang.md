@@ -22,8 +22,8 @@ We're starting with an interpreter that supports numbers, `cons`, and non-determ
          ((eval-ambo e2 v)))))))
 
 (test
-  (run* (v) (eval-ambo '(amb 1 2) v))
-  '(1 2))
+  (run* (v) (eval-ambo '(cons (amb 1 2) (amb 3 4)) v))
+  '((1 . 3) (1 . 4) (2 . 3) (2 . 4)))
 ```
 
 ## 1. write a staged interpreter that only staged fully ground programs
