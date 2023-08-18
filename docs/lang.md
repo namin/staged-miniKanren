@@ -31,7 +31,7 @@ We're starting with an interpreter that supports numbers, `cons`, and non-determ
 We introduce the following forms.
 - `staged`
 - `later`
-- `defrel/generator` (will be `defrel/staged`)
+- `defrel/generator`
 - `gather`
 
 We want to _stage_ the interpreter, specializing the interpreter to an expression in the first stage, and running the generated miniKanren code in the second stage.
