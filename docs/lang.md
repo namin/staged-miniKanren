@@ -98,6 +98,64 @@ We introduce the following forms:
 - `defrel/multistage`
 - `defrel/multistage/fallback`
 
+[Motivate with a program synthesis example. Do an aside of showing a program synthesis query in a more substantial interpreter.]
+
+In a program synthesis example, we will often have a sketch of the program, along with holes representing the portions of the program to synthesize.
+Staging can't help to do anything to optimize the holes, but it can specialize any computation involving the known sketch.
+The full computation has to mix evaluation of staged generated code with evaluation of the holes using the unspecialized runtime interpreter.
+The challenge is to construct both the interpreters and interactions between the generated code and the runtime interpreter.
+
+```
+(defrel/multistage/fallback (name param ...)
+  ...)
+```
+
+When we define a relation with `defrel/multistage/fallback`, we generate both the staged and runtime version. We get the runtime version by removing the `later` annotations.
+
+Here the runtime version of `ms-eval-ambo` would be identical to the `eval-ambo` relation we saw in section 1.
+
+How do we decide at staging-time that we've encountered a hole and don't have enough information for staging?
+
+For this query,
+
+```
+(run 4 (e v) (staged (ms-eval-ambo `(cons (amb 1 2) ,e) v)))
+```
+
+We would like to produce generated code like this:
+
+```
+(run  4 (e v)
+  (fresh (a d)
+    (== v (cons a d))
+    (conde ((== a 1)) ((== a 2)))
+    (ms-eval-ambo/runtime e d)))
+```
+
+```
+(defrel/multistage/fallback (ms-eval-ambo e v) ;; only change
+  (conde
+    ((numbero e)
+     (later (== e v)))
+    ((fresh (e1 e2 v1 v2)
+       (== e `(cons ,e1 ,e2))
+       (later (== v (cons v1 v2)))
+       (ms-eval-ambo e1 v1)
+       (ms-eval-ambo e2 v2)))
+    ((fresh (e1 e2)
+       (== e `(amb ,e1 ,e2))
+       (gather
+        (conde
+          ((ms-eval-ambo e1 v))
+          ((ms-eval-ambo e2 v))))))))
+
+(test
+  (run* (v) (staged (ms-eval-ambo '(amb 1 2) v)))
+  '(1 2))
+
+(run 4 (e v) (staged (ms-eval-ambo `(cons (amb 1 2) ,e) v)))
+```
+
 ### 3. let's scale that interpreter to support `lambda`
 
 #### 3.1 a limited form of first-class relations (can be explained independently of staging)

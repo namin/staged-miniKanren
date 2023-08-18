@@ -70,6 +70,7 @@
   '(1 2))
 
 (run 4 (e v) (staged (ms-eval-ambo `(cons (amb 1 2) ,e) v)))
+(pretty-print (generated-code))
 
 (defrel (lookupo x env v)
   (fresh (y b rest)
