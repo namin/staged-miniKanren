@@ -26,15 +26,15 @@ We're starting with an interpreter that supports numbers, `cons`, and non-determ
   '((1 . 3) (1 . 4) (2 . 3) (2 . 4)))
 ```
 
-## 1. write a staged interpreter that only staged fully ground programs
+## 1. write a staged interpreter that only stages fully-ground programs
 
 We introduce the following forms.
 - `staged`
 - `later`
-- `defrel/generator`
+- `defrel/generator` (will be `defrel/staged`)
 - `gather`
 
-We want to _stage_ the interpreter, specializing the interpreter to an expression in the first stage, and running the specialized miniKanren code in the second stage.
+We want to _stage_ the interpreter, specializing the interpreter to an expression in the first stage, and running the generated miniKanren code in the second stage.
 We want to define a generator `gen-eval-ambo`:
 
 ```
