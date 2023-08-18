@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require "../main.rkt"
+(require racket/pretty
+         "../main.rkt"
          "../test-check.rkt")
 
 (defrel (eval-ambo e v)
@@ -41,6 +42,9 @@
 (test
   (run* (v) (staged (gen-eval-ambo '(amb 1 2) v)))
   '(1 2))
+(test
+  (generated-code)
+  '(lambda (v7) (fresh (_.0) (== _.0 v7) (conde ((== '1 _.0)) ((== '2 _.0))))))
 
 ;; non-deterministic
 ;; (run 2 (e v) (staged (gen-eval-ambo `(cons (amb 1 2) ,e) v)))
