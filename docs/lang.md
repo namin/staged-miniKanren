@@ -114,8 +114,6 @@ When we define a relation with `defrel/multistage/fallback`, we generate both th
 
 Here the runtime version of `ms-eval-ambo` would be identical to the `eval-ambo` relation we saw in section 1.
 
-How do we decide at staging-time that we've encountered a hole and don't have enough information for staging?
-
 For this query,
 
 ```
@@ -131,6 +129,12 @@ We would like to produce generated code like this:
     (conde ((== a 1)) ((== a 2)))
     (ms-eval-ambo/runtime e d)))
 ```
+
+How do we decide at staging-time that we've encountered a hole and don't have enough information for staging?
+Our approach is to try evaluating the generator interpreter and see if it's non-deterministic.
+If it is, generate a fallback to the runtime version (which is itself automatically generated).
+
+Notice that in the example above, the first clause of the `cons`, `'(amb 1 2)`, is fully known and produces specialized code, while the second clause, `e`, is unknown and generates a fallback to the runtime.
 
 ```
 (defrel/multistage/fallback (ms-eval-ambo e v) ;; only change
