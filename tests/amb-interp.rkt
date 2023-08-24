@@ -187,3 +187,19 @@
 (test
   (run* (v) (staged (ms-eval-lambda-ambo '((lambda (x) (amb x 3)) (amb 1 2)) '() v)))
   '(3 3 1 2))
+
+#;
+(defrel (condg-eval-ambo e v)
+  (condg
+   ([] [(numbero e) (== e v)] [])
+   ([e1 e2 v1 v2]
+    [(== e `(cons ,e1 ,e2))
+     (== v (cons v1 v2))]
+    [(condg-eval-ambo e1 v1)
+     (condg-eval-ambo e2 v2)])
+   ([e1 e2]
+    [(== e `(amb ,e1 ,e2))]
+    [(gather
+      (conde
+        ((condg-eval-ambo e1 v))
+        ((condg-eval-ambo e2 v))))])))
