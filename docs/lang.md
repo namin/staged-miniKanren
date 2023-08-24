@@ -1,5 +1,7 @@
 # The Staged miniKanren Language
 
+## Preview of the purpose of staging
+
 ## 0. write a vanilla interpreter
 
 [Assume the reader knows about writing interpreters.]
@@ -26,7 +28,11 @@ We're starting with an interpreter that supports numbers, `cons`, and non-determ
   '((1 . 3) (1 . 4) (2 . 3) (2 . 4)))
 ```
 
+TODO: consider if-null instead of amb?
+
 ## 1. write a staged interpreter that only stages fully-ground programs
+
+TODO: this introduction is more helpful for us than for the reader. Consider replacing with the grammar extension.
 
 We introduce the following forms.
 - `staged`
@@ -34,8 +40,9 @@ We introduce the following forms.
 - `defrel/generator`
 - `gather`
 
-We want to _stage_ the interpreter, specializing the interpreter to an expression in the first stage, and running the generated miniKanren code in the second stage.
-We want to define a generator `gen-eval-ambo`:
+We want to _stage_ the interpreter: specializing the interpreter `eval-ambo` with respect to an expression `e` (the first argument of the interpreter) in the first stage. The result of specialization is miniKanren code, without the interpretive overhead of the interpreter (for example, the interpreter loop has gone away). In the second stage, we run the generated miniKanren code.
+
+We want to define a generator `gen-eval-ambo` for our staged intepreter:
 
 ```
 (defrel/generator (gen-eval-ambo e v)
@@ -50,7 +57,11 @@ Which we can then use like this:
   '(1 2))
 ```
 
+TODO: directly is weird
+
 The specialized code directly has a `conde` for each case of the `amb`, without mentioning `amb`. The interpretive overhead has been specialized away.
+
+TODO: generated-code hasn't been introduced. Maybe just show the generated code.
 
 ```
 (test
@@ -58,11 +69,17 @@ The specialized code directly has a `conde` for each case of the `amb`, without 
   '(lambda (v7) (fresh (_.0) (== _.0 v7) (conde ((== '1 _.0)) ((== '2 _.0))))))
 ```
 
+TODO: Modulo some extra lambdas and freshes:
+
+```
+(run* (v) (conde ((== 1 v)) ((== 2 v))))
+```
+
 What are the changes we need to think about when staging the interpreter? Why do we need to modify the body at all?
 
 In relational staging, we are partitioning the computation into goals that should happen at staging-time and goals that should happen at runtime.
 
-`later`: `(later <goal>)` defers the goal to the second stage (runtime). In a staged interpreter, we maintain the invariant that unifications with the resulting value is deferred to the second stage.
+`later`: `(later <goal>)` defers the goal to the second stage (runtime). In a staged interpreter, we maintain the invariant that unifications with the resulting value (the `v` argument of the interpreter) are deferred to the second stage.
 
 `gather`: How do we partition non-determinism? When we have a `conde`, do we want it to execute at staging-time or be part of the generated code? `(gather <goal>)` executes a goal, all branches within, and generates a runtime `conde` with a branch for each result of the goal.
 
@@ -163,9 +180,12 @@ Notice that in the example above, the first clause of the `cons`, `'(amb 1 2)`, 
 ### 3. let's scale that interpreter to support `lambda`
 
 #### 3.1 a limited form of first-class relations (can be explained independently of staging)
+We introduce the following forms:
 - `defrel-partial`
 - `partial-apply`
 - `finish-apply`
+
+
 
 #### 3.2 how to stage lambda
 - `defrel-partial/multistage`
@@ -198,25 +218,33 @@ is an extension of staging-time
 
 grammar for plain goals:
 term t
-goal g :=
+goal g(p) :=
 | (== t1 t2)
 | (=/= t1 t2)
 | etc.
-| (fresh etc.)
-| (conde etc.)
+| (fresh (tv ...) p ...)
+| (conde (p ...) ...)
 | (partial-apply t r t ...)
 | (finish-apply t r t ...)
 
 runtime goal rg :=
-| g
+| g(rg)
 | (staged sg)
 
 staging-time goal sg :=
-| g
-| (later g)
+| g(sg)
+| (later g(rg))
 | (gather sg)
 | (specialize-partial-apply t r t ...)
 
-multistage goal mg :=
-| sg
-| (fallback mg)
+definition d :=
+| (defrel (name param ...) rg)
+| (defrel/generator (name param ...) sg)
+| (defrel/multistage (name param ...) sg)
+| (defrel/multistage/fallback (name param ...) sg)
+
+term var tv
+
+expression e :=
+| (run* (tv ...) rg)
+| (run n (tv ...) rg)

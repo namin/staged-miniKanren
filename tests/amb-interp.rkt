@@ -55,6 +55,23 @@
 ;; non-deterministic
 ;; (run 2 (e v) (staged (gen-eval-ambo `(cons (amb 1 2) ,e) v)))
 
+;; Will's challenge
+;; this doesn't terminate because the recursion can keep going forever.
+(defrel/generator (gen-eval-ambo-v e v)
+  (conde
+    ((numbero v)
+     (gather
+      (conde
+        ((later (== e v)))
+        ((fresh (e1 e2)
+           (later (== e `(amb ,e1 ,e2)))
+           (gather
+            (conde
+              ((gen-eval-ambo-v e1 v))
+              ((gen-eval-ambo-v e2 v)))))))))
+    ((fresh (v1 v2)
+       (== (cons v1 v2) v)))))
+
 (defrel/multistage/fallback (ms-eval-ambo e v)
   (conde
     ((numbero e)
