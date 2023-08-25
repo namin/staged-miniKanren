@@ -80,3 +80,35 @@
 
 (pretty-print
  (generated-code))
+
+(test
+  (run 3 (e t)
+    (fresh (ef)
+      (== e `((app (app ,ef)) x))
+      (staged (!- e
+                  '((app . (-> (-> a b) (-> a b)))
+                    (f . (-> a b))
+                    (x . a))
+                  t))))
+  '((((app (app f)) x) b)
+    (((app (app (app f))) x) b)
+    ((((app (app (lambda (_.0) (f _.0)))) x) b) $$ (=/= ((_.0 f))) (sym _.0))))
+
+(pretty-print
+ (generated-code))
+
+(test
+  (run 3 (e t)
+    (fresh (ea ef ex)
+      (== e `((,ea (,ea ,ef)) ,ex))
+      (staged (!- e
+                  '((app . (-> (-> a b) (-> a b)))
+                    (f . (-> a b))
+                    (x . a))
+                  t))))
+  '((((app (app f)) x) b)
+    ((((app (app f)) ((lambda (_.0) _.0) x)) b) $$ (sym _.0))
+    ((((app (app f)) ((lambda (_.0) x) app)) b) $$ (=/= ((_.0 x))) (sym _.0))))
+
+(pretty-print
+ (generated-code))
