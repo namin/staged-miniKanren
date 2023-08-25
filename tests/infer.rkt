@@ -4,7 +4,7 @@
          "../main.rkt"
          "../test-check.rkt")
 
-(defrel/multistage/fallback (!- exp env t)
+(defrel/staged/fallback (!- exp env t)
   (conde
     [(fresh (env-t)
        (symbolo exp)
@@ -21,14 +21,14 @@
        (!- rator env `(-> ,t-x ,t))
        (!- rand env t-x))]))
 
-(defrel/multistage/fallback (lookupo x env t)
+(defrel/staged/fallback (lookupo x env t)
   (fresh (rest y v)
     (== `((,y . ,v) . ,rest) env)
     (conde
       ((== y x) (== v t))
       ((=/= y x) (lookupo x rest t)))))
 
-(defrel/multistage/fallback (not-in-envo x env)
+(defrel/staged/fallback (not-in-envo x env)
   (conde
     ((== '() env))
     ((fresh (y v rest)

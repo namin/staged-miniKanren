@@ -8,7 +8,7 @@
          "../main.rkt"
          "../test-check.rkt")
 
-(defrel/multistage/fallback (lookupo x env val)
+(defrel/staged/fallback (lookupo x env val)
   (fresh (y v env^)
     (== `((,y . ,v) . ,env^) env)
     (symbolo x)
@@ -18,7 +18,7 @@
       ((=/= x y)
        (lookupo x env^ val)))))
 
-(defrel/multistage/fallback (!-o gamma expr type)
+(defrel/staged/fallback (!-o gamma expr type)
   (conde
     ((== #f expr) (later (== 'Bool type)))
     ((== #t expr) (later (== 'Bool type)))
@@ -73,7 +73,7 @@
        (!-o gamma e1 `(-> ,t1 ,type))
        (checko gamma e2 t1)))))
 
-(defrel/multistage/fallback (!-quoted-datumo datum type)
+(defrel/staged/fallback (!-quoted-datumo datum type)
   (conde
     ((== #f datum) (later (== 'Bool type)))
     ((== #t datum) (later (== 'Bool type)))
@@ -88,7 +88,7 @@
        (!-quoted-datumo v2 `(List ,a))
        (!-quoted-datumo v1 a)))))
 
-(defrel/multistage/fallback (checko gamma expr type)
+(defrel/staged/fallback (checko gamma expr type)
   (conde
     ((fresh (x body t1 t2)
        (== `(lambda (,x) ,body) expr)
