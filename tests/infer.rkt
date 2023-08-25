@@ -55,3 +55,12 @@
 
 (pretty-print
  (generated-code))
+
+(test
+ (run 1 (t)
+   (staged (!- '((app f) x)
+               '((app . (-> (-> a b) (-> a b)))
+                 (f . (-> a b))
+                 (x . a))
+               t)))
+ '(b))
