@@ -48,3 +48,10 @@
      $$
      (=/= ((_.0 x)))
      (sym _.0))))
+
+(test
+  (run 1 (t) (staged (!- '(lambda (x) (x x)) '() t)))
+  '())
+
+(pretty-print
+ (generated-code))
