@@ -3,15 +3,15 @@
 (require "../main.rkt"
          racket/pretty)
 
-(defrel/multistage (not-tago v)
+(defrel/staged (not-tago v)
   (=/= 'struct v))
 
-(defrel/multistage (absent-tago v)
+(defrel/staged (absent-tago v)
   (absento 'struct v))
 
 (define empty-env '())
 
-(defrel/multistage (lookupo x env t)
+(defrel/staged (lookupo x env t)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
@@ -20,7 +20,7 @@
       ((=/= x y)
        (lookupo x rest t)))))
 
-(defrel/multistage (ext-env*o x* a* env out)
+(defrel/staged (ext-env*o x* a* env out)
   (conde
     ((== '() x*) (== '() a*) (== env out))
     ((fresh (x a dx* da* env2)
@@ -30,10 +30,10 @@
        (symbolo x)
        (ext-env*o dx* da* env2 out)))))
 
-(defrel/multistage (evalo expr val)
+(defrel/staged (evalo expr val)
   (eval-expo expr empty-env val))
 
-(defrel/multistage/fallback (eval-expo expr env val)
+(defrel/staged/fallback (eval-expo expr env val)
   (fresh ()
     ;;(trace eval-expo val)
     (conde
@@ -83,13 +83,13 @@
                     `((,f . (struct rec-closure ,rep)) . ,env)
                     val))))))
 
-(defrel-partial/multistage (eval-apply-rec rep [f x* e env] [a* res])
+(defrel-partial/staged (eval-apply-rec rep [f x* e env] [a* res])
   (fresh (env^ env-self)
     (== env-self `((,f . (struct rec-closure ,rep)) . ,env))
     (ext-env*o x* a* env-self env^)
     (eval-expo e env^ res)))
 
-(defrel/multistage (eval-listo expr env val)
+(defrel/staged (eval-listo expr env val)
   (conde
     ((== '() expr)
      (== '() val))

@@ -96,8 +96,9 @@
 
 ;; Gather notifies surrounding fallbacks to enable fallback in situations
 ;; where the goal doesn't terminate.
-(defrel/generator (nevero)
-  (nevero))
+(defrel/staged (nevero)
+  ;; need a fresh for a suspend
+  (fresh () (nevero)))
 (test
  (run* (q)
    (staged

@@ -41,7 +41,7 @@
 (run* (q) (u-minio '(hello 1) q))
 (run* (q) (u-minio q '(SYM 1)))
 
-(defrel/generator (minio expr val)
+(defrel/staged (minio expr val)
   (fallback
    (later (u-minio expr val))
    (conde

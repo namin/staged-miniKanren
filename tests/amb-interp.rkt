@@ -31,7 +31,7 @@
   (run* (v) (eval-ambo '(cons (amb 1 2) (amb 3 4)) v))
   '((1 . 3) (1 . 4) (2 . 3) (2 . 4)))
 
-(defrel/generator (gen-eval-ambo e v)
+(defrel/staged (gen-eval-ambo e v)
   (conde
     ((numbero e)
      (later (== e v)))
@@ -57,7 +57,7 @@
 
 ;; Will's challenge
 ;; this doesn't terminate because the recursion can keep going forever.
-(defrel/generator (gen-eval-ambo-v e v)
+(defrel/staged (gen-eval-ambo-v e v)
   (conde
     ((numbero v)
      (gather
@@ -72,7 +72,7 @@
     ((fresh (v1 v2)
        (== (cons v1 v2) v)))))
 
-(defrel/multistage/fallback (ms-eval-ambo e v)
+(defrel/staged/fallback (ms-eval-ambo e v)
   (conde
     ((numbero e)
      (later (== e v)))
@@ -138,17 +138,17 @@
   (run* (v) (eval-lambda-ambo '((lambda (x) (amb x 3)) (amb 1 2)) '() v))
   '(3 3 1 2))
 
-(defrel/multistage/fallback (ms-lookupo x env v)
+(defrel/staged/fallback (ms-lookupo x env v)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
      [(== x y) (== v b)]
      [(=/= x y) (ms-lookupo x rest v)])))
 
-(defrel-partial/multistage (ms-apply-lambda-ambo rep [x e env] [arg v])
+(defrel-partial/staged (ms-apply-lambda-ambo rep [x e env] [arg v])
   (ms-eval-lambda-ambo e (cons (cons x arg) env) v))
 
-(defrel/multistage/fallback (ms-eval-lambda-ambo e env v)
+(defrel/staged/fallback (ms-eval-lambda-ambo e env v)
   (conde
     ((numbero e)
      (later (== e v)))

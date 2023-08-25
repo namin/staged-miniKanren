@@ -6,35 +6,35 @@
 ;; When there's only one branch, produce that answer.
 (test
  (run 1 (q)
-      (staged
-       (fallback
-        (later (== q 'fallback))
-        (conde
-          ((== q 'single-branch) (later (== q 'single-branch)))))))
+   (staged
+    (fallback
+     (later (== q 'fallback))
+     (conde
+       ((== q 'single-branch) (later (== q 'single-branch)))))))
  '(single-branch))
 
 ;; When there are multiple successful branches, fall back.
 (test
  (run 1 (q)
-      (staged
-       (fallback
-        (later (== q 'fallback))
-        (conde
-          ((== q 'branch-1) (later (== q 'branch-1)))
-          ((== q 'branch-2) (later (== q 'branch-2)))))))
+   (staged
+    (fallback
+     (later (== q 'fallback))
+     (conde
+       ((== q 'branch-1) (later (== q 'branch-1)))
+       ((== q 'branch-2) (later (== q 'branch-2)))))))
  '(fallback))
 
 ;; When only one branch can succeed because of previous constraints, produce that answer.
 (test
  (run 1 (q)
-      (staged
-       (fresh (x)
-         (== x 1)
-         (fallback
-          (later (== q 'fallback))
-          (conde
-            ((== x 1) (later (== q 'branch-1)))
-            ((== x 2) (later (== q 'branch-2))))))))
+   (staged
+    (fresh (x)
+      (== x 1)
+      (fallback
+       (later (== q 'fallback))
+       (conde
+         ((== x 1) (later (== q 'branch-1)))
+         ((== x 2) (later (== q 'branch-2))))))))
  '(branch-1))
 
 ;; Results can also be filtered after the branch but before returning from the fallback.
@@ -54,14 +54,14 @@
 ;; and avoid fallback.
 (test
  (run 1 (q)
-      (staged
-       (fresh (x)
-         (fallback
-          (later (== q 'fallback))
-          (conde
-            ((== x 1) (later (== q 'branch-1)))
-            ((== x 2) (later (== q 'branch-2)))))
-         (== x 2))))
+   (staged
+    (fresh (x)
+      (fallback
+       (later (== q 'fallback))
+       (conde
+         ((== x 1) (later (== q 'branch-1)))
+         ((== x 2) (later (== q 'branch-2)))))
+      (== x 2))))
  '(fallback))
 ;; TODO: is this a good thing? One could also imagine ensuring multiple branches are
 ;; successful all the way through to the halt continuation before committing to fall
@@ -79,8 +79,9 @@
 ;; all the branches to determine if there is nondeterminism! With that strategy, the
 ;; inner fallback form would fail to terminate. Instead, the computation terminates when
 ;; the outer fallback finds out about the success of branch-2 and triggers fallback-1.
-(defrel/generator (nevero)
-  (nevero))
+(defrel/staged (nevero)
+  ;; need a fresh for a suspend
+  (fresh () (nevero)))
 (test
  (run 1 (q)
    (staged
@@ -96,7 +97,7 @@
  '(fallback-1))
 ;;
 ;; To see why the above behavior matters in practice, consider `membero`:
-(defrel/generator (membero x l log)
+(defrel/staged (membero x l log)
   (fallback
    (later (== log 'fallback))
    (fresh (first rest log-rest)
@@ -186,26 +187,26 @@
 ;; for this branch and thus end up falling back.
 (test
  (run 1 (q)
-      (staged
-       (fresh (x)
-         (== x 2)
-         (fallback
-          (later (== q 'fallback))
-          (conde
-            ((== 1 1) (== x 1) (later (== q 'branch-1)))
-            ((== x 2) (later (== q 'branch-2))))))))
+   (staged
+    (fresh (x)
+      (== x 2)
+      (fallback
+       (later (== q 'fallback))
+       (conde
+         ((== 1 1) (== x 1) (later (== q 'branch-1)))
+         ((== x 2) (later (== q 'branch-2))))))))
  '(branch-2))
 ;; But when the whole conjunction succeeds we do need the notify to make
 ;; it out.
 (test
  (run 1 (q)
-      (staged
-       (fresh (x)
-         (fallback
-          (later (== q 'fallback))
-          (conde
-            ((== 1 1) (== x 1) (later (== q 'branch-1)))
-            ((== x 2) (later (== q 'branch-2))))))))
+   (staged
+    (fresh (x)
+      (fallback
+       (later (== q 'fallback))
+       (conde
+         ((== 1 1) (== x 1) (later (== q 'branch-1)))
+         ((== x 2) (later (== q 'branch-2))))))))
  '(fallback))
 ;;
 ;; See the use of `ss:tag-notify` and `ss:filter-notify` in `ss:conj2` in the implementation.
@@ -215,12 +216,12 @@
 ;; as indicating nondeterminism.
 (test
  (run 1 (x)
-      (staged
-       (fresh ()
-         (fallback
-          (later (== x 'fallback))
-          (later (== x 'only-answer)))
-         (== 1 1))))
+   (staged
+    (fresh ()
+      (fallback
+       (later (== x 'fallback))
+       (later (== x 'only-answer)))
+      (== 1 1))))
  '(only-answer))
 ;; However, the notification must propagate out to trigger outer fallbacks.
 ;;
@@ -236,7 +237,7 @@
 ;; goal. The fallback goal will notify success; the fallback form needs to throw
 ;; that notify out to avoid making the outer fallback think this second outer branch
 ;; succeeded twice.
-(defrel/generator (r x y outer inner)
+(defrel/staged (r x y outer inner)
   (fallback
    (later (== outer 'outer-fallback))
    (conde
@@ -259,7 +260,7 @@
  '((outer-commit-2 inner-fallback)))
 ;; However, a second success from the fallback goal *should* be notified to the
 ;; surrounding fallback form, leading it to fall back.
-(defrel/generator (r2 x y outer inner)
+(defrel/staged (r2 x y outer inner)
   (fallback
    (later (== outer 'outer-fallback))
    (conde
@@ -291,10 +292,7 @@
 ;; to notify before even running the partial's generator, and unique-result to require
 ;; that generator to succeed.  TODO: in the future I would like to make it okay for the
 ;; generator to fail.
-(defrel-partial/multistage/explicit (p rep [a] [b])
-  #:runtime
-  (== a b)
-  #:staging-time
+(defrel-partial/staged (p rep [a] [b])
   (later (== a b)))
 
 (test
@@ -342,21 +340,21 @@
 ;; but we discover a contradiction at run time. This results in run time failure.
 (test
  (run 1 (q)
-      (staged
-       (fallback
-        (later (== 1 q))
-        (conde
-          ((== 2 q) (later (== 3 q)))))))
+   (staged
+    (fallback
+     (later (== 1 q))
+     (conde
+       ((== 2 q) (later (== 3 q)))))))
  '())
 
 ;; TODO: another test of cross-stage persistence. 
 (test
  (run 1 (q)
-      (staged
-       (fallback
-        (later (== 1 q))
-        (conde
-          ((fresh (x)
-             (== 2 x)
-             (later (== q x))))))))
+   (staged
+    (fallback
+     (later (== 1 q))
+     (conde
+       ((fresh (x)
+          (== 2 x)
+          (later (== q x))))))))
  '(2))

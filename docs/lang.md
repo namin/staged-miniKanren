@@ -37,7 +37,7 @@ TODO: this introduction is more helpful for us than for the reader. Consider rep
 We introduce the following forms.
 - `staged`
 - `later`
-- `defrel/generator`
+- `defrel/staged`
 - `gather`
 
 We want to _stage_ the interpreter: specializing the interpreter `eval-ambo` with respect to an expression `e` (the first argument of the interpreter) in the first stage. The result of specialization is miniKanren code, without the interpretive overhead of the interpreter (for example, the interpreter loop has gone away). In the second stage, we run the generated miniKanren code.
@@ -45,7 +45,7 @@ We want to _stage_ the interpreter: specializing the interpreter `eval-ambo` wit
 We want to define a generator `gen-eval-ambo` for our staged intepreter:
 
 ```
-(defrel/generator (gen-eval-ambo e v)
+(defrel/staged (gen-eval-ambo e v)
  ...)
 ```
 
@@ -84,7 +84,7 @@ In relational staging, we are partitioning the computation into goals that shoul
 `gather`: How do we partition non-determinism? When we have a `conde`, do we want it to execute at staging-time or be part of the generated code? `(gather <goal>)` executes a goal, all branches within, and generates a runtime `conde` with a branch for each result of the goal.
 
 ```
-(defrel/generator (gen-eval-ambo e v)
+(defrel/staged (gen-eval-ambo e v)
   (conde
     ((numbero e)
      (later (== e v))) ;; later is new
@@ -112,8 +112,8 @@ It doesn't work if the program is not fully known.
 
 ## 2. what if the program isn't fully ground?
 We introduce the following forms:
-- `defrel/multistage`
-- `defrel/multistage/fallback`
+- `defrel/staged`
+- `defrel/staged/fallback`
 
 [Motivate with a program synthesis example. Do an aside of showing a program synthesis query in a more substantial interpreter.]
 
@@ -123,11 +123,11 @@ The full computation has to mix evaluation of staged generated code with evaluat
 The challenge is to construct both the interpreters and interactions between the generated code and the runtime interpreter.
 
 ```
-(defrel/multistage/fallback (name param ...)
+(defrel/staged/fallback (name param ...)
   ...)
 ```
 
-When we define a relation with `defrel/multistage/fallback`, we generate both the staged and runtime version. We get the runtime version by removing the `later` annotations.
+When we define a relation with `defrel/staged/fallback`, we generate both the staged and runtime version. We get the runtime version by removing the `later` annotations.
 
 Here the runtime version of `ms-eval-ambo` would be identical to the `eval-ambo` relation we saw in section 1.
 
@@ -154,7 +154,7 @@ If it is, generate a fallback to the runtime version (which is itself automatica
 Notice that in the example above, the first clause of the `cons`, `'(amb 1 2)`, is fully known and produces specialized code, while the second clause, `e`, is unknown and generates a fallback to the runtime.
 
 ```
-(defrel/multistage/fallback (ms-eval-ambo e v) ;; only change
+(defrel/staged/fallback (ms-eval-ambo e v) ;; only change
   (conde
     ((numbero e)
      (later (== e v)))
@@ -188,7 +188,7 @@ We introduce the following forms:
 
 
 #### 3.2 how to stage lambda
-- `defrel-partial/multistage`
+- `defrel-partial/staged`
 - `specialize-partial-apply`  
 
 multistage: we assume it's possible to reach an application without knowing the lambda.
@@ -245,11 +245,10 @@ later goal lg := g(lg)
 
 definition d :=
 | (defrel (rname param ...) rg)
-| (defrel/generator (rname param ...) sg)
-| (defrel/multistage (rname param ...) sg)
-| (defrel/multistage/fallback (rname param ...) sg)
+| (defrel/staged (rname param ...) sg)
+| (defrel/staged/fallback (rname param ...) sg)
 | (defrel-partial (rname tv [tv ...] [tv ...]) rg)
-| (defrel-partial/multistage (rname tv [tv ...] [tv ...]) sg)
+| (defrel-partial/staged (rname tv [tv ...] [tv ...]) sg)
 
 expression e :=
 | (run* (tv ...) rg)

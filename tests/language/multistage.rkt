@@ -3,24 +3,7 @@
 (require "../../main.rkt"
          "../../test-check.rkt")
 
-(defrel/multistage/explicit (unify-mystery x)
-  #:runtime
-  (== x 5)
-  #:staging-time
-  (later (== x 6)))
-
-(test
-  (run* (q)
-    (unify-mystery q))
-  '(5))
-
-(test
-  (run* (q)
-    (staged
-     (unify-mystery q)))
-  '(6))
-
-(defrel/multistage (unify5 x)
+(defrel/staged (unify5 x)
   (later (== x 5)))
 
 (test
@@ -34,7 +17,7 @@
      (unify5 q)))
   '(5))
 
-(defrel/multistage (minio expr val)
+(defrel/staged (minio expr val)
   (conde
     ((numbero expr) (later (== expr val)))
     ((symbolo expr) (later (== 'SYM val)))
@@ -52,16 +35,7 @@
   (run* (q) (staged (minio '(hello 1) q)))
   '((SYM 1)))
 
-#;
-(defrel/multistage/explicit (minio-fallback expr val)
-  #:runtime
-  (minio expr val)
-  #:staging-time
-  (fallback
-   (later (minio expr val))
-   (minio expr val)))
-
-(defrel/multistage/fallback (minio-fallback expr val)
+(defrel/staged/fallback (minio-fallback expr val)
   (conde
     ((numbero expr) (later (== expr val)))
     ((symbolo expr) (later (== 'SYM val)))

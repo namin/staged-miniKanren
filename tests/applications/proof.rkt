@@ -23,7 +23,7 @@
                    ))])
        ,body)))
 
-(defrel/generator (proof-staged prf)
+(defrel/staged (proof-staged prf)
   (evalo-staged
    (prover `(proof? ',prf))
    #t))

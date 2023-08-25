@@ -54,7 +54,7 @@
  '((1 . _.0)))
 
 ;; Generator goals have a staging-time body and can be applied in staging-time code.
-(defrel/generator (gen-unify-5 x)
+(defrel/staged (gen-unify-5 x)
   (later (== x 5)))
 (test
  (run 1 (q)

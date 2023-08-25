@@ -3,7 +3,7 @@
 (require "../../main.rkt"
          "../../test-check.rkt")
 
-(defrel/multistage/fallback (evalo e v)
+(defrel/staged/fallback (evalo e v)
   (conde
     ((numbero e)
      (== e v))
@@ -98,7 +98,7 @@
 ;; Nada's initial formulation: you have to have a base case, and unifying with the
 ;; value at staging time may make the base case fail.
 
-(defrel/multistage/fallback (evalo-later e v)
+(defrel/staged/fallback (evalo-later e v)
   (conde
     ((numbero e)
      (later (== e v)))
@@ -197,7 +197,7 @@
 ;; environment has some lists to destruct. The only base cases is variable reference.
 ;; In an empty initial enviornment or when the expected value doesn't match the
 ;; environment value this case can fail.
-#;(defrel/multistage/condg-fallback (eval-var-car e env v)
+#;(defrel/staged/condg-fallback (eval-var-car e env v)
     ([]
      [(symbolo e)
       (lookupo e env v)]
@@ -212,7 +212,7 @@
 ;; Okay, making this interpeter always terminate. What does it take?
 ;; Just doing a later on the values isn't enough because lookup always fails
 ;; in an empty environment.
-#;(defrel/multistage/condg-fallback (eval-var-car2 e env v)
+#;(defrel/staged/condg-fallback (eval-var-car2 e env v)
     ([v2]
      [(symbolo e)
       (later (== v v2))
@@ -225,7 +225,7 @@
 
 ;; What about putting lookupo in the body, but no laters?
 ;; Then multiple guards succeed and we fall back.
-#;(defrel/multistage/condg-fallback (eval-var-car3 e env v)
+#;(defrel/staged/condg-fallback (eval-var-car3 e env v)
     ([v2]
      [(symbolo e)
       (== v v2)]
@@ -237,7 +237,7 @@
 
 ;; Done with fallbacks, the symbol case isn't a reliable base case to ensure
 ;; termination.
-(defrel/multistage/fallback (eval-var-car4 e env v)
+(defrel/staged/fallback (eval-var-car4 e env v)
   (conde
     ((fresh (v2)
        (symbolo e)
@@ -248,7 +248,7 @@
        (== v1 `(,v . ,d))
        (eval-var-car4 e1 env v1)))))
 
-(defrel/multistage/fallback (lookupo x env v)
+(defrel/staged/fallback (lookupo x env v)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
@@ -259,7 +259,7 @@
 #;(run 1 (e) (staged (eval-var-car4 e '() 5)))
 
 ;; And, constructing the case where runtime does terminate, using `gather`...
-(defrel/multistage/fallback (eval-var-car5 e env v)
+(defrel/staged/fallback (eval-var-car5 e env v)
   (conde
     ((fresh (v2)
        (symbolo e)
@@ -295,7 +295,7 @@
 ;; staging-time.
 
 ;; Well, there is a way, but it's tricky:
-(defrel/multistage/fallback (eval-var-car6 e env v)
+(defrel/staged/fallback (eval-var-car6 e env v)
   (conde
     ((fresh (v2)
        (symbolo e)
@@ -316,7 +316,7 @@
         (conde
           ((eval-var-car6 e1 env v))
           ((eval-var-car6 e2 env v))))))))
-(defrel/multistage (not-in-envo x env)
+(defrel/staged (not-in-envo x env)
   (conde
     ((== '() env))
     ((fresh (y b rest)

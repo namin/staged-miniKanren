@@ -24,14 +24,10 @@
  trace
 
  defrel
- defrel/multistage
- defrel/multistage/explicit
+ defrel/staged
  defrel-partial
- defrel-partial/multistage
- defrel-partial/multistage/explicit
- defrel/generator
- defrel/fallback
- defrel/multistage/fallback
+ defrel-partial/staged
+ defrel/staged/fallback
  run
  run*
 
@@ -172,7 +168,7 @@
            (compile-now-goal g) ...))])
 
   (host-interface/definition
-   (defrel/multistage (r:relation-name arg:term-var ...)
+   (defrel/staged (r:relation-name arg:term-var ...)
      g:goal ...+)
    #:binding [(export r) {(bind arg) g}]
    #:lhs
@@ -188,7 +184,7 @@
           (compile-now-goal g) ...)))])
     
   (host-interface/definition
-   (defrel/multistage/explicit (r:relation-name arg:term-var ...)
+   (defrel/staged/explicit (r:relation-name arg:term-var ...)
      #:runtime g:goal
      #:staging-time gen:goal)
    #:binding [(export r) {(bind arg) g gen}]
@@ -222,7 +218,7 @@
          (error 'defrel-partial "defined for runtime only but called from staging time")))])
   
   (host-interface/definition
-    (defrel-partial/multistage/explicit
+    (defrel-partial/staged/explicit
       (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
       #:runtime g:goal
       #:staging-time gen:goal)
@@ -242,7 +238,7 @@
            (compile-now-goal gen))))])
 
   (host-interface/definition
-    (defrel-partial/multistage
+    (defrel-partial/staged
       (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
         g:goal ...)
     #:binding [(export r) {(bind rep now-arg later-arg) g}]
@@ -610,24 +606,15 @@
              template])))]))
 
 (define-syntax-rule
-  (defrel/fallback (name arg ...) fallback-name
-    g ...)
-  (defrel/generator (name arg ...)
-    (fallback
-     (later (fallback-name arg ...))
-     (fresh ()
-       g ...))))
-
-(define-syntax-rule
-  (defrel/multistage/fallback (name arg ...)
+  (defrel/staged/fallback (name arg ...)
     g ...)
   (begin
-    (defrel/multistage/explicit (name arg ...)
+    (defrel/staged/explicit (name arg ...)
       #:runtime
       (internal arg ...)
       #:staging-time
       (fallback
        (later (internal arg ...))
        (internal arg ...)))
-    (defrel/multistage (internal arg ...)
+    (defrel/staged (internal arg ...)
       g ...)))

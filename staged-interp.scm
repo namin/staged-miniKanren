@@ -19,14 +19,14 @@ eval-rands-and-applyo
     ((== #f t))
     ((== #t t))))
 
-(defrel/multistage (absent-tago/gen v)
+(defrel/staged (absent-tago/gen v)
   (absento 'struct v))
 
 ;; avoids an `inc` at runtime vs not-tago that has a fresh ()
 (defrel (not-tago/gen v)
   (=/= 'struct v))
 
-(defrel-partial/multistage (eval-apply-rec rep [f x* e env] [a* res])
+(defrel-partial/staged (eval-apply-rec rep [f x* e env] [a* res])
   (fresh (env^ env-self)
     (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
     ;; TODO: do we need a fallback?
@@ -36,7 +36,7 @@ eval-rands-and-applyo
       ((ext-env*o x* a* env-self env^)))
     (eval-expo e env^ res)))
 
-(defrel-partial/multistage (eval-apply rep [x* body env] [a* val])
+(defrel-partial/staged (eval-apply rep [x* body env] [a* val])
   (fresh (env^)
     ;; TODO: do we need a fallback?
     (conde
@@ -45,7 +45,7 @@ eval-rands-and-applyo
       ((ext-env*o x* a* env env^)))
     (eval-expo body env^ val)))
 
-(defrel/multistage/fallback (handle-appo rator rands env val)
+(defrel/staged/fallback (handle-appo rator rands env val)
   (conde
     ((fresh (proc)
        (symbolo rator)
@@ -56,7 +56,7 @@ eval-rands-and-applyo
        (eval-expo rator env proc)
        (later (eval-rands-and-applyo proc rands env val))))))
 
-(defrel/multistage/fallback (eval-rands-and-applyo proc rands env val)
+(defrel/staged/fallback (eval-rands-and-applyo proc rands env val)
   (fresh (a* rep)
     (conde
       ((== `(struct prim . ,rep) proc)
@@ -69,7 +69,7 @@ eval-rands-and-applyo
        (eval-listo rands env a*)
        (later (finish-apply rep eval-apply-rec a* val))))))
 
-(defrel/multistage/fallback (eval-expo expr env val)
+(defrel/staged/fallback (eval-expo expr env val)
   (conde
     ;; quote
     ((fresh (v)
@@ -120,14 +120,14 @@ eval-rands-and-applyo
 
 (define empty-env '())
 
-(defrel/multistage/fallback (lookupo x env v)
+(defrel/staged/fallback (lookupo x env v)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde
      [(== x y) (== `(val . ,v) b)]
      [(=/= x y) (lookupo x rest v)])))
 
-(defrel/multistage (not-in-envo x env)
+(defrel/staged (not-in-envo x env)
   (conde
     ((== empty-env env))
     ((fresh (y b rest)
@@ -135,7 +135,7 @@ eval-rands-and-applyo
        (=/= y x)
        (not-in-envo x rest)))))
 
-(defrel/multistage/fallback (eval-listo expr env val)
+(defrel/staged/fallback (eval-listo expr env val)
   (conde
     ((== '() expr) (== '() val))
     ((fresh (a d v-a v-d)
@@ -146,7 +146,7 @@ eval-rands-and-applyo
 
 ;; Need to make sure lambdas are well formed.
 ;; Grammar constraints would be useful here!
-(defrel/multistage (list-of-symbolso los)
+(defrel/staged (list-of-symbolso los)
   (conde
     ((== '() los))
     ((fresh (a d)
@@ -154,7 +154,7 @@ eval-rands-and-applyo
        (symbolo a)
        (list-of-symbolso d)))))
 
-(defrel/multistage (ext-env*o x* a* env out)
+(defrel/staged (ext-env*o x* a* env out)
   (conde
     ((== '() x*) (== '() a*) (== env out))
     ((fresh (x a dx* da* env2)
@@ -164,7 +164,7 @@ eval-rands-and-applyo
        (symbolo x)
        (ext-env*o dx* da* env2 out)))))
 
-(defrel/multistage/fallback (eval-primo prim-id a* val)
+(defrel/staged/fallback (eval-primo prim-id a* val)
   (conde
     [(== prim-id 'list)
      (later (== a* val))]
@@ -235,25 +235,25 @@ eval-rands-and-applyo
                 ((== '() v) (== #t val))
                 ((=/= '() v) (== #f val)))))]))
 
-(defrel/multistage (prim-expo expr env val)
+(defrel/staged (prim-expo expr env val)
   (conde
     ((boolean-primo expr env val))
     ((and-primo expr env val))
     ((or-primo expr env val))
     ((if-primo expr env val))))
 
-(defrel/multistage (boolean-primo expr env val)
+(defrel/staged (boolean-primo expr env val)
   (conde
     ((== #t expr) (later (== #t val)))
     ((== #f expr) (later (== #f val)))))
 
-(defrel/multistage (and-primo expr env val)
+(defrel/staged (and-primo expr env val)
   (fresh (e*)
     (== `(and . ,e*) expr)
     (not-in-envo 'and env)
     (ando e* env val)))
 
-(defrel/multistage/fallback (ando e* env val)
+(defrel/staged/fallback (ando e* env val)
   (conde
     ((== '() e*) (later (== #t val)))
     ((fresh (e)
@@ -268,13 +268,13 @@ eval-rands-and-applyo
                  ((later (=/= #f v))
                   (ando `(,e2 . ,e-rest) env val))))))))
 
-(defrel/multistage (or-primo expr env val)
+(defrel/staged (or-primo expr env val)
   (fresh (e*)
     (== `(or . ,e*) expr)
     (not-in-envo 'or env)
     (oro e* env val)))
 
-(defrel/multistage/fallback (oro e* env val)
+(defrel/staged/fallback (oro e* env val)
   (conde
     ((== '() e*) (later (== #f val)))
     ((fresh (e)
@@ -289,7 +289,7 @@ eval-rands-and-applyo
                  ((later (== #f v))
                   (oro `(,e2 . ,e-rest) env val))))))))
 
-(defrel/multistage (if-primo expr env val)
+(defrel/staged (if-primo expr env val)
   (fresh (e1 e2 e3 t)
     (== `(if ,e1 ,e2 ,e3) expr)
     (not-in-envo 'if env)
@@ -310,7 +310,7 @@ eval-rands-and-applyo
                       (cdr . (val . (struct prim . cdr)))
                       . ,empty-env))
 
-(defrel/multistage (handle-matcho expr env val)
+(defrel/staged (handle-matcho expr env val)
   (fresh (against-expr clauses mval)
     (== `(match ,against-expr . ,clauses) expr)
     (not-in-envo 'match env)
@@ -335,12 +335,12 @@ eval-rands-and-applyo
     ((fresh (a d)
        (== `(,a . ,d) t)))))
 
-(defrel/multistage (self-eval-literalo t)
+(defrel/staged (self-eval-literalo t)
   (conde
     ((numbero t))
     ((booleano/gen t))))
 
-(defrel/multistage (literalo t)
+(defrel/staged (literalo t)
   (conde
     ((numbero t))
     ;; in the runtime version the delay from this fresh seems useful to peano-synth-fib-acc-stepo somehow.
@@ -348,12 +348,12 @@ eval-rands-and-applyo
     ((booleano/gen t))
     ((== '() t))))
 
-(defrel/multistage (booleano/gen t)
+(defrel/staged (booleano/gen t)
   (conde
     ((== #f t))
     ((== #t t))))
 
-(defrel/multistage (regular-env-appendo env1 env2 env-out)
+(defrel/staged (regular-env-appendo env1 env2 env-out)
   (conde
     ((== empty-env env1) (== env2 env-out))
     ((fresh (y v rest res)
@@ -361,7 +361,7 @@ eval-rands-and-applyo
        (== `((,y . (val . ,v)) . ,res) env-out)
        (regular-env-appendo rest env2 res)))))
 
-(defrel/multistage/fallback (match-clauses mval clauses env val)
+(defrel/staged/fallback (match-clauses mval clauses env val)
   (conde
     ;; a match fails if no clause matches; in
     ;; unstaged this happens when reaching
@@ -378,13 +378,13 @@ eval-rands-and-applyo
                  [(p-no-match p mval '() penv)
                   (match-clauses mval d env val)]))))))
 
-(defrel/multistage (var-p-match var mval penv penv-out)
+(defrel/staged (var-p-match var mval penv penv-out)
   (fresh ()
     (symbolo var)
     (later (not-tago/gen mval))
     (var-p-match-extend var mval penv penv-out)))
 
-(defrel/multistage/fallback (var-p-match-extend var val penv penv-out)
+(defrel/staged/fallback (var-p-match-extend var val penv penv-out)
   (conde
     ((fresh (env-v)
        (lookupo var penv env-v)
@@ -393,7 +393,7 @@ eval-rands-and-applyo
     ((not-in-envo var penv)
      (== `((,var . (val . ,val)) . ,penv) penv-out))))
 
-(defrel/multistage/fallback (var-p-no-match var mval penv penv-out)
+(defrel/staged/fallback (var-p-no-match var mval penv penv-out)
   (conde
     ;; a variable pattern cannot fail when it is
     ;; the first occurence of the name. unstaged
@@ -407,7 +407,7 @@ eval-rands-and-applyo
       (lookupo var penv env-v)
       (later (=/= mval env-v))))))
 
-(defrel/multistage/fallback (p-match p mval penv penv-out)
+(defrel/staged/fallback (p-match p mval penv penv-out)
   (conde
     ((self-eval-literalo p)
      (later (== p mval))
@@ -421,12 +421,12 @@ eval-rands-and-applyo
        (== (list 'quasiquote quasi-p) p)
        (quasi-p-match quasi-p mval penv penv-out)))))
 
-(defrel/multistage/fallback (pred-match pred mval)
+(defrel/staged/fallback (pred-match pred mval)
   (conde
    ((== 'symbol? pred) (later (symbolo mval)))
    ((== 'number? pred) (later (numbero mval)))))
 
-(defrel/multistage/fallback (p-no-match p mval penv penv-out)
+(defrel/staged/fallback (p-no-match p mval penv penv-out)
   (conde
    ((self-eval-literalo p)
     (later (=/= p mval))
@@ -441,7 +441,7 @@ eval-rands-and-applyo
       (== (list 'quasiquote quasi-p) p)
       (quasi-p-no-match quasi-p mval penv penv-out)))))
 
-(defrel/multistage/fallback (pred-no-match pred var mval penv penv-out)
+(defrel/staged/fallback (pred-no-match pred var mval penv penv-out)
   (conde
     ((== 'symbol? pred)
      (gather (conde
@@ -454,7 +454,7 @@ eval-rands-and-applyo
                [(later (numbero mval))
                 (var-p-no-match var mval penv penv-out)])))))
 
-(defrel/multistage/fallback (quasi-p-match quasi-p mval penv penv-out)
+(defrel/staged/fallback (quasi-p-match quasi-p mval penv penv-out)
   (conde
     ((literalo quasi-p)
      (later (== quasi-p mval))
@@ -469,7 +469,7 @@ eval-rands-and-applyo
        (quasi-p-match a v1 penv penv^)
        (quasi-p-match d v2 penv^ penv-out)))))
 
-(defrel/multistage/fallback (quasi-p-no-match quasi-p mval penv penv-out)
+(defrel/staged/fallback (quasi-p-no-match quasi-p mval penv penv-out)
   (conde
     ((literalo quasi-p)
      (later (=/= quasi-p mval))
@@ -491,10 +491,10 @@ eval-rands-and-applyo
                       [(quasi-p-match a v1 penv penv^)
                        (quasi-p-no-match d v2 penv^ penv-out)]))]))))))
 
-(defrel/multistage (evalo-staged expr val)
+(defrel/staged (evalo-staged expr val)
   (eval-expo expr initial-env val))
 
-(defrel/multistage (evalo-staged/env-exts expr x* a* val)
+(defrel/staged (evalo-staged/env-exts expr x* a* val)
   (fresh (env^)
     (ext-env*o x* a* initial-env env^)
     (eval-expo expr env^ val)))

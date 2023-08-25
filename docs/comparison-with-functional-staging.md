@@ -125,7 +125,7 @@ Related michael thought: I wanted it to be true of the fallback search that when
 for every ground assignment of its variables and fb always terminates, then (fallback fb g)
 always terminates.
 
-(defrel/generator (always-fails e)
+(defrel/staged (always-fails e)
   (fallback
    fbg
    (fresh (e1 e2)
@@ -146,7 +146,7 @@ So we say don't write `always-fails` because, it always fails given ground.
 
 Here's a version that has a base case, but still has the same problem:
 
-(defrel/generator (always-fails2 e)
+(defrel/staged (always-fails2 e)
   (fallback
    fbg
    (conde
