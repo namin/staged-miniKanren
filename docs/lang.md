@@ -216,16 +216,20 @@ is an extension of staging-time
 - can use `fallback`
 
 
-grammar for plain goals:
+Current grammar:
+
+term var tv
+
 term t
+
 goal g(p) :=
 | (== t1 t2)
 | (=/= t1 t2)
 | etc.
 | (fresh (tv ...) p ...)
 | (conde (p ...) ...)
-| (partial-apply t r t ...)
-| (finish-apply t r t ...)
+| (partial-apply t rname t ...)
+| (finish-apply t rname t ...)
 
 runtime goal rg :=
 | g(rg)
@@ -233,18 +237,60 @@ runtime goal rg :=
 
 staging-time goal sg :=
 | g(sg)
-| (later g(rg))
+| (later lg)
 | (gather sg)
 | (specialize-partial-apply t r t ...)
 
-definition d :=
-| (defrel (name param ...) rg)
-| (defrel/generator (name param ...) sg)
-| (defrel/multistage (name param ...) sg)
-| (defrel/multistage/fallback (name param ...) sg)
+later goal lg := g(lg)
 
-term var tv
+definition d :=
+| (defrel (rname param ...) rg)
+| (defrel/generator (rname param ...) sg)
+| (defrel/multistage (rname param ...) sg)
+| (defrel/multistage/fallback (rname param ...) sg)
+| (defrel-partial (rname tv [tv ...] [tv ...]) rg)
+| (defrel-partial/multistage (rname tv [tv ...] [tv ...]) sg)
 
 expression e :=
 | (run* (tv ...) rg)
 | (run n (tv ...) rg)
+
+
+Planned grammar:
+
+term var tv
+
+term t
+
+goal g(p) :=
+| (== t1 t2)
+| (=/= t1 t2)
+| etc.
+| (fresh (tv ...) p ...)
+| (conde (p ...) ...)
+| (partial-apply t rname t ...)
+| (finish-apply t rname t ...)
+
+runtime goal rg :=
+| g(rg)
+| (staged sg)
+
+staging-time goal sg :=
+| g(sg)
+| (later lg)
+| (gather sg)
+| (fallback sg)
+| (specialize-partial-apply t r t ...)
+
+later goal lg := g(lg)
+
+definition d :=
+| (defrel (rname param ...) rg)
+| (defrel/staged (rname param ...) sg)
+| (defrel-partial (rname tv [tv ...] [tv ...]) rg)
+| (defrel-partial/staged (rname tv [tv ...] [tv ...]) sg)
+
+expression e :=
+| (run* (tv ...) rg)
+| (run n (tv ...) rg)
+
