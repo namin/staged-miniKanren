@@ -64,3 +64,19 @@
                  (x . a))
                t)))
  '(b))
+
+(test
+  (run 3 (e t)
+    (fresh (ef ex)
+      (== e `((app ,ef) ,ex))
+      (staged (!- e
+                  '((app . (-> (-> a b) (-> a b)))
+                    (f . (-> a b))
+                    (x . a))
+                  t))))
+  '((((app f) x) b)
+    (((app (app f)) x) b)
+    ((((app f) ((lambda (_.0) _.0) x)) b) $$ (sym _.0))))
+
+(pretty-print
+ (generated-code))
