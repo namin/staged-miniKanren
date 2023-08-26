@@ -52,25 +52,25 @@ Syntax
 (define (peano n)
   (if (zero? n) '() `(,(peano (- n 1)))))
 
-(defrel (peanoo p)
+(defrel/staged/fallback (peanoo p)
   (conde
     [(== '() p)]
     [(fresh (p1)
        (== `(,p1) p)
        (peanoo p1))]))
 
-(defrel (var?o x)
+(defrel/staged/fallback (var?o x)
   (fresh (val)
     (== `(var . ,val) x)
     (peanoo val)))
 
-(defrel (var=?o x y)
+(defrel/staged/fallback (var=?o x y)
   (fresh (val)
     (== `(var . ,val) x)
     (== `(var . ,val) y)
     (peanoo val)))
 
-(defrel (var=/=o x y)
+(defrel/staged/fallback (var=/=o x y)
   (fresh (val1 val2)
     (== `(var . ,val1) x)
     (== `(var . ,val2) y)
@@ -78,12 +78,12 @@ Syntax
     (peanoo val1)
     (peanoo val2)))
 
-(defrel (booleano b)
+(defrel/staged/fallback (booleano b)
   (conde
     [(== #t b)]
     [(== #f b)]))
 
-(defrel (walko u s v)
+(defrel/staged/fallback (walko u s v)
   (conde
     [(== u v)
      (conde
@@ -102,7 +102,7 @@ Syntax
           (assp-subo u s `(,u . ,pr-d))
           (walko pr-d s v))])]))
 
-(defrel (assp-subo v s out)
+(defrel/staged/fallback (assp-subo v s out)
   (fresh (h t h-a h-d)
     (== `(,h . ,t) s)
     (== `(,h-a . ,h-d) h)
@@ -112,7 +112,7 @@ Syntax
       [(== h-a v) (== h out)]
       [(=/= h-a v) (assp-subo v t out)])))
 
-(defrel (not-assp-subo v s)
+(defrel/staged/fallback (not-assp-subo v s)
   (fresh ()
     (var?o v)
     (conde
@@ -123,12 +123,12 @@ Syntax
         (=/= h-a v)
         (not-assp-subo v t))])))
 
-(defrel (ext-so u v s s1)
+(defrel/staged/fallback (ext-so u v s s1)
   (== `((,u . ,v) . ,s) s1))
 
 ; u, v <- {logic var, number, symbol, boolean, empty list, non-empty list}
 ; Total 36 + 5 (types match, but terms do not) = 41 cases
-(defrel (unifyo u-unwalked v-unwalked s s1)
+(defrel/staged/fallback (unifyo u-unwalked v-unwalked s s1)
   (fresh (u v)
     (walko u-unwalked s u)
     (walko v-unwalked s v)
@@ -225,7 +225,7 @@ Syntax
 
 (define mzero '())
 
-(defrel (mpluso $1 $2 $)
+(defrel/staged/fallback (mpluso $1 $2 $)
   (conde
     [(== '() $1) (== $2 $)]
     [(fresh (a d r1)
@@ -237,7 +237,7 @@ Syntax
        (== `(delayed . ,d) $1)
        (== `(delayed mplus ,$1 ,$2) $))]))
 
-(defrel (bindo $ ge env $1)
+(defrel/staged/fallback (bindo $ ge env $1)
   (conde
     [(== '() $) (== mzero $1)]
     [(fresh ($1-a $1-d v-a v-d)
@@ -250,7 +250,7 @@ Syntax
        (== `(delayed . ,d) $)
        (== `(delayed bind ,$ ,ge ,env) $1))]))
 
-(defrel (exto params args env env1)
+(defrel/staged/fallback (exto params args env env1)
   (conde
     [(== params '())
      (== args '())
@@ -260,7 +260,7 @@ Syntax
        (== `(,v-a . ,v-d) args)
        (exto x-d v-d `((,x-a . ,v-a) . ,env) env1))]))
 
-(defrel (lookupo x env v)
+(defrel/staged/fallback (lookupo x env v)
   (conde
     [(fresh (y u env1)
       (== `((,y . ,u) . ,env1) env)
@@ -276,7 +276,7 @@ Syntax
           [(=/= id x)
            (lookupo x env1 v)]))]))
 
-(defrel (not-in-envo x env)
+(defrel/staged/fallback (not-in-envo x env)
   (conde
     [(== '() env)]
     [(fresh (y v env1)
@@ -284,7 +284,7 @@ Syntax
        (=/= x y)
        (not-in-envo x env1))]))
 
-(defrel (eval-args args env vals)
+(defrel/staged/fallback (eval-args args env vals)
   (conde
     [(== args '())
      (== vals '())]
@@ -294,7 +294,7 @@ Syntax
        (eval-texpro a env va)
        (eval-args d env vd))]))
 
-(defrel (eval-gexpro expr s/c env $)
+(defrel/staged/fallback (eval-gexpro expr s/c env $)
   (conde
     [(fresh (ge)
        (== `(delay ,ge) expr)
@@ -333,7 +333,7 @@ Syntax
        (exto params vargs env1 ext-env)
        (eval-gexpro geb s/c ext-env $))]))
 
-(defrel (eval-texpro expr env val)
+(defrel/staged/fallback (eval-texpro expr env val)
   (conde
     [(== expr val)
      (conde
@@ -360,7 +360,7 @@ Syntax
        (eval-texpro e1 env v-e1)
        (eval-texpro e2 env v-e2))]))
 
-(defrel (walk*o unwalked-v s u)
+(defrel/staged/fallback (walk*o unwalked-v s u)
   (fresh (v)
     (walko unwalked-v s v)
     (conde
@@ -382,7 +382,7 @@ Syntax
             (walk*o a s walk*-a)
             (walk*o d s walk*-d)]))])))
 
-(defrel (pullo $ $1)
+(defrel/staged/fallback (pullo $ $1)
   (conde
     [(== '() $) (== '() $1)]
     [(fresh (a d)
@@ -404,7 +404,7 @@ Syntax
        (bindo saved-$1 saved-ge saved-env $2)
        (pullo $2 $1))]))
 
-(defrel (take-allo $ s/c*)
+(defrel/staged/fallback (take-allo $ s/c*)
   (fresh ($1)
     (pullo $ $1)
     (conde
@@ -414,7 +414,7 @@ Syntax
          (== `(,a . ,d-s/c*) s/c*)
          (take-allo $d d-s/c*))])))
 
-(defrel (take-no n $ s/c*)
+(defrel/staged/fallback (take-no n $ s/c*)
   (conde
     [(== '() n) (== '() s/c*)]
     [(=/= '() n)
@@ -428,7 +428,7 @@ Syntax
             (== `(,a . ,d-s/c*) s/c*)
             (take-no n-1 d d-s/c*))]))]))
 
-(defrel (lengtho l len)
+(defrel/staged/fallback (lengtho l len)
   (conde
     [(== '() l) (== '() len)]
     [(fresh (a d len-d)
@@ -436,7 +436,7 @@ Syntax
        (== `(,len-d) len)
        (lengtho d len-d))]))
 
-(defrel (reify-so v-unwalked s s1)
+(defrel/staged/fallback (reify-so v-unwalked s s1)
   (fresh (v)
     (walko v-unwalked s v)
     (conde
@@ -460,14 +460,14 @@ Syntax
             (reify-so a s sa)
             (reify-so d sa s1)]))])))
 
-(defrel (reify-state/1st-varo s/c out)
+(defrel/staged/fallback (reify-state/1st-varo s/c out)
   (fresh (s c v u)
     (== `(,s . ,c) s/c)
     (walk*o `(var . ()) s v)
     (reify-so v '() u)
     (walk*o v u out)))
 
-(defrel (reifyo s/c* out)
+(defrel/staged/fallback (reifyo s/c* out)
     (conde
       [(== '() s/c*) (== '() out)]
       [(fresh (a d va vd)
@@ -476,7 +476,7 @@ Syntax
          (reify-state/1st-varo a va)
          (reifyo d vd))]))
 
-(defrel (eval-programo expr out)
+(defrel/staged/fallback (eval-programo expr out)
   (conde
     [(fresh (lvar gexpr $ s/c*)
        (symbolo lvar)
