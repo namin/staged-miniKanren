@@ -49,7 +49,7 @@ Syntax
 (define peano-zero '())
 (define init-env '())
 
-(define-term-syntax-rule (peano n)
+(define (peano n)
   (if (zero? n) '() `(,(peano (- n 1)))))
 
 (defrel (peanoo p)
@@ -528,6 +528,8 @@ Syntax
     '((_.))))
 
 ; Gives disj in addition to conj
+;; TODO
+#;
 (run* (x)
   (eval-programo
     `(run ,(peano 1) (z)
