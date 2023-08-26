@@ -576,11 +576,10 @@ Syntax
   '(conj))
 
 ; Gives disj in addition to conj
-;; TODO
-#;
+(define one (peano 1))
 (run* (x)
   (eval-programo
-    `(run ,(peano 1) (z)
+    `(run ,one (z)
        (letrec-rel ((appendo (l1 l2 l)
                       (disj
                         (conj (== '() l1) (== l2 l))
