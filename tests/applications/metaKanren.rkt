@@ -493,7 +493,8 @@ Syntax
 
 ;; tests
 
-(test
+(record-bench 'unstaged 'mm 1)
+(time-test
   (run* (x)
     (eval-programo
      `(run* (z)
@@ -512,7 +513,29 @@ Syntax
      x))
   '(((1 2 3 4))))
 
-(test
+(record-bench 'staged 'mm 1)
+(time-test
+  (run* (x)
+    (staged
+     (eval-programo
+      `(run* (z)
+         (letrec-rel ((appendo (l1 l2 l)
+                               (disj
+                                (conj (== '() l1) (== l2 l))
+                                (fresh (a)
+                                  (fresh (d)
+                                    (fresh (l3)
+                                      (conj (== (cons a d) l1)
+                                            (conj (== (cons a l3) l)
+                                                  (delay (call-rel appendo d
+                                                                   l2
+                                                                   l3))))))))))
+                     (call-rel appendo '(1 2) '(3 4) z)))
+      x)))
+  '(((1 2 3 4))))
+
+(record-bench 'unstaged 'mm 2)
+(time-test
   (run* (x)
     (eval-programo
      `(run* (z)
@@ -529,6 +552,27 @@ Syntax
                                                                 l3))))))))))
                     (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
      '((_.))))
+  '(conj))
+
+(record-bench 'staged 'mm 2)
+(time-test
+ (run* (x)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((appendo (l1 l2 l)
+                              (disj
+                               (conj (== '() l1) (== l2 l))
+                               (fresh (a)
+                                 (fresh (d)
+                                   (fresh (l3)
+                                     (,x (== (cons a d) l1)
+                                         (conj (== (cons a l3) l)
+                                               (delay (call-rel appendo d
+                                                                l2
+                                                                l3))))))))))
+                    (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
+     '((_.)))))
   '(conj))
 
 ; Gives disj in addition to conj
@@ -551,7 +595,8 @@ Syntax
           (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
     '((_.))))
 
-(test
+(record-bench 'unstaged 'mm 3)
+(time-test
   (run 1 (x)
     (eval-programo
      `(run* (z)
@@ -561,8 +606,21 @@ Syntax
      x))
   '((5)))
 
+(record-bench 'staged 'mm 3)
+(time-test
+ (run 1 (x)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((five (f)
+                           (== 5 f)))
+                    (call-rel five z)))
+     x)))
+  '((5)))
+
 ; Don't get what we expect when all examples are internally ground
-(test
+(record-bench 'unstaged 'mm 4)
+(time-test
   (run 1 (e1 e2)
     (eval-programo
      `(run* (z)
@@ -572,8 +630,21 @@ Syntax
      '((_.))))
   '(((_.0 _.0) $$ (num _.0))))
 
+(record-bench 'staged 'mm 4)
+(time-test
+ (run 1 (e1 e2)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((five (f)
+                           (== ,e1 ,e2)))
+                    (call-rel five 5)))
+     '((_.)))))
+  '(((_.0 _.0) $$ (num _.0))))
+
 ;; Aha!
-(test
+(record-bench 'unstaged 'mm 5)
+(time-test
   (run 1 (x)
     (eval-programo
      `(run* (z)
@@ -583,7 +654,20 @@ Syntax
      x))
   '(((_.))))
 
-(test
+(record-bench 'staged 'mm 5)
+(time-test
+ (run 1 (x)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((five (f)
+                           (== 7 7)))
+                    (call-rel five 5)))
+     x)))
+  '(((_.))))
+
+(record-bench 'unstaged 'mm 6)
+(time-test
   (run 3 (e1 e2)
     (eval-programo
      `(run* (z)
@@ -593,7 +677,20 @@ Syntax
      '((_.))))
   '(((_.0 _.0) $$ (num _.0)) (() ()) (5 f)))
 
-(test
+(record-bench 'staged 'mm 6)
+(time-test
+ (run 3 (e1 e2)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((five (f)
+                           (== ,e1 ,e2)))
+                    (call-rel five 5)))
+     '((_.)))))
+  '(((_.0 _.0) $$ (num _.0)) (() ()) (5 f)))
+
+(record-bench 'unstaged 'mm 7)
+(time-test
   (run 1 (e1 e2)
     (eval-programo
      `(run* (z)
@@ -603,9 +700,22 @@ Syntax
      '(5)))
   '((5 f)))
 
+(record-bench 'staged 'mm 7)
+(time-test
+ (run 1 (e1 e2)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((five (f)
+                           (== ,e1 ,e2)))
+                    (call-rel five z)))
+     '(5))))
+  '((5 f)))
+
 ; External grounding, extra examples to avoid overfitting, and with symbolo to
 ; fasten queries
-(test
+(record-bench 'unstaged 'mm 8)
+(time-test
   (run 1 (x y w)
     (symbolo x)
     (symbolo y)
@@ -629,8 +739,35 @@ Syntax
      '((1 2 3 4))))
   '((d l2 l3)))
 
+(record-bench 'staged 'mm 8)
+(time-test
+ (run 1 (x y w)
+   (symbolo x)
+   (symbolo y)
+   (symbolo w)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((appendo (l1 l2 l)
+                              (disj
+                               (conj (== '() l1) (== l2 l))
+                               (fresh (a)
+                                 (fresh (d)
+                                   (fresh (l3)
+                                     (conj (== (cons a d) l1)
+                                           (conj (== (cons a l3) l)
+                                                 (delay (call-rel appendo ,x
+                                                                  ,y
+                                                                  ,w))))))))))
+                    (conj (call-rel appendo '(cat dog) '() '(cat dog))
+                          (conj (call-rel appendo '(apple) '(peach) '(apple peach))
+                                (call-rel appendo '(1 2) '(3 4) z)))))
+     '((1 2 3 4)))))
+ '((d l2 l3)))
+
 ; Thanks for the example, @bollu!
-(test
+(record-bench 'unstaged 'mm 9)
+(time-test
   (run* (count)
     (eval-programo
      `(run ,count (z)
@@ -639,10 +776,32 @@ Syntax
      '(1 2)))
   '(((())) (((_.0)) $$ (=/= ((_.0 ()))))))
 
-(test
+(record-bench 'staged 'mm 9)
+(time-test
+ (run* (count)
+   (staged
+    (eval-programo
+     `(run ,count (z)
+        (disj (== z 1)
+              (== z 2)))
+     '(1 2))))
+  '(((())) (((_.0)) $$ (=/= ((_.0 ()))))))
+
+(record-bench 'unstaged 'mm 10)
+(time-test
   (run* (count answers)
     (eval-programo `(run ,count (z)
                       (disj (== z 1)
                             (== z 2)))
                    answers))
+  '((() ()) ((()) (1)) (((())) (1 2)) ((((_.0)) (1 2)) $$ (=/= ((_.0 ()))))))
+
+(record-bench 'staged 'mm 10)
+(time-test
+ (run* (count answers)
+   (staged
+    (eval-programo `(run ,count (z)
+                      (disj (== z 1)
+                            (== z 2)))
+                   answers)))
   '((() ()) ((()) (1)) (((())) (1 2)) ((((_.0)) (1 2)) $$ (=/= ((_.0 ()))))))
