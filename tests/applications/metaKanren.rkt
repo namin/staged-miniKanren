@@ -577,22 +577,46 @@ Syntax
 
 ; Gives disj in addition to conj
 (define one (peano 1))
-(run* (x)
-  (eval-programo
+(record-bench 'unstaged 'mm 11)
+(time-test
+ (run* (x)
+   (eval-programo
     `(run ,one (z)
        (letrec-rel ((appendo (l1 l2 l)
-                      (disj
-                        (conj (== '() l1) (== l2 l))
-                        (fresh (a)
-                          (fresh (d)
-                            (fresh (l3)
-                              (,x (== (cons a d) l1)
-                                  (conj (== (cons a l3) l)
-                                        (delay (call-rel appendo d
-                                                                 l2
-                                                                 l3))))))))))
-          (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
+                             (disj
+                              (conj (== '() l1) (== l2 l))
+                              (fresh (a)
+                                (fresh (d)
+                                  (fresh (l3)
+                                    (,x (== (cons a d) l1)
+                                        (conj (== (cons a l3) l)
+                                              (delay (call-rel appendo d
+                                                               l2
+                                                               l3))))))))))
+                   (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
     '((_.))))
+ '(disj conj))
+
+(record-bench 'staged 'mm 11)
+(time-test
+ (run* (x)
+   (staged
+    (eval-programo
+     `(run ,one (z)
+        (letrec-rel ((appendo (l1 l2 l)
+                              (disj
+                               (conj (== '() l1) (== l2 l))
+                               (fresh (a)
+                                 (fresh (d)
+                                   (fresh (l3)
+                                     (,x (== (cons a d) l1)
+                                         (conj (== (cons a l3) l)
+                                               (delay (call-rel appendo d
+                                                                l2
+                                                                l3))))))))))
+                    (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
+     '((_.)))))
+ '(disj conj))
 
 (record-bench 'unstaged 'mm 3)
 (time-test
