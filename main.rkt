@@ -44,6 +44,7 @@
          (for-syntax racket/base
                      racket/syntax
                      syntax/parse
+                     racket/pretty
                      racket/match
                      racket/list
                      syntax/id-set)
@@ -69,7 +70,7 @@
        (when (not (= def-arg-count (length use-args)))
          (raise-syntax-error #f "wrong number of arguments to relation" name))
        def-stage]
-       [_ (raise-syntax-error #f "relation application expects relation" name)]))
+      [_ (raise-syntax-error #f "relation application expects relation" name)]))
 
   (define (name-multistage-fallback! name)
     (compile-binder! (compiled-from name) #:table multistage-runtime-impl))
@@ -142,6 +143,7 @@
     
     (conde [g:goal ...+] ...+)
 
+    (fallback body:goal)
     (fallback fb:goal body:goal)
     (gather body:goal)
     
@@ -152,20 +154,21 @@
     fail
 
     (#%rel-app r:relation-name arg:term ...)
+    (#%rel-app/fn r:id arg:term ...)
     (~> (r:id arg ...)
         #'(#%rel-app r arg ...)))
   
   (host-interface/definition
-    (defrel (r:relation-name arg:term-var ...)
-      g:goal ...+)
-    #:binding [(export r) {(bind arg) g}]
-    #:lhs
-    [(register-simple-rel! #'r 'runtime (attribute arg))
-     #'r]
-    #:rhs
-    [#'(lambda (arg ...)
-         (i:relation-body
-           (compile-runtime-goal g) ...))])
+   (defrel (r:relation-name arg:term-var ...)
+     g:goal ...+)
+   #:binding [(export r) {(bind arg) g}]
+   #:lhs
+   [(register-simple-rel! #'r 'runtime (attribute arg))
+    #'r]
+   #:rhs
+   [#'(lambda (arg ...)
+        (i:relation-body
+         (compile-runtime-goal g) ...))])
 
   (host-interface/definition
    (defrel/staged (r:relation-name arg:term-var ...)
@@ -176,32 +179,14 @@
     (register-simple-rel! #'r 'multistage (attribute arg))
     #'(r r-fallback)]
    #:rhs
-   [#'(values
+   [#:with (gl ...) (map lift-fallbacks! (attribute g))
+    #'(values
        (lambda (arg ...)
          (i:relation-body
-          (compile-now-goal g) ...))
+          (compile-now-goal gl) ...))
        (lambda (arg ...)
          (i:relation-body
-          (compile-now-for-runtime-goal g) ...)))])
-    
-  (host-interface/definition
-   (defrel/staged/fallback (r:relation-name arg:term-var ...)
-     g:goal ...)
-   #:binding [(export r) {(bind arg) g}]
-   #:lhs
-   [#:with r-fallback (name-multistage-fallback! #'r)
-    (register-simple-rel! #'r 'multistage (attribute arg))
-    #'(r r-fallback)]
-   #:rhs
-   [#'(values
-       (lambda (arg ...)
-         (compile-now-goal
-          (fallback
-           (later (#%rel-app r (#%term-var arg) ...))
-           (fresh () g ...))))
-       (lambda (arg ...)
-         (i:relation-body
-          (compile-now-for-runtime-goal g) ...)))])
+          (compile-now-for-runtime-goal gl) ...)))])
 
   (host-interface/definition
    (defrel-partial
@@ -219,34 +204,35 @@
          (compile-runtime-goal g) ...))])
 
   (host-interface/definition
-    (defrel-partial/staged
-      (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
-        g:goal ...)
-    #:binding [(export r) {(bind rep now-arg later-arg) g}]
-    #:lhs
-    [#:with r-fallback (name-multistage-fallback! #'r)
-     (symbol-table-set!
-      relation-info #'r
-      (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
-     #'(r r-fallback)]
-    #:rhs
-    [#'(values
-        (lambda (rep now-arg ... later-arg ...)
-          (i:relation-body
-           (compile-now-goal g) ...))
-        (lambda (rep now-arg ... later-arg ...)
-          (i:relation-body
-           (compile-now-for-runtime-goal g) ...)))])
+   (defrel-partial/staged
+     (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
+     g:goal ...)
+   #:binding [(export r) {(bind rep now-arg later-arg) g}]
+   #:lhs
+   [#:with r-fallback (name-multistage-fallback! #'r)
+    (symbol-table-set!
+     relation-info #'r
+     (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
+    #'(r r-fallback)]
+   #:rhs
+   [#:with (gl ...) (map lift-fallbacks! (attribute g))
+    #'(values
+       (lambda (rep now-arg ... later-arg ...)
+         (i:relation-body
+          (compile-now-goal gl) ...))
+       (lambda (rep now-arg ... later-arg ...)
+         (i:relation-body
+          (compile-now-for-runtime-goal gl) ...)))])
   
   (host-interface/expression
-    (run n:racket-expr (q:term-var ...+) g:goal ...+)
-    #:binding {(bind q) g}
-    #'(i:run n (q ...) (compile-runtime-goal g) ...))
+   (run n:racket-expr (q:term-var ...+) g:goal ...+)
+   #:binding {(bind q) g}
+   #'(i:run n (q ...) (compile-runtime-goal g) ...))
 
   (host-interface/expression
-    (run* (q:term-var ...+) g:goal ...+)
-    #:binding {(bind q) g}
-    #'(i:run* (q ...) (compile-runtime-goal g) ...)))
+   (run* (q:term-var ...+) g:goal ...+)
+   #:binding {(bind q) g}
+   #'(i:run* (q ...) (compile-runtime-goal g) ...)))
 
 (begin-for-syntax
   (require syntax/transformer)
@@ -315,7 +301,34 @@
        (free-vars-of-binding-form (attribute x) (attribute g))]
       [(a . d)
        (free-id-set-union (free-vars #'a) (free-vars #'d))]
-      [_ (immutable-free-id-set)])))
+      [_ (immutable-free-id-set)]))
+
+  (define (lift-fallbacks! now-goal)
+    (syntax-parse now-goal
+      #:literal-sets (goal-literals)
+      [(fallback body)
+       #:with (var ...) (free-id-set->list (free-vars (attribute body)))
+       #:with lifted (syntax-local-lift-expression
+                      #'(lambda (var ...) (compile-now-for-runtime-goal body)))
+       #:with bodyl (lift-fallbacks! (attribute body))
+       #:with res #'(fallback (later (#%rel-app/fn lifted (#%term-var var) ...)) bodyl)
+       #'res]
+
+      [(fallback fb body)
+       #:with bodyl (lift-fallbacks! (attribute body))
+       #'(fallback fb bodyl)]
+      [(fresh (x:id ...) g ...)
+       #:with (gl ...) (map lift-fallbacks! (attribute g))
+       #'(fresh (x ...) gl ...)]
+      [(conde [g ...] ...)
+       #:with ([gl ...] ...) (map (lambda (l) (map lift-fallbacks! l)) (attribute g))
+       #'(conde [gl ...] ...)]
+      [(gather body)
+       #:with bodyl (lift-fallbacks! (attribute body))
+       #'(gather bodyl)]
+      [_ this-syntax]))
+  
+  )
 
 (define-syntax compile-runtime-goal
   (syntax-parser
@@ -323,15 +336,17 @@
 
     [(_ (trace id x ...))
      #'(i:project (x ...)
-         (begin
-           (displayln (list 'id x ...))
-           i:succeed))]
+                  (begin
+                    (displayln (list 'id x ...))
+                    i:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
      (let ((def-stage (check-simple-rel #'r 'runtime (attribute arg))))
        (if (eq? def-stage 'multistage)
            #`(#,(reference-multistage-fallback #'r) (compile-term arg) ...)
            #'(r (compile-term arg) ...)))]
+    [(_ (#%rel-app/fn r:id arg ...))
+     #'(r (compile-term arg) ...)]
     
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
@@ -351,8 +366,8 @@
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
-       (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)]
-                     [rel (reference-runtime-relation #'rel stage)])
+        (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)]
+                      [rel (reference-runtime-relation #'rel stage)])
           #'(i:finish-apply v (rel (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "finish-apply expects relation defined by defrel-partial" #'r)])]
     
@@ -385,9 +400,9 @@
     [(_ (trace id x ...))
      ;(error 'compile-now-goal "TODO not supported")
      #'(i:ss:project (x ...)
-         (begin
-           (displayln (list 'id x ...))
-           (i:ss:atomic i:succeed)))]
+                     (begin
+                       (displayln (list 'id x ...))
+                       (i:ss:atomic i:succeed)))]
     
     [(_ (#%rel-app r:id arg ...))
      (let ((def-stage (check-simple-rel #'r 'staging-time (attribute arg))))
@@ -444,6 +459,8 @@
        #'(compile-runtime-goal now-goal)]
       [(_ (#%rel-app r:id arg ...))
        #'(compile-runtime-goal now-goal)]
+      [(_ (#%rel-app/fn r:id arg ...))
+       #'(compile-runtime-goal now-goal)]
       
       [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
        (raise-syntax-error #f "partial-apply not supported in staging-time code" #'stx)]
@@ -489,6 +506,8 @@
        (if (eq? def-stage 'multistage)
            #`(i:lapp #,(reference-multistage-fallback #'r) (compile-term arg) ...)
            #'(i:lapp r (compile-term arg) ...)))]
+    [(_ (#%rel-app/fn r:id arg ...))
+     #'(i:lapp r (compile-term arg) ...)]
 
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
@@ -586,4 +605,9 @@
           (syntax-rules ()
             [(_ . pat)
              template])))]))
+
+(define-syntax-rule
+  (defrel/staged/fallback (name arg ...) body ...)
+  (defrel/staged (name arg ...)
+    (fallback (fresh () body ...))))
 
