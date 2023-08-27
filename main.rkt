@@ -141,7 +141,7 @@
     #:binding {(bind x) g}
     
     (conde [g:goal ...+] ...+)
-    
+
     (fallback fb:goal body:goal)
     (gather body:goal)
     
@@ -168,18 +168,6 @@
            (compile-runtime-goal g) ...))])
 
   (host-interface/definition
-    (defrel/generator (r:relation-name arg:term-var ...)
-      g:goal ...+)
-    #:binding [(export r) {(bind arg) g}]
-    #:lhs
-    [(register-simple-rel! #'r 'staging-time (attribute arg))
-     #'r]
-    #:rhs
-    [#'(lambda (arg ...)
-         (i:ss:fresh () ;; don't care about avoiding suspends at staging time
-           (compile-now-goal g) ...))])
-
-  (host-interface/definition
    (defrel/staged (r:relation-name arg:term-var ...)
      g:goal ...+)
    #:binding [(export r) {(bind arg) g}]
@@ -197,10 +185,9 @@
           (compile-now-for-runtime-goal g) ...)))])
     
   (host-interface/definition
-   (defrel/staged/explicit (r:relation-name arg:term-var ...)
-     #:runtime g:goal
-     #:staging-time gen:goal)
-   #:binding [(export r) {(bind arg) g gen}]
+   (defrel/staged/fallback (r:relation-name arg:term-var ...)
+     g:goal ...)
+   #:binding [(export r) {(bind arg) g}]
    #:lhs
    [#:with r-fallback (name-multistage-fallback! #'r)
     (register-simple-rel! #'r 'multistage (attribute arg))
@@ -208,11 +195,13 @@
    #:rhs
    [#'(values
        (lambda (arg ...)
-         (i:relation-body
-          (compile-now-goal gen)))
+         (compile-now-goal
+          (fallback
+           (later (#%rel-app r (#%term-var arg) ...))
+           (fresh () g ...))))
        (lambda (arg ...)
          (i:relation-body
-          (compile-now-for-runtime-goal g))))])
+          (compile-now-for-runtime-goal g) ...)))])
 
   (host-interface/definition
    (defrel-partial
@@ -598,17 +587,3 @@
             [(_ . pat)
              template])))]))
 
-(define-syntax defrel/staged/fallback
-  (syntax-parser
-    [(_ (name arg ...) g ...)
-     #:with internal (format-id (generate-temporary #'name) "~a" #'name)
-     #'(begin
-         (defrel/staged/explicit (name arg ...)
-           #:runtime
-           (internal arg ...)
-           #:staging-time
-           (fallback
-            (later (internal arg ...))
-            (internal arg ...)))
-         (defrel/staged (internal arg ...)
-           g ...))]))
