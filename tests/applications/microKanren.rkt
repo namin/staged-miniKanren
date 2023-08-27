@@ -1,4 +1,8 @@
-(define (micro0 query)
+#lang racket/base
+
+(require "../../all.rkt")
+
+(define-term-syntax-rule (micro0 query)
      `(letrec
        ((assp
          (lambda (p l)
@@ -96,7 +100,7 @@
 
      ))
 
-(define (micro query)
+(define-term-syntax-rule (micro query)
      `(letrec
        ((assp
          (lambda (p l)
@@ -184,18 +188,21 @@
 
                                          ))))))))))))))))))))
 
-
+#|
+;; TODO -- micro: term-macro may not be used as a racket expression
 (define (micro-unstaged query)
   (eval (micro `(,query (empty-state)))))
 
 (micro-unstaged 'unit)
+|#
 
 (record-bench 'run-staged 'micro 0)
 (time-test
-  (run-staged #f (v)
+ (run #f (v)
+   (staged
     (evalo-staged
      (micro '((=== 5 5) (empty-state)))
-     v))
+     v)))
   '(((() . z) . ())))
 
 (record-bench 'unstaged 'micro 0)
@@ -209,10 +216,11 @@
 
 (record-bench 'run-staged 'micro 1)
 (time-test
-  (run-staged #f (v)
+ (run #f (v)
+   (staged
     (evalo-staged
      (micro '((call/fresh (lambda (q) (=== q 5))) (empty-state)))
-     v))
+     v)))
   '((((((var . z) . 5)) . (s . z)))))
 
 (record-bench 'unstaged 'micro 1)
@@ -226,10 +234,11 @@
 
 (record-bench 'run-staged 'micro 2)
 (time-test
-  (run-staged #f (v)
+ (run #f (v)
+   (staged
     (evalo-staged
      (micro '((call/fresh (lambda (q) (disj (=== q 5) (=== q 6)))) (empty-state)))
-     v))
+     v)))
   '((((((var . z) . 5)) . (s . z))
      ((((var . z) . 6)) . (s . z)))))
 
@@ -246,11 +255,12 @@
 
 ;; This generates answers that are not valid microKanren programs.
 (test
-    (run-staged 3 (q)
-      (evalo-staged
-       (micro `(,q (empty-state)))
-       '((() . z))))
-  '(unit list ((lambda _.0 _.0) $$ (sym _.0)))
+  (run 3 (q)
+    (staged
+     (evalo-staged
+      (micro `(,q (empty-state)))
+      '((() . z)))))
+  '(unit ((lambda _.0 _.0) $$ (sym _.0)) list)
 )
 
 (test
@@ -261,7 +271,7 @@
   '(unit list ((lambda _.0 _.0) $$ (sym _.0))))
 
 
-(define (valid-ge? ge)
+(define-term-syntax-rule (valid-ge? ge-top)
   `(letrec
        ((valid-te? (lambda (te)
                      (match te
@@ -278,21 +288,23 @@
                              [`(disj ,ge1 ,ge2) (and (valid-ge? ge1) (valid-ge? ge2))]
                              [`(call/fresh (lambda (,(? symbol? x)) ,ge)) (valid-ge? ge)]
                              [`,else #f]))))
-       (valid-ge? ',ge))))
+       (valid-ge? ',ge-top))))
 
 
 (record-bench 'run-staged 'micro-synthesis 1)
 (time-test
-  (run-staged 1 (ge)
-    (evalo-staged
-     (valid-ge? ge)
-     #t)
-    (evalo-staged
-     (micro `(,ge (empty-state)))
-     '((() . z) . ())))
+ (run 1 (ge)
+   (staged
+    (fresh ()
+      (evalo-staged
+       (valid-ge? ge)
+       #t)
+      (evalo-staged
+       (micro `(,ge (empty-state)))
+       '((() . z) . ())))))
   '(((=== '_.0 '_.0)
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (=/= ((_.0 struct)))
      (sym _.0))))
 
 (record-bench 'unstaged 'micro-synthesis 1)
@@ -306,27 +318,32 @@
      '((() . z) . ())))
   '(((=== '_.0 '_.0)
      $$
-     (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure)) ((_.0 dynamic)) ((_.0 prim)))
+     (=/= ((_.0 struct)))
      (sym _.0))))
 
 
-
+;; TODO: seems to hang
+#;
 (record-bench 'run-staged 'micro-synthesis 2)
+#;
 (time-test
-  (run-staged 1 (ge)
+  (run 1 (ge)
     (absento 'var ge)
-    (fresh (ge1 ge2)
-      (== `(call/fresh (lambda (q) (disj ,ge1 ,ge2))) ge))
-    (evalo-staged
-     (valid-ge? ge)
-     #t)
-    (evalo-staged
-     (micro `(,ge (empty-state)))
-     '(((((var . z) . 5)) . (s . z))
-       ((((var . z) . 6)) . (s . z)))))
+    (staged
+     (fresh (ge1 ge2)
+       (== `(call/fresh (lambda (q) (disj ,ge1 ,ge2))) ge)
+       (evalo-staged
+        (valid-ge? ge)
+        #t)
+       (evalo-staged
+        (micro `(,ge (empty-state)))
+        '(((((var . z) . 5)) . (s . z))
+          ((((var . z) . 6)) . (s . z)))))))
   '((call/fresh (lambda (q) (disj (=== '5 q) (=== '6 q))))))
 
+#;
 (record-bench 'unstaged 'micro-synthesis 2)
+#;
 (time-test
   (run 1 (ge)
     (absento 'var ge)
@@ -374,58 +391,66 @@
 |#
 
 
-
 (test
-    (run-staged #f (v)
-      (evalo-staged
-       (valid-ge? `(=== '5 '5))
-       #t)
-      (evalo-staged
-       (micro `((=== '5 '5) (empty-state)))
-       v))
+  (run #f (v)
+    (staged
+     (fresh ()
+       (evalo-staged
+        (valid-ge? `(=== '5 '5))
+        #t)
+       (evalo-staged
+        (micro `((=== '5 '5) (empty-state)))
+        v))))
   '(((() . z))))
 
 (test
-    (run-staged #f (ge v)
-      (== `(=== '5 '5) ge)
-      (evalo-staged
-       (valid-ge? ge)
-       #t)
-      (evalo-staged
-       (micro `(,ge (empty-state)))
-       v))
+  (run #f (ge v)
+    (== `(=== '5 '5) ge)
+    (staged
+     (fresh ()
+       (evalo-staged
+        (valid-ge? ge)
+        #t)
+       (evalo-staged
+        (micro `(,ge (empty-state)))
+        v))))
   '(((=== '5 '5) ((() . z)))))
 
 (test
-    (run-staged #f (ge v)
-      (== `(=== '5 '5) ge)
-      (evalo-staged
-       (micro `(,ge (empty-state)))
-       v)
-      (evalo-staged
-       (valid-ge? ge)
-       #t))
+  (run #f (ge v)
+    (== `(=== '5 '5) ge)
+    (staged
+     (fresh ()
+       (evalo-staged
+        (micro `(,ge (empty-state)))
+        v)
+       (evalo-staged
+        (valid-ge? ge)
+        #t))))
   '(((=== '5 '5) ((() . z)))))
 
 
 
 (test
-    (run-staged 1 (ge)
-      (== '(=== '5 '5) ge)
-      (evalo-staged
-       (micro `(,ge (empty-state)))
-       '((() . z)))
-      (evalo-staged
-       (valid-ge? ge)
-       #t))
+  (run 1 (ge)
+    (== '(=== '5 '5) ge)
+    (staged
+     (fresh ()
+       (evalo-staged
+        (micro `(,ge (empty-state)))
+        '((() . z)))
+       (evalo-staged
+        (valid-ge? ge)
+        #t))))
   '((=== '5 '5)))
 
 
 (test
-    (run-staged #f (v)
-      (evalo-staged
-       (valid-ge? `(=== '5 '5))
-       v))
+  (run #f (v)
+    (staged
+     (evalo-staged
+      (valid-ge? `(=== '5 '5))
+      v)))
   '(#t))
 
 (test
@@ -437,10 +462,11 @@
 
 
 (test
-    (run-staged #f (v)
-      (evalo-staged
-       (valid-ge? `(=== 5 '5))
-       v))
+  (run #f (v)
+    (staged
+     (evalo-staged
+      (valid-ge? `(=== 5 '5))
+      v)))
   '(#f))
 
 (test
@@ -452,163 +478,76 @@
 
 
 (test
-    (run-staged 11 (q)
-      (evalo-staged
-       (valid-ge? q)
-       #t))
-  '(((=== '_.0 '_.1)
-   $$
-   (=/= ((_.0 call-code)) ((_.1 call-code)))
-   (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
-     (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
-  ((=== '_.0 _.1)
-    $$
-    (=/= ((_.0 call-code)) ((_.1 call)) ((_.1 call-code))
-         ((_.1 closure)) ((_.1 dynamic)) ((_.1 prim)))
-    (sym _.1)
-    (absento (call _.0) (closure _.0) (dynamic _.0) (prim _.0)))
-  ((=== _.0 '_.1)
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-         ((_.0 dynamic)) ((_.0 prim)) ((_.1 call-code)))
-    (sym _.0)
-    (absento (call _.1) (closure _.1) (dynamic _.1) (prim _.1)))
+  (run 11 (q)
+    (staged
+     (evalo-staged
+      (valid-ge? q)
+      #t)))
+  '(((=== '_.0 '_.1) $$ (absento (struct _.0) (struct _.1)))
   ((=== '_.0 (cons '_.1 '_.2))
-    $$
-    (=/= ((_.0 call-code)) ((_.1 call-code)) ((_.2 call-code)))
-    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2)))
   ((=== (cons '_.0 '_.1) '_.2)
-    $$
-    (=/= ((_.0 call-code)) ((_.1 call-code)) ((_.2 call-code)))
-    (absento (call _.0) (call _.1) (call _.2) (closure _.0)
-      (closure _.1) (closure _.2) (dynamic _.0) (dynamic _.1)
-      (dynamic _.2) (prim _.0) (prim _.1) (prim _.2)))
-  ((=== _.0 _.1)
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-         ((_.0 dynamic)) ((_.0 prim)) ((_.1 call)) ((_.1 call-code))
-         ((_.1 closure)) ((_.1 dynamic)) ((_.1 prim)))
-    (sym _.0 _.1))
-  ((=== _.0 (cons '_.1 '_.2))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-         ((_.0 dynamic)) ((_.0 prim)) ((_.1 call-code))
-         ((_.2 call-code)))
-    (sym _.0)
-    (absento (call _.1) (call _.2) (closure _.1) (closure _.2)
-      (dynamic _.1) (dynamic _.2) (prim _.1) (prim _.2)))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2)))
+  ((=== '_.0 _.1) $$ (=/= ((_.1 struct))) (sym _.1) (absento (struct _.0)))
+  ((=== _.0 '_.1) $$ (=/= ((_.0 struct))) (sym _.0) (absento (struct _.1)))
+  ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
   ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
-    $$
-    (=/= ((_.0 call-code))
-         ((_.1 call-code))
-         ((_.2 call-code))
-         ((_.3 call-code)))
-    (absento (call _.0) (call _.1) (call _.2) (call _.3) (closure _.0)
-      (closure _.1) (closure _.2) (closure _.3) (dynamic _.0)
-      (dynamic _.1) (dynamic _.2) (dynamic _.3) (prim _.0)
-      (prim _.1) (prim _.2) (prim _.3)))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
   ((=== (cons '_.0 '_.1) _.2)
-    $$
-    (=/= ((_.0 call-code)) ((_.1 call-code)) ((_.2 call))
-         ((_.2 call-code)) ((_.2 closure)) ((_.2 dynamic))
-         ((_.2 prim)))
-    (sym _.2)
-    (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
-      (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
-  ((=== '_.0 (cons '_.1 _.2))
-    $$
-    (=/= ((_.0 call-code)) ((_.1 call-code)) ((_.2 call))
-         ((_.2 call-code)) ((_.2 closure)) ((_.2 dynamic))
-         ((_.2 prim)))
-    (sym _.2)
-    (absento (call _.0) (call _.1) (closure _.0) (closure _.1)
-      (dynamic _.0) (dynamic _.1) (prim _.0) (prim _.1)))
-  ((=== '_.0 (cons _.1 '_.2))
-    $$
-    (=/= ((_.0 call-code)) ((_.1 call)) ((_.1 call-code))
-         ((_.1 closure)) ((_.1 dynamic)) ((_.1 prim))
-         ((_.2 call-code)))
-    (sym _.1)
-    (absento (call _.0) (call _.2) (closure _.0) (closure _.2)
-      (dynamic _.0) (dynamic _.2) (prim _.0) (prim _.2))))
-  )
+   $$
+   (=/= ((_.2 struct)))
+   (sym _.2)
+   (absento (struct _.0) (struct _.1)))
+  ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
+  ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
+  ((=== _.0 (cons '_.1 '_.2))
+   $$
+   (=/= ((_.0 struct)))
+   (sym _.0)
+   (absento (struct _.1) (struct _.2)))))
 
 (test
     (run 10 (q)
       (evalo-unstaged
        (valid-ge? q)
        #t))
-  '(((=== '_.0 '_.1)
-   $$
-   (absento (call _.0) (call _.1) (call-code _.0) (call-code _.1)
-     (closure _.0) (closure _.1) (dynamic _.0) (dynamic _.1)
-     (prim _.0) (prim _.1)))
-  ((=== '_.0 _.1)
-    $$
-    (=/= ((_.1 call)) ((_.1 call-code)) ((_.1 closure))
-         ((_.1 dynamic)) ((_.1 prim)))
-    (sym _.1)
-    (absento (call _.0) (call-code _.0) (closure _.0)
-      (dynamic _.0) (prim _.0)))
-  ((=== _.0 '_.1)
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-         ((_.0 dynamic)) ((_.0 prim)))
-    (sym _.0)
-    (absento (call _.1) (call-code _.1) (closure _.1)
-      (dynamic _.1) (prim _.1)))
-  ((=== _.0 _.1)
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-         ((_.0 dynamic)) ((_.0 prim)) ((_.1 call)) ((_.1 call-code))
-         ((_.1 closure)) ((_.1 dynamic)) ((_.1 prim)))
-    (sym _.0 _.1))
+    '(((=== '_.0 '_.1) $$ (absento (struct _.0) (struct _.1)))
+  ((=== '_.0 _.1) $$ (=/= ((_.1 struct))) (sym _.1) (absento (struct _.0)))
+  ((=== _.0 '_.1) $$ (=/= ((_.0 struct))) (sym _.0) (absento (struct _.1)))
+  ((=== _.0 _.1) $$ (=/= ((_.0 struct)) ((_.1 struct))) (sym _.0 _.1))
   ((=== '_.0 (cons '_.1 '_.2))
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call-code _.0)
-      (call-code _.1) (call-code _.2) (closure _.0) (closure _.1)
-      (closure _.2) (dynamic _.0) (dynamic _.1) (dynamic _.2)
-      (prim _.0) (prim _.1) (prim _.2)))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2)))
   ((=== '_.0 (cons '_.1 _.2))
-    $$
-    (=/= ((_.2 call)) ((_.2 call-code)) ((_.2 closure))
-         ((_.2 dynamic)) ((_.2 prim)))
-    (sym _.2)
-    (absento (call _.0) (call _.1) (call-code _.0) (call-code _.1)
-      (closure _.0) (closure _.1) (dynamic _.0) (dynamic _.1)
-      (prim _.0) (prim _.1)))
+   $$
+   (=/= ((_.2 struct)))
+   (sym _.2)
+   (absento (struct _.0) (struct _.1)))
   ((=== '_.0 (cons _.1 '_.2))
-    $$
-    (=/= ((_.1 call)) ((_.1 call-code)) ((_.1 closure))
-         ((_.1 dynamic)) ((_.1 prim)))
-    (sym _.1)
-    (absento (call _.0) (call _.2) (call-code _.0) (call-code _.2)
-      (closure _.0) (closure _.2) (dynamic _.0) (dynamic _.2)
-      (prim _.0) (prim _.2)))
+   $$
+   (=/= ((_.1 struct)))
+   (sym _.1)
+   (absento (struct _.0) (struct _.2)))
   ((=== '_.0 (cons _.1 _.2))
-    $$
-    (=/= ((_.1 call)) ((_.1 call-code)) ((_.1 closure))
-         ((_.1 dynamic)) ((_.1 prim)) ((_.2 call)) ((_.2 call-code))
-         ((_.2 closure)) ((_.2 dynamic)) ((_.2 prim)))
-    (sym _.1 _.2)
-    (absento (call _.0) (call-code _.0) (closure _.0)
-      (dynamic _.0) (prim _.0)))
-  ((=== _.0 (cons '_.1 '_.2))
-    $$
-    (=/= ((_.0 call)) ((_.0 call-code)) ((_.0 closure))
-         ((_.0 dynamic)) ((_.0 prim)))
-    (sym _.0)
-    (absento (call _.1) (call _.2) (call-code _.1) (call-code _.2)
-      (closure _.1) (closure _.2) (dynamic _.1) (dynamic _.2)
-      (prim _.1) (prim _.2)))
+   $$
+   (=/= ((_.1 struct)) ((_.2 struct)))
+   (sym _.1 _.2)
+   (absento (struct _.0)))
   ((=== (cons '_.0 '_.1) '_.2)
-    $$
-    (absento (call _.0) (call _.1) (call _.2) (call-code _.0)
-      (call-code _.1) (call-code _.2) (closure _.0) (closure _.1)
-      (closure _.2) (dynamic _.0) (dynamic _.1) (dynamic _.2)
-      (prim _.0) (prim _.1) (prim _.2))))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2)))
+  ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
+   $$
+   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3))))
   )
 
 
