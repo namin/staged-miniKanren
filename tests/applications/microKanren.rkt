@@ -391,8 +391,6 @@
 |#
 
 
-;; TODO: error gen: staging failed
-#;
 (test
   (run #f (v)
     (staged
@@ -447,8 +445,6 @@
   '((=== '5 '5)))
 
 
-;; TODO: error gen: staging failed
-#;
 (test
   (run #f (v)
     (staged
