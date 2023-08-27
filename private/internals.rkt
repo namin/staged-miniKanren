@@ -448,12 +448,6 @@
            (map (lambda (d) #`(=/=* #,(data d))) (c-D c)))))))
 
 ;;
-;; Multistage structures
-;;
-
-(struct multistage-rel-value [runtime staging-time] #:prefab)
-
-;;
 ;; Partial relation application
 ;;
 
@@ -478,7 +472,7 @@
                      ;; that substitution extensions to `y-n` are captured in the walk.
                      (ss:later #`(== #,(data y-n) y-n2))
                      ...
-                     ((multistage-rel-value-staging-time rel) rep x ... y-n ...))
+                     (rel rep x ... y-n ...))
           (lambda (body)
             (l== rep (apply-rep
                       'rel 'rel (list x ...)
@@ -500,7 +494,7 @@
                   [proc (apply-rep-proc rep)])
              ((if (procedure? proc)
                   (proc y ...)
-                  ((multistage-rel-value-runtime rel) rep x-n ... y ...))
+                  (rel rep x-n ... y ...))
               st))))]))
 
 (define-syntax lfinish-apply
