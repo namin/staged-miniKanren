@@ -112,8 +112,8 @@ It doesn't work if the program is not fully known.
 
 ## 2. what if the program isn't fully ground?
 We introduce the following forms:
-- `defrel/staged`
-- `defrel/staged/fallback`
+
+- `fallback`
 
 [Motivate with a program synthesis example. Do an aside of showing a program synthesis query in a more substantial interpreter.]
 
@@ -123,11 +123,11 @@ The full computation has to mix evaluation of staged generated code with evaluat
 The challenge is to construct both the interpreters and interactions between the generated code and the runtime interpreter.
 
 ```
-(defrel/staged/fallback (name param ...)
+(defrel/staged (name param ...)
   ...)
 ```
 
-When we define a relation with `defrel/staged/fallback`, we generate both the staged and runtime version. We get the runtime version by removing the `later` annotations.
+When we define a relation with `defrel/staged`, we generate both the staged and runtime version. We get the runtime version by removing the `later` annotations.
 
 Here the runtime version of `ms-eval-ambo` would be identical to the `eval-ambo` relation we saw in section 1.
 
@@ -154,21 +154,22 @@ If it is, generate a fallback to the runtime version (which is itself automatica
 Notice that in the example above, the first clause of the `cons`, `'(amb 1 2)`, is fully known and produces specialized code, while the second clause, `e`, is unknown and generates a fallback to the runtime.
 
 ```
-(defrel/staged/fallback (ms-eval-ambo e v) ;; only change
-  (conde
-    ((numbero e)
-     (later (== e v)))
-    ((fresh (e1 e2 v1 v2)
-       (== e `(cons ,e1 ,e2))
-       (later (== v (cons v1 v2)))
-       (ms-eval-ambo e1 v1)
-       (ms-eval-ambo e2 v2)))
-    ((fresh (e1 e2)
-       (== e `(amb ,e1 ,e2))
-       (gather
-        (conde
-          ((ms-eval-ambo e1 v))
-          ((ms-eval-ambo e2 v))))))))
+(defrel/staged (ms-eval-ambo e v)
+  (fallback  ;; only change
+   (conde
+     ((numbero e)
+      (later (== e v)))
+     ((fresh (e1 e2 v1 v2)
+        (== e `(cons ,e1 ,e2))
+        (later (== v (cons v1 v2)))
+        (ms-eval-ambo e1 v1)
+        (ms-eval-ambo e2 v2)))
+     ((fresh (e1 e2)
+        (== e `(amb ,e1 ,e2))
+        (gather
+         (conde
+           ((ms-eval-ambo e1 v))
+           ((ms-eval-ambo e2 v)))))))))
 
 (test
   (run* (v) (staged (ms-eval-ambo '(amb 1 2) v)))
@@ -216,49 +217,7 @@ is an extension of staging-time
 - can use `fallback`
 
 
-Current grammar:
-
 term var tv
-
-term t
-
-goal g(p) :=
-| (== t1 t2)
-| (=/= t1 t2)
-| etc.
-| (fresh (tv ...) p ...)
-| (conde (p ...) ...)
-| (partial-apply t rname t ...)
-| (finish-apply t rname t ...)
-
-runtime goal rg :=
-| g(rg)
-| (staged sg)
-
-staging-time goal sg :=
-| g(sg)
-| (later lg)
-| (gather sg)
-| (specialize-partial-apply t r t ...)
-
-later goal lg := g(lg)
-
-definition d :=
-| (defrel (rname param ...) rg)
-| (defrel/staged (rname param ...) sg)
-| (defrel/staged/fallback (rname param ...) sg)
-| (defrel-partial (rname tv [tv ...] [tv ...]) rg)
-| (defrel-partial/staged (rname tv [tv ...] [tv ...]) sg)
-
-expression e :=
-| (run* (tv ...) rg)
-| (run n (tv ...) rg)
-
-
-Planned grammar:
-
-term var tv
-
 term t
 
 goal g(p) :=

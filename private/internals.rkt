@@ -386,7 +386,7 @@
      ;; When we generate here for eval, use the human readable symbol. We'll put the lifted symbol in the syntax
      ;; property and the lifted's lexical context on the rel-annotated, and reunite them in invoke-fallback.
      ;; We need this trick because of the expander's shortcomings re: adjusting references in syntax properties.
-     #:with rel-annotated (syntax-property (datum->syntax #'fn (syntax-e #'rel)) 'fallback-function (syntax-e #'fn))
+     #:with rel-annotated (syntax-property (datum->syntax #'fn (syntax-e #'rel)) 'fallback-function (syntax-e #'fn) #t)
      #'(ss:later #`(invoke-fallback rel-annotated #,(data arg) ...))]))
 
 (define-syntax lpartial-apply
