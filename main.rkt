@@ -7,7 +7,6 @@
  #;racket-term
  define-term-syntax-rule
  ==
- finish-apply
  =/=
  absento
  stringo
@@ -15,6 +14,9 @@
  symbolo
  fresh
  conde
+ partial-apply
+ specialize-partial-apply
+ finish-apply
  fallback
  gather
  staged
@@ -116,13 +118,8 @@
 
   (nonterminal goal
     #:bind-literal-set goal-literals
-
-    (== v:term-var ((~datum partial-apply) rel:relation-name arg:term ...))
-    (== v:term-var ((~datum specialize-partial-apply) rel:relation-name arg:term ...))
+    
     (== t1:term t2:term)
-  
-    (finish-apply v:term-var rel:relation-name arg:term ...)
-
     (=/= t1:term t2:term)
     (absento t1:term t2:term)
     (symbolo t1:term)
@@ -135,6 +132,10 @@
     #:binding {(bind x) g}
     
     (conde [g:goal ...+] ...+)
+
+    (partial-apply v:term-var rel:relation-name arg:term ...)
+    (specialize-partial-apply v:term-var rel:relation-name arg:term ...)
+    (finish-apply v:term-var rel:relation-name arg:term ...)
 
     (fallback body:goal)
     (fallback fb:goal body:goal)
@@ -346,7 +347,7 @@
     [(_ (#%rel-app/fallback r:id fn:id arg ...))
      #'(fn (compile-term arg) ...)]
     
-    [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
+    [(_ (partial-apply v:id rel:id arg ...))
      (match (symbol-table-ref relation-info #'rel)
        [(partial-rel stage now-args-count later-args-count)
         (when (not (= now-args-count (length (attribute arg))))
@@ -355,7 +356,7 @@
           #'(i:partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
 
-    [(_ (~and stx (== v:id ((~datum specialize-partial-apply) rel:id arg ...))))
+    [(_ (~and stx (specialize-partial-apply v:id rel:id arg ...)))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     
     [(_ (finish-apply v:id rel:id arg ...))
@@ -408,10 +409,10 @@
      (define/syntax-parse r-generator (reference-generator #'r))
      #'(r-generator (compile-term arg) ...)]
 
-    [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
+    [(_ (~and stx (partial-apply v:id rel:id arg ...)))
      (raise-syntax-error #f "partial-apply not supported in staging-time code" #'stx)]
 
-    [(_ (== v:id ((~datum specialize-partial-apply) rel:id arg ...)))
+    [(_ (specialize-partial-apply v:id rel:id arg ...))
      (match (symbol-table-ref relation-info #'rel)
        [(partial-rel stage now-args-count later-args-count)
         (when (not (= now-args-count (length (attribute arg))))
@@ -463,10 +464,10 @@
       [(_ (#%rel-app/fallback r:id fn:id arg ...))
        #'(compile-runtime-goal now-goal)]
       
-      [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
+      [(_ (~and stx (partial-apply v:id rel:id arg ...)))
        (raise-syntax-error #f "partial-apply not supported in staging-time code" #'stx)]
-      [(_ (== v:id ((~datum specialize-partial-apply) rel:id arg ...)))
-       #'(compile-runtime-goal (== v (partial-apply rel arg ...)))]
+      [(_ (specialize-partial-apply v:id rel:id arg ...))
+       #'(compile-runtime-goal (partial-apply v rel arg ...))]
 
       
       [(_ (== t1 t2))
@@ -508,7 +509,7 @@
     [(_ (#%rel-app/fallback r:id fn:id arg ...))
      #'(i:linvoke-fallback r fn (compile-term arg) ...)]
 
-    [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
+    [(_ (partial-apply v:id rel:id arg ...))
      (match (symbol-table-ref relation-info #'rel)
        [(partial-rel stage now-args-count later-args-count)
         (when (not (= now-args-count (length (attribute arg))))
@@ -517,7 +518,7 @@
           #'(i:lpartial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "partial-apply expects relation defined by defrel-partial" #'r)])]
 
-    [(_ (~and stx (== v:id ((~datum specialize-partial-apply) rel:id arg ...))))
+    [(_ (~and stx (specialize-partial-apply v:id rel:id arg ...)))
      (raise-syntax-error #f "not supported in generated code" #'stx)]
     
     [(_ (finish-apply v:id rel:id arg ...))

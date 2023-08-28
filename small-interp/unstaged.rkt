@@ -74,7 +74,7 @@
        (== `(letrec ((,f (lambda ,x ,e)))
               ,letrec-body)
            expr)
-       (== rep (partial-apply eval-apply-rec f x e env))
+       (partial-apply rep eval-apply-rec f x e env)
        (eval-expo letrec-body
                     `((,f . (struct rec-closure ,rep)) . ,env)
                     val)))))

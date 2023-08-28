@@ -16,7 +16,7 @@
 (test
  (run 1 (q)
    (fresh (c r1 r2)
-     (== c (partial-apply test-rel 2 2))
+     (partial-apply c test-rel 2 2)
      (finish-apply c test-rel 1 r1)
      (finish-apply c test-rel 4 r2)
      (== q `(,r1 ,r2))))
@@ -27,7 +27,7 @@
  (run 1 (q)
    (staged
     (fresh (c r1 r2)
-      (later (== c (partial-apply test-rel 2 2)))
+      (later (partial-apply c test-rel 2 2))
       (later (finish-apply c test-rel 1 r1))
       (later (finish-apply c test-rel 4 r2))
       (later (== q `(,r1 ,r2))))))
@@ -40,7 +40,7 @@
  (run 1 (q)
    (staged
     (fresh (c r1 r2)
-      (later (== c (partial-apply test-rel 2 2)))
+      (later (partial-apply c test-rel 2 2))
       (later (like-callo c 1 r1))
       (later (like-callo c 4 r2))
       (later (== q `(,r1 ,r2))))))
@@ -52,7 +52,7 @@
    (staged
     (conde
       [(fresh (c)
-         (== c (specialize-partial-apply test-rel 2 3))
+         (specialize-partial-apply c test-rel 2 3)
          (later (== q 'branch-1)))]
       [(later (== q 'branch-2))])))
  '(branch-2))

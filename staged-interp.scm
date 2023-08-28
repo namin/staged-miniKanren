@@ -100,7 +100,7 @@ eval-rands-and-applyo
          ((symbolo x))
          ((list-of-symbolso x)))
        (not-in-envo 'lambda env)
-       (== rep (specialize-partial-apply eval-apply x body env))))
+       (specialize-partial-apply rep eval-apply x body env)))
     
     ;; match
     ((handle-matcho expr env val))
@@ -111,7 +111,7 @@ eval-rands-and-applyo
               ,letrec-body)
            expr)
        (not-in-envo 'letrec env)
-       (== rep (specialize-partial-apply eval-apply-rec f x e env))
+       (specialize-partial-apply rep eval-apply-rec f x e env)
        (eval-expo letrec-body
                   `((,f . (val . (struct rec-closure ,rep))) . ,env)
                   val)))

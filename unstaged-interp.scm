@@ -90,7 +90,7 @@
          ;; Multi-argument
          ((u-list-of-symbolso x)))
        (u-not-in-envo 'lambda env)
-       (== rep (partial-apply u-eval-apply x body env))
+       (partial-apply rep u-eval-apply x body env)
        ))
     
     ((u-handle-matcho expr env val))
@@ -100,7 +100,7 @@
               ,letrec-body)
            expr)
        (u-not-in-envo 'letrec env)
-       (== rep (partial-apply u-eval-apply-rec f x e env))
+       (partial-apply rep u-eval-apply-rec f x e env)
        (u-eval-expo letrec-body
                     `((,f . (val . (struct rec-closure ,rep))) . ,env)
                     val)))

@@ -302,7 +302,7 @@
      (later (== q 'fallback))
      (conde
        ((fresh (rep)
-          (later (== rep (partial-apply p 5)))
+          (later (partial-apply rep p 5))
           (== q 'branch-1)))
        ((later (== q 'branch-2)))))))
  '(fallback))
@@ -313,7 +313,7 @@
     (fallback
      (later (== q 'fallback))
      (fresh (rep)
-       (later (== rep (partial-apply p 'partial-value)))
+       (later (partial-apply rep p 'partial-value))
        (later (finish-apply rep p q))))))
  '(partial-value))
 
