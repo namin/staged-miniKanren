@@ -44,7 +44,6 @@
          (for-syntax racket/base
                      racket/syntax
                      syntax/parse
-                     racket/pretty
                      racket/match
                      racket/list
                      syntax/id-set)
@@ -148,7 +147,7 @@
     fail
 
     (#%rel-app r:relation-name arg:term ...)
-    (#%rel-app/fn r:id arg:term ...)
+    (#%rel-app/fallback r:id arg:term ...)
     (~> (r:id arg ...)
         #'(#%rel-app r arg ...)))
   
@@ -173,7 +172,7 @@
     (register-simple-rel! #'r 'multistage (attribute arg))
     #'(r-generator r)]
    #:rhs
-   [#:with (gl ...) (map lift-fallbacks! (attribute g))
+   [#:with (gl ...) (lift-fallbacks! (attribute g) #'r)
     #'(values
        (lambda (arg ...)
          (i:relation-body
@@ -209,7 +208,7 @@
      (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
     #'(r-generator r)]
    #:rhs
-   [#:with (gl ...) (map lift-fallbacks! (attribute g))
+   [#:with (gl ...) (lift-fallbacks! (attribute g) #'r)
     #'(values
        (lambda (rep now-arg ... later-arg ...)
          (i:relation-body
@@ -297,32 +296,39 @@
        (free-id-set-union (free-vars #'a) (free-vars #'d))]
       [_ (immutable-free-id-set)]))
 
-  (define (lift-fallbacks! now-goal)
-    (syntax-parse now-goal
-      #:literal-sets (goal-literals)
-      [(fallback body)
-       #:with (var ...) (free-id-set->list (free-vars (attribute body)))
-       #:with lifted (syntax-local-lift-expression
-                      #'(lambda (var ...) (compile-now-for-runtime-goal body)))
-       #:with bodyl (lift-fallbacks! (attribute body))
-       #:with res #'(fallback (later (#%rel-app/fn lifted (#%term-var var) ...)) bodyl)
-       #'res]
+  (define (lift-fallbacks! now-goals rel-name)
+    (define counter!
+      (let ([val 0])
+        (lambda ()
+          (set! val (+ 1 val))
+          val)))
+    
+    (define (recur now-goal)
+      (syntax-parse now-goal
+        #:literal-sets (goal-literals)
+        [(fallback body)
+         #:with (var ...) (free-id-set->list (free-vars (attribute body)))
+         #:with fallback-name (format-id #f "~a/~a" rel-name (counter!))
+         #:with bodyl (recur (attribute body))
+         #:with lifted (syntax-local-lift-expression
+                        #'(lambda (var ...) (compile-now-for-runtime-goal bodyl)))
+         #'(fallback (later (#%rel-app/fallback fallback-name lifted (#%term-var var) ...)) bodyl)]
 
-      [(fallback fb body)
-       #:with bodyl (lift-fallbacks! (attribute body))
-       #'(fallback fb bodyl)]
-      [(fresh (x:id ...) g ...)
-       #:with (gl ...) (map lift-fallbacks! (attribute g))
-       #'(fresh (x ...) gl ...)]
-      [(conde [g ...] ...)
-       #:with ([gl ...] ...) (map (lambda (l) (map lift-fallbacks! l)) (attribute g))
-       #'(conde [gl ...] ...)]
-      [(gather body)
-       #:with bodyl (lift-fallbacks! (attribute body))
-       #'(gather bodyl)]
-      [_ this-syntax]))
-  
-  )
+        [(fallback fb body)
+         #:with bodyl (recur (attribute body))
+         #'(fallback fb bodyl)]
+        [(fresh (x:id ...) g ...)
+         #:with (gl ...) (map recur (attribute g))
+         #'(fresh (x ...) gl ...)]
+        [(conde [g ...] ...)
+         #:with ([gl ...] ...) (map (lambda (l) (map recur l)) (attribute g))
+         #'(conde [gl ...] ...)]
+        [(gather body)
+         #:with bodyl (recur (attribute body))
+         #'(gather bodyl)]
+        [_ this-syntax]))
+
+    (map recur now-goals)))
 
 (define-syntax compile-runtime-goal
   (syntax-parser
@@ -337,8 +343,8 @@
     [(_ (#%rel-app r:id arg ...))
      (check-simple-rel #'r 'runtime (attribute arg))
      #'(r (compile-term arg) ...)]
-    [(_ (#%rel-app/fn r:id arg ...))
-     #'(r (compile-term arg) ...)]
+    [(_ (#%rel-app/fallback r:id fn:id arg ...))
+     #'(fn (compile-term arg) ...)]
     
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
@@ -375,11 +381,13 @@
      #'i:fail]
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
-     #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal g)))
+     #:with (gl) (lift-fallbacks! (list #'g) #'staged)
+     #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal gl)))
      #'(staged-f var ...)]
     [(_ (time-staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
-     #:with staged-f (syntax-local-lift-expression #'(time (i:ss:generate-staged (var ...) (compile-now-goal g))))
+     #:with (gl) (lift-fallbacks! (list #'g) #'staged)
+     #:with staged-f (syntax-local-lift-expression #'(time (i:ss:generate-staged (var ...) (compile-now-goal gl))))
      #'(staged-f var ...)]
     [(_ (~and stx (~or (later . _) (fallback . _) (gather . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
@@ -452,7 +460,7 @@
        #'(compile-runtime-goal now-goal)]
       [(_ (#%rel-app r:id arg ...))
        #'(compile-runtime-goal now-goal)]
-      [(_ (#%rel-app/fn r:id arg ...))
+      [(_ (#%rel-app/fallback r:id fn:id arg ...))
        #'(compile-runtime-goal now-goal)]
       
       [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
@@ -497,8 +505,8 @@
     [(_ (#%rel-app r:id arg ...))
      (check-simple-rel #'r 'runtime (attribute arg))
      #'(i:lapp r (compile-term arg) ...)]
-    [(_ (#%rel-app/fn r:id arg ...))
-     #'(i:lapp r (compile-term arg) ...)]
+    [(_ (#%rel-app/fallback r:id fn:id arg ...))
+     #'(i:linvoke-fallback r fn (compile-term arg) ...)]
 
     [(_ (== v:id ((~datum partial-apply) rel:id arg ...)))
      (match (symbol-table-ref relation-info #'rel)
@@ -541,7 +549,6 @@
                        (later . _))))
      (raise-syntax-error #f "not supported in generated code" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
-
 
 (define-syntax define-syntax/space
   (syntax-parser

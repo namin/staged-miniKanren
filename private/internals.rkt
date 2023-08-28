@@ -373,6 +373,22 @@
     [(_ relation arg ...)
      (ss:later #`(relation #,(data arg) ...))]))
 
+(define-syntax invoke-fallback
+  (syntax-parser
+    [(_ rel arg ...)
+     #:with fn (datum->syntax #'rel (syntax-property #'rel 'fallback-function))
+     #'(fn arg ...)]))
+
+(define-syntax linvoke-fallback
+  (syntax-parser
+    [(_ rel fn arg ...)
+     ;; We want rel-annotated to be a nice human readable name, whereas `fn` is a lifted name we can't control.
+     ;; When we generate here for eval, use the human readable symbol. We'll put the lifted symbol in the syntax
+     ;; property and the lifted's lexical context on the rel-annotated, and reunite them in invoke-fallback.
+     ;; We need this trick because of the expander's shortcomings re: adjusting references in syntax properties.
+     #:with rel-annotated (syntax-property (datum->syntax #'fn (syntax-e #'rel)) 'fallback-function (syntax-e #'fn))
+     #'(ss:later #`(invoke-fallback rel-annotated #,(data arg) ...))]))
+
 (define-syntax lpartial-apply
   (syntax-rules ()
     [(_ rep (rel (x ...) (under ...)))
