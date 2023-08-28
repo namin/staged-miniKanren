@@ -57,7 +57,7 @@
   (struct partial-rel [stage args1-count args2-count] #:prefab)
 
   (define-persistent-symbol-table relation-info)
-  (define-persistent-symbol-table multistage-runtime-impl)
+  (define-persistent-symbol-table staged-relation-generator)
 
   (define (register-simple-rel! name stage args)
     (symbol-table-set! relation-info name (simple-rel stage (length args))))
@@ -72,16 +72,11 @@
        def-stage]
       [_ (raise-syntax-error #f "relation application expects relation" name)]))
 
-  (define (name-multistage-fallback! name)
-    (compile-binder! (compiled-from name) #:table multistage-runtime-impl))
+  (define (name-generator! name)
+    (compile-binder! (compiled-from name) #:table staged-relation-generator))
 
-  (define (reference-multistage-fallback name)
-    (compile-reference (compiled-from name) #:table multistage-runtime-impl))
-
-  (define (reference-runtime-relation name stage)
-    (if (eq? stage 'multistage)
-        (reference-multistage-fallback name)
-        name))
+  (define (reference-generator name)
+    (compile-reference (compiled-from name) #:table staged-relation-generator))
   )
 
 (syntax-spec
@@ -108,7 +103,6 @@
     ((~literal list) t:term ...)
 
     (#%term-var x:term-var)
-    ;; TODO: we don't check that the value of e is a valid term value.
     (racket-term e:racket-expr)
     
     (~> v:id
@@ -175,9 +169,9 @@
      g:goal ...+)
    #:binding [(export r) {(bind arg) g}]
    #:lhs
-   [#:with r-fallback (name-multistage-fallback! #'r)
+   [#:with r-generator (name-generator! #'r)
     (register-simple-rel! #'r 'multistage (attribute arg))
-    #'(r r-fallback)]
+    #'(r-generator r)]
    #:rhs
    [#:with (gl ...) (map lift-fallbacks! (attribute g))
     #'(values
@@ -209,11 +203,11 @@
      g:goal ...)
    #:binding [(export r) {(bind rep now-arg later-arg) g}]
    #:lhs
-   [#:with r-fallback (name-multistage-fallback! #'r)
+   [#:with r-generator (name-generator! #'r)
     (symbol-table-set!
      relation-info #'r
      (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
-    #'(r r-fallback)]
+    #'(r-generator r)]
    #:rhs
    [#:with (gl ...) (map lift-fallbacks! (attribute g))
     #'(values
@@ -341,10 +335,8 @@
                     i:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
-     (let ((def-stage (check-simple-rel #'r 'runtime (attribute arg))))
-       (if (eq? def-stage 'multistage)
-           #`(#,(reference-multistage-fallback #'r) (compile-term arg) ...)
-           #'(r (compile-term arg) ...)))]
+     (check-simple-rel #'r 'runtime (attribute arg))
+     #'(r (compile-term arg) ...)]
     [(_ (#%rel-app/fn r:id arg ...))
      #'(r (compile-term arg) ...)]
     
@@ -366,8 +358,7 @@
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
-        (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)]
-                      [rel (reference-runtime-relation #'rel stage)])
+        (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)])
           #'(i:finish-apply v (rel (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "finish-apply expects relation defined by defrel-partial" #'r)])]
     
@@ -405,8 +396,9 @@
                        (i:ss:atomic i:succeed)))]
     
     [(_ (#%rel-app r:id arg ...))
-     (let ((def-stage (check-simple-rel #'r 'staging-time (attribute arg))))
-       #'(r (compile-term arg) ...))]
+     (check-simple-rel #'r 'staging-time (attribute arg))
+     (define/syntax-parse r-generator (reference-generator #'r))
+     #'(r-generator (compile-term arg) ...)]
 
     [(_ (~and stx (== v:id ((~datum partial-apply) rel:id arg ...))))
      (raise-syntax-error #f "partial-apply not supported in staging-time code" #'stx)]
@@ -416,7 +408,8 @@
        [(partial-rel stage now-args-count later-args-count)
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
-        (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)])
+        (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)]
+                      [rel (reference-generator #'rel)])
           #'(i:ss:specialize-partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "specialize-partial-apply expects relation defined by defrel-partial" #'r)])]
 
@@ -502,10 +495,8 @@
   (syntax-parser
     #:literal-sets (goal-literals)
     [(_ (#%rel-app r:id arg ...))
-     (let ((def-stage (check-simple-rel #'r 'runtime (attribute arg))))
-       (if (eq? def-stage 'multistage)
-           #`(i:lapp #,(reference-multistage-fallback #'r) (compile-term arg) ...)
-           #'(i:lapp r (compile-term arg) ...)))]
+     (check-simple-rel #'r 'runtime (attribute arg))
+     #'(i:lapp r (compile-term arg) ...)]
     [(_ (#%rel-app/fn r:id arg ...))
      #'(i:lapp r (compile-term arg) ...)]
 
@@ -527,8 +518,7 @@
         (when (not (= later-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of later-stage arguments to relation" #'r))
         
-        (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)]
-                      [rel (reference-runtime-relation #'rel stage)])
+        (with-syntax ([(now-placeholders ...) (make-list now-args-count #'_)])
           #'(i:lfinish-apply v (rel (now-placeholders ...) ((compile-term arg) ...))))]
        [_ (raise-syntax-error #f "finish-apply expects relation defined by defrel-partial" #'r)])]
    
