@@ -180,13 +180,137 @@ Notice that in the example above, the first clause of the `cons`, `'(amb 1 2)`, 
 
 ### 3. let's scale that interpreter to support `lambda`
 
+Control flow means that any given piece of code may execute more than once, and when staging, we want to ensure that we generate each piece of code only once.
+Accomplishing this will require us to add a new staging mechanism to our system, specifically some form of first-class code in the staging language.
+
+As an example, we want to add function abstraction and application as expressions in our interpreter.
+So we will add expressions: `(lambda (x) e)` for function abstraction and `(e e)` for application.
+
+We want to generate code for an abstraction once, and then use it each time the abstraction is applied.
+Almost any control flow structure is going to need this feature of generating once, using many times.
+
+Our solution is to introduce the mechanism of partially applicable relations.
+An initial partial application of the relation supplies some arguments and creates a first-class representation of code as a miniKanren term.
+A final application supplies the remaining arguments.
+
+In the context of staging, code is generated at the partial application and reused at each final application.
+
 #### 3.1 a limited form of first-class relations (can be explained independently of staging)
 We introduce the following forms:
 - `defrel-partial`
 - `partial-apply`
 - `finish-apply`
 
+We first introduce some forms for partial application independently of staging starting with our vanilla interpreter. In the next section, we will see how this augmented interpreter can be staged.
 
+Our interpreter for this section is `eval-lambda-ambo` and it takes an extra argument for the environment mapping variables to values.
+`(defrel (eval-lambda-ambo e env v)
+  ...)`
+
+Here is an example of running the interpreter:
+
+```
+(run* (v) (eval-lambda-ambo '((lambda (x) (amb x 3)) (amb 1 2)) '() v))
+;; => (3 3 1 2)
+```
+
+We will use a partial applicable relation to represent a closure.
+When evaluating the `lambda`, we will partially apply this relation, having the parameter, body and environment.
+When applying the closure, we will finish the partial application with the argument and returned value.
+
+We use `defrel-partial` to define a partially applicable relation.
+
+```
+(defrel-partial (apply-lambda-ambo rep [x e env] [arg v])
+  (eval-lambda-ambo e (cons (cons x arg) env) v))
+```
+
+This relation takes the parameter, body and birth environment of the closure as the arguments for the partial application.
+When finishing the application, the relation takes the argument and the returned value (as an "output" parameter of the relation).
+
+The relation body here evaluates the body of the closure in an extended environment.
+
+When creating a closure, the interpreter partially applies this new relation, using `partial-apply`. The first argument unifies with the first-class representation. The second argument is the relation name. The remainder are the first-application arguments.
+
+```
+...
+    ((fresh (x e0)
+       (== e `(lambda (,x) ,e0))
+       (partial-apply v apply-lambda-ambo x e0 env)))
+....
+```
+
+When applying a closure, we `finish-apply` this relation. The first argument is the first-class representation, the second argument is the relation name, and the remaining arguments are the arguments to finish the application.
+
+```
+...
+    ((fresh (e1 e2 v1 v2)
+       (== e `(,e1 ,e2))
+       (eval-lambda-ambo e1 env v1)
+       (eval-lambda-ambo e2 env v2)
+       (finish-apply v1 apply-lambda-ambo v2 v)))))
+...
+```
+
+Note that we have a case for variables in the interpreter.
+
+```
+...
+    ((symbolo e)
+     (lookupo e env v))
+...
+```
+
+We use an auxiliary relation `lookupo` to lookup the value for a variable in the environment.
+
+```
+(defrel (lookupo x env v)
+  (fresh (y b rest)
+    (== `((,y . ,b) . ,rest) env)
+    (conde
+     [(== x y) (== v b)]
+     [(=/= x y) (lookupo x rest v)])))
+```
+
+[Here is the full code:
+
+```
+(defrel (lookupo x env v)
+  (fresh (y b rest)
+    (== `((,y . ,b) . ,rest) env)
+    (conde
+     [(== x y) (== v b)]
+     [(=/= x y) (lookupo x rest v)])))
+
+(defrel-partial (apply-lambda-ambo rep [x e env] [arg v])
+  (eval-lambda-ambo e (cons (cons x arg) env) v))
+
+(defrel (eval-lambda-ambo e env v)
+  (conde
+    ((numbero e)
+     (== e v))
+    ((fresh (e1 e2 v1 v2)
+       (== e `(cons ,e1 ,e2))
+       (== v (cons v1 v2))
+       (eval-lambda-ambo e1 env v1)
+       (eval-lambda-ambo e2 env v2)))
+    ((fresh (e1 e2)
+       (== e `(amb ,e1 ,e2))
+       (conde
+         ((eval-lambda-ambo e1 env v))
+         ((eval-lambda-ambo e2 env v)))))
+    ((symbolo e)
+     (lookupo e env v))
+    ((fresh (x e0)
+       (== e `(lambda (,x) ,e0))
+       (partial-apply v apply-lambda-ambo x e0 env)))
+    ((fresh (e1 e2 v1 v2)
+       (== e `(,e1 ,e2))
+       (eval-lambda-ambo e1 env v1)
+       (eval-lambda-ambo e2 env v2)
+       (finish-apply v1 apply-lambda-ambo v2 v)))))
+```
+]
 
 #### 3.2 how to stage lambda
 - `defrel-partial/staged`
