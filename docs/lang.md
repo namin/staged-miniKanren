@@ -392,7 +392,9 @@ multistage (like staging-time)
 is an extension of staging-time
 - can use `fallback`
 
+### Grammar
 
+```
 term var tv
 term t
 
@@ -427,4 +429,4 @@ definition d :=
 expression e :=
 | (run* (tv ...) rg)
 | (run n (tv ...) rg)
-
+```
