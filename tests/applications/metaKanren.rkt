@@ -495,13 +495,15 @@ Syntax
 
 ;; tests
 
-(run 1 (res)
-  (staged
-   (eval-programo
-    `(run* (z)
-       (letrec-rel ((unify-2 (z) (== z '2)))
-                   (call-rel unify-2 z)))
-    res)))
+(time-test
+  (run 1 (res)
+    (staged
+     (eval-programo
+      `(run* (z)
+         (letrec-rel ((unify-2 (z) (== z '2)))
+                     (call-rel unify-2 z)))
+      res)))
+  '((2)))
 
 
 
