@@ -173,7 +173,7 @@
     (register-simple-rel! #'r 'multistage (attribute arg))
     #'(r-generator r)]
    #:rhs
-   [#:with (gl ...) (lift-fallbacks! (attribute g) #'r)
+   [#:with (gl ...) (lift-fallbacks! (attribute g) #'r (attribute arg))
     #'(values
        (lambda (arg ...)
          (i:relation-body
@@ -209,7 +209,7 @@
      (partial-rel 'multistage (length (attribute now-arg)) (length (attribute later-arg))))
     #'(r-generator r)]
    #:rhs
-   [#:with (gl ...) (lift-fallbacks! (attribute g) #'r)
+   [#:with (gl ...) (lift-fallbacks! (attribute g) #'r (append (attribute now-arg) (attribute later-arg)))
     #'(values
        (lambda (rep now-arg ... later-arg ...)
          (i:relation-body
@@ -285,7 +285,8 @@
     (free-id-set-subtract
      body-vars
      (immutable-free-id-set binder-vars)))
-  
+
+  ;; TODO: is it valid to use free-identifier equality on these names?
   (define (free-vars goal-stx)
     (syntax-parse goal-stx
       #:literals (#%term-var quote fresh)
@@ -297,7 +298,7 @@
        (free-id-set-union (free-vars #'a) (free-vars #'d))]
       [_ (immutable-free-id-set)]))
 
-  (define (lift-fallbacks! now-goals rel-name)
+  (define (lift-fallbacks! now-goals rel-name rel-args)
     (define counter!
       (let ([val 0])
         (lambda ()
@@ -308,7 +309,11 @@
       (syntax-parse now-goal
         #:literal-sets (goal-literals)
         [(fallback body)
-         #:with (var ...) (free-id-set->list (free-vars (attribute body)))
+         #:with (var ...) (append rel-args
+                                  (free-id-set->list
+                                   (free-id-set-subtract
+                                    (free-vars (attribute body))
+                                    (immutable-free-id-set rel-args))))
          #:with fallback-name (format-id #f "~a/~a" rel-name (counter!))
          #:with bodyl (recur (attribute body))
          #:with lifted (syntax-local-lift-expression
@@ -382,12 +387,12 @@
      #'i:fail]
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
-     #:with (gl) (lift-fallbacks! (list #'g) #'staged)
+     #:with (gl) (lift-fallbacks! (list #'g) #'staged '())
      #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal gl)))
      #'(staged-f var ...)]
     [(_ (time-staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
-     #:with (gl) (lift-fallbacks! (list #'g) #'staged)
+     #:with (gl) (lift-fallbacks! (list #'g) #'staged '())
      #:with staged-f (syntax-local-lift-expression #'(time (i:ss:generate-staged (var ...) (compile-now-goal gl))))
      #'(staged-f var ...)]
     [(_ (~and stx (~or (later . _) (fallback . _) (gather . _))))
