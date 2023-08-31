@@ -237,18 +237,18 @@ Syntax
        (== `(delayed . ,d) $1)
        (== `(delayed mplus ,$1 ,$2) $))]))
 
-(defrel/staged/fallback (bindo $ ge env $1)
+(defrel/staged/fallback (bindo $ g2-rep $1)
   (conde
     [(== '() $) (== mzero $1)]
     [(fresh ($1-a $1-d v-a v-d)
        (== `(,$1-a . ,$1-d) $)
        (=/= 'delayed $1-a)
-       (eval-gexpro ge $1-a env v-a)
-       (bindo $1-d ge env v-d)
+       (later (finish-apply g2-rep eval-bind-g2 $1-a v-a))
+       (bindo $1-d g2-rep v-d)
        (mpluso v-a v-d $1))]
     [(fresh (d)
        (== `(delayed . ,d) $)
-       (== `(delayed bind ,$ ,ge ,env) $1))]))
+       (== `(delayed bind ,$ ,g2-rep) $1))]))
 
 (defrel/staged/fallback (exto params args env env1)
   (conde
@@ -264,17 +264,9 @@ Syntax
   (conde
     [(fresh (y u env1)
       (== `((,y . ,u) . ,env1) env)
-      (=/= y 'rec)
       (conde
         [(== x y) (== v u)]
-        [(=/= x y) (lookupo x env1 v)]))]
-    [(fresh (id params geb env1)
-        (== `((rec (closr ,id ,params ,geb)) . ,env1) env)
-        (conde
-          [(== id x)
-           (== `(closr ,params ,geb ,env) v)]
-          [(=/= id x)
-           (lookupo x env1 v)]))]))
+        [(=/= x y) (lookupo x env1 v)]))]))
 
 (defrel/staged/fallback (not-in-envo x env)
   (conde
@@ -294,6 +286,9 @@ Syntax
        (eval-texpro a env va)
        (eval-args d env vd))]))
 
+(defrel-partial/staged (eval-bind-g2 rep [expr env] [s/c $])
+  (eval-gexpro expr s/c env $))
+
 (defrel/staged/fallback (eval-gexpro expr s/c env $)
   (conde
     [(fresh (ge)
@@ -304,10 +299,11 @@ Syntax
        (eval-gexpro ge1 s/c env ge1-$)
        (eval-gexpro ge2 s/c env ge2-$)
        (mpluso ge1-$ ge2-$ $))]
-    [(fresh (ge1 ge2 ge1-$)
+    [(fresh (ge1 ge2 ge1-$ rep)
        (== `(conj ,ge1 ,ge2) expr)
        (eval-gexpro ge1 s/c env ge1-$)
-       (bindo ge1-$ ge2 env $))]
+       (specialize-partial-apply rep eval-bind-g2 ge2 env)
+       (bindo ge1-$ rep $))]
     [(fresh (x ge s c env1)
        (== `(fresh (,x) ,ge) expr)
        (== `(,s . ,c) s/c)
@@ -322,16 +318,21 @@ Syntax
          [(== #f s1) (== '() $)]
          [(=/= #f s1) (== `((,s1 . ,c)) $)])
        (unifyo v1 v2 s s1))]
-    [(fresh (id params geb ge e1)
+    [(fresh (id params geb ge e1 rep)
        (== `(letrec-rel ((,id ,params ,geb)) ,ge) expr)
-       (== `((rec (closr ,id ,params ,geb)) . ,env) e1)
+       (== `((,id . (closr ,rep)) . ,env) e1)
+       (specialize-partial-apply rep eval-closr id params geb env)
        (eval-gexpro ge s/c e1 $))]
-    [(fresh (id args params geb env1 ext-env vargs)
+    [(fresh (id args rep vargs)
        (== `(call-rel ,id . ,args) expr)
-       (lookupo id env `(closr ,params ,geb ,env1))
+       (lookupo id env `(closr ,rep))
        (eval-args args env vargs)
-       (exto params vargs env1 ext-env)
-       (eval-gexpro geb s/c ext-env $))]))
+       (later (finish-apply rep eval-closr vargs s/c $)))]))
+
+(defrel-partial/staged (eval-closr rep [id params geb env] [vargs s/c $])
+  (fresh (ext-env)
+    (exto params vargs `((,id . (closr ,rep)) . ,env) ext-env)
+    (eval-gexpro geb s/c ext-env $)))
 
 (defrel/staged/fallback (eval-texpro expr env val)
   (conde
@@ -398,10 +399,10 @@ Syntax
        (pullo $a $a1)
        (mpluso $b $a1 $2)
        (pullo $2 $1))]
-    [(fresh (saved-ge saved-env saved-$ saved-$1 $2)
-       (== `(delayed bind ,saved-$ ,saved-ge ,saved-env) $)
+    [(fresh (saved-rep saved-$ saved-$1 $2)
+       (== `(delayed bind ,saved-$ ,saved-rep) $)
        (pullo saved-$ saved-$1)
-       (bindo saved-$1 saved-ge saved-env $2)
+       (bindo saved-$1 saved-rep $2)
        (pullo $2 $1))]))
 
 (defrel/staged/fallback (take-allo $ s/c*)
@@ -493,6 +494,58 @@ Syntax
 
 ;; tests
 
+(run 1 (res)
+  (staged
+   (eval-programo
+    `(run* (z)
+       (letrec-rel ((unify-2 (z) (== z '2)))
+                   (call-rel unify-2 z)))
+    res)))
+
+
+
+(time-test
+ (run* (x)
+   (eval-programo
+    `(run* (z)
+       (letrec-rel ((incomplete-appendo (l1 l2 l)
+                                        (disj
+                                         (conj (== '() l1) (== l2 l))
+                                         (== l 'recursive-case))))
+                   (delay (call-rel incomplete-appendo '(1 2) '(3 4) z))))
+    x))
+ '((recursive-case)))
+
+
+;; Just printing generated code
+(run 0 (x y w)
+   (symbolo x)
+   (symbolo y)
+   (symbolo w)
+   (staged
+    (eval-programo
+     `(run* (z)
+        (letrec-rel ((appendo (l1 l2 l)
+                              (disj
+                               (conj (== '() l1) (== l2 l))
+                               (fresh (a)
+                                 (fresh (d)
+                                   (fresh (l3)
+                                     (conj (== (cons a d) l1)
+                                           (conj (== (cons a l3) l)
+                                                 (delay (call-rel appendo ,x
+                                                                  ,y
+                                                                  ,w))))))))))
+                    (conj (call-rel appendo '(cat dog) '() '(cat dog))
+                          (conj (call-rel appendo '(apple) '(peach) '(apple peach))
+                                (call-rel appendo '(1 2) '(3 4) z)))))
+     '((1 2 3 4)))))
+
+(generated-code)
+
+
+
+
 (record-bench 'unstaged 'mm 1)
 (time-test
   (run* (x)
@@ -533,6 +586,7 @@ Syntax
                      (call-rel appendo '(1 2) '(3 4) z)))
       x)))
   '(((1 2 3 4))))
+
 
 (record-bench 'unstaged 'mm 2)
 (time-test
@@ -828,3 +882,6 @@ Syntax
                             (== z 2)))
                    answers)))
   '((() ()) ((()) (1)) (((())) (1 2)) ((((_.0)) (1 2)) $$ (=/= ((_.0 ()))))))
+
+
+
