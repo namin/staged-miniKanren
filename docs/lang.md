@@ -310,8 +310,62 @@ We use an auxiliary relation `lookupo` to lookup the value for a variable in the
 ]
 
 #### 3.2 how to stage lambda
+We introduce the following forms:
 - `defrel-partial/staged`
-- `specialize-partial-apply`  
+- `specialize-partial-apply`
+
+[TODO: Change ms- to s-.]
+
+;; change here
+(defrel/staged (ms-lookupo x env v)
+  (fresh (y b rest)
+    (== `((,y . ,b) . ,rest) env)
+    (fallback
+     (conde
+       [(== x y) (== v b)]
+       [(=/= x y) (ms-lookupo x rest v)]))))
+
+;; change here
+(defrel-partial/staged (ms-apply-lambda-ambo rep [x e env] [arg v])
+  (ms-eval-lambda-ambo e (cons (cons x arg) env) v))
+
+(defrel/staged (ms-eval-lambda-ambo e env v)
+  (fallback
+   (conde
+     ((numbero e)
+      (later (== e v)))
+     ((fresh (e1 e2 v1 v2)
+        (== e `(cons ,e1 ,e2))
+        (later (== v (cons v1 v2)))
+        (ms-eval-lambda-ambo e1 env v1)
+        (ms-eval-lambda-ambo e2 env v2)))
+     ((fresh (e1 e2)
+        (== e `(amb ,e1 ,e2))
+        (gather
+         (conde
+           ((ms-eval-lambda-ambo e1 env v))
+           ((ms-eval-lambda-ambo e2 env v))))))
+     ((fresh (env-v)
+        (symbolo e)
+        ;; We want to make the unifications with v later-stage.
+        ;; We put it before the lookupo to make sure the runtime version knows the value.
+        (later (== v env-v))
+        (ms-lookupo e env env-v)))
+     ((fresh (x e0)
+        (== e `(lambda (,x) ,e0))
+        ;; change here
+        (specialize-partial-apply v ms-apply-lambda-ambo x e0 env)))
+     ((fresh (e1 e2 v1 v2)
+        (== e `(,e1 ,e2))
+        (ms-eval-lambda-ambo e1 env v1)
+        (ms-eval-lambda-ambo e2 env v2)
+        ;; change here
+        (later (finish-apply v1 ms-apply-lambda-ambo v2 v)))))))
+```
+
+It's possible to construct a query where you reach the application case, but you have a fresh logic variable for the first-class representation of the partial application. In this case, we have to fallback to invoking the runtime version of the partially applicable relation with the first-application arguments being fresh logic variables.
+
+## Language
 
 multistage: we assume it's possible to reach an application without knowing the lambda.
 Still doesn't happen for fully ground.
