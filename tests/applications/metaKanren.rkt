@@ -314,9 +314,10 @@ Syntax
        (== `(,s . ,c) s/c)
        (eval-texpro te1 env v1)
        (eval-texpro te2 env v2)
-       (conde
-         [(== #f s1) (== '() $)]
-         [(=/= #f s1) (== `((,s1 . ,c)) $)])
+       (gather
+        (conde
+          [(== #f s1) (== '() $)]
+          [(=/= #f s1) (== `((,s1 . ,c)) $)]))
        (unifyo v1 v2 s s1))]
     [(fresh (id params geb ge e1 rep)
        (== `(letrec-rel ((,id ,params ,geb)) ,ge) expr)
@@ -544,6 +545,7 @@ Syntax
 (generated-code)
 
 
+#;(begin
 
 
 (record-bench 'unstaged 'mm 1)
@@ -883,5 +885,5 @@ Syntax
                    answers)))
   '((() ()) ((()) (1)) (((())) (1 2)) ((((_.0)) (1 2)) $$ (=/= ((_.0 ()))))))
 
-
+)
 
