@@ -23,9 +23,8 @@ We're starting with an interpreter that supports numbers, `cons`, and non-determ
          ((eval-ambo e1 v))
          ((eval-ambo e2 v)))))))
 
-(test
-  (run* (v) (eval-ambo '(cons (amb 1 2) (amb 3 4)) v))
-  '((1 . 3) (1 . 4) (2 . 3) (2 . 4)))
+(run* (v) (eval-ambo '(cons (amb 1 2) (amb 3 4)) v))
+;; => ((1 . 3) (1 . 4) (2 . 3) (2 . 4))
 ```
 
 TODO: consider if-null instead of amb?
@@ -52,9 +51,8 @@ We want to define a generator `gen-eval-ambo` for our staged intepreter:
 Which we can then use like this:
 
 ```
-(test
-  (run* (v) (staged (gen-eval-ambo '(amb 1 2) v)))
-  '(1 2))
+(run* (v) (staged (gen-eval-ambo '(amb 1 2) v)))
+;; => (1 2)
 ```
 
 TODO: directly is weird
@@ -64,9 +62,8 @@ The specialized code directly has a `conde` for each case of the `amb`, without 
 TODO: generated-code hasn't been introduced. Maybe just show the generated code.
 
 ```
-(test
-  (generated-code)
-  '(lambda (v7) (fresh (_.0) (== _.0 v7) (conde ((== '1 _.0)) ((== '2 _.0))))))
+(generated-code)
+;; => (lambda (v7) (fresh (_.0) (== _.0 v7) (conde ((== '1 _.0)) ((== '2 _.0)))))
 ```
 
 TODO: Modulo some extra lambdas and freshes:
