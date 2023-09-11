@@ -10,7 +10,7 @@ erase(fallback sg) = erase(sg)
 erase(specialize-partial-apply t r t ...) = (partial-apply t r t ...)
 ```
 
-`[(staged sg)] ~=~ [(erase sg)]` if staging terminates.
+`[(staged sg)] ~=~ [(erase sg)]` if staging terminates (and is deterministic).
 The denotation `[]` is an answer set.
 For terminating queries, thetheorem is:
 `(run* (staged sg)) ~=~ (run* (erase sg))`.
