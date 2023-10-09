@@ -37,3 +37,54 @@ How do we define the denotation `[]` and how do we define `staged`?
 
 This is nondeterministic, and always allows that we just do the outermost fallback. So not
 useful for understanding how specialized your program is, but it is enough for proving the theorem.
+
+## Definition of `staged(sg) = rg`
+
+```
+istaged(sg) = intermediary thing
+f(intermediary thing) = staged(sg)
+```
+
+`intermediary thing`: like the denotational semantics with tupled up code fragment
+but need to think about divergence / infinite computation
+
+- what's the inductive invariant that we need for `istaged`
+- what properties of a denotional semantics is that going to depend on to prove the invariant
+
+in the restricted case, and only accounting for terminating and deterministic, there should be a pretty easy to prove.
+as soon as we start relaxing some of the conditions, then challenges.
+
+``{f : A → D | f (t1) = f (t2)} [UnifyD ]``
+
+set of (r,c)
+
+```
+// OPEN QUESTION 1: what about the non-termination aspect of everything
+staged(g(sg))
+  staged(=/= t1 t2) = (like in paper, [])
+  etc.
+  staged(conj g1 g2) = {
+    rc1 = staged(g1)
+    rc2 = staged(g2)
+    for all (r1,c1) in rc1:
+      for all (r2,c2) in rc2:
+        yield (r1 /\ r2, c1 ++ c2)
+  }
+  // OPEN QUESTION 2: for all, for all infinite sets is iffy
+  staged(disj g1 g2) = staged(g1) \/ staged(g2)
+  staged(fresh (tv ...) p ...)
+  staged(conde (p ...) ...)
+  staged(partial-apply t rname t ...) // omitted for now
+  staged(finish-apply t rname t ...) // omitted for now
+
+staged(later lg) = (success, [lg])
+staged(gather sg) = (success, buildDisj(staged(sg)))
+// OPEN QUESTION 3: buildDisj turns a representing function back into syntax -- doesn't seem like a good match for the representation
+staged(fallback sg) // omitted for now
+staged(specialize-partial-apply t r t ...) // omitted for now
+```
+
+How fine-grained do we want the semantics of staging to be?
+Do we want a version that uses substitution like the real implementation does, instead of representing function? What aspects of the real system as opposed to the denotional semantics are useful to model?
+
+Nada's hunch: the buildDisj reification will dictate the granularity.
