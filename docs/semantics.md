@@ -125,9 +125,21 @@ top(l) = {
  reify(s,c)
 }
 
+// QUESTION: we want to add a fresh for all variables used in s and c that aren't bound further out
+//           or in another words maybe, that were allocated during the staging
+//           we can make what we have right now correct by wrapping a fresh around all variables in top
+//           but we need something more precise for partial application
 reify(s,c) = {
  [(== a b) for a,b in s] ++ c
 }
+```
+
+Note: this semantics convey something though it dodges all the difficult cases, including scoping.
+
+
+### Fallback
+```
+staged(fallback sg) // omitted for now
 ```
 
 ## Old
