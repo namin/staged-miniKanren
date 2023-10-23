@@ -57,6 +57,80 @@ as soon as we start relaxing some of the conditions, then challenges.
 ``{f : A → D | f (t1) = f (t2)} [UnifyD ]``
 
 set of (r,c)
+vs
+((set of r), c)
+
+what's a result of a staging time disjunction?
+
+we need a notion of top-level to filter out non-determinism.
+so:
+top(staged(sg))
+staged(sg) = intermediary thing
+top(intermediary thing) = ((set of r), c)
+intermediary thing = (streams of (s,c)).
+constraints other than unifications -- seems like a simplification
+do we have to worry about non-terminating streams?
+in the absence of fallback, everything has to terminate
+so let's imagine we're doing the semantics for a simpler system without fallback
+then any infinite stream would lead to failure, so in the absence of fallback, we could get away with a definition of search without interleaving
+so let's go with list (s,c)
+
+
+```
+staged(g(sg))
+  staged(== t1 t2) = {
+    s = unify t1 t2
+    if s then [(s,[])] else []
+  }
+  etc.
+  staged(conj g1 g2) = {
+    l1 = staged(g1)
+    l2 = staged(g2)
+    [ s1 o s2, c1 ++ c2
+      for all (s1,c1) in l1
+      for all (s2,c2) in l2
+      if s1 o s2 ]
+  }
+  staged(disj g1 g2) = staged(g1) ++ staged(g2)
+  staged(fresh (tv ...) p ...)
+  staged(conde (p ...) ...)
+  staged(partial-apply t rname t ...) // omitted for now
+  staged(finish-apply t rname t ...) // omitted for now
+
+staged(later lg) = (success, [lg])
+staged(gather sg) = (success, buildDisj(staged(sg)))
+staged(fallback sg) // omitted for now
+staged(specialize-partial-apply t r t ...) // omitted for now
+
+buildDisj(l) = {
+ (conde . [reify(s,c) for all (s,c) in l])
+}
+
+for
+[
+(x -> 1, [(== x 2)])
+(x -> 2, [(== x y)])
+(y -> 3, [])
+]
+we could generate
+[(== x 1) (== x 2)],
+[(== x 2) (== x y)],
+[(== y 3)]
+but we want to be more efficient if x or y are not used outside of here.
+In reality, we are more efficient than this (tracking allocation of variables), but we can skip this for now.
+(but what if none of the code refers to y, but maybe some code outside refers to y)
+
+top(l) = {
+ [(s,c)] = l // must be deterministic
+ reify(s,c)
+}
+
+reify(s,c) = {
+ [(== a b) for a,b in s] ++ c
+}
+```
+
+## Old
 
 ```
 // OPEN QUESTION 1: what about the non-termination aspect of everything
