@@ -138,9 +138,27 @@ Note: this semantics convey something though it dodges all the difficult cases, 
 
 
 ### Fallback
+
+Fallback takes a staging-time goal. If evaluating the staging-time goal produces exactly one answer, that's what we get.
+If it produces two or more answers, then we generate an invocation to run-time code produces by erasing sg.
+If it produces zero answers, then it fails.
+
 ```
-staged(fallback sg) // omitted for now
+staged(fallback sg) = {
+  l = staged(sg)
+  n = len(l)
+  switch n {
+    case 0 => []
+    case 1 => l
+    case _ => erased(sg)
+  }
+}
 ```
+
+The difficulty is what happens when you have nested fallbacks and non-termination.
+
+TODO: next step: deal with non-termination properly.
+
 
 ## Old
 
