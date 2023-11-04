@@ -6,7 +6,7 @@ A novel framework for staging interpreters written as relations, in which the pr
 
 ## Run
 
-Clone https://github.com/namin/faster-miniKanren into a _sibling_ directory, and checkout the `staged` branch.
+First, run `git submodule update --init --recursive --depth 1`.
 
 Then see [Run](RUN.md).
 
