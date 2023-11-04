@@ -1,0 +1,4 @@
+[submodule "faster-miniKanren"]
+	path = faster-miniKanren
+	url = https://github.com/namin/faster-miniKanren
+	branch = staged

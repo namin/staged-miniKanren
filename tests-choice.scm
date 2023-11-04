@@ -1,6 +1,6 @@
 ;; using namin/faster-miniKaren branch staged
-(load "../faster-miniKanren/mk-vicare.scm")
-(load "../faster-miniKanren/mk.scm")
+(load "faster-miniKanren/mk-vicare.scm")
+(load "faster-miniKanren/mk.scm")
 (load "full-interp.scm")
 (load "test-check.scm")
 
