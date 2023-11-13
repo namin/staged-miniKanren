@@ -61,36 +61,45 @@
 ;; Staging-time search
 ;;
 
+(define (first-answer-stream stream)
+  (case-inf stream
+    (() #f)
+    ((f) (lambda () (first-answer-stream (f))))
+    ((c) c)
+    ((c f) c)))
 
 (define in-surrounding-fallback-evaluation? (make-parameter #f))
 
 (define (ss:fallback fallback-g g)
   (lambda (st)
     (if (in-surrounding-fallback-evaluation?)
-        (if (null? (take 1 (lambda () (g st))))
-            #f
-            st)
-        (match
-            (parameterize
-                ([in-surrounding-fallback-evaluation? #t])
-              (take 2 (lambda () (g st))))
-          ['() #f]
-          [(list answer) (g st)]
-          [answers (fallback-g st)]))))
-
+        (first-answer-stream (g st))
+        (let ([answers (parameterize
+                           ([in-surrounding-fallback-evaluation? #t])
+                         (take 2 (lambda () (g st))))])
+          (match answers
+            ['() #f]
+            [(list answer) (g st)]
+            [answers (fallback-g st)])))))
+  
 (define (ss:gather g)
   (lambda (st-original)
-    (let ((results (take #f (lambda () ((ss:capture-later g)  st-original)))))
-      (ss:later
-       (if (= (length results) 1)
-           (let ([result (car results)])
-             (if (= (length result) 1)
-                 (car result)
-                 ;; TODO: would a fresh () be okay here or would it break scope fixing?
-                 #`(conj #,@result)))
-           #`(conde
-               #,@(for/list ([result results])
-                            #`[#,@result])))))))
+    (if (in-surrounding-fallback-evaluation?)
+        (first-answer-stream (g st-original))
+        (let ((results (take #f (lambda () ((ss:capture-later g) st-original)))))
+          (if (null? results)
+              #f
+              ((ss:later
+                (if (= (length results) 1)
+                    (let ([result (car results)])
+                      (if (= (length result) 1)
+                          (car result)
+                          ;; TODO: would a fresh () be okay here or would it break scope fixing?
+                          #`(conj #,@result)))
+                    #`(conde
+                        #,@(for/list ([result results])
+                             #`[#,@result]))))
+               st-original))))))
 
 (define-syntax conj
   (syntax-rules ()
@@ -231,13 +240,13 @@
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
      #'(fresh (y-n ...)
          (ss:capture-later-and-then
-           (fresh ()
-                     ;; This is a little subtle. This unification ends up as code in the
-                     ;; lambda body, but it has to be part of L in the capture to ensure
-                     ;; that substitution extensions to `y-n` are captured in the walk.
-                     (ss:later #`(== #,(data y-n) y-n2))
-                     ...
-                     (rel rep x ... y-n ...))
+          (fresh ()
+            ;; This is a little subtle. This unification ends up as code in the
+            ;; lambda body, but it has to be part of L in the capture to ensure
+            ;; that substitution extensions to `y-n` are captured in the walk.
+            (ss:later #`(== #,(data y-n) y-n2))
+            ...
+            (rel rep x ... y-n ...))
           (lambda (body)
             (l== rep (apply-rep
                       'rel 'rel (list x ...)
@@ -505,10 +514,10 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
      #:with (var2 ...) (generate-temporaries (attribute var))
      #'(ss:generate-staged-rt
         (fresh (var ...)
-                  (ss:capture-later
-                   (fresh ()
-                             (ss:later #`(== #,(data var) var2)) ...
-                             goal ...)))
+          (ss:capture-later
+           (fresh ()
+             (ss:later #`(== #,(data var) var2)) ...
+             goal ...)))
         #'(var2 ...))]))
 
 

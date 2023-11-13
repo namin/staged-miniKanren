@@ -112,8 +112,7 @@
            ((nevero)))))))))
  '(fallback))
 
-
-(todo "here we fail to realize we should fall back!"
+(test
  (run* (q)
    (staged
     (fallback

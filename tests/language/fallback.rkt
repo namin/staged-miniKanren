@@ -258,9 +258,12 @@
     (fresh (y)
       (r 2 y outer inner))))
  '((outer-commit-2 inner-fallback)))
+
+;; OLD TEST; new fallback form assumes the fallback goal always is deterministic.
+;;
 ;; However, a second success from the fallback goal *should* be notified to the
 ;; surrounding fallback form, leading it to fall back.
-(defrel/staged (r2 x y outer inner)
+#;(defrel/staged (r2 x y outer inner)
   (fallback
    (later (== outer 'outer-fallback))
    (conde
@@ -277,7 +280,7 @@
           (later (== inner 'inner-commit-1)))
          ((== y 2)
           (later (== inner 'inner-commit-2)))))))))
-(test
+#;(test
  (run 1 (outer inner)
    (staged
     (fresh (y)
