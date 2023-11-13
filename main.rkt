@@ -404,10 +404,10 @@
     #:literal-sets (goal-literals)
     [(_ (trace id x ...))
      ;(error 'compile-now-goal "TODO not supported")
-     #'(i:ss:project (x ...)
+     #'(i:project (x ...)
                      (begin
                        (displayln (list 'id x ...))
-                       (i:ss:atomic i:succeed)))]
+                       i:succeed))]
     
     [(_ (#%rel-app r:id arg ...))
      (check-simple-rel #'r 'staging-time (attribute arg))
@@ -428,16 +428,16 @@
        [_ (raise-syntax-error #f "specialize-partial-apply expects relation defined by defrel-partial" #'r)])]
 
     [(_ (== t1 t2))
-     #'(i:ss:atomic (i:==/staging-time (compile-term t1) (compile-term t2)))]
+     #'(i:==/staging-time (compile-term t1) (compile-term t2))]
     [(_ (constraint:binary-constraint t1 t2))
-     #'(i:ss:atomic (constraint.c (compile-term t1) (compile-term t2)))]
+     #'(constraint.c (compile-term t1) (compile-term t2))]
     [(_ (constraint:unary-constraint t))
-     #'(i:ss:atomic (constraint.c (compile-term t)))]
+     #'(constraint.c (compile-term t))]
     
     [(_ (fresh (x:id ...) g ...))
-     #'(i:ss:fresh (x ...) (compile-now-goal g) ...)]
+     #'(i:fresh (x ...) (compile-now-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(i:ss:conde [(compile-now-goal g) ...] ...)]
+     #'(i:conde [(compile-now-goal g) ...] ...)]
     
     [(_ (fallback fb body))
      #'(i:ss:fallback
@@ -542,10 +542,10 @@
      #'(constraint.l (compile-term t))]
     
     [(_ (fresh (x:id ...) g ...))
-     #'(i:ss:fresh (x ...) (compile-later-goal g) ...)]
+     #'(i:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(i:ss:gather
-        (i:ss:conde
+        (i:conde
          [(compile-later-goal g) ...] ...))]
     [(_ fail) #'i:lfail]
     
