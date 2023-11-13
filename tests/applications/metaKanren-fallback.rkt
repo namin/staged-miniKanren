@@ -452,7 +452,120 @@
     (reifyo s/c* out)))
 
 
-(run 0 (q)
+(run 1 (q)
+  (staged
+   (walko 1 '() q)))
+
+(generated-code)
+
+(run 1 (q)
+  (staged
+   (unifyo '1 '1 '() q)))
+
+(defrel/staged/fallback (unifywo u v s s1)
+  (conde
+    [(var?o u) (var?o v) (var=?o u v) (== s s1)]
+    [(var?o u) (var?o v) (var=/=o u v) (ext-so u v s s1)]
+    [(var?o u) (numbero v) (ext-so u v s s1)]
+    [(var?o u) (symbolo v) (ext-so u v s s1)]
+    [(var?o u) (booleano v) (ext-so u v s s1)]
+    [(var?o u) (== '() v) (ext-so u v s s1)]
+    [(var?o u)
+     (fresh (a d)
+       (== `(,a . ,d) v)
+       (=/= 'var a))
+     (ext-so u v s s1)]
+    [(numbero u) (var?o v) (ext-so v u s s1)]
+    [(numbero u) (numbero v) (== u v) (== s s1)]
+    [(numbero u) (numbero v) (=/= u v) (== #f s1)]
+    [(numbero u) (symbolo v) (== #f s1)]
+    [(numbero u) (booleano v) (== #f s1)]
+    [(numbero u) (== '() v) (== #f s1)]
+    [(numbero u)
+     (fresh (a d)
+       (== `(,a . ,d) v)
+       (=/= 'var a))
+     (== #f s1)]
+    [(symbolo u) (var?o v) (ext-so v u s s1)]
+    [(symbolo u) (numbero v) (== #f s1)]
+    [(symbolo u) (symbolo v) (== u v) (== s s1)]
+    [(symbolo u) (symbolo v) (=/= u v) (== #f s1)]
+    [(symbolo u) (booleano v) (== #f s1)]
+    [(symbolo u) (== '() v) (== #f s1)]
+    [(symbolo u)
+     (fresh (a d)
+       (== `(,a . ,d) v)
+       (=/= 'var a))
+     (== #f s1)]
+    [(booleano u) (var?o v) (ext-so v u s s1)]
+    [(booleano u) (numbero v) (== #f s1)]
+    [(booleano u) (symbolo v) (== #f s1)]
+    [(booleano u) (booleano v) (== u v) (== s s1)]
+    [(booleano u) (booleano v) (=/= u v) (== #f s1)]
+    [(booleano u) (== '() v) (== #f s1)]
+    [(booleano u)
+     (fresh (a d)
+       (== `(,a . ,d) v)
+       (=/= 'var a))
+     (== #f s1)]
+    [(== '() u) (var?o v) (ext-so v u s s1)]
+    [(== '() u) (numbero v) (== #f s1)]
+    [(== '() u) (symbolo v) (== #f s1)]
+    [(== '() u) (booleano v) (== #f s1)]
+    [(== '() u) (== '() v) (== s s1)]
+    [(== '() u)
+     (fresh (a d)
+       (== `(,a . ,d) v)
+       (=/= 'var a))
+     (== #f s1)]
+    [(var?o v)
+     (fresh (a d)
+       (== `(,a . ,d) u)
+       (=/= 'var a))
+     (ext-so v u s s1)]
+    [(numbero v)
+     (fresh (a d)
+       (== `(,a . ,d) u)
+       (=/= 'var a))
+     (== #f s1)]
+    [(symbolo v)
+     (fresh (a d)
+       (== `(,a . ,d) u)
+       (=/= 'var a))
+     (== #f s1)]
+    [(booleano v)
+     (fresh (a d)
+       (== `(,a . ,d) u)
+       (=/= 'var a))
+     (== #f s1)]
+    [(== '() v)
+     (fresh (a d)
+       (== `(,a . ,d) u)
+       (=/= 'var a))
+     (== #f s1)]
+    [(fresh (u-a u-d v-a v-d s-a)
+       (== `(,u-a . ,u-d) u)
+       (== `(,v-a . ,v-d) v)
+       (=/= 'var u-a)
+       (=/= 'var v-a)
+       (conde
+         [(== s-a #f) (== #f s1) (unifyo u-a v-a s s-a)]
+         [(=/= s-a #f)
+          (unifyo u-a v-a s s-a)
+          (unifyo u-d v-d s-a s1)]))]))
+
+(run 1 (q)
+  (staged
+   (unifywo '1 '1 '() q)))
+
+#;(run 1 (q)
+    (staged
+     (eval-programo
+      `(run* (res)
+         (== 1 1))
+      q)))
+
+(run 1 (q)
   (staged
    (eval-programo
     `(run* (res)
