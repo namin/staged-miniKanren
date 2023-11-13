@@ -61,19 +61,19 @@
 ;; Staging-time search
 ;;
 
-(define (first-answer-stream stream)
+(define (first-answer-stream stream st)
   (case-inf stream
     (() #f)
-    ((f) (lambda () (first-answer-stream (f))))
-    ((c) c)
-    ((c f) c)))
+    ((f) (lambda () (first-answer-stream (f) st)))
+    ((c) st)
+    ((c f) st)))
 
 (define in-surrounding-fallback-evaluation? (make-parameter #f))
 
 (define (ss:fallback fallback-g g)
   (lambda (st)
     (if (in-surrounding-fallback-evaluation?)
-        (first-answer-stream (g st))
+        (first-answer-stream (g st) st)
         (let ([answers (parameterize
                            ([in-surrounding-fallback-evaluation? #t])
                          (take 2 (lambda () (g st))))])
@@ -85,7 +85,7 @@
 (define (ss:gather g)
   (lambda (st-original)
     (if (in-surrounding-fallback-evaluation?)
-        (first-answer-stream (g st-original))
+        (first-answer-stream (g st-original) st-original)
         (let ((results (take #f (lambda () ((ss:capture-later g) st-original)))))
           (if (null? results)
               #f
