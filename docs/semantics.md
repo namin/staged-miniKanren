@@ -78,8 +78,17 @@ so let's go with list (s,c)
 ```
 // for concision, when we write staged
 // we mean staged_x with staged_x for all recursive calls
+// staged_f is when in surrounding fallback evaluation
+// staged_t is when not in surrounding fallback evaluation (the default)
 
 // we assume lazy containers (ferns?), and /++/ is interleaving, non-starving for any side
+
+// need to define composition o:
+// informally, s1 o s2
+// for each var x, have x -> unify (s1 x) (s2 x) and fail globally if unifies fail.
+// These compositions fail:
+// ([x -> 3] o [x -> 2])
+// ([x -> 3, y -> x] o [y -> 2])
 
 staged(g(sg))
   staged(== t1 t2) = {
