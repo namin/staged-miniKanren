@@ -96,8 +96,9 @@ staged(g(sg))
           if s1 o s2 ]
   }
   staged(disj g1 g2) = staged(g1) /++/ staged(g2)
-  staged(fresh (tv ...) p ...)
-  staged(conde (p ...) ...)
+  staged(fresh1 v sg) = staged(sg[v := fresh_logic_var()])
+  staged(fresh (tv ...) sg ...) // just a macro over fresh1
+  staged(conde (sg ...) ...) // just a macro of disj of conjs
   staged(partial-apply t rname t ...) // omitted for now
   staged(finish-apply t rname t ...) // omitted for now
 
