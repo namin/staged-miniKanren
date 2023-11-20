@@ -113,7 +113,7 @@ staged(g(sg))
 
 staged(later lg) = (success, [lg])
 staged(gather sg) = (success, buildDisj(staged(sg)))
-staged_t(fallback sg) = // assume we don't have infinite answers for now
+staged_t(fallback sg) =
   l = staged_f(sg)
   if |l|==0 then [] else if |l|==1 staged_t(sg) else [((),erase(sg))]
 staged_f(fallback sg) =
