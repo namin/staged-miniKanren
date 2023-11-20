@@ -75,8 +75,10 @@ so let's imagine we're doing the semantics for a simpler system without fallback
 then any infinite stream would lead to failure, so in the absence of fallback, we could get away with a definition of search without interleaving
 so let's go with list (s,c)
 
-
 ```
+// for concision, when we write staged
+// we mean staged_x with staged_x for all recursive calls
+
 staged(g(sg))
   staged(== t1 t2) = {
     s = unify t1 t2
@@ -99,11 +101,11 @@ staged(g(sg))
 
 staged(later lg) = (success, [lg])
 staged(gather sg) = (success, buildDisj(staged(sg)))
-staged(fallback sg) = // assume we don't have infinite answers for now
-  l = parameterize(in-surrounding-fallback-eval?)(staged(sg))
-  if |l|==0 then [] else if |l|==1 staged(sg) else [((),erase(sg))]
-parameterize(in-surrounding-fallback-eval?)(staged(fallback sg)) =
-  l = staged(sg)
+staged_t(fallback sg) = // assume we don't have infinite answers for now
+  l = staged_f(sg)
+  if |l|==0 then [] else if |l|==1 staged_t(sg) else [((),erase(sg))]
+staged_f(fallback sg) =
+  l = staged_f(sg)
   if |l|==0 then [] else [((),())]
 staged(specialize-partial-apply t r t ...) // omitted for now
 
