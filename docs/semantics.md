@@ -92,8 +92,8 @@ staged(g(sg))
     l2 = staged(g2)
     [ s1 o s2, c1 ++ c2
       for all (s1,c1) in l1
-      for all (s2,c2) in l2
-      if s1 o s2 ]
+        for all (s2,c2) in l2
+          if s1 o s2 ]
   }
   staged(disj g1 g2) = staged(g1) /++/ staged(g2)
   staged(fresh (tv ...) p ...)
