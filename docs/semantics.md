@@ -79,6 +79,8 @@ so let's go with list (s,c)
 // for concision, when we write staged
 // we mean staged_x with staged_x for all recursive calls
 
+// we assume lazy containers (ferns?), and /++/ is interleaving, non-starving for any side
+
 staged(g(sg))
   staged(== t1 t2) = {
     s = unify t1 t2
@@ -93,7 +95,7 @@ staged(g(sg))
       for all (s2,c2) in l2
       if s1 o s2 ]
   }
-  staged(disj g1 g2) = staged(g1) ++ staged(g2)
+  staged(disj g1 g2) = staged(g1) /++/ staged(g2)
   staged(fresh (tv ...) p ...)
   staged(conde (p ...) ...)
   staged(partial-apply t rname t ...) // omitted for now
