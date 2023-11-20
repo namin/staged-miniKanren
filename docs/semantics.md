@@ -99,7 +99,12 @@ staged(g(sg))
 
 staged(later lg) = (success, [lg])
 staged(gather sg) = (success, buildDisj(staged(sg)))
-staged(fallback sg) // omitted for now
+staged(fallback sg) = // assume we don't have infinite answers for now
+  l = parameterize(in-surrounding-fallback-eval?)(staged(sg))
+  if |l|==0 then [] else if |l|==1 staged(sg) else [((),erase(sg))]
+parameterize(in-surrounding-fallback-eval?)(staged(fallback sg)) =
+  l = staged(sg)
+  if |l|==0 then [] else [((),())]
 staged(specialize-partial-apply t r t ...) // omitted for now
 
 buildDisj(l) = {
