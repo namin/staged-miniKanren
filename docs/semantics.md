@@ -1,6 +1,6 @@
 # Semantics
 
-The grammar is defined at the end of [lang.md](lang.md).
+The grammar is defined at the end of [lang.md](lang.md#grammar).
 
 ## Staging Correctness Theorem
 
