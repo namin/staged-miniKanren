@@ -14,6 +14,7 @@
 (run 4 (e t)
   (staged
    (!-arith e t)))
+(generated-code)
 
 (run 4 (e)
   (staged
@@ -24,6 +25,16 @@
   (staged
    (!-arith e 'bool)))
 (generated-code)
+
+(defrel/staged (lookupof x env t)
+  (conde
+    [(== env '()) (== t #f)]
+    [(fresh (rest y v)
+       (== `((,y . ,v) . ,rest) env)
+       (=/= v #f)
+       (conde
+         ((== y x) (== v t))
+         ((=/= y x) (lookupof x rest t))))]))
 
 (defrel/staged (lookupo x env t)
   (fresh (rest y v)
@@ -83,6 +94,11 @@
         (later (!-arith-int e1 env))
         (later (!-arith-int e2 env)))])))
 
+(run 10 (e)
+  (staged
+   (!-arith-int e '((x . int) (y . int)))))
+(generated-code)
+
 ;; assuming we want the type (list int)
 ;; then one value is car(list(list(5)))
 ;; but this is not in normal form!
@@ -94,6 +110,57 @@
 ;; 2. simulate something like tabling
 
 ;; can we get away with passing an explicit memo table?
+
+(defrel-partial/staged (!-arith-memo rep [t env memo] [e])
+  (fresh (memo^)
+    (trace !- rep memo)
+    (== (cons (cons t rep) memo) memo^)
+    (conde
+      [(== t 'int)
+       (gather
+        (conde
+          [(later (numbero e))]
+          [(lookupo e env t)]
+          [(fresh (e1 e2)
+             (== `(+ ,e1 ,e2) e)
+             (!-arith-memo-wrapper 'int env memo^ e1)
+             (!-arith-memo-wrapper 'int env memo^ e2))]))]
+      [(== t 'bool)
+       (gather
+        (conde
+          [(later (== #f e))]
+          [(later (== #t e))]
+          [(lookupo e env t)]))])))
+
+(defrel/staged (!-arith-memo-wrapper t env memo e)
+  (fresh (rep rep^)
+    (lookupof t memo rep) ;; TODO: need env if env grows!
+    (conde
+      [(== rep #f)
+       (specialize-partial-apply rep^ !-arith-memo t env memo)]
+      [(=/= rep #f)
+       (== rep rep^)])
+    (later (finish-apply rep^ !-arith-memo e))))
+
+(run 10 (e)
+  (staged
+   (!-arith-memo-wrapper 'int '() '() e)))
+(generated-code)
+
+(defrel (make-diff q)
+  (fresh (x)
+    (== q (cons x x))))
+
+(defrel (add-diff q1 el q2)
+  (fresh (x l y)
+    (== (cons x l) q1)
+    (== x (cons el y))
+    (== (cons y l) q2)))
+
+(run* (q1 q2 q3)
+  (make-diff q1)
+  (add-diff q1 'hello q2)
+  (add-diff q2 'world q3))
 
 (defrel/staged/fallback (!-arith3 e env t)
   (conde
