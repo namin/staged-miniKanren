@@ -30,6 +30,7 @@
  defrel-partial
  defrel-partial/staged
  defrel/staged/fallback
+ defrel-partial/staged/fallback
  run
  run*
 
@@ -612,5 +613,10 @@
 (define-syntax-rule
   (defrel/staged/fallback (name arg ...) body ...)
   (defrel/staged (name arg ...)
+    (fallback (fresh () body ...))))
+
+(define-syntax-rule
+  (defrel-partial/staged/fallback (r rep [now-arg ...] [later-arg ...]) body ...)
+  (defrel-partial/staged (r rep [now-arg ...] [later-arg ...])
     (fallback (fresh () body ...))))
 

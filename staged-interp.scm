@@ -26,7 +26,7 @@ eval-rands-and-applyo
 (defrel (not-tago/gen v)
   (=/= 'struct v))
 
-(defrel-partial/staged (eval-apply-rec rep [f x* e env] [a* res])
+(defrel-partial/staged/fallback (eval-apply-rec rep [f x* e env] [a* res])
   (fresh (env^ env-self)
     (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
     ;; TODO: do we need a fallback?
@@ -36,7 +36,7 @@ eval-rands-and-applyo
       ((ext-env*o x* a* env-self env^)))
     (eval-expo e env^ res)))
 
-(defrel-partial/staged (eval-apply rep [x* body env] [a* val])
+(defrel-partial/staged/fallback (eval-apply rep [x* body env] [a* val])
   (fresh (env^)
     ;; TODO: do we need a fallback?
     (conde
