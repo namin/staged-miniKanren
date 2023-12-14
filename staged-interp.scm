@@ -7,7 +7,7 @@
  evalo-staged/env-exts
  eval-expo
 
-eval-rands-and-applyo
+ eval-rands-and-applyo
  
  initial-env)
 
@@ -45,7 +45,7 @@ eval-rands-and-applyo
       ((ext-env*o x* a* env env^)))
     (eval-expo body env^ val)))
 
-(defrel/staged/fallback (handle-appo rator rands env val)
+(defrel/staged (handle-appo rator rands env val)
   (conde
     ((fresh (proc)
        (symbolo rator)
@@ -55,6 +55,8 @@ eval-rands-and-applyo
        (== (cons a d) rator)
        (eval-expo rator env proc)
        (later (eval-rands-and-applyo proc rands env val))))))
+
+
 
 (defrel/staged/fallback (eval-rands-and-applyo proc rands env val)
   (fresh (a* rep)
@@ -85,7 +87,8 @@ eval-rands-and-applyo
     ((symbolo expr)
      (fresh (env-v)
        (later (== env-v val))
-       (lookupo expr env env-v)))
+       (fallback
+        (lookupo expr env env-v))))
 
     ;; application
     ((fresh (rator rands a* rator-v)
@@ -120,7 +123,7 @@ eval-rands-and-applyo
 
 (define empty-env '())
 
-(defrel/staged/fallback (lookupo x env v)
+(defrel/staged (lookupo x env v)
   (fresh (y b rest)
     (== `((,y . ,b) . ,rest) env)
     (conde

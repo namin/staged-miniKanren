@@ -73,7 +73,7 @@
 (define (ss:fallback fallback-g g)
   (lambda (st)
     (if (in-surrounding-fallback-evaluation?)
-        (first-answer-stream (g st) st)
+        st #;(first-answer-stream (g st) st)
         (let ([answers (parameterize
                            ([in-surrounding-fallback-evaluation? #t])
                          (take 2 (lambda () (g st))))])
@@ -81,11 +81,11 @@
             ['() #f]
             [(list answer) (g st)]
             [answers (fallback-g st)])))))
-  
+
 (define (ss:gather g)
   (lambda (st-original)
     (if (in-surrounding-fallback-evaluation?)
-        (first-answer-stream (g st-original) st-original)
+        st-original #;(first-answer-stream (g st-original) st-original)
         (let ((results (take #f (lambda () ((ss:capture-later g) st-original)))))
           (if (null? results)
               #f
@@ -98,7 +98,9 @@
                           #`(conj #,@result)))
                     #`(conde
                         #,@(for/list ([result results])
-                             #`[#,@result]))))
+                             (if (null? result)
+                                 #'[succeed]
+                                 #`[#,@result])))))
                st-original))))))
 
 (define-syntax conj
