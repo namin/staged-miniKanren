@@ -447,49 +447,6 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
       (error 'fix-scope-syntax "unscoped variable"))
     (fix-scope2-syntax (first r) '())))
 
-(define fix-scope1
-  (lambda (t . in-cdr)
-    (cond
-      ((symbol? t)
-       (list t (if (reified-var? t) (list t) (list))))
-      ((and (null? in-cdr) (pair? t) (eq? 'fresh (car t)))
-       (let ((r (map fix-scope1 (cddr t))))
-         (let ((body (map car r))
-               (vs (fold-right union
-                               (filter (lambda (x) (not (reified-var? x))) (cadr t))
-                               (map cadr r))))
-           (list `(fresh ,vs . ,body) (list)))))
-      ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
-       (let ((r (map fix-scope1 (cddr t))))
-         (let ((body (map car r))
-               (vs (diff (fold-right union '() (map cadr r))
-                         (if (symbol? (cadr t)) (list (cadr t)) (cadr t)))))
-           (list `(lambda ,(cadr t) . ,body) vs))))
-      ((pair? t)
-       (let ((ra (fix-scope1 (car t)))
-             (rb (fix-scope1 (cdr t) #t)))
-         (list (cons (car ra) (car rb)) (union (cadr ra) (cadr rb)))))
-      (else (list t (list))))))
-
-(define fix-scope2
-  (lambda (t s . in-cdr)
-    (cond
-      ((and (null? in-cdr) (pair? t) (eq? 'fresh (car t)))
-       (let ((ds (diff (cadr t) (filter reified-var? s)))
-             (us (union (cadr t) s)))
-         `(fresh ,ds . ,(map (lambda (x) (fix-scope2 x us)) (cddr t)))))
-      ((and (pair? t) (eq? 'lambda (car t)) (not (null? (cdr t))))
-       (let ((us (union (if (symbol? (cadr t)) (list (cadr t)) (cadr t)) s)))
-         `(lambda ,(cadr t) . ,(map (lambda (x) (fix-scope2 x us)) (cddr t)))))
-      ((pair? t)
-       (cons (fix-scope2 (car t) s) (fix-scope2 (cdr t) s #t)))
-      (else t))))
-
-(define fix-scope
-  (lambda (t)
-    (car (fix-scope2 (fix-scope1 t) '()))))
-
-
 ;;
 ;; Staging entry point
 ;;
