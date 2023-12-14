@@ -199,7 +199,7 @@
            (exts (subst-exts S)))
       (for/list ([b (reverse exts)]
                  #:when (<= (var-idx (car b)) initial-var-idx))
-        #`(== #,(data (car b)) #,(walk* (data (cdr b)) (state-S st)))))))
+        #`(== #,(data (car b)) #,(data (walk* (cdr b) (state-S st))))))))
 
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
