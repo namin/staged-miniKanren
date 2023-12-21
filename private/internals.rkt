@@ -423,9 +423,6 @@
 
   (define var-mapping (map cons var-vals var-ids))
   (define closed (replace-vars result var-mapping))
-  
-  ;; TODO: We call reflect-data-in-syntax via walk-later-final in reify in mk.scm.
-  ;; Why do we have to do it again here? Should it be removed from one or other?
   (define reflected (reflect-data-in-syntax closed))
   
   (define stx #`(lambda #,var-ids #,reflected))
