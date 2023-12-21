@@ -24,7 +24,7 @@
 ;; The proc is syntax at staging time and a procedure at runtime.
 ;;
 ;; called in mk.scm `unify` and `walk*`
-(struct apply-rep [name-staged name-dyn args proc] #:prefab)
+(struct apply-rep [name args proc] #:prefab)
 
 ;; A SyntaxWithData is a syntax object containing (data TermWithIdentifiers) structures
 ;;  in some positions.
@@ -208,7 +208,7 @@
       [(? syntax?) (rec (syntax-e v))]
       [(cons a d)
        (set-union (rec a) (rec d))]
-      [(apply-rep name-staged name-dyn args proc)
+      [(apply-rep name args proc)
        (set-union (rec args) (rec proc))]
       [(? data?)
        (rec (data-value v))]
@@ -231,10 +231,9 @@
              v))]
       [(cons a d)
        (cons (replace-in-datum a) (replace-in-datum d))]
-      [(apply-rep name-staged name-dyn args proc)
+      [(apply-rep name args proc)
        (apply-rep
-        name-staged
-        name-dyn
+        name
         (replace-in-datum args)
         (replace-in-datum proc))]
       [(? syntax?)
@@ -290,8 +289,8 @@
     [(_ rep (rel (x ...) ((~literal _) ...)))
      #'(partial-apply-rt rep 'rel (list x ...))]))
 
-(define (partial-apply-rt rep rel args)
-  (== rep (apply-rep rel rel args #f))) ;; TODO: maybe have just one rel
+(define (partial-apply-rt rep name args)
+  (== rep (apply-rep name args #f)))
 
 (define-syntax ss:specialize-partial-apply
   (syntax-parser
@@ -311,7 +310,7 @@
              st))
           (lambda (body)
             (l== rep (apply-rep
-                      'rel 'rel (list x ...)
+                      'rel (list x ...)
                       #`(lambda (y-n2 ...)
                           #,body))))))]))
 
@@ -323,7 +322,7 @@
          ;; Note: the proc position doesn't actually unify, because a dynamic
          ;; and staged rep should be unifiable but one will have #f and the other
          ;; a procedure. So we have to walk the rep and check its field.
-         (== rep (apply-rep 'rel 'rel (list x-n ...) proc))
+         (== rep (apply-rep 'rel (list x-n ...) proc))
          (lambda (st)
            (let* ([repv (walk rep (state-S st))]
                   [proc (apply-rep-proc repv)])
@@ -354,10 +353,9 @@
     (match t
       [(? var?) (data t)]
       [(? syntax? t) (reflect-data-in-syntax t)]
-      [(apply-rep name-staged name-dyn args proc)
+      [(apply-rep name args proc)
        #`(apply-rep
-          #,(reflect-datum name-staged)
-          #,(reflect-datum name-dyn)
+          '#,name
           #,(reflect-datum args)
           #,(reflect-datum proc))]))
 
