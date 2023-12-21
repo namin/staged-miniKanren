@@ -30,8 +30,6 @@
 ;;  in some positions.
 ;;
 ;; A TermWithIdentifiers has term values but also syntax representing term variable references, like #'x
-;;
-;; called in mk.scm `vars`
 (struct data [value] #:transparent)
 
 (define (map-syntax-with-data f stx)
@@ -340,22 +338,8 @@
      #'(ss:later #`(finish-apply #,(data rep) (rel (x ...) (#,(data y) ...))))]))
 
 ;;
-;; Reification
+;; Reflect
 ;;
-
-;; (ListOf SyntaxWithData), Substitution -> (ListOf SyntaxWithDataVars)
-;;
-;; At reification time, walk* the lifted `later` syntax
-;; and reflect the data within it to syntax for expressions that
-;; construct the same data.
-;;
-;; The resulting syntax still contains data constructors containing
-;; logic variables.
-;;
-;; called from mk.scm `reify`
-(define (walk-later-final st)
-  (for/list ([stx (reverse (state-L st))])
-    (reflect-data-in-syntax (walk* stx (state-S st)))))
 
 ;; (or/c (ListOf SyntaxWithData) SyntaxWithData) -> SyntaxWithDataVars
 (define (reflect-data-in-syntax t)
@@ -403,26 +387,6 @@
       [else (literal t)]))
 
   (to-expr-v (reflect t)))
-
-
-;; SyntaxWithDataVars, ReifierSubst -> ReifierSubst
-;;
-;; Extends reify-S to traverse SyntaxWithDataVars. reify-S
-;; is responsible for constructing a reifier substitution
-;; that maps Vars to reified variable name symbols.
-;;
-;; called from mk.scm `reify-S`
-(define (reify-S-syntax v S)
-  (cond
-    [(syntax? v)
-     (reify-S-syntax (syntax-e v) S)]
-    [(pair? v)
-     (let ((S (reify-S-syntax (car v) S)))
-       (reify-S-syntax (cdr v) S))]
-    [(data? v)
-     (reify-S (data-value v) S)]
-    [else S]))
-
 
 ;;
 ;; Staging entry point
