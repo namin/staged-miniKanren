@@ -252,24 +252,6 @@
   
   (map-syntax-with-data (lambda (v) (data (replace-in-datum v))) stx))
 
-
-#|
-(fresh (z)  1
-  (gather 1
-   (fresh (x)  2
-     (gather 2
-      (fresh (y)  3
-        (== x (list y z)))))))
-
-#`(== ,(data x_2) (list #,(data y_3) #,(data z_1)))
-
-
-#`(fresh (y)
-    (== #,(data x_2) (list y #,(data z_1))))
-|#
-
-
-
 (define (walk*-L L st)
   (for/list ([stx L])
     (walk* stx (state-S st))))
@@ -467,10 +449,6 @@
 
 (define res #f)
 
-;; Issue: what happens when we learn something about an external variable?
-;; Well, capture-later should lift an == assigning to it assuming it is external.
-;; So, allocate some vars externally. In the end we'll subst the lambda binders for them.
-
 (define-syntax ss:generate-staged
   (syntax-parser
     [(_ (v ...) goal ...)
@@ -490,17 +468,14 @@
     (unique-result
      (take 2 (lambda () (goal empty-state)))))
 
-
   (define var-mapping (map cons var-vals var-ids))
   (define closed (replace-vars result var-mapping))
   
   ;; TODO: We call reflect-data-in-syntax via walk-later-final in reify in mk.scm.
   ;; Why do we have to do it again here? Should it be removed from one or other?
   (define reflected (reflect-data-in-syntax closed))
-
   
   (define stx #`(lambda #,var-ids #,reflected))
-
 
   (set! res stx)
 
