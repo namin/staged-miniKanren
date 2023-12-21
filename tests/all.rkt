@@ -8,8 +8,6 @@
 (require "language/multistage.rkt")
 (require "language/nontermination.rkt")
 
-(require "internals/fix-scope.rkt")
-
 (require "interpreter/basics.rkt")
 (require "interpreter/staged-apply-letrec.rkt")
 (require "interpreter/letrec-cross-stage.rkt")

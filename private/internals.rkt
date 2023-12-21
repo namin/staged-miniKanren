@@ -26,8 +26,10 @@
 ;; called in mk.scm `unify` and `walk*`
 (struct apply-rep [name-staged name-dyn args proc] #:prefab)
 
-;; A SyntaxWithData is a syntax object containing (data Term) structures
+;; A SyntaxWithData is a syntax object containing (data TermWithIdentifiers) structures
 ;;  in some positions.
+;;
+;; A TermWithIdentifiers has term values but also syntax representing term variable references, like #'x
 ;;
 ;; called in mk.scm `vars`
 (struct data [value] #:transparent)
@@ -91,16 +93,8 @@
               #f
               ((ss:later
                 (if (= (length results) 1)
-                    (let ([result (car results)])
-                      (if (= (length result) 1)
-                          (car result)
-                          ;; TODO: would a fresh () be okay here or would it break scope fixing?
-                          #`(conj #,@result)))
-                    #`(conde
-                        #,@(for/list ([result results])
-                             (if (null? result)
-                                 #'[succeed]
-                                 #`[#,@result])))))
+                    (car results)
+                    #`(disj . #,results)))
                st-original))))))
 
 (define-syntax conj
@@ -108,6 +102,15 @@
     [(_ g) g]
     [(_ g0 g ...) (lambda (st) (bind* (g0 st) g ...))]))
 
+(define-syntax disj
+  (syntax-rules ()
+    ((_ g ...)
+     (lambda (st)
+       (suspend
+         (let ((st (state-with-scope st (new-scope))))
+           (mplus*
+             (g st)
+             ...)))))))
 
 ;;
 ;; Basic "later" constraint and goal variants
@@ -165,7 +168,7 @@
 ;; Scoped lift capturing
 ;;
 
-;; Goal, (-> (ListOf Syntax) Goal) -> Goal
+;; Goal, (-> SyntaxWithData Goal) -> Goal
 (define (ss:capture-later-and-then g k)
   (lambda (st)
     (bind*
@@ -173,7 +176,7 @@
      (ss:capture-later g)
      (lambda (L) ((k L) st)))))
 
-;; Goal -> (-> State (ListOf Syntax))
+;; Goal -> (-> State SyntaxWithData)
 (define (ss:capture-later g)
   (lambda (st-original)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
@@ -185,9 +188,86 @@
       (bind
        (g st-before)
        (lambda (st-after)
-         (append (walk*-L (generate-constraints st-after) st-after)
-                 (generate-subst-exts st-after initial-var-idx)
-                 (walk*-L (reverse (state-L st-after)) st-after)))))))
+         (fresh-local-vars
+          initial-var-idx
+          (append (walk*-L (generate-constraints st-after) st-after)
+                  (generate-subst-exts st-after initial-var-idx)
+                  (walk*-L (reverse (state-L st-after)) st-after))))))))
+
+;; Int, (ListOf SyntaxWithData) -> SyntaxWithData
+(define (fresh-local-vars initial-var-idx L)
+  (define local-vars (find-local-vars initial-var-idx L))
+  (define local-var-ids (generate-temporaries local-vars))
+  (define var-mapping (map cons local-vars local-var-ids))
+
+  (define/syntax-parse (local-var-id ...) local-var-ids)
+  (define/syntax-parse (L-closed ...) (map (lambda (stx) (replace-vars stx var-mapping)) L))
+
+  #'(fresh (local-var-id ...)
+      L-closed ...))
+
+;; Int, (ListOf SyntaxWithData) -> (ListOf Var)
+(define (find-local-vars initial-var-idx L)
+  (define (rec v)
+    (match v
+      [(? var?)
+       (if (var-local? v initial-var-idx)
+           (set v)
+           (set))]
+      [(? syntax?) (rec (syntax-e v))]
+      [(cons a d)
+       (set-union (rec a) (rec d))]
+      [(apply-rep name-staged name-dyn args proc)
+       (set-union (rec args) (rec proc))]
+      [(? data?)
+       (rec (data-value v))]
+      [else (set)]))
+
+  (sort (set->list (rec L)) < #:key var-idx))
+
+;; SyntaxWithData, (AList Var Identifier) -> SyntaxWithData
+;; Example:
+#; (#'(== #,(data x) #,(data (cons (var y) 1))), (list (cons (var y) #'y)))
+#; ->
+#; #'(== #,(data x) #,(data (cons #'y 1)))
+(define (replace-vars stx var-mapping)
+  (define (replace-in-datum v)
+    (match v
+      [(? var?)
+       (let ([pr (assq v var-mapping)])
+         (if pr
+             (cdr pr)
+             v))]
+      [(cons a d)
+       (cons (replace-in-datum a) (replace-in-datum d))]
+      [(apply-rep name-staged name-dyn args proc)
+       (apply-rep
+        name-staged
+        name-dyn
+        (replace-in-datum args)
+        (replace-in-datum proc))]
+      [(? syntax?)
+       (map-syntax-with-data (lambda (v) (data (replace-in-datum v))) v)]
+      [else v]))
+  
+  (map-syntax-with-data (lambda (v) (data (replace-in-datum v))) stx))
+
+
+#|
+(fresh (z)  1
+  (gather 1
+   (fresh (x)  2
+     (gather 2
+      (fresh (y)  3
+        (== x (list y z)))))))
+
+#`(== ,(data x_2) (list #,(data y_3) #,(data z_1)))
+
+
+#`(fresh (y)
+    (== #,(data x_2) (list y #,(data z_1))))
+|#
+
 
 
 (define (walk*-L L st)
@@ -197,12 +277,15 @@
 (define (new-subst-with-empty-exts S)
   (subst (subst-map S) (subst-scope S) '()))
 
+(define (var-local? v initial-var-idx)
+  (> (var-idx v) initial-var-idx))
+
 (define generate-subst-exts
   (lambda (st initial-var-idx)
     (let* ((S (state-S st))
            (exts (subst-exts S)))
       (for/list ([b (reverse exts)]
-                 #:when (<= (var-idx (car b)) initial-var-idx))
+                 #:when (not (var-local? (car b) initial-var-idx)))
         #`(== #,(data (car b)) #,(data (walk* (cdr b) (state-S st))))))))
 
 (define (generate-constraints st)
@@ -242,21 +325,22 @@
     [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
-     #'(fresh (y-n ...)
+     #'(fresh ()
          (ss:capture-later-and-then
-          (fresh ()
-            ;; This is a little subtle. This unification ends up as code in the
-            ;; lambda body, but it has to be part of L in the capture to ensure
-            ;; that substitution extensions to `y-n` are captured in the walk.
-            (ss:later #`(== #,(data y-n) y-n2))
-            ...
-            (rel rep x ... y-n ...))
+          (lambda (st) ;; nasty hack---make sure we don't allocate the variables until this goal is called!
+            ((fresh (y-n ...)
+               ;; This is a little subtle. This unification ends up as code in the
+               ;; lambda body, but it has to be part of L in the capture to ensure
+               ;; that substitution extensions to `y-n` are captured in the walk.
+               (ss:later #`(== #,(data y-n) y-n2))
+               ...
+               (rel rep x ... y-n ...))
+             st))
           (lambda (body)
             (l== rep (apply-rep
                       'rel 'rel (list x ...)
                       #`(lambda (y-n2 ...)
-                          (fresh ()
-                            . #,body)))))))]))
+                          #,body))))))]))
 
 (define-syntax finish-apply
   (syntax-parser
@@ -268,11 +352,11 @@
          ;; a procedure. So we have to walk the rep and check its field.
          (== rep (apply-rep 'rel 'rel (list x-n ...) proc))
          (lambda (st)
-           (let* ([rep (walk rep (state-S st))]
-                  [proc (apply-rep-proc rep)])
+           (let* ([repv (walk rep (state-S st))]
+                  [proc (apply-rep-proc repv)])
              ((if (procedure? proc)
                   (proc y ...)
-                  (rel rep x-n ... y ...))
+                  (rel repv x-n ... y ...))
               st))))]))
 
 (define-syntax lfinish-apply
@@ -298,7 +382,7 @@
   (for/list ([stx (reverse (state-L st))])
     (reflect-data-in-syntax (walk* stx (state-S st)))))
 
-;; SyntaxWithData -> SyntaxWithDataVars
+;; (or/c (ListOf SyntaxWithData) SyntaxWithData) -> SyntaxWithDataVars
 (define (reflect-data-in-syntax t)
   (map-syntax-with-data reflect-datum t))
 
@@ -366,92 +450,6 @@
 
 
 ;;
-;; Scope fixing
-;;
-
-;; # Utilities for quick-fixing scope
-(define union
-  (lambda (a b)
-    (if (null? a) b
-        (union (cdr a) (if (memq (car a) b) b (cons (car a) b))))))
-
-(define diff
-  (lambda (a b)
-    (if (null? b) a (remq (car b) (diff a (cdr b))))))
-
-#|
-goals :=
-(== term term)
-(fresh (x ...) goal...)
-(conde (goal ...) ...)
-term :=
-(cons term term)
-(lambda x goal)
-(lambda (x ...) goal)
-(quote datum)
-(list term...)
-(data var)
-
-things to manipulate:
-reified logic variables, always in data position
-fresh syntax that is not quoted
-
-by the way we construct lambdas in lpartial-apply, the parameter names do not intersect with logic variables, so we don't need to consider lambda especially in fix scope.
-
-|#
-
-#|
-for each later state variable, fix-scope1-syntax will add a binding to the variable to the immediately surrounding fresh.
-fix-scope2-syntax keeps only the outermost fresh binding for a variable.
-|#
-(define fix-scope1-syntax
-  (syntax-parser
-    #:literals (fresh quote)
-    [(fresh (x ...+) goal ...)
-     (error 'fix-scope1-syntax "encountered fresh with variables")]
-    [(fresh () goal ...)
-     (define r (map fix-scope1-syntax (attribute goal)))
-     (define/syntax-parse (goal^ ...) (map first r))
-     (define/syntax-parse (var ...) (apply set-union (map second r)))
-     (list #'(fresh (var ...) goal^ ...) (list))]
-    [(quote datum)
-     (list this-syntax (list))]
-    [d
-     #:when (data? (syntax-e #'d))
-     (define var (data-value (syntax-e #'d)))
-     (list #`#,var (list var))]
-    [(a . d)
-     (define ra (fix-scope1-syntax #'a))
-     (define rd (fix-scope1-syntax #'d))
-     (list #`(#,(first ra) . #,(first rd)) (set-union (second ra) (second rd)))]
-    [_ (list this-syntax (list))]))
-
-(define fix-scope2-syntax
-  (lambda (stx bound-vars)
-    (syntax-parse
-        stx
-      #:literals (fresh quote)
-      [(fresh (x ...) goal ...)
-       (define xs (map syntax-e (attribute x)))
-       (define/syntax-parse (x^ ...) (set-subtract xs bound-vars))
-       (define bound-vars^ (set-union xs bound-vars))
-       (define/syntax-parse (goal^ ...)
-         (for/list ([g (attribute goal)]) (fix-scope2-syntax g bound-vars^)))
-       #'(fresh (x^ ...) goal^ ...)]
-      [(quote datum)
-       this-syntax]
-      [(a . d)
-       #`(#,(fix-scope2-syntax #'a bound-vars) . #,(fix-scope2-syntax #'d bound-vars))]
-      [_ this-syntax])))
-
-(define fix-scope-syntax
-  (lambda (stx)
-    (define r (fix-scope1-syntax stx))
-    (unless (null? (second r))
-      (error 'fix-scope-syntax "unscoped variable"))
-    (fix-scope2-syntax (first r) '())))
-
-;;
 ;; Staging entry point
 ;;
 
@@ -469,36 +467,40 @@ fix-scope2-syntax keeps only the outermost fresh binding for a variable.
 
 (define res #f)
 
+;; Issue: what happens when we learn something about an external variable?
+;; Well, capture-later should lift an == assigning to it assuming it is external.
+;; So, allocate some vars externally. In the end we'll subst the lambda binders for them.
+
 (define-syntax ss:generate-staged
   (syntax-parser
-    [(_ (var ...) goal ...)
-     #:with (var2 ...) (generate-temporaries (attribute var))
-     #'(ss:generate-staged-rt
-        (fresh (var ...)
+    [(_ (v ...) goal ...)
+     #'(let ([v (var (new-scope))] ...)
+         (ss:generate-staged-rt
           (ss:capture-later
-           (fresh ()
-             (ss:later #`(== #,(data var) var2)) ...
-             goal ...)))
-        #'(var2 ...))]))
-
+           (fresh () goal ...))
+          (list v ...)
+          (list #'v ...)))]))
 
 (define (assign-vars v)
   (let ((R (reify-S v (subst empty-subst-map nonlocal-scope '()))))
     (walk* v R)))
 
-(define (ss:generate-staged-rt goal var-list)
+(define (ss:generate-staged-rt goal var-vals var-ids)
   (define result
     (unique-result
      (take 2 (lambda () (goal empty-state)))))
- 
-  (define reflected (reflect-data-in-syntax result))
-  (define assigned (assign-vars reflected))
 
-  (define stx
-    (fix-scope-syntax
-     #`(lambda #,var-list
-         (fresh ()
-           #,@assigned))))
+
+  (define var-mapping (map cons var-vals var-ids))
+  (define closed (replace-vars result var-mapping))
+  
+  ;; TODO: We call reflect-data-in-syntax via walk-later-final in reify in mk.scm.
+  ;; Why do we have to do it again here? Should it be removed from one or other?
+  (define reflected (reflect-data-in-syntax closed))
+
+  
+  (define stx #`(lambda #,var-ids #,reflected))
+
 
   (set! res stx)
 
