@@ -60,42 +60,35 @@
           #f))))
 
 ;;
-;; Staging-time search
+;; Staging-time control flow
 ;;
-
-(define (first-answer-stream stream st)
-  (case-inf stream
-    (() #f)
-    ((f) (lambda () (first-answer-stream (f) st)))
-    ((c) st)
-    ((c f) st)))
 
 (define in-surrounding-fallback-evaluation? (make-parameter #f))
 
-(define (ss:fallback fallback-g g)
+(define (succeed-in-fallback g)
   (lambda (st)
     (if (in-surrounding-fallback-evaluation?)
-        st #;(first-answer-stream (g st) st)
-        (let ([answers (parameterize
-                           ([in-surrounding-fallback-evaluation? #t])
-                         (take 2 (lambda () (g st))))])
-          (match answers
-            ['() #f]
-            [(list answer) (g st)]
-            [answers (fallback-g st)])))))
+        st
+        (g st))))
+
+(define (ss:fallback fallback-g g)
+  (succeed-in-fallback
+   (lambda (st)
+     (let ([answers (parameterize ([in-surrounding-fallback-evaluation? #t])
+                      (take 2 (lambda () (g st))))])
+       (match answers
+         ['() #f]
+         [(list answer) (g st)]
+         [answers (fallback-g st)])))))
 
 (define (ss:gather g)
-  (lambda (st-original)
-    (if (in-surrounding-fallback-evaluation?)
-        st-original #;(first-answer-stream (g st-original) st-original)
-        (let ((results (take #f (lambda () ((ss:capture-later g) st-original)))))
-          (if (null? results)
-              #f
-              ((ss:later
-                (if (= (length results) 1)
-                    (car results)
-                    #`(disj . #,results)))
-               st-original))))))
+  (succeed-in-fallback
+   (lambda (st-original)
+     (let ((results (take #f (lambda () ((ss:capture-later g) st-original)))))
+       (if (null? results)
+           #f
+           ((ss:later #`(disj . #,results))
+            st-original))))))
 
 (define-syntax conj
   (syntax-rules ()
@@ -104,13 +97,12 @@
 
 (define-syntax disj
   (syntax-rules ()
-    ((_ g ...)
+    [(_ g) g]
+    [(_ g ...)
      (lambda (st)
        (suspend
-         (let ((st (state-with-scope st (new-scope))))
-           (mplus*
-             (g st)
-             ...)))))))
+        (let ((st (state-with-scope st (new-scope))))
+          (mplus* (g st) ...))))]))
 
 ;;
 ;; Basic "later" constraint and goal variants
@@ -152,7 +144,8 @@
      ;; When we generate here for eval, use the human readable symbol. We'll put the lifted symbol in the syntax
      ;; property and the lifted's lexical context on the rel-annotated, and reunite them in invoke-fallback.
      ;; We need this trick because of the expander's shortcomings re: adjusting references in syntax properties.
-     #:with rel-annotated (syntax-property (datum->syntax #'fn (syntax-e #'rel)) 'fallback-function (syntax-e #'fn) #t)
+     #:with rel-annotated (syntax-property (datum->syntax #'fn (syntax-e #'rel))
+                                           'fallback-function (syntax-e #'fn) #t)
      #'(ss:later #`(invoke-fallback rel-annotated #,(data arg) ...))]))
 
 (define-syntax lpartial-apply
@@ -274,7 +267,7 @@
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
     (apply append (map (generate-var-constraints st) vars))))
 
-;; TODO: this relies on internal details, only works for current set of type constraints.
+;; TODO: this relies on internal details and only works for current set of type constraints.
 ;;  Should figure how to make generic in type constraints at least.
 (define (generate-var-constraints st)
   (lambda (v)
@@ -458,10 +451,6 @@
            (fresh () goal ...))
           (list v ...)
           (list #'v ...)))]))
-
-(define (assign-vars v)
-  (let ((R (reify-S v (subst empty-subst-map nonlocal-scope '()))))
-    (walk* v R)))
 
 (define (ss:generate-staged-rt goal var-vals var-ids)
   (define result
