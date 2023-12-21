@@ -165,6 +165,7 @@
 ;; Scoped lift capturing
 ;;
 
+;; Goal, (-> (ListOf Syntax) Goal) -> Goal
 (define (ss:capture-later-and-then g k)
   (lambda (st)
     (bind*
@@ -172,6 +173,7 @@
      (ss:capture-later g)
      (lambda (L) ((k L) st)))))
 
+;; Goal -> (-> State (ListOf Syntax))
 (define (ss:capture-later g)
   (lambda (st-original)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
