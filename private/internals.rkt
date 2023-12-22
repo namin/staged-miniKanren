@@ -79,10 +79,10 @@
          [(list answer) (g st)]
          [answers (fallback-g st)])))))
 
-(define (ss:gather g)
+(define (ss:gather goal-thunk)
   (succeed-in-fallback
    (lambda (st-original)
-     (let ((results (take #f (lambda () ((ss:capture-later g) st-original)))))
+     (let ((results (take #f (lambda () ((ss:capture-later goal-thunk) st-original)))))
        (if (null? results)
            #f
            ((ss:later #`(disj . #,results))
@@ -160,15 +160,17 @@
 ;;
 
 ;; Goal, (-> SyntaxWithData Goal) -> Goal
-(define (ss:capture-later-and-then g k)
+(define (ss:capture-later-and-then goal-thunk k)
   (lambda (st)
     (bind*
      st
-     (ss:capture-later g)
+     (ss:capture-later goal-thunk)
      (lambda (L) ((k L) st)))))
 
-;; Goal -> (-> State SyntaxWithData)
-(define (ss:capture-later g)
+;; (-> Goal) -> (-> State SyntaxWithData)
+;; The goal argument is in a thunk to make sure that fresh variable allocations within
+;; do not happen before we have captured the initial-var-idx. It's a bit of a nasty hack.
+(define (ss:capture-later goal-thunk)
   (lambda (st-original)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
@@ -177,7 +179,7 @@
       (define initial-var-idx (var-idx (var 'capture-later)))
 
       (bind
-       (g st-before)
+       ((goal-thunk) st-before)
        (lambda (st-after)
          (fresh-local-vars
           initial-var-idx
@@ -297,39 +299,39 @@
     [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-n ...) (generate-temporaries #'(y ...))
      #:with (y-n2 ...) (generate-temporaries #'(y ...))
-     #'(fresh ()
-         (ss:capture-later-and-then
-          (lambda (st) ;; nasty hack---make sure we don't allocate the variables until this goal is called!
-            ((fresh (y-n ...)
-               ;; This is a little subtle. This unification ends up as code in the
-               ;; lambda body, but it has to be part of L in the capture to ensure
-               ;; that substitution extensions to `y-n` are captured in the walk.
-               (ss:later #`(== #,(data y-n) y-n2))
-               ...
-               (rel rep x ... y-n ...))
-             st))
-          (lambda (body)
-            (l== rep (apply-rep
-                      'rel (list x ...)
-                      #`(lambda (y-n2 ...)
-                          #,body))))))]))
+     #'(ss:capture-later-and-then
+        (lambda ()
+          (fresh (y-n ...)
+            ;; This is a little subtle. This unification ends up as code in the
+            ;; lambda body, but it has to be part of L in the capture to ensure
+            ;; that substitution extensions to `y-n` are captured in the walk.
+            (ss:later #`(== #,(data y-n) y-n2))
+            ...
+            (rel rep x ... y-n ...)))
+        (lambda (body)
+          (l== rep (apply-rep
+                    'rel (list x ...)
+                    #`(lambda (y-n2 ...)
+                        #,body)))))]))
 
 (define-syntax finish-apply
   (syntax-parser
     [(_ rep (rel ((~and x (~literal _)) ...) (y ...)))     
      #:with (x-n ...) (generate-temporaries #'(x ...))
-     #'(fresh (proc x-n ...)
-         ;; Note: the proc position doesn't actually unify, because a dynamic
-         ;; and staged rep should be unifiable but one will have #f and the other
-         ;; a procedure. So we have to walk the rep and check its field.
-         (== rep (apply-rep 'rel (list x-n ...) proc))
-         (lambda (st)
-           (let* ([repv (walk rep (state-S st))]
-                  [proc (apply-rep-proc repv)])
-             ((if (procedure? proc)
-                  (proc y ...)
-                  (rel repv x-n ... y ...))
-              st))))]))
+     #'(fresh (x-n ...)
+         (== rep (apply-rep 'rel (list x-n ...) 'doesnt-matter))
+         (finish-apply-rt rep rel (list x-n ...) (list y ...)))]))
+ 
+(define (finish-apply-rt rep rel-proc args1-vars args2-terms)
+  (lambda (st)
+    ;; The proc position of an apply-rep doesn't actually unify, because a dynamic
+    ;; rep and a staged rep should be unifiable but one will have #f and the other
+    ;; a procedure. So we have to walk the rep manually to access its field.
+    (define rep-proc (apply-rep-proc (walk rep (state-S st))))
+    (define g (if (procedure? rep-proc)
+                  (apply rep-proc args2-terms)
+                  (apply rel-proc rep (append args1-vars args2-terms))))
+    (g st)))
 
 (define-syntax lfinish-apply
   (syntax-parser
@@ -337,7 +339,7 @@
      #'(ss:later #`(finish-apply #,(data rep) (rel (x ...) (#,(data y) ...))))]))
 
 ;;
-;; Reflect
+;; Reflecting data in lifted code to code that constructs the same data
 ;;
 
 ;; (or/c (ListOf SyntaxWithData) SyntaxWithData) -> SyntaxWithDataVars
@@ -390,18 +392,6 @@
 ;; Staging entry point
 ;;
 
-(define (unique-result r)
-  (cond
-    ((null? r)
-     (error 'gen "staging failed"))
-    ((not (null? (cdr r)))
-     (for-each
-      (lambda (i x) (printf "result ~a: ~a\n" (+ 1 i) x))
-      (iota (length r))
-      r)
-     (error 'gen "staging non-deterministic"))
-    (else (car r))))
-
 (define res #f)
 
 (define-syntax ss:generate-staged
@@ -409,25 +399,33 @@
     [(_ (v ...) goal ...)
      #'(let ([v (var (new-scope))] ...)
          (ss:generate-staged-rt
-          (ss:capture-later
-           (fresh () goal ...))
+          (lambda () (fresh () goal ...))
           (list v ...)
           (list #'v ...)))]))
 
-(define (ss:generate-staged-rt goal var-vals var-ids)
-  (define result
-    (unique-result
-     (take 2 (lambda () (goal empty-state)))))
+(define (ss:generate-staged-rt goal-thunk var-vals var-ids)
+  (define stream (lambda () ((ss:capture-later goal-thunk) empty-state)))
+  (define staging-results
+    (for/list ([res (take 2 stream)])
+      (reflect-result res var-vals var-ids)))
+  (define stx (check-unique-result staging-results))
+  (set! res stx)
+  (eval-syntax stx))
 
+(define (reflect-result result var-vals var-ids)
   (define var-mapping (map cons var-vals var-ids))
   (define closed (replace-vars result var-mapping))
   (define reflected (reflect-data-in-syntax closed))
-  
-  (define stx #`(lambda #,var-ids #,reflected))
+  #`(lambda #,var-ids #,reflected))
 
-  (set! res stx)
-
-  (eval-syntax stx))
+(define (check-unique-result r)
+  (match r
+    [(list v) v]
+    ['() (error 'staged "staging failed")]
+    [else
+     (for ([x r] [i (range (length r))])
+       (printf "result ~a: ~a\n" (+ 1 i) x))
+     (error 'staged "staging non-deterministic")]))
 
 (define (generated-code)
   (and res (syntax->datum res)))
