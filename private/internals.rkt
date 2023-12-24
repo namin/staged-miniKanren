@@ -324,7 +324,7 @@
  
 (define (finish-apply-rt rep rel-proc args1-vars args2-terms)
   (lambda (st)
-    ;; The proc position of an apply-rep doesn't actually unify, because a dynamic
+    ;; The proc position of an apply-rep doesn't unify because a dynamic
     ;; rep and a staged rep should be unifiable but one will have #f and the other
     ;; a procedure. So we have to walk the rep manually to access its field.
     (define rep-proc (apply-rep-proc (walk rep (state-S st))))
@@ -342,51 +342,51 @@
 ;; Reflecting data in lifted code to code that constructs the same data
 ;;
 
-;; (or/c (ListOf SyntaxWithData) SyntaxWithData) -> SyntaxWithDataVars
+;; SyntaxWithData -> SyntaxWithDataVars
 (define (reflect-data-in-syntax t)
-  (map-syntax-with-data reflect-datum t))
+  (map-syntax-with-data reflect-term t))
 
 ;; Term -> SyntaxWithDataVars
-(define (reflect-datum t)
-  (define (nonliteral-datum? t)
-    (or (var? t) (syntax? t) (apply-rep? t)))
-
-  (define (reflect-nonliteral-datum t)
+;;
+;; Construct a syntax object representing an expression that will construct
+;; the term value `t` when evaluated at runtime. `data` elements whose
+;; values are logic variables remain in the result.
+;;
+;; Generates in order of preference: `quote` expressions where there are no
+;; subexpressions that require evaluation; `list` constructor calls for proper
+;; lists with elements that do require evaluation; and `cons` constructor calls.
+(define (reflect-term t)
+  ;; Term -> (or SyntaxWithDataVars Quotable)
+  ;;
+  ;; For each term, return either a value that can be constructed via `quote`,
+  ;; or a syntax object that constructs the term. This allows us to construct
+  ;; as large of quotations as possible.
+  (define (quotable-or-reflect t)
     (match t
-      [(? var?) (data t)]
+      [(? var?) #`#,(data t)]
       [(? syntax? t) (reflect-data-in-syntax t)]
       [(apply-rep name args proc)
-       #`(apply-rep
-          '#,name
-          #,(reflect-datum args)
-          #,(reflect-datum proc))]))
-
-  (struct literal [v] #:prefab)
-  (struct expr [v] #:prefab)
-
-  (define (to-expr-v v)
-    (match v
-      [(expr v) v]
-      [(literal v) #`(quote #,v)]))
-  
-  (define (reflect t)
-    (match t
-      [(? nonliteral-datum?) (expr (reflect-nonliteral-datum t))]
+       #`(apply-rep '#,name
+                    #,(reflect-term args)
+                    #,(reflect-term proc))]
       [(? list?)
-       (define els-refl (map reflect t))
-       (if (andmap literal? els-refl)
-           (literal (map literal-v els-refl))
-           (expr #`(list #,@(map to-expr-v els-refl))))]
+       (define els-refl (map quotable-or-reflect t))
+       (if (ormap syntax? els-refl)
+           #`(list #,@(map to-expr els-refl))
+           els-refl)]
       [(cons a d)
-       (let ([a-refl (reflect a)] [d-refl (reflect d)])
-         (match* (a-refl d-refl)
-           [((literal a-lit) (literal d-lit))
-            (literal (cons a-lit d-lit))]
-           [(a d)
-            (expr #`(cons #,(to-expr-v a) #,(to-expr-v d)))]))]
-      [else (literal t)]))
+       (define a-refl (quotable-or-reflect a))
+       (define d-refl (quotable-or-reflect d))
+       (if (or (syntax? a-refl) (syntax? d-refl))
+           #`(cons #,(to-expr a-refl) #,(to-expr d-refl))
+           (cons a-refl d-refl))]
+      [else t]))
 
-  (to-expr-v (reflect t)))
+  ;; (or SyntaxWithDataVars Quotable) -> SyntaxWithDataVars
+  (define (to-expr v)
+    (if (syntax? v) v #`(quote #,v)))
+
+  (to-expr (quotable-or-reflect t)))
 
 ;;
 ;; Staging entry point

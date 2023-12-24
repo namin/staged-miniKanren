@@ -446,7 +446,7 @@
         (compile-now-goal body))]
 
     [(_ (gather body))
-     #'(i:ss:gather (compile-now-goal body))]
+     #'(i:ss:gather (lambda () (compile-now-goal body)))]
     
     [(_ fail) #'(i:ss:atomic i:fail)]
 
