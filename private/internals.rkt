@@ -294,6 +294,30 @@
 (define (partial-apply-rt rep name args)
   (== rep (apply-rep name args #f)))
 
+
+;; Okay... we do have to allocate some fresh variables for the `y`s, I think,
+;; as they're unknown at staging-time.
+;; And we need to run the rel, with those values.
+;; And then we need to unify with some other values later.
+;;
+;; I guess an alternative to this is to do like we do in ss:generate-staged:
+;; let-bind the fresh variables instead, pass them along to the k,
+;; and explicitly substitute them.
+;;
+;; So generally two choices:
+;;   1. generate both fresh variables and unifications with syntactic variables
+;;   2. generate fresh variables, and explicitly substitute syntactic variables for them later.
+;;
+;; I wonder if we can somehow avoid one or the other approach altogether.
+
+;; I don't think we can apply #1 to normal fresh, capture-later contexts.
+;; We don't want to keep around every staging-time fresh variable, so we can't just
+;; always generate the fresh and unifications.
+
+;; Re #2, I think we need the staging-time fresh / let (var) binding, but we could avoid
+;; the explicit unifications and leave the creation of them to the other process.
+
+
 (define-syntax ss:specialize-partial-apply
   (syntax-parser
     [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
@@ -342,51 +366,52 @@
 ;; Reflecting data in lifted code to code that constructs the same data
 ;;
 
-;; SyntaxWithData -> SyntaxWithDataVars
+;; SyntaxWithData -> Syntax
 (define (reflect-data-in-syntax t)
   (map-syntax-with-data reflect-term t))
 
-;; Term -> SyntaxWithDataVars
+;; Term -> Syntax
 ;;
 ;; Construct a syntax object representing an expression that will construct
-;; the term value `t` when evaluated at runtime. `data` elements whose
-;; values are logic variables remain in the result.
+;; the term value `t` when evaluated at runtime.
+;;
+;; Expects that all logic variables in the term have already been replaced
+;; by identifiers referring to runtime fresh- or lambda- bindings.
 ;;
 ;; Generates in order of preference: `quote` expressions where there are no
 ;; subexpressions that require evaluation; `list` constructor calls for proper
 ;; lists with elements that do require evaluation; and `cons` constructor calls.
 (define (reflect-term t)
-  ;; Term -> (or SyntaxWithDataVars Quotable)
+  ;; Term -> (or Syntax Quotable)
   ;;
   ;; For each term, return either a value that can be constructed via `quote`,
   ;; or a syntax object that constructs the term. This allows us to construct
   ;; as large of quotations as possible.
-  (define (quotable-or-reflect t)
+  (define (quotable-or-reflected t)
     (match t
-      [(? var?) #`#,(data t)]
-      [(? syntax? t) (reflect-data-in-syntax t)]
-      [(apply-rep name args proc)
+      [(or (? symbol?) (? number?) (? boolean?) (? string?)) t]
+      [(? identifier?) t] ;; references inserted by replace-vars
+      [(apply-rep name args proc-stx)
        #`(apply-rep '#,name
                     #,(reflect-term args)
-                    #,(reflect-term proc))]
+                    #,(reflect-data-in-syntax proc-stx))]
       [(? list?)
-       (define els-refl (map quotable-or-reflect t))
+       (define els-refl (map quotable-or-reflected t))
        (if (ormap syntax? els-refl)
            #`(list #,@(map to-expr els-refl))
            els-refl)]
       [(cons a d)
-       (define a-refl (quotable-or-reflect a))
-       (define d-refl (quotable-or-reflect d))
+       (define a-refl (quotable-or-reflected a))
+       (define d-refl (quotable-or-reflected d))
        (if (or (syntax? a-refl) (syntax? d-refl))
            #`(cons #,(to-expr a-refl) #,(to-expr d-refl))
-           (cons a-refl d-refl))]
-      [else t]))
+           (cons a-refl d-refl))]))
 
-  ;; (or SyntaxWithDataVars Quotable) -> SyntaxWithDataVars
+  ;; (or Syntax Quotable) -> Syntax
   (define (to-expr v)
     (if (syntax? v) v #`(quote #,v)))
 
-  (to-expr (quotable-or-reflect t)))
+  (to-expr (quotable-or-reflected t)))
 
 ;;
 ;; Staging entry point
