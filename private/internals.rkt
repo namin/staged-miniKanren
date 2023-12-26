@@ -169,9 +169,12 @@
        (lambda (st-after)
          (fresh-local-vars
           initial-var-idx
-          (append (walk*-L (generate-constraints st-after) st-after)
-                  (generate-subst-exts st-after initial-var-idx)
-                  (walk*-L (reverse (state-L st-after)) st-after))))))))
+          (append
+           ;; TODO: this captures all constraints added during the evaluation of the captured goal,
+           ;; even those for variables that are irrelevant outside.
+           (walk*-L (generate-constraints st-after) st-after)
+           (generate-subst-exts st-after initial-var-idx)
+           (walk*-L (reverse (state-L st-after)) st-after))))))))
 
 ;; Int, (ListOf SyntaxWithData) -> SyntaxWithData
 (define (fresh-local-vars initial-var-idx L)
