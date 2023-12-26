@@ -88,11 +88,6 @@
            ((later #`(disj . #,results))
             st-original))))))
 
-(define-syntax conj
-  (syntax-rules ()
-    [(_ g) g]
-    [(_ g0 g ...) (lambda (st) (bind* (g0 st) g ...))]))
-
 (define-syntax disj
   (syntax-rules ()
     [(_ g) g]
@@ -245,13 +240,10 @@
 (define (var-local? v initial-var-idx)
   (> (var-idx v) initial-var-idx))
 
-(define generate-subst-exts
-  (lambda (st initial-var-idx)
-    (let* ((S (state-S st))
-           (exts (subst-exts S)))
-      (for/list ([b (reverse exts)]
-                 #:when (not (var-local? (car b) initial-var-idx)))
-        #`(== #,(data (car b)) #,(data (walk* (cdr b) (state-S st))))))))
+(define (generate-subst-exts st initial-var-idx)
+  (for/list ([b (reverse (subst-exts (state-S st)))]
+             #:when (not (var-local? (car b) initial-var-idx)))
+    #`(== #,(data (car b)) #,(data (walk* (cdr b) (state-S st))))))
 
 (define (generate-constraints st)
   (let ([vars (remove-duplicates (reverse (C-vars (state-C st))))])
