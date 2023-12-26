@@ -69,7 +69,7 @@
         st
         (g st))))
 
-(define (ss:fallback fallback-g g)
+(define (fallback fallback-g g)
   (succeed-in-fallback
    (lambda (st)
      (let ([answers (parameterize ([in-surrounding-fallback-evaluation? #t])
@@ -79,13 +79,13 @@
          [(list answer) (g st)]
          [answers (fallback-g st)])))))
 
-(define (ss:gather goal-thunk)
+(define (gather goal-thunk)
   (succeed-in-fallback
    (lambda (st-original)
-     (let ((results (take #f (lambda () ((ss:capture-later goal-thunk) st-original)))))
+     (let ((results (take #f (lambda () ((capture-later goal-thunk) st-original)))))
        (if (null? results)
            #f
-           ((ss:later #`(disj . #,results))
+           ((later #`(disj . #,results))
             st-original))))))
 
 (define-syntax conj
@@ -106,17 +106,17 @@
 ;; Basic "later" constraint and goal variants
 ;;
 
-(define (ss:later x)
+(define (later x)
   (lambda (st)
     (state-with-L st (cons x (state-L st)))))
 
 (define (later-binary-constraint constraint-id)
   (lambda (t1 t2)
-    (ss:later #`(#,constraint-id #,(data t1) #,(data t2)))))
+    (later #`(#,constraint-id #,(data t1) #,(data t2)))))
 
 (define (later-unary-constraint constraint-id)
   (lambda (t)
-    (ss:later #`(#,constraint-id #,(data t)))))
+    (later #`(#,constraint-id #,(data t)))))
 
 (define-values (l== l=/= labsento)
   (apply values (map later-binary-constraint (list #'== #'=/= #'absento))))
@@ -127,7 +127,7 @@
 (define-syntax lapp
   (syntax-rules ()
     [(_ relation arg ...)
-     (ss:later #`(relation #,(data arg) ...))]))
+     (later #`(relation #,(data arg) ...))]))
 
 (define-syntax invoke-fallback
   (syntax-parser
@@ -144,15 +144,15 @@
      ;; We need this trick because of the expander's shortcomings re: adjusting references in syntax properties.
      #:with rel-annotated (syntax-property (datum->syntax #'fn (syntax-e #'rel))
                                            'fallback-function (syntax-e #'fn) #t)
-     #'(ss:later #`(invoke-fallback rel-annotated #,(data arg) ...))]))
+     #'(later #`(invoke-fallback rel-annotated #,(data arg) ...))]))
 
 (define-syntax lpartial-apply
   (syntax-rules ()
     [(_ rep (rel (x ...) (under ...)))
-     (ss:later #`(partial-apply #,(data rep) (rel (#,(data x) ...) (under ...))))]))
+     (later #`(partial-apply #,(data rep) (rel (#,(data x) ...) (under ...))))]))
 
-(define lsucceed (ss:later #'succeed))
-(define lfail (ss:later #'fail))
+(define lsucceed (later #'succeed))
+(define lfail (later #'fail))
 
 ;;
 ;; Scoped lift capturing
@@ -161,7 +161,7 @@
 ;; (-> Goal) -> (-> State SyntaxWithData)
 ;; The goal argument is in a thunk to make sure that fresh variable allocations within
 ;; do not happen before we have captured the initial-var-idx. It's a bit of a nasty hack.
-(define (ss:capture-later goal-thunk)
+(define (capture-later goal-thunk)
   (lambda (st-original)
     (let* ([st-before (state-with-C st-original (C-new-later-scope (state-C st-original)))]
            [st-before (state-with-L st-before '())]
@@ -285,7 +285,7 @@
 (define (partial-apply-rt rep name args)
   (== rep (apply-rep name args #f)))
 
-(define-syntax ss:specialize-partial-apply
+(define-syntax specialize-partial-apply
   (syntax-parser
     [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-var ...) (generate-temporaries #'(y ...))
@@ -296,21 +296,21 @@
             ;; This is a little subtle. This unification ends up as code in the
             ;; lambda body, but it has to be part of L in the capture to ensure
             ;; that substitution extensions to `y-n` are captured in the walk.
-            (ss:later #`(== #,(data y-var) y-arg))
+            (later #`(== #,(data y-var) y-arg))
             ...
             (rel rep x ... y-var ...)))
         rep 'rel (list x ...) (list #'y-arg ...))]))
 
 (define (specialize-partial-apply-rt goal-thunk rep rel-name x-vals y-ids)
-  (ss:capture-later-and-then
+  (capture-later-and-then
    goal-thunk
    (lambda (result)
      (l== rep (apply-rep rel-name x-vals #`(lambda #,y-ids #,result))))))
 
 ;; (-> Goal), (-> SyntaxWithData Goal) -> Goal
-(define (ss:capture-later-and-then goal-thunk k)
+(define (capture-later-and-then goal-thunk k)
   (lambda (st)
-    (bind ((ss:capture-later goal-thunk) st)
+    (bind ((capture-later goal-thunk) st)
           (lambda (L) ((k L) st)))))
 
 (define-syntax finish-apply
@@ -335,7 +335,7 @@
 (define-syntax lfinish-apply
   (syntax-parser
     [(_ rep (rel ((~and x (~literal _)) ...) (y ...)))
-     #'(ss:later #`(finish-apply #,(data rep) (rel (x ...) (#,(data y) ...))))]))
+     #'(later #`(finish-apply #,(data rep) (rel (x ...) (#,(data y) ...))))]))
 
 ;;
 ;; Reflecting data in lifted code to code that constructs the same data
@@ -395,20 +395,20 @@
 
 (define res #f)
 
-(define-syntax ss:generate-staged
+(define-syntax generate-staged
   (syntax-parser
     [(_ (v ...) goal ...)
      #:with (v-arg ...) (generate-temporaries #'(v ...))
-     #'(ss:generate-staged-rt
+     #'(generate-staged-rt
         (lambda ()
           (fresh (v ...)
             ;; see also specialize-partial-apply
-            (ss:later #`(== #,(data v) v-arg)) ...
+            (later #`(== #,(data v) v-arg)) ...
             goal ...))
         (list #'v-arg ...))]))
 
-(define (ss:generate-staged-rt goal-thunk var-ids)
-  (define stream (lambda () ((ss:capture-later goal-thunk) empty-state)))
+(define (generate-staged-rt goal-thunk var-ids)
+  (define stream (lambda () ((capture-later goal-thunk) empty-state)))
   (define (reflect-result result)
     #`(lambda #,var-ids #,(reflect-data-in-syntax result)))
   (define stx (check-unique-result (map reflect-result (take 2 stream))))

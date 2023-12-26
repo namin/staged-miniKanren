@@ -389,12 +389,12 @@
     [(_ (staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with (gl) (lift-fallbacks! (list #'g) #'staged '())
-     #:with staged-f (syntax-local-lift-expression #'(i:ss:generate-staged (var ...) (compile-now-goal gl)))
+     #:with staged-f (syntax-local-lift-expression #'(i:generate-staged (var ...) (compile-now-goal gl)))
      #'(staged-f var ...)]
     [(_ (time-staged g))
      #:with (var ...) (free-id-set->list (free-vars #'g))
      #:with (gl) (lift-fallbacks! (list #'g) #'staged '())
-     #:with staged-f (syntax-local-lift-expression #'(time (i:ss:generate-staged (var ...) (compile-now-goal gl))))
+     #:with staged-f (syntax-local-lift-expression #'(time (i:generate-staged (var ...) (compile-now-goal gl))))
      #'(staged-f var ...)]
     [(_ (~and stx (~or (later . _) (fallback . _) (gather . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
@@ -425,7 +425,7 @@
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
         (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)]
                       [rel (reference-generator #'rel)])
-          #'(i:ss:specialize-partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
+          #'(i:specialize-partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "specialize-partial-apply expects relation defined by defrel-partial" #'r)])]
 
     [(_ (== t1 t2))
@@ -441,14 +441,14 @@
      #'(i:conde [(compile-now-goal g) ...] ...)]
     
     [(_ (fallback fb body))
-     #'(i:ss:fallback
+     #'(i:fallback
         (compile-now-goal fb)
         (compile-now-goal body))]
 
     [(_ (gather body))
-     #'(i:ss:gather (lambda () (compile-now-goal body)))]
+     #'(i:gather (lambda () (compile-now-goal body)))]
     
-    [(_ fail) #'(i:ss:atomic i:fail)]
+    [(_ fail) #'(i:atomic i:fail)]
 
     [(_ (later g))
      #'(compile-later-goal g)]
@@ -545,7 +545,7 @@
     [(_ (fresh (x:id ...) g ...))
      #'(i:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
-     #'(i:ss:gather
+     #'(i:gather
         (i:conde
          [(compile-later-goal g) ...] ...))]
     [(_ fail) #'i:lfail]
