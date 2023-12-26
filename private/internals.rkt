@@ -370,19 +370,20 @@
 (define (reflect-data-in-syntax t)
   (map-syntax-with-data reflect-term t))
 
-;; Term -> Syntax
+;; TermWithIdentifiers -> Syntax
 ;;
 ;; Construct a syntax object representing an expression that will construct
 ;; the term value `t` when evaluated at runtime.
 ;;
-;; Expects that all logic variables in the term have already been replaced
-;; by identifiers referring to runtime fresh- or lambda- bindings.
+;; Expects that all logic variables in the term have already been walked away
+;; or replaced by identifiers referring to runtime fresh- or lambda- bindings,
+;; and that constraints the variables have been turned into syntax elsewhere.
 ;;
 ;; Generates in order of preference: `quote` expressions where there are no
 ;; subexpressions that require evaluation; `list` constructor calls for proper
 ;; lists with elements that do require evaluation; and `cons` constructor calls.
 (define (reflect-term t)
-  ;; Term -> (or Syntax Quotable)
+  ;; TermWithIdentifiers -> (or Syntax Quotable)
   ;;
   ;; For each term, return either a value that can be constructed via `quote`,
   ;; or a syntax object that constructs the term. This allows us to construct
