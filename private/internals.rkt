@@ -154,18 +154,9 @@
 (define lsucceed (ss:later #'succeed))
 (define lfail (ss:later #'fail))
 
-
 ;;
 ;; Scoped lift capturing
 ;;
-
-;; Goal, (-> SyntaxWithData Goal) -> Goal
-(define (ss:capture-later-and-then goal-thunk k)
-  (lambda (st)
-    (bind*
-     st
-     (ss:capture-later goal-thunk)
-     (lambda (L) ((k L) st)))))
 
 ;; (-> Goal) -> (-> State SyntaxWithData)
 ;; The goal argument is in a thunk to make sure that fresh variable allocations within
@@ -294,49 +285,33 @@
 (define (partial-apply-rt rep name args)
   (== rep (apply-rep name args #f)))
 
-
-;; Okay... we do have to allocate some fresh variables for the `y`s, I think,
-;; as they're unknown at staging-time.
-;; And we need to run the rel, with those values.
-;; And then we need to unify with some other values later.
-;;
-;; I guess an alternative to this is to do like we do in ss:generate-staged:
-;; let-bind the fresh variables instead, pass them along to the k,
-;; and explicitly substitute them.
-;;
-;; So generally two choices:
-;;   1. generate both fresh variables and unifications with syntactic variables
-;;   2. generate fresh variables, and explicitly substitute syntactic variables for them later.
-;;
-;; I wonder if we can somehow avoid one or the other approach altogether.
-
-;; I don't think we can apply #1 to normal fresh, capture-later contexts.
-;; We don't want to keep around every staging-time fresh variable, so we can't just
-;; always generate the fresh and unifications.
-
-;; Re #2, I think we need the staging-time fresh / let (var) binding, but we could avoid
-;; the explicit unifications and leave the creation of them to the other process.
-
-
 (define-syntax ss:specialize-partial-apply
   (syntax-parser
     [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
-     #:with (y-n ...) (generate-temporaries #'(y ...))
-     #:with (y-n2 ...) (generate-temporaries #'(y ...))
-     #'(ss:capture-later-and-then
+     #:with (y-var ...) (generate-temporaries #'(y ...))
+     #:with (y-arg ...) (generate-temporaries #'(y ...))
+     #'(specialize-partial-apply-rt
         (lambda ()
-          (fresh (y-n ...)
+          (fresh (y-var ...)
             ;; This is a little subtle. This unification ends up as code in the
             ;; lambda body, but it has to be part of L in the capture to ensure
             ;; that substitution extensions to `y-n` are captured in the walk.
-            (ss:later #`(== #,(data y-n) y-n2))
+            (ss:later #`(== #,(data y-var) y-arg))
             ...
-            (rel rep x ... y-n ...)))
-        (lambda (body)
-          (l== rep (apply-rep
-                    'rel (list x ...)
-                    #`(lambda (y-n2 ...)
-                        #,body)))))]))
+            (rel rep x ... y-var ...)))
+        rep 'rel (list x ...) (list #'y-arg ...))]))
+
+(define (specialize-partial-apply-rt goal-thunk rep rel-name x-vals y-ids)
+  (ss:capture-later-and-then
+   goal-thunk
+   (lambda (result)
+     (l== rep (apply-rep rel-name x-vals #`(lambda #,y-ids #,result))))))
+
+;; (-> Goal), (-> SyntaxWithData Goal) -> Goal
+(define (ss:capture-later-and-then goal-thunk k)
+  (lambda (st)
+    (bind ((ss:capture-later goal-thunk) st)
+          (lambda (L) ((k L) st)))))
 
 (define-syntax finish-apply
   (syntax-parser
@@ -381,7 +356,7 @@
 ;;
 ;; Generates in order of preference: `quote` expressions where there are no
 ;; subexpressions that require evaluation; `list` constructor calls for proper
-;; lists with elements that do require evaluation; and `cons` constructor calls.
+;; lists with elements that do require evaluation; and `cons` constructor calls.  
 (define (reflect-term t)
   ;; TermWithIdentifiers -> (or Syntax Quotable)
   ;;
@@ -423,26 +398,22 @@
 (define-syntax ss:generate-staged
   (syntax-parser
     [(_ (v ...) goal ...)
-     #'(let ([v (var (new-scope))] ...)
-         (ss:generate-staged-rt
-          (lambda () (fresh () goal ...))
-          (list v ...)
-          (list #'v ...)))]))
+     #:with (v-arg ...) (generate-temporaries #'(v ...))
+     #'(ss:generate-staged-rt
+        (lambda ()
+          (fresh (v ...)
+            ;; see also specialize-partial-apply
+            (ss:later #`(== #,(data v) v-arg)) ...
+            goal ...))
+        (list #'v-arg ...))]))
 
-(define (ss:generate-staged-rt goal-thunk var-vals var-ids)
+(define (ss:generate-staged-rt goal-thunk var-ids)
   (define stream (lambda () ((ss:capture-later goal-thunk) empty-state)))
-  (define staging-results
-    (for/list ([res (take 2 stream)])
-      (reflect-result res var-vals var-ids)))
-  (define stx (check-unique-result staging-results))
+  (define (reflect-result result)
+    #`(lambda #,var-ids #,(reflect-data-in-syntax result)))
+  (define stx (check-unique-result (map reflect-result (take 2 stream))))
   (set! res stx)
   (eval-syntax stx))
-
-(define (reflect-result result var-vals var-ids)
-  (define var-mapping (map cons var-vals var-ids))
-  (define closed (replace-vars result var-mapping))
-  (define reflected (reflect-data-in-syntax closed))
-  #`(lambda #,var-ids #,reflected))
 
 (define (check-unique-result r)
   (match r
