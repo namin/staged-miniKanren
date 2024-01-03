@@ -93,14 +93,18 @@ buildDisj(ls) = {
  (conde . [state-to-code(s,c,l) for all (s,c,l) in ls])
 }
 
+// in the impl, we have a way to decide whether a variable is local to the dynamic extent of the code generation process
+// make sure substitution is fully applied
 state-to-code((s,c,l)) =
+  (fresh (local-variable ...) // in real impl, need to substitute
   [for each binding (x,v) in s:
-     yield (== x v)]
+     yield (== x (walk* v s))
+     if x is local]
   ++
   [for each constraint c in c:
-    constraint-to-code(c)]
+    constraint-to-code((walk* c s))]
   ++
-  l
+  (walk* l s))
 
 constraint-to-code((=/= a b)) = (=/= a b)
 etc.
