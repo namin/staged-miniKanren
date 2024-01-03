@@ -14,7 +14,7 @@ erase(specialize-partial-apply t r t ...) = (partial-apply t r t ...)
 
 `[(top_staged sg)] ~=~ [(erase sg)]` if staging terminates (and is deterministic).
 The denotation `[]` is an answer set.
-For terminating queries, thetheorem is:
+For terminating queries, the theorem is:
 `(run* (staged sg)) ~=~ (run* (erase sg))`.
 
 Another way:
