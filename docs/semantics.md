@@ -27,7 +27,7 @@ top_staged(sg) = rg
 `top_staged(sg)` produces a substitution and a program, and reifies it into an `rg`.
 
 ```
-top_staged(sg) = reify(staged(sg))
+top_staged(sg) = state-to-code(staged(sg))
 ```
 
 ## Definition of `staged(sg) = [(s,c)]`
