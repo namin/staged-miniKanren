@@ -47,21 +47,30 @@ top_staged(sg) = reify(staged(sg))
 // ([x -> 3] o [x -> 2])
 // ([x -> 3, y -> x] o [y -> 2])
 
-staged(sg): lazy container of substitution and code pairs: [(s,c)]
+// c is a list of constraints
+// l is a list of code
+
+staged(sg): lazy container of substitution and code pairs: [(s,c,l)]
 
 staged(g(sg))
   staged(== t1 t2) = {
     s = unify t1 t2
-    if s then [(s,[])] else []
+    if s then [(s,[],[])] else []
+  }
+  staged(=/= t1 t2) = {
+    c = solve(=/= t1 t2)
+    if c then [(∅,c,[])] else []
   }
   etc.
   staged(conj g1 g2) = {
-    l1 = staged(g1)
-    l2 = staged(g2)
-    [ s1 o s2, c1 ++ c2
-      for all (s1,c1) in l1
-        for all (s2,c2) in l2
-          if s1 o s2 ]
+    ls1 = staged(g1)
+    ls2 = staged(g2)
+    [ s1 o s2, c, l1 ++ l2
+      for all (s1,c1,l1) in ls1
+        for all (s2,c2,l2) in ls2
+          if s1 o s2
+          let c = solve(s1 o s2, c1 ++ c2)
+          if c]
   }
   staged(disj g1 g2) = staged(g1) /++/ staged(g2)
   staged(fresh1 v sg) = staged(sg[v := fresh_logic_var()])
@@ -71,18 +80,18 @@ staged(g(sg))
   staged(finish-apply t rname t ...) // omitted for now
 
 staged(later lg) = (success, [lg])
-staged(gather sg) = (success, buildDisj(staged(sg)))
+staged_t(gather sg) = (success, buildDisj(staged(sg)))
 staged_t(fallback sg) =
-  l = staged_f(sg)
-  if |l|==0 then [] else if |l|==1 staged_t(sg) else [((),erase(sg))]
-staged_f(fallback sg) =
-  l = staged_f(sg)
-  if |l|==0 then [] else [((),())]
+  ls = staged_f(sg)
+  if |ls|==0 then [] else if |ls|==1 staged_t(sg) else [(∅,[],erase(sg))]
+// for nested fallback and gather cases
+staged_f(fallback sg) = succeed
+staged_f(gather sg) = succeed
 staged(specialize-partial-apply t r t ...) // omitted for now
 
-buildDisj(l) = {
- (conde . [reify(s,c) for all (s,c) in l])
+buildDisj(ls) = {
+ (conde . [reify(s,c,l) for all (s,c,l) in ls])
 }
 
-reify((s,c)) = // omitted for now
+reify((s,c,l)) = // omitted for now
 ```
