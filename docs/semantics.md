@@ -90,8 +90,19 @@ staged_f(gather sg) = succeed
 staged(specialize-partial-apply t r t ...) // omitted for now
 
 buildDisj(ls) = {
- (conde . [reify(s,c,l) for all (s,c,l) in ls])
+ (conde . [state-to-code(s,c,l) for all (s,c,l) in ls])
 }
 
-reify((s,c,l)) = // omitted for now
+state-to-code((s,c,l)) =
+  [for each binding (x,v) in s:
+     yield (== x v)]
+  ++
+  [for each constraint c in c:
+    constraint-to-code(c)]
+  ++
+  l
+
+constraint-to-code((=/= a b)) = (=/= a b)
+etc.
+
 ```
