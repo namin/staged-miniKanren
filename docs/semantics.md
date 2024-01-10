@@ -138,7 +138,8 @@ staged_t(fallback sg) =
 // for nested fallback and gather cases
 staged_f(fallback sg) = succeed
 staged_f(gather sg) = succeed
-staged(specialize-partial-apply t r t ...) // omitted for now
+staged(specialize-partial-apply t0 r t ...) =
+we unify t0 with an apply-rep that has a proc that is a lambda with the result of staging the relation // TODO: not precise enough to be meaningful
 
 buildDisj(ls) = {
  (conde . [state-to-code(s,c,l) for all (s,c,l) in ls])
