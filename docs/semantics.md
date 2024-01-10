@@ -71,10 +71,16 @@ how unifies treat apply-rep: it ignores the fun position, otherwise structural.
   t0 unifies with (apply-rep rname t ... proc)
 [(partial-apply t0 rname t ...)] = t0 unifies with (apply-rep rname t ... <ignored>)
 [(finish-apply t0 rname t ...)] = walk t0, and get a rep
+three cases: rep is fresh, rep is an apply-rep without a proc, rep is an apply-rep with a proc
 if rep has a proc:
 then (proc t ...)
-else apply rname with t0, the first-application args from rep and t ...
-
+else if rep has no proc, but is an apply rep
+apply rname with t0, the first-application args from rep and t ...
+else // rep is fresh
+we allocate the fresh variables for the first-application params
+create an apply-rep struct that has the real name and that list
+and unify t0 with this apply-rep
+and then do apply rname, etc.
 ```
 
 ## Definition of `staged(sg) = [(s,c)]`
