@@ -21,25 +21,27 @@
 (defrel/staged (evalo e env v)
   (fallback
    (conde
-     ((numbero e)
-      (later (== e v)))
+     ((numbero e) (== e v))
      ((fresh (e1 e2 v1 v2)
         (== e `(cons ,e1 ,e2))
-        (later (== v (cons v1 v2)))
+        (== v (cons v1 v2))
         (evalo e1 env v1)
         (evalo e2 env v2)))
-     ((fresh (e1 e2)
-        (== e `(amb ,e1 ,e2))
+     ((fresh (ve res null-e pair-e first-x rest-x)
+        (== e `(match ,ve ['() ,null-e] [(cons ,first-x ,rest-x) ,pair-e]))
+        (symbolo first-x)
+        (symbolo rest-x)
+        (evalo ve env res)
         (gather
          (conde
-           ((evalo e1 env v))
-           ((evalo e2 env v))))))
-     ((fresh (env-v)
-        (symbolo e)
-        ;; We want to make the unifications with v later-stage.
-        ;; We put it before the lookupo to make sure the runtime version knows the value.
-        (later (== v env-v))
-        (lookupo e env env-v)))
+           ((== res '()) (evalo null-e env v))
+           ((fresh (first rest)
+              (== res (cons first rest))
+              (evalo pair-e
+                     `((,first-x . ,first) (,rest-x . ,rest) . ,env)
+                     v)))))))
+     ((symbolo e)
+      (lookupo e env v))
      ((fresh (x e0)
         (== e `(lambda (,x) ,e0))
         (specialize-partial-apply v applyo x e0 env)))
@@ -50,11 +52,15 @@
         (later (finish-apply v1 applyo v2 v)))))))
 
 (test
-  (run* (v) (staged (evalo '(amb 1 2) '()  v)))
-  '(1 2))
-
-(run 4 (e v) (staged (evalo `(cons (amb 1 2) ,e) '()  v)))
+ (run 4 (e v) (staged (evalo `(cons 1 ,e) '()  v)))
+ '(((_.0 (1 . _.0)) $$ (num _.0))
+  (((cons _.0 _.1) (1 _.0 . _.1)) $$ (num _.0 _.1))
+  ((lambda (_.0) _.1) (1 . #s(apply-rep applyo (_.0 _.1 ()) #f)))
+  (((cons _.0 (cons _.1 _.2)) (1 _.0 _.1 . _.2)) $$ (num _.0 _.1 _.2))))
 
 (test
-  (run* (v) (staged (evalo '((lambda (x) (amb x 3)) (amb 1 2)) '() v)))
-  '(3 3 1 2))
+ (run 1 (q) (staged (evalo `(match (cons 1 2) ['() 0] [(cons a d) d]) '() q)))
+ '(2))
+
+(generated-code)
+
