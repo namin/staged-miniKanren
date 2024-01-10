@@ -12,7 +12,7 @@ erase(fallback sg) = erase(sg)
 erase(specialize-partial-apply t r t ...) = (partial-apply t r t ...)
 ```
 
-`[(top_staged sg)] ~=~ [(erase sg)]` if staging terminates (and is deterministic).
+`[(top_staged sg)] ~=~ [(erase sg)]` if staging terminates successfully (and is deterministic).
 The denotation `[]` is an answer set.
 For terminating queries, the theorem is:
 `(run* (staged sg)) ~=~ (run* (erase sg))`.
@@ -28,6 +28,43 @@ top_staged(sg) = rg
 
 ```
 top_staged(sg) = state-to-code(staged(sg))
+```
+
+### Proof by structural induction on sg
+
+Case (== t1 t2):
+  Subcase 1: if s = unify t1 t2 succeeds then
+    state-to-code(staged(sg)) == state-to-code([(s,[],[])]) =
+    s produces a conjunction of unifications
+    need it to be equivalent to to (== t1 t2)
+    need to specify specify unstaged semantics
+  
+  Subcase 2: if ... fails: then staging fails. Vacuous.
+  
+Case (conj g1 g2):
+  by induction:
+    `[(top_staged g1)] ~=~ [(erase g1)]`
+    `[(top_staged g2)] ~=~ [(erase g2)]`
+    
+    if composition of substitution succeeds
+    if constraint solving succeeds
+    
+    staged(sg) = [s1 o s2, solve(s1 o s2, c1 ++ c2), l1 ++ l2]
+    vs
+    (erased(conj g1 g2)) = same semantics
+    
+    need to reason about composed substitution,
+    turning that into unifications
+    
+    need to srength hypothesis to not go to top
+    
+    need to worry about reordering
+
+## Unstaged Partial Apply
+
+```
+[(partial-apply t rname t ...)] = // omitted for now
+[(finish-apply t rname t ...)] = // omitted for now
 ```
 
 ## Definition of `staged(sg) = [(s,c)]`
@@ -76,8 +113,6 @@ staged(g(sg))
   staged(fresh1 v sg) = staged(sg[v := fresh_logic_var()])
   staged(fresh (tv ...) sg ...) // just a macro over fresh1
   staged(conde (sg ...) ...) // just a macro of disj of conjs
-  staged(partial-apply t rname t ...) // omitted for now
-  staged(finish-apply t rname t ...) // omitted for now
 
 staged(later lg) = (success, [lg])
 staged_t(gather sg) = (success, buildDisj(staged(sg)))
