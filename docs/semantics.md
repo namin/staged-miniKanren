@@ -63,8 +63,18 @@ Case (conj g1 g2):
 ## Unstaged Partial Apply
 
 ```
-[(partial-apply t rname t ...)] = // omitted for now
-[(finish-apply t rname t ...)] = // omitted for now
+how unifies treat apply-rep: it ignores the fun position, otherwise structural.
+
+[(residual-partial-apply t0 rname t ... proc)] =
+  proc should take as many arguments as the second application of rname
+  and returns a goal (a function from state to stream)
+  t0 unifies with (apply-rep rname t ... proc)
+[(partial-apply t0 rname t ...)] = t0 unifies with (apply-rep rname t ... <ignored>)
+[(finish-apply t0 rname t ...)] = walk t0, and get a rep
+if rep has a proc:
+then (proc t ...)
+else apply rname with t0, the first-application args from rep and t ...
+
 ```
 
 ## Definition of `staged(sg) = [(s,c)]`
