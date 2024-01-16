@@ -4,9 +4,6 @@
          "../main.rkt"
          "../test-check.rkt")
 
-#;(if-null? xs a b)
-#;(match xs ['() a] [(cons x xs) b])
-
 (defrel/staged (booleano v)
   (conde [(== v #t)] [(== v #f)]))
 
