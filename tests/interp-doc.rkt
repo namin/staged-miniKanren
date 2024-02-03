@@ -41,5 +41,14 @@
 
 (run 3 (e v) (staged (evalo `(or (or #f ,e) #f) '() v)))
 
+(run 3 (e v) (staged (evalo `((lambda (x) (or (or #f ,e) x)) #f) '() v)))
+
+(run 3 (e v) (staged (evalo `((lambda (x) x) #f) '()  v)))
+
+(run 3 (e v) (staged (evalo `((lambda (x) (or #f x)) #f) '()  v)))
+
+(run 3 (e v) (staged (evalo `((lambda (x) (or ,e x)) #f) '()  v)))
+
+(run 3 (e v) (staged (evalo `((lambda (f) (or (f #t) (f #f))) (lambda (x) x)) '() v)))
 (generated-code)
 
