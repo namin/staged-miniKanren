@@ -83,6 +83,50 @@ and unify t0 with this apply-rep
 and then do apply rname, etc.
 ```
 
+## Monadic Definition
+
+Top-level entry point: `staged(sg) = rg`
+
+Local thing: `stagedi(s) = \state -> stream<state>`
+
+`state` is a staging state, with the `l` part of the store.
+
+Need to be a stream because in fallback, want to fallback if there are at least two things, and what this to work regardless of whether there are infinite substreams at staging time. In the real interpreter, we almost always have things setup so that the branches are almost always cutoff by nested fallbacks. Symbol case with lookupo, eg.
+
+Syntactic convenience:
+`[s] state = stream<state>`
+
+Spelling out the state:
+(substitution+constraints sc, code l, counter n)
+
+what is the datatype in the L part of the state?
+it has a representation of the constructs of the language but also terms inside of that, which may contain logic variables.
+in real implementation, syntax objects for the constructs, and normal miniKanren values for the terms.
+We we use data tag to distinguish between == and the data parts.
+
+```
+[(== t1 t2)] state =
+  sc = unify t1 t2 (SC(state))
+  if sc then stream-singleton(update-SC(sc, state)) else fail
+
+[(later lg)] state = stream-singleton(add-update-L(lg, state))
+
+[(gather sg)] state = stream-singleton(add-update-L(buildDisj(sg, state)))
+
+
+// capture it takes a staged goal and a state and returns a stream of syntax after reflecting all the constraints and closing any free variables with a fresh binding
+capture(sg, state) = {
+  n = C(state)
+  // in real impl., which we could improve.
+}
+
+buildDisj(sg, state) = {
+ list-of-syntaxes = take-all(capture(sg, state))
+ (conde . list-of-syntaxes)
+}
+
+```
+
 ## Definition of `staged(sg) = [(s,c)]`
 
 ```
