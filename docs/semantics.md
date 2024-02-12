@@ -160,6 +160,18 @@ We we use data tag to distinguish between == and the data parts.
     [x]       => x
     otherwise => stream-singleton(add-update-L(erase(sg), (sc, l, n, false)))
 
+// global environment env
+[(specialize-partial-apply t_rep r_name t_args ...)] state = {
+  (defrel-partial/staged (_ tv_rep [tv1 ...] [tv2 ...]) sg) = lookup r_name in env
+  sg' = substitute t_args for tv1 in sg
+  // note: we fresh within capture in the impl, with some subtle point ensuing
+  tv2' = fresh vars for each tv2, state' = inc++ counter state
+  sg'' = substitute tv2' for tv2 in sg'
+  // maybe some substitution for tv_rep is needed
+  singleton-stream(syntax) = capture(sg'', state'')
+  syntax' = substitute tv2 for tv2' in syntax
+  [(later (== t_rep APPLYREP(r_name (t_args ...) lambda(tv2 ...).syntax')))] state
+}
 
 // capture it takes a staged goal and a state and returns a stream of syntax after reflecting all the constraints and closing any free variables with a fresh binding
 capture(sg, state) = {
