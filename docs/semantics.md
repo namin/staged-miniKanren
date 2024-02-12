@@ -51,7 +51,12 @@ Theorem:
 ### Proof by structural induction on sg
 
 Case (== t1 t2):
-  Subcase 1: if s = unify t1 t2 succeeds then
+  Subcase 1:
+     We evaluate ==, that gives us an updated state.
+     We evaluate top-level capture, that generate syntax for the unifications.
+     What it does depends on whether the term unifications refer to q or not.
+  
+  if s = unify t1 t2 succeeds then
     state-to-code(staged(sg)) == state-to-code([(s,[],[])]) =
     s produces a conjunction of unifications
     need it to be equivalent to to (== t1 t2)
