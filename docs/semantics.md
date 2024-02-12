@@ -97,7 +97,7 @@ Syntactic convenience:
 `[s] state = stream<state>`
 
 Spelling out the state:
-(substitution+constraints sc, code l, counter n, falling-back f)
+(substitution+constraints sc, code l, counter n, list of touched variables t, falling-back f)
 
 what is the datatype in the L part of the state?
 it has a representation of the constructs of the language but also terms inside of that, which may contain logic variables.
@@ -106,6 +106,8 @@ We we use data tag to distinguish between == and the data parts.
 
 ```
 [(== t1 t2)] state =
+  // TODO: update the touched variables
+  // in addition to the sc, returns variables that got extended
   sc = unify t1 t2 (SC(state))
   if sc then stream-singleton(update-SC(sc, state)) else fail
 
@@ -114,6 +116,7 @@ We we use data tag to distinguish between == and the data parts.
   state' = inc-counter(state)
   x' = var(n)
   sg' = substitute x' for x in sg
+  // assumes substitute does the right scoping of nested freshes
   [sg'] state'
 }
 
@@ -127,9 +130,9 @@ We we use data tag to distinguish between == and the data parts.
 
 [(gather sg)] state = stream-singleton(add-update-L(buildDisj(sg, state)))
 
-[(fallback sg)] state@(sc, l, n, true)  = stream-singleton((sc, l, n, true))
-[(fallback sg)] state@(sc, l, n, false) = 
-  case take(2, sg((sc, l, n, true)) of
+[(fallback sg)] state@(sc, l, n, t, true)  = stream-singleton((sc, l, n, true))
+[(fallback sg)] state@(sc, l, n, t, false) = 
+  case take(2, sg((sc, l, n, t, true)) of
     []        => stream-empty
     [x]       => x
     otherwise => stream-singleton(add-update-L(erase(sg), (sc, l, n, false)))
@@ -138,9 +141,30 @@ We we use data tag to distinguish between == and the data parts.
 // capture it takes a staged goal and a state and returns a stream of syntax after reflecting all the constraints and closing any free variables with a fresh binding
 capture(sg, state) = {
   // capture without constraints
-  n = C(state)
-  // in real impl., which we could improve.
-  // TODO
+  n = counter(state)
+  state' = empty-L(state)
+  stream-bind ([sg] state') generate-syntax(n)
+}
+
+generate-syntax(n) state = {
+ // counter tells us which variables are fresh inside or outside
+ // touched variables tells us which variables got their values updated inside the goal
+ t = touched(state)
+ roots = filter t with variable counter <= n
+ s = SUBST(state)
+ Lroot = for each root, generate (== root (walk* v s))
+ fresh_local_vars(n, Lroot ++ walk*(L(state), s))
+}
+
+fresh_local_vars(n, L) = {
+ vars = find_all_local_vars(n, L)
+ vars' = fresh identifiers for vars
+ L' = substitute vars' for vars in L
+ fresh(vars') conj*(L')
+}
+
+find_all_local_vars(n, L) = {
+ // find all the variables in L and filter those that are local based on the counter n, so > n.
 }
 
 buildDisj(sg, state) = {
