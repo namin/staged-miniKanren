@@ -30,6 +30,19 @@ top_staged(sg) = rg
 top_staged(sg) = state-to-code(staged(sg))
 ```
 
+```
+[[(run n (q) (staged sg))]] = {
+  n = counter(initial_state)
+  state' = inc_counter(initial_state)
+  q' = var(n)
+  sg' = substitute q' for q in sg
+  singleton-stream(syntax) = capture(sg', state')
+  syntax' = substitute q for q' in syntax
+  (run n (q) syntax')
+}
+
+```
+
 ### Proof by structural induction on sg
 
 Case (== t1 t2):
