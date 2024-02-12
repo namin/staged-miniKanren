@@ -97,7 +97,7 @@ Syntactic convenience:
 `[s] state = stream<state>`
 
 Spelling out the state:
-(substitution+constraints sc, code l, counter n)
+(substitution+constraints sc, code l, counter n, falling-back f)
 
 what is the datatype in the L part of the state?
 it has a representation of the constructs of the language but also terms inside of that, which may contain logic variables.
@@ -112,6 +112,13 @@ We we use data tag to distinguish between == and the data parts.
 [(later lg)] state = stream-singleton(add-update-L(lg, state))
 
 [(gather sg)] state = stream-singleton(add-update-L(buildDisj(sg, state)))
+
+[(fallback sg)] state@(sc, l, n, true)  = stream-singleton((sc, l, n, true))
+[(fallback sg)] state@(sc, l, n, false) = 
+  case take(2, sg(in-fallback((sc, l, n, true)))) of
+    []        => stream-empty
+    [x]       => x
+    otherwise => stream-singleton(add-update-L(erase(sg), (sc, l, n, false)))
 
 
 // capture it takes a staged goal and a state and returns a stream of syntax after reflecting all the constraints and closing any free variables with a fresh binding

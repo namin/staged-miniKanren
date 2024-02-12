@@ -3,7 +3,8 @@
 (provide record-bench
          test
          time-test
-         todo)
+         todo
+         *test-result-same?*)
 
 (require "private/internals.rkt"
          (for-syntax racket/base syntax/parse))
@@ -39,6 +40,8 @@
 (define (set-test-failed!)
   (set! test-failed #t))
 
+(define *test-result-same?* (make-parameter equal?))
+
 (define-syntax test
   (syntax-parser
     ((~and test-case (_ tested-expression expected-result))
@@ -46,17 +49,14 @@
          (printf "Testing ~a\n" 'tested-expression)
          (let* ((expected expected-result)
                 (produced tested-expression))
-           (or (equal? expected produced)
-               (begin
-                 (set-test-failed!)
-                 (raise-syntax-error
-                  'test
-                  (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
-                          'tested-expression expected produced)
-                  #'test-case)
-                 ;; (format #t "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
-                 ;;         'tested-expression expected produced)
-                 )))))))
+           (unless ((*test-result-same?*) expected produced)
+             (set-test-failed!)
+             (raise-syntax-error
+              'test
+              (format "Failed: ~a~%Expected: ~a~%Computed: ~a~%"
+                      'tested-expression expected produced)
+              #'test-case)))))))
+
 
 (define-syntax time-test
   (syntax-rules ()
