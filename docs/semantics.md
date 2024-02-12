@@ -167,8 +167,8 @@ We we use data tag to distinguish between == and the data parts.
   // note: we fresh within capture in the impl, with some subtle point ensuing
   tv2' = fresh vars for each tv2, state' = inc++ counter state
   sg'' = substitute tv2' for tv2 in sg'
-  // maybe some substitution for tv_rep is needed
-  singleton-stream(syntax) = capture(sg'', state'')
+  sg''' = substitute t_rep for tv_rep in sg''
+  singleton-stream(syntax) = capture(sg''', state'')
   syntax' = substitute tv2 for tv2' in syntax
   [(later (== t_rep APPLYREP(r_name (t_args ...) lambda(tv2 ...).syntax')))] state
 }
