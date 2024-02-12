@@ -38,9 +38,14 @@ top_staged(sg) = state-to-code(staged(sg))
   sg' = substitute q' for q in sg
   singleton-stream(syntax) = capture(sg', state')
   syntax' = substitute q for q' in syntax
-  (run n (q) syntax')
+  [[(run n (q) syntax')]]
 }
 
+
+Theorem:
+[[(run n (q) (staged sg))]] ~=~ [[(run n (q) erased(sg))]]
+
+~=~: set of answers produced after reification
 ```
 
 ### Proof by structural induction on sg
