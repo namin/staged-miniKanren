@@ -120,7 +120,7 @@ We we use data tag to distinguish between == and the data parts.
 [(conde ((g1 ...) ...))] =
 // let's do disj instead
 
-[(conj sg1 sg2)] state = stream-bind ([sg1] state) [sg2] 
+[(conj sg1 sg2)] state = stream-bind([sg1] state) [sg2]
 [(disj sg1 sg2)] state = stream-append(([sg1] state), ([sg2] state))
 
 [(later lg)] state = stream-singleton(add-update-L(lg, state))
