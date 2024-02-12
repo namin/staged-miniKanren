@@ -109,6 +109,20 @@ We we use data tag to distinguish between == and the data parts.
   sc = unify t1 t2 (SC(state))
   if sc then stream-singleton(update-SC(sc, state)) else fail
 
+[(fresh (x) sg)] state = {
+  n = counter(state)
+  state' = inc-counter(state)
+  x' = var(n)
+  sg' = substitute x' for x in sg
+  [sg'] state'
+}
+
+[(conde ((g1 ...) ...))] =
+// let's do disj instead
+
+[(conj sg1 sg2)] state = stream-bind ([sg1] state) [sg2] 
+[(disj sg1 sg2)] state = stream-append(([sg1] state), ([sg2] state))
+
 [(later lg)] state = stream-singleton(add-update-L(lg, state))
 
 [(gather sg)] state = stream-singleton(add-update-L(buildDisj(sg, state)))
@@ -123,8 +137,10 @@ We we use data tag to distinguish between == and the data parts.
 
 // capture it takes a staged goal and a state and returns a stream of syntax after reflecting all the constraints and closing any free variables with a fresh binding
 capture(sg, state) = {
+  // capture without constraints
   n = C(state)
   // in real impl., which we could improve.
+  // TODO
 }
 
 buildDisj(sg, state) = {
