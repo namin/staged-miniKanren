@@ -161,6 +161,7 @@ We we use data tag to distinguish between == and the data parts.
     otherwise => stream-singleton(add-update-L(erase(sg), (sc, l, n, false)))
 
 // global environment env
+// note: maybe leave out the recursive aspect, though it's not hard to write down
 [(specialize-partial-apply t_rep r_name t_args ...)] state = {
   (defrel-partial/staged (_ tv_rep [tv1 ...] [tv2 ...]) sg) = lookup r_name in env
   sg' = substitute t_args for tv1 in sg
