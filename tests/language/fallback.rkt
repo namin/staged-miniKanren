@@ -361,3 +361,24 @@
           (== 2 x)
           (later (== q x))))))))
  '(2))
+
+;; Regression test: when falling back, we discard work done on the goal. Unifications
+;; in that goal should have no effect, but the set-var-val! optimization caused an
+;; effect to leak.
+;;
+;; I think the only way to test this is using internal two place (fallback fallback-g g)
+;; version, because in normal use of the one place (fallback g) form the original goal
+;; and the generated fallback will always have compatible constraints. Still, we don't
+;; want the constraint to leak into the generated code so I consider the set-var-val!
+;; leak to be a bug.
+(test
+ (run* (q)
+   (staged
+    (fallback
+     (later (== q 2))
+     (fresh ()
+       (== q 1)
+       (conde
+         [(== 1 1)]
+         [(== 1 1)])))))
+ '(2))

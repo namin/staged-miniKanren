@@ -73,7 +73,7 @@
   (succeed-in-fallback
    (lambda (st)
      (let ([answers (parameterize ([in-surrounding-fallback-evaluation? #t])
-                      (take 2 (lambda () (g st))))])
+                      (take 2 (lambda () (g (state-with-scope st (new-scope))))))])
        (match answers
          ['() #f]
          [(list answer) (g st)]
