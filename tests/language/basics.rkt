@@ -16,6 +16,12 @@
    (staged (later (== q 1))))
  '(1))
 
+;; This should generate a trivial residual program.
+(test
+ (run 1 (q)
+   (staged (== 1 1)))
+ '(_.0))
+
 ;; `later` application of a runtime goal
 (test
  (run 1 (q)

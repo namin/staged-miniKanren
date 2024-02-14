@@ -185,8 +185,10 @@
   (define/syntax-parse (local-var-id ...) local-var-ids)
   (define/syntax-parse (L-closed ...) (map (lambda (stx) (replace-vars stx var-mapping)) L))
 
+  (if (not (null? (attribute L-closed)))
   #'(fresh (local-var-id ...)
-      L-closed ...))
+          L-closed ...)
+      #'succeed))
 
 ;; Int, (ListOf SyntaxWithData) -> (ListOf Var)
 (define (find-local-vars initial-var-idx L)
