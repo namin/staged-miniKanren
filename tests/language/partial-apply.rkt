@@ -57,6 +57,18 @@
       [(later (== q 'branch-2))])))
  '(branch-2))
 
+;; Ensure that specializing a partial application doesn't commit any unifications within
+;; to the state accidentally via set-var-val!
+(defrel-partial/staged (unify-5 rep [x] [y])
+  (== x 5))
+(test
+ (run 1 (q)
+   (staged
+    (fresh (x rep)
+      (specialize-partial-apply rep unify-5 x)
+     (== x 6)
+      (== q x))))
+ '(6))
 
 (defrel-partial/staged (equalo rep [a b] [c])
   (conde
