@@ -75,17 +75,12 @@
   (== 1 1))
 (test
  (run 1 (q)
-   (staged
-    ;; I want to test staging-time failure, but we don't have a way to catch the exception right
-    ;; now. So the structure of this test is a bit of a hack.
-    (conde
-      [(fresh (r1 r2 env)
-         (partial-apply r1 cycle env)
-         ;; This unification should fail on the occurs check...
-         (== env `((f . ,r1))))] 
-      ;; ... and thus only this branch should succeed at staging time.
-      [(== q 'branch-2)])))
- '(branch-2))
+   (fresh (r1 r2 env)
+     (partial-apply r1 cycle env)
+     ;; This unification should fail on the occurs check.
+     (== env `((f . ,r1)))))
+ '())
+
 (defrel-partial/staged (equalo rep [a b] [c])
   (conde
     [(== a b) (later (== c #t))]
