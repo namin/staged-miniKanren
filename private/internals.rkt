@@ -186,7 +186,7 @@
   (define/syntax-parse (L-closed ...) (map (lambda (stx) (replace-vars stx var-mapping)) L))
 
   (if (not (null? (attribute L-closed)))
-  #'(fresh (local-var-id ...)
+      #'(fresh (local-var-id ...)
           L-closed ...)
       #'succeed))
 
