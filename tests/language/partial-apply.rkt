@@ -57,6 +57,40 @@
       [(later (== q 'branch-2))])))
  '(branch-2))
 
+;; Ensure that specializing a partial application doesn't commit any unifications within
+;; to the state accidentally via set-var-val!
+(defrel-partial/staged (unify-5 rep [x] [y])
+  (== x 5))
+(test
+ (run 1 (q)
+   (staged
+    (fresh (x rep)
+      (specialize-partial-apply rep unify-5 x)
+     (== x 6)
+      (== q x))))
+ '(6))
+
+;; Check that we can't create a cyclic term via partial applications
+(defrel-partial/staged (cycle rec [env] [y])
+  (== 1 1))
+(test
+ (run 1 (q)
+   (fresh (r1 r2 env)
+     (partial-apply r1 cycle env)
+     ;; This unification should fail on the occurs check.
+     (== env `((f . ,r1)))))
+ '())
+
+;; Check that we can't create a cyclic term via specialize-partial-apply
+(test
+ (run 1 (q)
+   (staged
+    (fresh (r1 r2 env)
+      ;; This generates a later unification with an apply-rep that fails at
+      ;; runtime due to the occurs check.
+      (specialize-partial-apply r1 cycle env)
+      (== env `((f . ,r1))))))
+ '())
 
 (defrel-partial/staged (equalo rep [a b] [c])
   (conde

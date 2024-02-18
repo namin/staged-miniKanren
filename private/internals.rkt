@@ -73,7 +73,7 @@
   (succeed-in-fallback
    (lambda (st)
      (let ([answers (parameterize ([in-surrounding-fallback-evaluation? #t])
-                      (take 2 (lambda () (g st))))])
+                      (take 2 (lambda () (g (state-with-scope st (new-scope))))))])
        (match answers
          ['() #f]
          [(list answer) (g st)]
@@ -185,8 +185,10 @@
   (define/syntax-parse (local-var-id ...) local-var-ids)
   (define/syntax-parse (L-closed ...) (map (lambda (stx) (replace-vars stx var-mapping)) L))
 
-  #'(fresh (local-var-id ...)
-      L-closed ...))
+  (if (not (null? (attribute L-closed)))
+      #'(fresh (local-var-id ...)
+          L-closed ...)
+      #'succeed))
 
 ;; Int, (ListOf SyntaxWithData) -> (ListOf Var)
 (define (find-local-vars initial-var-idx L)
