@@ -155,7 +155,7 @@ We we use data tag to distinguish between == and the data parts.
 
 [(fallback sg)] state@(sc, l, n, t, true)  = stream-singleton((sc, l, n, true))
 [(fallback sg)] state@(sc, l, n, t, false) = 
-  case take(2, sg((sc, l, n, t, true)) of
+  case take(2, [sg]((sc, l, n, t, true)) of
     []        => stream-empty
     [x]       => x
     otherwise => stream-singleton(add-update-L(erase(sg), (sc, l, n, false)))
