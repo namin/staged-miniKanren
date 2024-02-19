@@ -546,8 +546,9 @@
      #'(i:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(i:gather
-        (i:conde
-         [(compile-later-goal g) ...] ...))]
+        (lambda ()
+          (i:conde
+           [(compile-later-goal g) ...] ...)))]
     [(_ fail) #'i:lfail]
     
     [(_ (~and stx (~or (fallback . _)
