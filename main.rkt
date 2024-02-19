@@ -448,7 +448,7 @@
     [(_ (gather body))
      #'(i:gather (lambda () (compile-now-goal body)))]
     
-    [(_ fail) #'(i:atomic i:fail)]
+    [(_ fail) #'i:fail]
 
     [(_ (later g))
      #'(compile-later-goal g)]
