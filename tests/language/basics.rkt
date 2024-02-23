@@ -28,6 +28,37 @@
    (staged (later (unify-5 q))))
  '(5))
 
+;; later conde
+(test
+ (run 2 (q) (staged (later (conde [(== q 1)] [(== q 2)]))))
+ '(1 2))
+
+;; nested later conde
+(test
+ (run* (q)
+   (staged
+    (later
+     (conde
+       [(== q 1)]
+       [(conde
+          [(== q 2)]
+          [(== q 3) fail]
+          [(== q 4)])]))))
+ '(1 2 4))
+
+;; gather
+(test
+ (run* (q)
+   (staged
+    (gather
+     (conde
+       [(== q 1)]
+       [(conde
+          [(== q 2)]
+          [(== q 3) fail]
+          [(== q 4)])]))))
+ '(1 2 4))
+
 ;; Staging within a runtime relation happens at definition-time,
 ;; and the relation can be called in runtime goals.
 (defrel (unify-1 a)

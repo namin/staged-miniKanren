@@ -448,7 +448,7 @@
     [(_ (gather body))
      #'(i:gather (lambda () (compile-now-goal body)))]
     
-    [(_ fail) #'(i:atomic i:fail)]
+    [(_ fail) #'i:fail]
 
     [(_ (later g))
      #'(compile-later-goal g)]
@@ -546,8 +546,9 @@
      #'(i:fresh (x ...) (compile-later-goal g) ...)]
     [(_ (conde [g ...] ...))
      #'(i:gather
-        (i:conde
-         [(compile-later-goal g) ...] ...))]
+        (lambda ()
+          (i:conde
+           [(compile-later-goal g) ...] ...)))]
     [(_ fail) #'i:lfail]
     
     [(_ (~and stx (~or (fallback . _)
