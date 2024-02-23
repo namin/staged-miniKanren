@@ -151,7 +151,12 @@ We we use data tag to distinguish between == and the data parts.
 
 [(later lg)] state = stream-singleton(add-update-L(lg, state))
 
-[(gather sg)] state = stream-singleton(add-update-L(buildDisj(sg, state)))
+
+// TODO: should be symetric in handling fallback
+
+[(gather sg)] state =
+  stream-singleton(state) if in-fallback(state)
+  stream-singleton(add-update-L(buildDisj(sg, state))) otherwise
 
 [(fallback sg)] state@(sc, l, n, t, true)  = stream-singleton((sc, l, n, true))
 [(fallback sg)] state@(sc, l, n, t, false) = 
