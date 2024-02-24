@@ -119,6 +119,15 @@ expression to be evalued.
         '((+ 0 >) (> + 0) (* 0 >) (> * 0)))
   (pretty-print (generated-code)))
 
+(let ((size 200))
+  (record-bench 'unstaged 'grammar-synthesis)
+  (time
+   (run size (r)
+     (interp-E r)))
+  (record-bench 'run-staged 'grammar-synthesis)
+  (time
+   (run size (r)
+     (staged (interp-E r)))))
 
 (define (get-timing-data size)
   (define-values (ures ucpu ureal ugc)

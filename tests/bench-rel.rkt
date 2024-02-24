@@ -4,3 +4,4 @@
 (require "applications/proof.rkt")
 (require "applications/dl.rkt")
 (require "applications/peano-fib.rkt")
+(require "applications/grammars.rkt")
