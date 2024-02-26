@@ -39,6 +39,8 @@
         (evalo e2 env v2)
         (later (finish-apply v1 applyo v2 v)))))))
 
+(run 3 (x v) (staged (evalo `(or x #t) `((x . ,x)) v)))
+
 (run 3 (e v) (staged (evalo `(or (or #f ,e) #f) '() v)))
 
 (run 3 (e v) (staged (evalo `((lambda (x) (or (or #f ,e) x)) #f) '() v)))
