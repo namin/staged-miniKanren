@@ -241,6 +241,27 @@
 
 (pretty-print (generated-code)) ;; contains the generated code
 
+#|
+(lambda (xs ys zs)
+   (fresh (rep)
+    (absento 'struct xs) (absento 'struct ys)
+    (== rep (apply-rep 'eval-apply-rec '(append
+              (xs ys)
+              (if (null? xs) ys (cons (car xs) (append (cdr xs) ys)))
+              <env>)
+      (lambda (input out)
+        (fresh (b)
+         (== (list in1 in2) input)
+         (disj (conj (== in1 '()) (== b #t))
+               (conj (=/= in1 '()) (== b #f)))
+         (disj (conj (=/= b #f) (== in2 out))
+               (fresh (a r d)
+                  (=/= a 'struct)
+                  (== b '#f) (== out (cons a r)) (== in1 (cons a d))
+                  (finish-apply rep (eval-apply-rec (list d in2) r))))))))
+    (finish-apply rep (eval-apply-rec (list xs ys) zs))))
+|#
+
 ;; generated code using environment extension at the top level
 (defrel (appendo/env-exts xs ys zs)
   (staged
