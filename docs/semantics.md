@@ -132,10 +132,22 @@ We we use data tag to distinguish between == and the data parts.
   sc, vs = unify t1 t2 (SC(state))
   if sc then stream-singleton(add-T(vs, update-SC(sc, state))) else fail
 
+or simplified:
+[(== t1 t2)] state =
+  sc = unify t1 t2 (SC(state))
+  if sc then stream-singleton(update-SC(sc, state)) else fail
+
 [(fresh (x) sg)] state = {
-  n = counter(state)
-  state' = inc-counter(state)
+  n, state' = inc-counter(state)
   x' = var(n)
+  sg' = substitute x' for x in sg
+  // assumes substitute does the right scoping of nested freshes
+  [sg'] state'
+}
+
+or simplified:
+[(fresh (x) sg)] state = {
+  x', state' = fresh-var(state)
   sg' = substitute x' for x in sg
   // assumes substitute does the right scoping of nested freshes
   [sg'] state'
@@ -185,6 +197,13 @@ capture(sg, state) = {
   stream-bind ([sg] state') generate-syntax(n)
 }
 
+or simplified:
+capture(sg, state) = {
+  // capture without constraints
+  state' = empty-L(state)
+  stream-bind ([sg] state') generate-syntax
+}
+
 generate-syntax(n) state = {
  // counter tells us which variables are fresh inside or outside
  // touched variables tells us which variables got their values updated inside the goal
@@ -193,6 +212,14 @@ generate-syntax(n) state = {
  s = SUBST(state)
  Lroot = for each root, generate (== root (walk* v s))
  fresh_local_vars(n, Lroot ++ walk*(L(state), s))
+}
+
+or simplified:
+generate-syntax state = {
+ s = SUBST(state)
+ Ls = for each association x,v in s:
+      generate (== x (walk* v s))
+ fresh_local_vars(counter(state), Ls ++ walk*(L(state), s))
 }
 
 fresh_local_vars(n, L) = {
