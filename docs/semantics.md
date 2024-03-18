@@ -129,10 +129,8 @@ We we use data tag to distinguish between == and the data parts.
 
 ```
 [(== t1 t2)] state =
-  // TODO: update the touched variables
-  // in addition to the sc, returns variables that got extended
-  sc = unify t1 t2 (SC(state))
-  if sc then stream-singleton(update-SC(sc, state)) else fail
+  sc, vs = unify t1 t2 (SC(state))
+  if sc then stream-singleton(add-T(vs, update-SC(sc, state))) else fail
 
 [(fresh (x) sg)] state = {
   n = counter(state)
