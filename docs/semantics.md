@@ -197,11 +197,12 @@ capture(sg, state) = {
   stream-bind ([sg] state') generate-syntax(n)
 }
 
-or simplified:
+or simplified (no simplification!):
 capture(sg, state) = {
   // capture without constraints
+  n = counter(state)
   state' = empty-L(state)
-  stream-bind ([sg] state') generate-syntax
+  stream-bind ([sg] state') generate-syntax(n)
 }
 
 generate-syntax(n) state = {
@@ -215,11 +216,11 @@ generate-syntax(n) state = {
 }
 
 or simplified:
-generate-syntax state = {
+generate-syntax(n) state = {
  s = SUBST(state)
  Ls = for each association x,v in s:
       generate (== x (walk* v s))
- fresh_local_vars(counter(state), Ls ++ walk*(L(state), s))
+ fresh_local_vars(n, Ls ++ walk*(L(state), s))
 }
 
 fresh_local_vars(n, L) = {
