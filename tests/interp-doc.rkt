@@ -43,7 +43,7 @@
 (run* (x v) (staged (evalo `(or #f x) `((x . ,x)) v)))
 (generated-code)
 #|
-(lambda (v x) (disj (== v x)))
+(lambda (x v) (disj (== v x)))
 |#
 
 (run* (x v) (staged (evalo `(or x #t) `((x . ,x)) v)))
