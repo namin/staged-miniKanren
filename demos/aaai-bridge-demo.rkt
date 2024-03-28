@@ -31,6 +31,12 @@
      (== prf `(C (A (A => B) (B => C)) . ,body))
      (proofo prf #t))))
 
+(time
+ (run 1 (prf)
+   (fresh (body)
+     (== prf `(H (A (A => B) (B => C) (C => D) (D => E) (E => F) (F => G) (G => H)) . ,body))
+     (proofo prf #t))))
+
 (defrel (peano-synth-fib-acc-stepo step1 step2 ACC1 ACC2)
   (staged
    (evalo-staged

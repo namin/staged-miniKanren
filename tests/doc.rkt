@@ -132,43 +132,30 @@
 
 ;; ## Staging
 
-(todo "run with staged"
-    (run* (q) (l== q 1))
-  '((_.0 !! ((== _.0 '1)))))
+(test
+  (run* (q) (staged (later (== q 1))))
+  '(1))
+(generated-code)
 
-(todo "run with staged"
-    (run* (q) (== q 1))
+(test
+  (run* (q) (== q 1))
   '(1))
 
-(todo "run with staged"
-    (run* (q) (l== (list 1) (list q)))
-  '((_.0 !! ((== (cons '1 '()) (cons _.0 '())))))
-  ;; not simplified to ((_.0 !! ((== '1 _.0))))
-  )
+(test
+  (run* (q) (staged (later (==  (list 1) (list q)))))
+  '(1))
+(generated-code)
+;; not simplified to (== 1 _.0)
 
-(todo "run with staged"
-    (run* (q) (l== 1 2))
-  '((_.0 !! ((== '1 '2)))))
+(test
+  (run* (q) (staged (later (== 1 2))))
+  '())
+(generated-code)
 
-(todo "run with staged"
-    (run* (q) (fresh (x) (l== (cons x x) q)))
-  '((_.0 !! ((== (cons _.1 _.1) _.0)))))
-
-(todo "run with staged"
-    (run* (q) (later `(== ,(expand q) ,(expand 1))))
-  '((_.0 !! ((== _.0 '1)))))
-
-(todo "run with staged"
-    (run* (x y)
-      (fresh (c1 c2)
-        (later-scope (fresh () (l== 5 x) (l== 6 y)) c1)
-        (later-scope (fresh () (l== 5 y) (l== 6 x)) c2)
-        (later `(conde ,c1 ,c2))))
-  '(((_.0 _.1)
-     !!
-     ((conde
-        ((== '5 _.0) (== '6 _.1))
-        ((== '5 _.1) (== '6 _.0)))))))
+(test
+  (run* (q) (staged (fresh (x) (later (== (cons x x) q)))))
+  '((_.0 . _.0)))
+(generated-code)
 
 ;; ### run-staged
 
@@ -179,23 +166,23 @@
   '(1))
 
 #|
-(run-staged 2 (q)
-  (conde
-    ((l== q 1))
-    ((l== q 2))))
+(run 2 (q)
+  (staged
+    (conde
+      ((later (== q 1)))
+      ((later (== q 2))))))
 ;; running first stage
-;; result 1: (_.0 !! ((== _.0 '1)))
-;; result 2: (_.0 !! ((== _.0 '2)))
 ;; Exception: staging non-deterministic
 |#
 
-(todo "later conde"
+(test
     (run 2 (q)
       (staged
         (gather (conde
                   ((later (== q 1)))
                   ((later (== q 2)))))))
-  '(1 2))
+    '(1 2))
+(generated-code)
 
 ;; ## Staged Relational Interpreter
 
