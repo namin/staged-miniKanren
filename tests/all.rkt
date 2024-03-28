@@ -12,6 +12,8 @@
 (require "interpreter/staged-apply-letrec.rkt")
 (require "interpreter/letrec-cross-stage.rkt")
 
+(require "applications/power.rkt")
+
 (require "doc.rkt")
 
 
