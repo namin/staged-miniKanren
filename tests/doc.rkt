@@ -184,6 +184,15 @@
     '(1 2))
 (generated-code)
 
+(test
+    (run 2 (q)
+      (staged
+        (fallback (conde
+                    ((later (== q 1)))
+                    ((later (== q 2)))))))
+    '(1 2))
+(generated-code)
+
 ;; ## Staged Relational Interpreter
 
 (test
