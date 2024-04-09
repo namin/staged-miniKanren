@@ -15,13 +15,13 @@ Another attempt at semantics, with help from Jason. Three new ideas:
 
 [[(fresh (x) gs)]] st = [[gs[x'/x]]] st  where x' \not\in (st, gs)
 
-[[(later gl)]] st = add-L(gl, st)
+[[(later gl)]] st = {add-L(gl, st)}
 
 [[(fallback gs)]] st =
   res = [[gs[succeed / (fallback _)]]] in
   if |res| <= 1 then res else {add-L(erase(gs), st)}
 
-[[(gather gs)]] st = `(disj ,@capture(gs, st))
+[[(gather gs)]] st = {add-L(`(disj ,@capture(gs, st)), st)}
 
 capture(gs, st) = 
   res = [[gs]] empty-L(st)
