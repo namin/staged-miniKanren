@@ -18,7 +18,7 @@ Another attempt at semantics, with help from Jason. Three new ideas:
 [[(later gl)]] st = {add-L(gl, st)}
 
 [[(fallback gs)]] st =
-  res = [[gs[succeed / (fallback _)]]] in
+  res = [[gs[succeed / (fallback _)]]] st in
   if |res| <= 1 then res else {add-L(erase(gs), st)}
 
 [[(gather gs)]] st = {add-L(`(disj ,@capture(gs, st)), st)}
