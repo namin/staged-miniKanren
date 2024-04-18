@@ -547,7 +547,7 @@ Syntax
 (generated-code)
 
 
-#;(begin
+(begin
 
 
 (record-bench 'unstaged 'mm 1)
