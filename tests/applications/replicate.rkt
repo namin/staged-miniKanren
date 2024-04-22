@@ -117,3 +117,44 @@
       (specialize-partial-apply rep replicate/staged n)
       (later (finish-apply rep replicate/staged l '(1 1 1 2 2 2 3 3 3))))))
  '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
+
+;;
+;; As a single relation
+;;
+
+
+(defrel-partial/staged (replicate/staged-single rep [n] [l res])
+  (replicate-helper `(replicate ,rep ,n ,l ,res)))
+
+(defrel/staged (replicate-helper e)
+  (conde
+    [(fresh (n l res rep)
+       (== `(replicate ,rep ,n ,l ,res) e)
+       (gather
+        (conde
+          [(== l '())
+           (== res '())]
+          [(fresh (a d rec-res)
+             (== l (cons a d))
+             (replicate-helper `(cons-n ,n ,a ,rec-res ,res))
+             (later (finish-apply rep replicate/staged-single d rec-res)))])))]
+    [(fresh (n v l res)
+       (== `(cons-n ,n ,v ,l ,res) e)
+       (fallback
+        (conde
+          [(== n 'Z)
+           (== l res)]
+          [(fresh (n-1 rec-res)
+             (== n `(S ,n-1))
+             (== res (cons v rec-res))
+             (replicate-helper `(cons-n ,n-1 ,v ,l ,rec-res)))])))]))
+
+(test
+ (run 1 (q)
+   (staged
+    (fresh (rep)
+      (specialize-partial-apply rep replicate/staged-single '(S (S (S Z))))
+      (later (finish-apply rep replicate/staged-single '(1 2 3) q)))))
+ '((1 1 1 2 2 2 3 3 3)))
+
+(generated-code)
