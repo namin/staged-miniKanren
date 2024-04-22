@@ -13,6 +13,9 @@ Another attempt at semantics, with help from Jason. Three new ideas:
 
 [[(conj gs1 gs2)]] st = U st' \in [[gs1]] st. [[gs2]] st'
 
+Matthias: could be more denotational using R1 | R2 relation composition
+notation.
+
 [[(fresh (x) gs)]] st = [[gs[x'/x]]] st  where x' \not\in (st, gs)
 
 [[(later gl)]] st = {add-L(gl, st)}
