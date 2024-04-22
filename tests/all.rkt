@@ -13,6 +13,8 @@
 (require "interpreter/letrec-cross-stage.rkt")
 
 (require "applications/power.rkt")
+(require "applications/replicate.rkt")
+
 
 (require "doc.rkt")
 
