@@ -284,7 +284,7 @@
 
 (define-syntax specialize-partial-apply
   (syntax-parser
-    [(_ rep (rel (x ...) ((~and y (~literal _)) ...)))     
+    [(_ rep (gen-rel rel (x ...) ((~and y (~literal _)) ...)))     
      #:with (y-var ...) (generate-temporaries #'(y ...))
      #:with (y-arg ...) (generate-temporaries #'(y ...))
      #'(specialize-partial-apply-rt
@@ -295,7 +295,7 @@
             ;; that substitution extensions to `y-n` are captured in the walk.
             (later #`(== #,(data y-var) y-arg))
             ...
-            (rel rep x ... y-var ...)))
+            (gen-rel rep x ... y-var ...)))
         rep 'rel (list x ...) (list #'y-arg ...))]))
 
 (define (specialize-partial-apply-rt goal-thunk rep rel-name x-vals y-ids)

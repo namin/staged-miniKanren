@@ -424,8 +424,8 @@
         (when (not (= now-args-count (length (attribute arg))))
           (raise-syntax-error #f "wrong number of now-stage arguments to relation" #'r))
         (with-syntax ([(later-placeholders ...) (make-list later-args-count #'_)]
-                      [rel (reference-generator #'rel)])
-          #'(i:specialize-partial-apply v (rel ((compile-term arg) ...) (later-placeholders ...))))]
+                      [gen-rel (reference-generator #'rel)])
+          #'(i:specialize-partial-apply v (gen-rel rel ((compile-term arg) ...) (later-placeholders ...))))]
        [_ (raise-syntax-error #f "specialize-partial-apply expects relation defined by defrel-partial" #'r)])]
 
     [(_ (== t1 t2))
