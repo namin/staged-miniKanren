@@ -9,26 +9,26 @@ Another attempt at semantics, with help from Jason. Three new ideas:
   sc, vs = unify(t1, t2, (SC(st)))
   if sc then {update-SC(sc, state)} else {}
 
-[[(disj gs1 gs2)]] st = gs1 st U gs2 st
+[[(disj gs1 gs2)]] st = [[gs1]] st U [[gs2]] st
 
-[[(conj gs1 gs2)]] st = U st' \in gs1 st. gs2 st'
+[[(conj gs1 gs2)]] st = U st' \in [[gs1]] st. [[gs2]] st'
 
 [[(fresh (x) gs)]] st = [[gs[x'/x]]] st  where x' \not\in (st, gs)
 
-[[(later gl)]] st = add-L(gl, st)
+[[(later gl)]] st = {add-L(gl, st)}
 
 [[(fallback gs)]] st =
-  res = [[gs[succeed / (fallback _)]]] in
+  res = [[gs[succeed / (fallback _)]]] st in
   if |res| <= 1 then res else {add-L(erase(gs), st)}
 
-[[(gather gs)]] st = `(disj ,@capture(gs, st))
+[[(gather gs)]] st = {add-L(`(disj ,@capture(gs, st)), st)}
 
 capture(gs, st) = 
   res = [[gs]] empty-L(st)
   U st' \in res . generate-syntax(gs, st, st')  when res is finite
 
 generate-syntax(gs, st, st') =
- Ls = `(== ,x ,v) for x,v in SUBST(st'):
+ Ls = `(== ,x ,v) for x,v in SUBST(st')
  local-vars = vars(st') - (vars(st) U vars(gs))
  `(fresh (,@local-vars) ,@(Ls ++ L(st')))
  ```
