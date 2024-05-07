@@ -71,11 +71,12 @@
  '(6))
 
 (defrel-partial/staged (equalo rep [a b] [c])
-  (conde
-    [(== a b) (later (== c #t))]
-    [(=/= a b) (later (== c #f))]))
+  (fallback
+   (conde
+     [(== a b) (later (== c #t))]
+     [(=/= a b) (later (== c #f))])))
 
-;; Regression test to make sure it's okay for specialize-partial-apply to refer to
+;; Regression tests to make sure it's okay for specialize-partial-apply to refer to
 ;; logic variables bound outside `staged`. Also tests finish-apply before partial-apply
 ;; producing right generate and check behavior.
 (test
@@ -87,6 +88,13 @@
      (staged
       (specialize-partial-apply st equalo 5 5))))
  '((#t #t)))
+(test
+ (run 1 (q)
+   (fresh (st)
+     (finish-apply st equalo #t)
+     (staged
+      (specialize-partial-apply st equalo 5 q))))
+ '(5))
 
 ;; Right now this is an error. Should it be? Or should the generator use gather
 ;; or fallback if it should not be?

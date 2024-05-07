@@ -292,8 +292,14 @@
     (syntax-parse goal-stx
       #:literals (#%term-var quote fresh partial-apply specialize-partial-apply)
       [(#%term-var x) (immutable-free-id-set (list #'x))]
-      [(partial-apply r . _) (immutable-free-id-set (list #'r))]
-      [(specialize-partial-apply r . _) (immutable-free-id-set (list #'r))]
+      [(partial-apply r _ arg ...)
+       (free-id-set-add
+        (free-vars #'(arg ...))
+        #'r)]
+      [(specialize-partial-apply r _ arg ...)
+       (free-id-set-add
+        (free-vars #'(arg ...))
+        #'r)]
       [(quote _) (immutable-free-id-set)]
       [(fresh (x ...) g ...)
        (free-vars-of-binding-form (attribute x) (attribute g))]
