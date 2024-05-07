@@ -116,6 +116,15 @@
       (later (finish-apply rep replicate/staged '(1 2 3) q)))))
  '((1 1 1 2 2 2 3 3 3)))
 
+;; Staged, running backwards in runtime portion
+(test
+ (run 1 (q)
+   (staged
+    (fresh (rep)
+      (specialize-partial-apply rep replicate/staged '(S (S (S Z))))
+      (later (finish-apply rep replicate/staged q '(1 1 1 2 2 2 3 3 3))))))
+ '((1 2 3)))
+
 ;; Partially-staged: will replicate each element at least twice, but perhaps more.
 ;; The generated code has two unfolded `cons`es.
 ;; This relies on the fallback to terminate at staging-time; otherwise the take*
@@ -177,4 +186,34 @@
       (later (finish-apply rep replicate/staged-single '(1 2 3) q)))))
  '((1 1 1 2 2 2 3 3 3)))
 
+
+
+
+;;
+;; Staged for a different mode: where we know `l` but not `n`.
+;;
+
+;; Note the asymmetry, due to the fact that cons-n doesn't call replicate.
+
+(defrel/staged (replicate/staged2 l n res)
+  (fallback
+   (conde
+     [(== l '())
+      (== res '())]
+     [(fresh (a d rec-res)
+        (== l (cons a d))
+        (later (cons-n n a rec-res res))
+        (replicate/staged2 d n rec-res))])))
+
+;; We can't / don't know how to write a replicate/staged that will specialize in both modes.
+
+(test
+ (run 1 (q)
+   (fresh (n)
+     (== n '(S (S (S Z))))
+     (staged
+      (replicate/staged2 '(1 2 3) n q))))
+   '((1 1 1 2 2 2 3 3 3)))
+
 (generated-code)
+
