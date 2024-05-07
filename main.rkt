@@ -130,7 +130,7 @@
     (trace name:id t:term-var ...+)
 
     (fresh (x:term-var ...) g:goal ...+)
-    #:binding {(bind x) g}
+    #:binding (scope (bind x) g)
     
     (conde [g:goal ...+] ...+)
 
@@ -156,7 +156,7 @@
   (host-interface/definition
    (defrel (r:relation-name arg:term-var ...)
      g:goal ...+)
-   #:binding [(export r) {(bind arg) g}]
+   #:binding [(export r) (scope (bind arg) g)]
    #:lhs
    [(register-simple-rel! #'r 'runtime (attribute arg))
     #'r]
@@ -168,7 +168,7 @@
   (host-interface/definition
    (defrel/staged (r:relation-name arg:term-var ...)
      g:goal ...+)
-   #:binding [(export r) {(bind arg) g}]
+   #:binding [(export r) (scope (bind arg) g)]
    #:lhs
    [#:with r-generator (name-generator! #'r)
     (register-simple-rel! #'r 'multistage (attribute arg))
@@ -187,7 +187,7 @@
    (defrel-partial
      (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
      g:goal ...)
-   #:binding [(export r) {(bind rep now-arg later-arg) g}]
+   #:binding [(export r) (scope (bind rep now-arg later-arg) g)]
    #:lhs
    [(symbol-table-set!
      relation-info #'r
@@ -202,7 +202,7 @@
    (defrel-partial/staged
      (r:relation-name rep:term-var [now-arg:term-var ...+] [later-arg:term-var ...+])
      g:goal ...)
-   #:binding [(export r) {(bind rep now-arg later-arg) g}]
+   #:binding [(export r) (scope (bind rep now-arg later-arg) g)]
    #:lhs
    [#:with r-generator (name-generator! #'r)
     (symbol-table-set!
@@ -221,12 +221,12 @@
   
   (host-interface/expression
    (run n:racket-expr (q:term-var ...+) g:goal ...+)
-   #:binding {(bind q) g}
+   #:binding (scope (bind q) g)
    #'(i:run n (q ...) (compile-runtime-goal g) ...))
 
   (host-interface/expression
    (run* (q:term-var ...+) g:goal ...+)
-   #:binding {(bind q) g}
+   #:binding (scope (bind q) g)
    #'(i:run* (q ...) (compile-runtime-goal g) ...)))
 
 (begin-for-syntax
