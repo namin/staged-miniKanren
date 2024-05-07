@@ -9,7 +9,8 @@
 
  eval-rands-and-applyo
  
- initial-env)
+ initial-env
+ eval-apply)
 
 (defrel/staged (pos-tago v)
   (== v 'struct))

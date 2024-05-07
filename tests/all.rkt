@@ -11,6 +11,7 @@
 (require "interpreter/basics.rkt")
 (require "interpreter/staged-apply-letrec.rkt")
 (require "interpreter/letrec-cross-stage.rkt")
+(require "interpreter/lambda-backwards.rkt")
 
 (require "applications/power.rkt")
 (require "applications/replicate.rkt")
