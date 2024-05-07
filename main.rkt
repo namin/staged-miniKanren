@@ -290,8 +290,10 @@
   ;; TODO: is it valid to use free-identifier equality on these names?
   (define (free-vars goal-stx)
     (syntax-parse goal-stx
-      #:literals (#%term-var quote fresh)
+      #:literals (#%term-var quote fresh partial-apply specialize-partial-apply)
       [(#%term-var x) (immutable-free-id-set (list #'x))]
+      [(partial-apply r . _) (immutable-free-id-set (list #'r))]
+      [(specialize-partial-apply r . _) (immutable-free-id-set (list #'r))]
       [(quote _) (immutable-free-id-set)]
       [(fresh (x ...) g ...)
        (free-vars-of-binding-form (attribute x) (attribute g))]

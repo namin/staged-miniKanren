@@ -75,9 +75,22 @@
     [(== a b) (later (== c #t))]
     [(=/= a b) (later (== c #f))]))
 
+;; Regression test to make sure it's okay for specialize-partial-apply to refer to
+;; logic variables bound outside `staged`. Also tests finish-apply before partial-apply
+;; producing right generate and check behavior.
+(test
+ (run* (rt-eq st-eq)
+   (fresh (rt st)
+     (finish-apply rt equalo rt-eq)
+     (finish-apply st equalo st-eq)
+     (partial-apply rt equalo 5 5)
+     (staged
+      (specialize-partial-apply st equalo 5 5))))
+ '((#t #t)))
+
 ;; Right now this is an error. Should it be? Or should the generator use gather
 ;; or fallback if it should not be?
 #;(run 1 (q)
   (staged
    (fresh (a b rep)
-     (later (== rep (partial-apply equalo a b))))))
+     (specialize-partial-apply rep equalo a b))))
