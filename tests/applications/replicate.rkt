@@ -6,6 +6,7 @@
 ;; Original unstaged program
 ;;
 
+;; Replicate every element of `l` `n` times to produce `res`
 (defrel (replicate n l res)
   (conde
     [(== l '())
@@ -15,6 +16,7 @@
        (cons-n n a rec-res res)
        (replicate n d rec-res))]))
 
+;; Add `n` copies of `v` to the front of `l` to produce `res`
 (defrel (cons-n n v l res)
   (conde
     [(== n 'Z)
@@ -46,6 +48,24 @@
      (replicate n l '(1 1 1 2 2 2 3 3 3))))
  '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
 
+;;
+;; MetaOCaml-like
+;;
+
+;; fun replicate n =
+;;   let rec f = < fn l => match l with
+;;                     | [] -> []
+;;                     | a :: d -> let rec-res = ~f d in
+;;                                    ~(cons-n n) a rec-res >  in
+;;     f
+;; fun cons-n n =
+;;    match n with
+;;     | Z -> fn v l => l
+;;     | (S nm1) -> fn v l -> < v :: ~(cons-n nm1) v l >
+;;
+;; ^ not quite right because I don't want to generate redexes. Probably want the
+;; generated fn outside, and then a recursion inside that just builds conses somehow.
+;; Revisit when I actually have MetaOCaml installed.
 
 ;;
 ;; Staged
