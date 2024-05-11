@@ -397,10 +397,10 @@
        (== `((,p ,result-expr) . ,d) clauses)
        (gather (conde
                  [(fresh (env^)
-                    (p-match p mval '() penv)
+                    (p-match p mval empty-env penv)
                     (regular-env-appendo penv env env^)
                     (eval-expo result-expr env^ val))]
-                 [(p-no-match p mval '() penv)
+                 [(p-no-match p mval empty-env penv)
                   (match-clauses mval d env val)]))))))
 
 (defrel/staged (var-p-match var mval penv penv-out)
