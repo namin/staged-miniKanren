@@ -27,13 +27,63 @@
 (defrel/staged (not-tago/gen v)
   (=/= 'struct v))
 
+
+;;
+;; Environment operations
+;;
+
+(define empty-env '())
+
+(define (build-env l)
+  (map (lambda (p) (cons (car p) `(val . ,(cdr p)))) l))
+
+(defrel/staged (lookupo x env v)
+  (fresh (y b rest)
+    (== `((,y . ,b) . ,rest) env)
+    (conde
+     [(== x y) (== `(val . ,v) b)]
+     [(=/= x y) (lookupo x rest v)])))
+
+(defrel/staged (not-in-envo x env)
+  (conde
+    ((== empty-env env))
+    ((fresh (y b rest)
+       (== `((,y . ,b) . ,rest) env)
+       (=/= y x)
+       (not-in-envo x rest)))))
+
+(defrel/staged (ext-envo x a env out)
+  (== `((,x . (val . ,a)) . ,env) out))
+
+(defrel/staged (ext-env*o x* a* env out)
+  (conde
+    ((== '() x*) (== '() a*) (== env out))
+    ((fresh (x a dx* da* env2)
+       (== `(,x . ,dx*) x*)
+       (== `(,a . ,da*) a*)
+       (ext-envo x a env env2)
+       (symbolo x)
+       (ext-env*o dx* da* env2 out)))))
+
+(defrel/staged (regular-env-appendo env1 env2 env-out)
+  (conde
+    ((== empty-env env1) (== env2 env-out))
+    ((fresh (y v rest res)
+       (== `((,y . (val . ,v)) . ,rest) env1)
+       (== `((,y . (val . ,v)) . ,res) env-out)
+       (regular-env-appendo rest env2 res)))))
+
+
+
+
+
 (defrel-partial/staged/fallback (eval-apply-rec rep [f x* e env] [a* res])
   (fresh (env^ env-self)
-    (== env-self `((,f . (val . (struct rec-closure ,rep))) . ,env))
+    (ext-envo f `(struct rec-closure ,rep) env env-self)
     ;; TODO: do we need a fallback?
     (conde
       ((symbolo x*)
-       (== env^ `((,x* . (val . ,a*)) . ,env-self)))
+       (ext-envo x* a* env-self env^))
       ((ext-env*o x* a* env-self env^)))
     (eval-expo e env^ res)))
 
@@ -42,7 +92,7 @@
     ;; TODO: do we need a fallback?
     (conde
       ((symbolo x*)
-       (== `((,x* . (val . ,a*)) . ,env) env^))
+       (ext-envo x* a* env env^))
       ((ext-env*o x* a* env env^)))
     (eval-expo body env^ val)))
 
@@ -110,34 +160,20 @@
     ((handle-matcho expr env val))
     
     ;; letrec
-    ((fresh (letrec-body f x e rep)
+    ((fresh (letrec-body f x e rep env^)
        (== `(letrec ((,f (lambda ,x ,e)))
               ,letrec-body)
            expr)
        (not-in-envo 'letrec env)
        (specialize-partial-apply rep eval-apply-rec f x e env)
+       (ext-envo f `(struct rec-closure ,rep) env env^)
        (eval-expo letrec-body
-                  `((,f . (val . (struct rec-closure ,rep))) . ,env)
+                  env^
                   val)))
 
     ((prim-expo expr env val))))
 
-(define empty-env '())
 
-(defrel/staged (lookupo x env v)
-  (fresh (y b rest)
-    (== `((,y . ,b) . ,rest) env)
-    (conde
-     [(== x y) (== `(val . ,v) b)]
-     [(=/= x y) (lookupo x rest v)])))
-
-(defrel/staged (not-in-envo x env)
-  (conde
-    ((== empty-env env))
-    ((fresh (y b rest)
-       (== `((,y . ,b) . ,rest) env)
-       (=/= y x)
-       (not-in-envo x rest)))))
 
 (defrel/staged/fallback (eval-listo expr env val)
   (conde
@@ -158,15 +194,7 @@
        (symbolo a)
        (list-of-symbolso d)))))
 
-(defrel/staged (ext-env*o x* a* env out)
-  (conde
-    ((== '() x*) (== '() a*) (== env out))
-    ((fresh (x a dx* da* env2)
-       (== `(,x . ,dx*) x*)
-       (== `(,a . ,da*) a*)
-       (== `((,x . (val . ,a)) . ,env) env2)
-       (symbolo x)
-       (ext-env*o dx* da* env2 out)))))
+
 
 (defrel/staged/fallback (eval-primo prim-id a* val)
   (conde
@@ -307,17 +335,20 @@
               ((=/= #f t) (eval-expo e2 env val))
               ((== #f t) (eval-expo e3 env val))))))
 
-(define initial-env `((list . (val . (struct prim . list)))
-                      (not . (val . (struct prim . not)))
-                      (equal? . (val . (struct prim . equal?)))
-                      (symbol? . (val . (struct prim . symbol?)))
-                      (number? . (val . (struct prim . number?)))
-                      (pair? . (val . (struct prim . pair?)))
-                      (cons . (val . (struct prim . cons)))
-                      (null? . (val . (struct prim . null?)))
-                      (car . (val . (struct prim . car)))
-                      (cdr . (val . (struct prim . cdr)))
-                      . ,empty-env))
+
+
+(define initial-env (build-env
+                     `((list . (struct prim . list))
+                      (not . (struct prim . not))
+                      (equal? . (struct prim . equal?))
+                      (symbol? . (struct prim . symbol?))
+                      (number? . (struct prim . number?))
+                      (pair? . (struct prim . pair?))
+                      (cons . (struct prim . cons))
+                      (null? . (struct prim . null?))
+                      (car . (struct prim . car))
+                      (cdr . (struct prim . cdr))
+                      . ,empty-env)))
 
 (defrel/staged (handle-matcho expr env val)
   (fresh (against-expr clauses mval)
@@ -358,13 +389,7 @@
     ((== '() t))))
 
 
-(defrel/staged (regular-env-appendo env1 env2 env-out)
-  (conde
-    ((== empty-env env1) (== env2 env-out))
-    ((fresh (y v rest res)
-       (== `((,y . (val . ,v)) . ,rest) env1)
-       (== `((,y . (val . ,v)) . ,res) env-out)
-       (regular-env-appendo rest env2 res)))))
+
 
 (defrel/staged/fallback (match-clauses mval clauses env val)
   (conde
@@ -394,7 +419,7 @@
     ((== penv penv-out)
      (lookupo var penv val))
     ((not-in-envo var penv)
-     (== `((,var . (val . ,val)) . ,penv) penv-out))))
+     (ext-envo var val penv penv-out))))
 
 (defrel/staged/fallback (var-p-no-match var mval penv penv-out)
   (conde
