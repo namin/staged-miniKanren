@@ -5,10 +5,11 @@
 ;; unstaged call before unstaged lambda
 (test
  (run 1 (q)
-      (fresh (v)
+      (fresh (v env)
+        (ext-envo 'f v initial-env env)
         (eval-expo
          '(f 1)
-         `((f . (val . ,v)) . ,initial-env)
+         env
          1)
         (eval-expo
          `(lambda (x) ,q)
@@ -20,10 +21,11 @@
 (test
  (run 1 (q)
       (staged
-       (fresh (v)
+       (fresh (v env)
+         (ext-envo 'f v initial-env env)
          (later (eval-expo
                  '(f 1)
-                 `((f . (val . ,v)) . ,initial-env)
+                 env
                  1))
          (eval-expo
           `(lambda (x) ,q)
@@ -34,10 +36,11 @@
 ;; unstaged call before unstaged letrec
 (test
  (run 1 (q)
-      (fresh (v)
+      (fresh (v env)
+        (ext-envo 'f v initial-env env)
         (eval-expo
          '(f 1)
-         `((f . (val . ,v)) . ,initial-env)
+         env
          1)
         (eval-expo
          `(letrec ([g (lambda (x) ,q)]) g)
@@ -49,10 +52,11 @@
 (test
  (run 1 (q)
       (staged
-       (fresh (v)
+       (fresh (v env)
+         (ext-envo 'f v initial-env env)
          (later (eval-expo
                  '(f 1)
-                 `((f . (val . ,v)) . ,initial-env)
+                 env
                  1))
          (eval-expo
           `(letrec ([g (lambda (x) ,q)]) g)
