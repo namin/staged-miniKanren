@@ -139,7 +139,7 @@
   '((#f 1)))
 
 (test
-    (run 1 (q)
+    (run 2 (q)
       (staged
        (evalo-staged
         `(letrec ((append
@@ -148,7 +148,7 @@
                          (cons (car xs) (append (cdr xs) ys))))))
            (append '(1 2) '(3 4)))
         '(1 2 3 4))))
-  '(ys))
+  '('(3 4) ys))
 
 (test
     (run 1 (q)
@@ -320,8 +320,9 @@
     (length
      (run 1 (q p e)
        (staged
-        (fresh ()
-          (eval-expo `(x 1) `((x . (val . ,p))) q)
+        (fresh (env)
+          (ext-envo 'x p empty-env env)
+          (eval-expo `(x 1) env q)
           (later (evalo-staged
                   `(letrec ((f ,e)) f) p))))))
   1)
@@ -349,6 +350,8 @@
           (evalo-staged `(((lambda (,x) (lambda (,y) z)) 1) 2) q)))))
   2)
 ;; NOTE: res has a u-lookupo call!
+
+
 
 (test
     (run 1 (q)

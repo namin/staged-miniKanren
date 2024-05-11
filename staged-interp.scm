@@ -8,8 +8,10 @@
  eval-expo
 
  eval-rands-and-applyo
- 
+
+ empty-env
  initial-env
+ ext-envo
  eval-apply)
 
 (defrel/staged (pos-tago v)
