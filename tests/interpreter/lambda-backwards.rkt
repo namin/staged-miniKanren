@@ -38,6 +38,10 @@
 
 ;; When fv is fresh, nothing defines or restricts the environment of the closure.
 ;; So it guesses a bunch of environment variations instead of interesting terms.
+;;
+;; This is caused by `not-in-envo` for the quote case (which can be fixed by split
+;; environments), and by `lookupo` for the environment case.
+;;
 #;(run 300 (body)
   (fresh (fv x p env)
     (evalo-staged/env-exts `(f (cons 1 2)) '(f) (list fv) 2)
