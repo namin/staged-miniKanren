@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "staged-interp.scm" "all.rkt")
+(require "../../staged-interp.scm" "../../all.rkt")
 
 ;; I had hoped to illustrate the issues with out-of-order execution of partial
 ;; applications with an example like the following:
