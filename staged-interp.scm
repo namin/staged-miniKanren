@@ -32,28 +32,27 @@
 ;; Environment operations
 ;;
 
-(define empty-env '())
+(define empty-env '(() . ()))
 
 (define (build-env l)
-  (map (lambda (p) (cons (car p) `(val . ,(cdr p)))) l))
+  (cons (map car l) (map cdr l)))
 
 (defrel/staged (lookupo x env v)
-  (fresh (y b rest)
-    (== `((,y . ,b) . ,rest) env)
+  (fresh (env-x env-xs env-v env-vs)
+    (== `((,env-x . ,env-xs) . (,env-v . ,env-vs)) env)
     (conde
-     [(== x y) (== `(val . ,v) b)]
-     [(=/= x y) (lookupo x rest v)])))
+      [(== x env-x) (== v env-v)]
+      [(=/= x env-x) (lookupo x `(,env-xs . ,env-vs) v)])))
 
 (defrel/staged (not-in-envo x env)
-  (conde
-    ((== empty-env env))
-    ((fresh (y b rest)
-       (== `((,y . ,b) . ,rest) env)
-       (=/= y x)
-       (not-in-envo x rest)))))
+  (fresh (env-xs env-vs)
+    (== `(,env-xs . ,env-vs) env)
+    (absento x env-xs)))
 
 (defrel/staged (ext-envo x a env out)
-  (== `((,x . (val . ,a)) . ,env) out))
+  (fresh (env-xs env-vs)
+    (== `(,env-xs . ,env-vs) env)
+    (== `((,x . ,env-xs) . (,a . ,env-vs)) out)))
 
 (defrel/staged (ext-env*o x* a* env out)
   (conde
@@ -66,15 +65,12 @@
        (ext-env*o dx* da* env2 out)))))
 
 (defrel/staged (regular-env-appendo env1 env2 env-out)
-  (conde
-    ((== empty-env env1) (== env2 env-out))
-    ((fresh (y v rest res)
-       (== `((,y . (val . ,v)) . ,rest) env1)
-       (== `((,y . (val . ,v)) . ,res) env-out)
-       (regular-env-appendo rest env2 res)))))
+  (fresh (env-xs env-vs)
+    (== `(,env-xs . ,env-vs) env1)
+    (ext-env*o env-xs env-vs env2 env-out)))
 
-
-
+(module+ private
+  (provide empty-env initial-env build-env lookupo not-in-envo ext-envo ext-env*o regular-env-appendo))
 
 
 (defrel-partial/staged/fallback (eval-apply-rec rep [f x* e env] [a* res])
@@ -335,20 +331,17 @@
               ((=/= #f t) (eval-expo e2 env val))
               ((== #f t) (eval-expo e3 env val))))))
 
-
-
 (define initial-env (build-env
                      `((list . (struct prim . list))
-                      (not . (struct prim . not))
-                      (equal? . (struct prim . equal?))
-                      (symbol? . (struct prim . symbol?))
-                      (number? . (struct prim . number?))
-                      (pair? . (struct prim . pair?))
-                      (cons . (struct prim . cons))
-                      (null? . (struct prim . null?))
-                      (car . (struct prim . car))
-                      (cdr . (struct prim . cdr))
-                      . ,empty-env)))
+                       (not . (struct prim . not))
+                       (equal? . (struct prim . equal?))
+                       (symbol? . (struct prim . symbol?))
+                       (number? . (struct prim . number?))
+                       (pair? . (struct prim . pair?))
+                       (cons . (struct prim . cons))
+                       (null? . (struct prim . null?))
+                       (car . (struct prim . car))
+                       (cdr . (struct prim . cdr)))))
 
 (defrel/staged (handle-matcho expr env val)
   (fresh (against-expr clauses mval)
@@ -428,12 +421,12 @@
     ;; fails by failure of the lookupo below; in
     ;; staged we need to defer this failure to
     ;; runtime.
-   ((not-in-envo var penv)
-    (later fail))
-   ((fresh (env-v)
-      (== penv penv-out)
-      (=/= mval env-v)
-      (lookupo var penv env-v)))))
+    ((not-in-envo var penv)
+     (later fail))
+    ((fresh (env-v)
+       (== penv penv-out)
+       (=/= mval env-v)
+       (lookupo var penv env-v)))))
 
 (defrel/staged/fallback (p-match p mval penv penv-out)
   (conde
@@ -451,23 +444,23 @@
 
 (defrel/staged/fallback (pred-match pred mval)
   (conde
-   ((== 'symbol? pred) (symbolo mval))
-   ((== 'number? pred) (numbero mval))))
+    ((== 'symbol? pred) (symbolo mval))
+    ((== 'number? pred) (numbero mval))))
 
 (defrel/staged/fallback (p-no-match p mval penv penv-out)
   (conde
-   ((self-eval-literalo p)
-    (=/= p mval)
-    (== penv penv-out))
-   ((symbolo p) (var-p-no-match p mval penv penv-out))
-   ((fresh (var pred)
-      (== `(? ,pred ,var) p)
-      (== penv penv-out)
-      (symbolo var)
-      (pred-no-match pred var mval penv penv-out)))
-   ((fresh (quasi-p)
-      (== (list 'quasiquote quasi-p) p)
-      (quasi-p-no-match quasi-p mval penv penv-out)))))
+    ((self-eval-literalo p)
+     (=/= p mval)
+     (== penv penv-out))
+    ((symbolo p) (var-p-no-match p mval penv penv-out))
+    ((fresh (var pred)
+       (== `(? ,pred ,var) p)
+       (== penv penv-out)
+       (symbolo var)
+       (pred-no-match pred var mval penv penv-out)))
+    ((fresh (quasi-p)
+       (== (list 'quasiquote quasi-p) p)
+       (quasi-p-no-match quasi-p mval penv penv-out)))))
 
 (defrel/staged/fallback (pred-no-match pred var mval penv penv-out)
   (conde
