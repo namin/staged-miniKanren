@@ -9,6 +9,7 @@
 (require "language/nontermination.rkt")
 
 (require "interpreter/basics.rkt")
+(require "interpreter/env-ops.rkt")
 (require "interpreter/staged-apply-letrec.rkt")
 (require "interpreter/letrec-cross-stage.rkt")
 (require "interpreter/lambda-backwards.rkt")
