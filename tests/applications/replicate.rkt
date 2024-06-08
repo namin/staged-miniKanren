@@ -48,24 +48,24 @@
      (replicate n l '(1 1 1 2 2 2 3 3 3))))
  '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
 
+
 ;;
-;; MetaOCaml-like
+;; Equivalent MetaOCaml code (also in replicate.ml)
 ;;
 
-;; fun replicate n =
-;;   let rec f = < fn l => match l with
-;;                     | [] -> []
-;;                     | a :: d -> let rec-res = ~f d in
-;;                                    ~(cons-n n) a rec-res >  in
-;;     f
-;; fun cons-n n =
-;;    match n with
-;;     | Z -> fn v l => l
-;;     | (S nm1) -> fn v l -> < v :: ~(cons-n nm1) v l >
-;;
-;; ^ not quite right because I don't want to generate redexes. Probably want the
-;; generated fn outside, and then a recursion inside that just builds conses somehow.
-;; Revisit when I actually have MetaOCaml installed.
+;; let rec replicate_staged (n : peano) =
+;;   .<let rec replicate_n l =
+;;      match l with
+;;      | [] -> []
+;;      | a :: d -> .~(cons_n_staged n .<a>. .<(replicate_n d)>.)
+;;    in
+;;    replicate_n>.
+;; 
+;; let rec cons_n_staged (n : peano) (v : 'a code) (l : 'a list code) =
+;;   match n with
+;;   | Z -> l
+;;   | S p -> .<.~v :: .~(cons_n_staged p v l)>.
+
 
 ;;
 ;; Staged
