@@ -1,4 +1,15 @@
 #|
+
+TODOs:
+
+- Try a more syntactic / unwalked term unification so as to get some specialization
+  when the substitution is unknown.
+- Reconsider whether each `later` is important. We can get away with more partial evaluation
+  on values with the new fallback approach.
+
+|#
+
+#|
 author            : Bharathi Ramana Joshi
 email             : joshibharathiramana@gmail.com
 latest version at : http://github.com/iambrj/metaKanren
@@ -123,7 +134,7 @@ Syntax
         (=/= h-a v)
         (not-assp-subo v t))])))
 
-(defrel/staged/fallback (ext-so u v s s1)
+(defrel/staged (ext-so u v s s1)
   (== `((,u . ,v) . ,s) s1))
 
 ;; I tried out making walko not a fallback relation. This means we have
@@ -232,6 +243,7 @@ Syntax
            [(=/= s-a #f)
             (unifyo u-a v-a s s-a)
             (unifyo u-d v-d s-a s1)]))])))
+
 
 (define mzero '())
 
@@ -515,6 +527,16 @@ Syntax
     (unifyo '1 '1 '() q)))
  '(()))
 (generated-code)
+
+;; TODO: it seems like this unification should be able to specialize if
+;; we didn't have peanoo enumerating variable names. But when I remove the
+;; peanoo, mm 8 doesn't come back.
+#;(time-test
+ (run* (v q)
+   (staged
+    (unifyo `(var . ,v) '1 '() q)))
+ '((_.0 (((var . _.0) . 1)))))
+#;(generated-code)
 
 ;; The unification in this one specializes because we do
 ;; know the initial substitution.
