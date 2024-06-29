@@ -6,6 +6,8 @@ TODOs:
   when the substitution is unknown.
 - Reconsider whether each `later` is important. We can get away with more partial evaluation
   on values with the new fallback approach.
+     Should we allow staging-time finish-apply?
+- Try to figure out what goes wrong if we drop the `peanoo` constraints
 
 |#
 
