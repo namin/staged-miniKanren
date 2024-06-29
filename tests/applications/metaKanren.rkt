@@ -59,18 +59,18 @@ Syntax
        (== `(,p1) p)
        (peanoo p1))]))
 
-(defrel/staged/fallback (var?o x)
+(defrel/staged (var?o x)
   (fresh (val)
     (== `(var . ,val) x)
     (peanoo val)))
 
-(defrel/staged/fallback (var=?o x y)
+(defrel/staged (var=?o x y)
   (fresh (val)
     (== `(var . ,val) x)
     (== `(var . ,val) y)
     (peanoo val)))
 
-(defrel/staged/fallback (var=/=o x y)
+(defrel/staged (var=/=o x y)
   (fresh (val1 val2)
     (== `(var . ,val1) x)
     (== `(var . ,val2) y)
@@ -78,12 +78,12 @@ Syntax
     (peanoo val1)
     (peanoo val2)))
 
-(defrel/staged/fallback (booleano b)
+(defrel/staged (booleano b)
   (conde
     [(== #t b)]
     [(== #f b)]))
 
-(defrel/staged/fallback (walko u s v)
+(defrel/staged (walko u s v)
   (conde
     [(== u v)
      (conde
@@ -126,10 +126,20 @@ Syntax
 (defrel/staged/fallback (ext-so u v s s1)
   (== `((,u . ,v) . ,s) s1))
 
+;; I tried out making walko not a fallback relation. This means we have
+;; some potential to specialize unifications. However, if any walk turns
+;; out nondeterministically, we will fallback the unifyo call that uses it.
+;; It might be possible to get better specialization than that by writing
+;; a unify-syntactico that cases on the term expression rather than walked
+;; term value first, and dispatches to unifyo only at term variables in the
+;; expression.
+
 ; u, v <- {logic var, number, symbol, boolean, empty list, non-empty list}
 ; Total 36 + 5 (types match, but terms do not) = 41 cases
 (defrel/staged/fallback (unifyo u-unwalked v-unwalked s s1)
   (fresh (u v)
+    ;; The substitution will often be unknown, so these won't give
+    ;; us a staging-time value for `u`.
     (walko u-unwalked s u)
     (walko v-unwalked s v)
     (conde
@@ -312,6 +322,8 @@ Syntax
     [(fresh (te1 te2 v1 v2 s c s1)
        (== `(== ,te1 ,te2) expr)
        (== `(,s . ,c) s/c)
+       ;; Staging-time evaluation does seem to get through these eval-texpros,
+       ;; so we are getting term values at staging time.
        (eval-texpro te1 env v1)
        (eval-texpro te2 env v2)
        (gather
@@ -495,6 +507,43 @@ Syntax
 
 ;; tests
 
+;; This specializes, generating q == '()
+(time-test
+ (run 1 (q)
+   (staged
+    (unifyo '1 '1 '() q)))
+ '(()))
+(generated-code)
+
+;; The unification in this one specializes because we do
+;; know the initial substitution.
+(time-test
+ (run 1 (q)
+   (staged
+    (eval-programo
+     `(run* (res)
+        (== 1 1))
+     q)))
+ ;; res is fresh
+ '(((_.))))
+(generated-code)
+
+;; Here we don't know the substition for the second unification,
+;; as it won't statically flow through the conjunction.
+(time-test
+ (run 1 (q)
+   (staged
+    (eval-programo
+     `(run* (res)
+        (conj (== 1 res) (== 2 res)))
+     q)))
+ ;; failure
+ '(()))
+(generated-code)
+
+;; When specializing unify-2, we don't know what substitution
+;; it will be called with. The current value-based unifier thus has
+;; to just fall back.
 (time-test
   (run 1 (res)
     (staged
@@ -504,7 +553,7 @@ Syntax
                      (call-rel unify-2 z)))
       res)))
   '((2)))
-
+(generated-code)
 
 
 (time-test
@@ -518,7 +567,7 @@ Syntax
                    (delay (call-rel incomplete-appendo '(1 2) '(3 4) z))))
     x))
  '((recursive-case)))
-
+(generated-code)
 
 ;; Just printing generated code
 (run 0 (x y w)
