@@ -352,16 +352,8 @@ Syntax
     [(== expr val)
      (conde
        [(numbero expr)]
-       [(booleano expr)]
-       [(== '() expr)])]
+       [(booleano expr)])]
     [(== `(quote ,val) expr)
-     (conde
-       [(numbero val)]
-       [(symbolo val)]
-       [(booleano val)]
-       [(== '() val)]
-       [(fresh (a d)
-          (== `(,a . ,d) val))])
      (not-in-envo 'quote env)
      (absento 'var val)
      (absento 'closr val)]
