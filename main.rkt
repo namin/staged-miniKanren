@@ -43,7 +43,10 @@
 ;; https://github.com/michaelballantyne/syntax-spec
 (require syntax-spec
          ;; for a nasty workaround
-         (for-syntax (only-in ee-lib compile-reference lookup compile-binder! compiled-from))
+         (for-syntax (only-in syntax-spec/private/ee-lib/main
+                              compile-reference
+                              lookup compile-binder!
+                              compiled-from))
          (for-syntax racket/base
                      racket/syntax
                      syntax/parse
