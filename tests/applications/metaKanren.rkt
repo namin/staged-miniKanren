@@ -499,6 +499,15 @@ Syntax
 
 ;; tests
 
+;; eval-texpro of a partially known expression
+;; produced a partially known value at staging time.
+(run 0 (x q)
+  (staged
+   (fresh ()
+     (eval-texpro `(cons ,x 1) '() q)
+     (trace foo q))))
+(generated-code)
+
 ;; This specializes, generating q == '()
 (time-test
  (run 1 (q)
@@ -797,7 +806,7 @@ Syntax
                            (== ,e1 ,e2)))
                     (call-rel five 5)))
      '((_.))))
-  '(((_.0 _.0) $$ (num _.0)) (() ()) (5 f)))
+  '(((_.0 _.0) $$ (num _.0)) (#t #t) (5 f)))
 
 (record-bench 'staged 'mm 6)
 (time-test
@@ -809,7 +818,7 @@ Syntax
                            (== ,e1 ,e2)))
                     (call-rel five 5)))
      '((_.)))))
-  '(((_.0 _.0) $$ (num _.0)) (() ()) (5 f)))
+  '(((_.0 _.0) $$ (num _.0)) (#t #t) (5 f)))
 
 (record-bench 'unstaged 'mm 7)
 (time-test
@@ -930,3 +939,4 @@ Syntax
 
 )
 
+|#
