@@ -569,31 +569,25 @@
      (raise-syntax-error #f "not supported in generated code" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
-(define-syntax define-syntax/space
-  (syntax-parser
-    [(_ name space rhs)
-     #`(define-syntax #,((make-interned-syntax-introducer (syntax-e #'space)) #'name) rhs)]))
-
-(define-syntax/space quasiquote mk
-  (term-macro
-   (syntax-parser 
-     [(~describe
-       "`<datum>"
-       (_ q))
-      (let recur ([stx #'q] [level 0])
-        (syntax-parse stx #:datum-literals (unquote quasiquote)
-          [(unquote e)
-           (if (= level 0)
-               #'e
-               #`(cons (quote unquote) #,(recur #'(e) (- level 1))))]
-          [(unquote . rest)
-           (raise-syntax-error 'unquote "bad unquote syntax" stx)]
-          [(quasiquote e)
-           #`(cons (quote quasiquote) #,(recur #'(e) (+ level 1)))]
-          [(a . d)
-           #`(cons #,(recur #'a level) #,(recur #'d level))]
-          [(~or* v:identifier v:number v:boolean v:string) #'(quote v)]
-          [() #'(quote ())]))])))
+(define-dsl-syntax quasiquote term-macro
+  (syntax-parser 
+    [(~describe
+      "`<datum>"
+      (_ q))
+     (let recur ([stx #'q] [level 0])
+       (syntax-parse stx #:datum-literals (unquote quasiquote)
+         [(unquote e)
+          (if (= level 0)
+              #'e
+              #`(cons (quote unquote) #,(recur #'(e) (- level 1))))]
+         [(unquote . rest)
+          (raise-syntax-error 'unquote "bad unquote syntax" stx)]
+         [(quasiquote e)
+          #`(cons (quote quasiquote) #,(recur #'(e) (+ level 1)))]
+         [(a . d)
+          #`(cons #,(recur #'a level) #,(recur #'d level))]
+         [(~or* v:identifier v:number v:boolean v:string) #'(quote v)]
+         [() #'(quote ())]))]))
 
 (require ee-lib/errors racket/match)
 (struct term-variable [value])
@@ -616,11 +610,10 @@
   (syntax-parser
     [(_ (name . pat)
         template)
-     #'(define-syntax name
-         (term-macro
-          (syntax-rules ()
-            [(_ . pat)
-             template])))]))
+     #'(define-dsl-syntax name term-macro
+         (syntax-rules ()
+           [(_ . pat)
+            template]))]))
 
 (define-syntax-rule
   (defrel/staged/fallback (name arg ...) body ...)
