@@ -63,3 +63,28 @@ cons2 "a" ["b"; "b"; "c"; "c"];;
 
 let replicate_2 = Runcode.run (replicate_staged (S (S Z))) ;;
 replicate_2 ["a"; "b"; "c"] ;;
+
+
+(* Version where the number is partially static, and we fall back to the runtime cons_n *)
+
+type peanoPS =
+  | Z
+  | S of peanoPS
+  | C of peano code ;;
+
+let rec cons_n_ps (n : peanoPS) (v : 'a code) (l : 'a list code) =
+  match n with
+  | Z -> l
+  | S p -> .<.~v :: .~(cons_n_ps p v l)>.
+  | C nC -> .< cons_n .~nC .~v .~l >.;;
+
+let rec replicate_ps (n : peanoPS) =
+  .<let rec replicate_n l =
+     match l with
+     | [] -> []
+     | a :: d -> .~(cons_n_ps n .<a>. .<(replicate_n d)>.)
+   in
+   replicate_n>. ;;
+
+let replicate_2plus = Runcode.run .<fun n l -> .~(replicate_ps (S (S (C .<n>.)))) l>. ;;
+replicate_2plus (S Z) ["a"; "b"; "c"] ;;
