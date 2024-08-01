@@ -17,13 +17,13 @@
 
 (test
  (synth/sketch (e)
-   ([append
-     (lambda (xs ys)
-       (if (null? xs) ys
-           (cons ,e (append (cdr xs) ys))))])
-   [(append '() '()) -> ()]
-   [(append '(a) '(b)) -> (a b)]
-   [(append '(c d) '(e f)) -> (c d e f)])
+               ([append
+                 (lambda (xs ys)
+                   (if (null? xs) ys
+                       (cons ,e (append (cdr xs) ys))))])
+               [(append '() '()) -> ()]
+               [(append '(a) '(b)) -> (a b)]
+               [(append '(c d) '(e f)) -> (c d e f)])
  '(car xs))
 
 
@@ -31,13 +31,12 @@
   (invert-execute
    ([name (lambda (arg ...) body)])
    return)
-  (car
-   (run 1 (arg ...)
-     (staged
-      (evalo-staged
-       `(letrec ([name (lambda (arg ...) body)])
-          (name ',arg ...))
-       'return)))))
+  (run* (arg ...)
+    (staged
+     (evalo-staged
+      `(letrec ([name (lambda (arg ...) body)])
+         (name ',arg ...))
+      'return))))
 
 (test
  (invert-execute
@@ -46,6 +45,8 @@
       (if (null? xs) ys
           (cons (car xs) (append (cdr xs) ys))))])
   (a b c))
- '(() (a b c)))
+ '((() (a b c))
+   ((a) (b c))
+   ((a b) (c))
+   ((a b c) ())))
 
- 
