@@ -589,7 +589,7 @@
          [(~or* v:identifier v:number v:boolean v:string) #'(quote v)]
          [() #'(quote ())]))]))
 
-(require ee-lib/errors racket/match)
+(require syntax-spec/private/ee-lib/errors racket/match)
 (struct term-variable [value])
 (define (unwrap-term v blame-stx)
   (match v
