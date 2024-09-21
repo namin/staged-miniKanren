@@ -46,3 +46,7 @@
 (run 1 (q v e) (staged (evalo `(or a ,e) `((a . ,q)) v)))
 
 (generated-code)
+
+(run 2 (q v e) (staged (evalo `((lambda (x) (or x x)) ,q) '() v)))
+
+(generated-code)
