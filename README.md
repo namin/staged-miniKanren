@@ -6,7 +6,7 @@ A novel framework for staging interpreters written as relations, in which the pr
 
 - `git submodule init`
 - `git submodule update`
-- Install https://github.com/michaelballantyne/syntax-spec
+- Install as Racket package, including dependencies, with `raco pkg install` in this directory.
 
 ## Running
 - `racket tests/all.rkt`

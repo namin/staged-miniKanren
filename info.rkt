@@ -3,7 +3,7 @@
 (define name "staged-minikanren")
 
 (define deps '("base"
-               "git://github.com/michaelballantyne/syntax-spec.git#main"))
+               "syntax-spec-v2"))
 
 (define license 'MIT)
 

@@ -41,9 +41,9 @@
  unquote)
 
 ;; https://github.com/michaelballantyne/syntax-spec
-(require syntax-spec
+(require syntax-spec-v2
          ;; for a nasty workaround
-         (for-syntax (only-in syntax-spec/private/ee-lib/main
+         (for-syntax (only-in syntax-spec-v2/private/ee-lib/main
                               compile-reference
                               lookup compile-binder!
                               compiled-from))
@@ -589,7 +589,7 @@
          [(~or* v:identifier v:number v:boolean v:string) #'(quote v)]
          [() #'(quote ())]))]))
 
-(require syntax-spec/private/ee-lib/errors racket/match)
+(require syntax-spec-v2/private/ee-lib/errors racket/match)
 (struct term-variable [value])
 (define (unwrap-term v blame-stx)
   (match v
