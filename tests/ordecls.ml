@@ -1,3 +1,3 @@
-type orval2 =
+type orval =
   | Bool of bool
-  | Closure of (orval2 -> orval2);;
+  | Closure of (orval -> orval);;

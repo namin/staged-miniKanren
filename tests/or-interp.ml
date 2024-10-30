@@ -58,28 +58,33 @@ f false;;
    metaocamlc -c ordecls.ml   *)
 
 #use "ordecls.ml";;
+open Ordecls;;
 
-type orexp2 =
+type orexp =
   | Lit of bool
-  | Or of orexp2 * orexp2
+  | Or of orexp * orexp
   | Sym of string
-  | Lam of string * orexp2
-  | App of orexp2 * orexp2 ;;
+  | Lam of string * orexp
+  | App of orexp * orexp ;;
 
-type env2_staged = (string * Ordecls.orval2 code) list ;;
+type env = (string * orval code) list ;;
 
-let rec eval_or2_staged (e : orexp2) (env : env2_staged) =
+let rec eval (e : orexp) (env : env) : orval code =
   match e with
-  | Lit b -> .< Ordecls.Bool b >.
-  | Or (e1, e2) -> .< (match .~(eval_or2_staged e1 env) with
-                      | Ordecls.Bool v1 -> (match .~(eval_or2_staged e2 env) with
-                                            | Ordecls.Bool v2 -> Ordecls.Bool (v1 || v2))) >.
-  | Lam (s, e) -> .< Ordecls.Closure (fun v -> .~(eval_or2_staged e ((s, .<v>.) :: env))) >.
-  | App (e1, e2) -> .< (match .~(eval_or2_staged e1 env) with
-                       | Ordecls.Closure f -> f .~(eval_or2_staged e2 env)) >.
-  | Sym s -> List.assoc s env ;;
+  | Lit b -> .< Bool b >.
+  | Or (e1, e2) ->
+    .< (match .~(eval e1 env) with
+        | Bool false -> .~(eval e2 env)
+        | v1 -> v1) >.
+  | Sym s -> List.assoc s env
+  | Lam (s, e) -> 
+    .< Closure
+       (fun v -> .~(eval e ((s, .<v>.) :: env))) >.
+  | App (e1, e2) ->
+    .< (match .~(eval e1 env) with
+        | Closure f -> f .~(eval e2 env)) >. ;;
 
-let f = Runcode.run .< fun a -> .~(eval_or2_staged (App ((Lam ("x", (Or ((Sym "x"), (Sym "x"))))), (Sym "a"))) [("a", .< Bool a >.)]) >.;;
+let f = Runcode.run .< fun a -> .~(eval (App ((Lam ("x", (Or ((Sym "x"), (Sym "x"))))), (Sym "a"))) [("a", .< Bool a >.)]) >.;;
 
 f true;;
 f false;;
