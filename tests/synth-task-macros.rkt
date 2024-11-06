@@ -9,11 +9,12 @@
    [example-call -> example-return] ...)
   (car
    (run 1 (q ...)
-     (evalo-staged
-      `(letrec
-           ([name rhs] ...)
-         (list example-call ...))
-      '(example-return ...)))))
+     (staged
+      (evalo-staged
+       `(letrec
+            ([name rhs] ...)
+          (list example-call ...))
+       '(example-return ...))))))
 
 (test
  (synth/sketch (e)
@@ -25,6 +26,23 @@
                [(append '(a) '(b)) -> (a b)]
                [(append '(c d) '(e f)) -> (c d e f)])
  '(car xs))
+
+
+(test
+ (run 1 (e)
+   (staged
+    (evalo-staged
+     `(letrec
+          ([append
+            (lambda (xs ys)
+              (if (null? xs) ys
+                  (cons ,e (append (cdr xs) ys))))])
+        (list
+         (append '() '())
+         (append '(a) '(b))
+         (append '(c d) '(e f))))
+     '(() (a b) (c d e f)))))
+ '((car xs)))
 
 
 (define-syntax-rule
@@ -45,6 +63,23 @@
       (if (null? xs) ys
           (cons (car xs) (append (cdr xs) ys))))])
   (a b c))
+ '((() (a b c))
+   ((a) (b c))
+   ((a b) (c))
+   ((a b c) ())))
+
+(test
+ (run* (xs ys)
+   (staged
+    (evalo-staged
+     `(letrec
+          ([append
+            (lambda (xs ys)
+              (if (null? xs) ys
+                  (cons (car xs)
+                        (append (cdr xs) ys))))])
+        (append ',xs ',ys))
+     '(a b c))))
  '((() (a b c))
    ((a) (b c))
    ((a b) (c))
