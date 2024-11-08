@@ -69,22 +69,22 @@ type orexp =
 
 type env = (string * orval code) list ;;
 
-let rec eval (e : orexp) (env : env) : orval code =
+let rec eval_or (e : orexp) (env : env) : orval code =
   match e with
   | Lit b -> .< Bool b >.
   | Or (e1, e2) ->
-    .< (match .~(eval e1 env) with
-        | Bool false -> .~(eval e2 env)
+    .< (match .~(eval_or e1 env) with
+        | Bool false -> .~(eval_or e2 env)
         | v1 -> v1) >.
   | Sym s -> List.assoc s env
   | Lam (s, e) -> 
     .< Closure
-       (fun v -> .~(eval e ((s, .<v>.) :: env))) >.
+       (fun v -> .~(eval_or e ((s, .<v>.) :: env))) >.
   | App (e1, e2) ->
-    .< (match .~(eval e1 env) with
-        | Closure f -> f .~(eval e2 env)) >. ;;
+    .< (match .~(eval_or e1 env) with
+        | Closure f -> f .~(eval_or e2 env)) >. ;;
 
-let f = Runcode.run .< fun a -> .~(eval (App ((Lam ("x", (Or ((Sym "x"), (Sym "x"))))), (Sym "a"))) [("a", .< Bool a >.)]) >.;;
+let f = Runcode.run .< fun a -> .~(eval_or (App ((Lam ("x", (Or ((Sym "x"), (Sym "x"))))), (Sym "a"))) [("a", .< Bool a >.)]) >.;;
 
 f true;;
 f false;;

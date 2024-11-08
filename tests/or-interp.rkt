@@ -13,40 +13,49 @@
      ((== y x) (== a v))
      ((=/= y x) (lookupo x env^ v)))))
 
-
-(defrel-partial/staged (applyo rep [x e env] [arg v])
-  (evalo e (cons (cons x arg) env) v))
-  
-(defrel/staged (evalo e env v)
+(defrel/staged (evalo-or-staged e env v)
   (fallback
    (conde
-    ((booleano e) (== e v))
-    ((fresh (e1 e2 v1)
-            (== e `(or ,e1 ,e2))
-            (evalo e1 env v1)
-            (gather
-             (conde
-              [(== v1 #f) (evalo e2 env v)]
-              [(=/= v1 #f) (== v1 v)]))))
-    ;; adding the lambda-calculus
-    ((symbolo e) (lookupo e env v))
-    ((fresh (x e0)
-            (== e `(lambda (,x) ,e0))
-            (specialize-partial-apply v applyo x e0 env)))
-    ((fresh (e1 e2 v1 v2)
-            (== e `(,e1 ,e2))
-            (evalo e1 env v1)
-            (evalo e2 env v2)
-            (later (finish-apply v1 applyo v2 v)))))))
+     ((booleano e) (== e v))
+     ((fresh (e1 e2 v1)
+        (== e `(or ,e1 ,e2))
+        (evalo-or-staged e1 env v1)
+        (gather
+         (conde
+           [(== v1 #f) (evalo-or-staged e2 env v)]
+           [(=/= v1 #f) (== v1 v)]))))
+     ((symbolo e) (lookupo e env v))
+     ((fresh (x e0)
+        (== e `(lambda (,x) ,e0))
+        (symbolo x)
+        (make-closo x e0 env v)))
+     ((fresh (e1 e2 v1 v2)
+        (== e `(,e1 ,e2))
+        (evalo-or-staged e1 env v1)
+        (evalo-or-staged e2 env v2)
+        (later (apply-closo v1 v2 v)))))))
 
-(run 1 (q v) (evalo '(or #f #t) q v))
+(defrel-partial/staged (applyo rep [x e env] [v1 v])
+  (evalo-or-staged e `((,x . ,v1) . ,env) v))
 
-(run 1 (q v) (staged (evalo `(or a #t) q v)))
+(defrel/staged (make-closo x e env clos)
+  (specialize-partial-apply clos applyo x e env))
 
-(run 1 (q v e) (staged (evalo `(or a ,e) `((a . ,q)) v)))
+(defrel (apply-closo clos v1 v)
+  (finish-apply clos applyo v1 v))
+
+(run 1 (q v) (evalo-or-staged '(or #f #t) q v))
+
+(run 1 (q v) (staged (evalo-or-staged `(or a #t) q v)))
+
+(run 1 (q v e) (staged (evalo-or-staged `(or a ,e) `((a . ,q)) v)))
 
 (generated-code)
 
-(run 2 (q v e) (staged (evalo `((lambda (x) (or x x)) ,q) '() v)))
+(run 2 (q v e) (staged (evalo-or-staged `((lambda (x) (or x x)) ,q) '() v)))
+
+(generated-code)
+
+(run* (x v) (staged (evalo-or-staged `(or #f x) `((x . ,x)) v)))
 
 (generated-code)
