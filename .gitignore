@@ -1,5 +1,6 @@
 *~
 \#*\#
 bench-log*
-**/compiled/bench-results/
+**/compiled
+/anonymous-submission/
 /bench-results/
