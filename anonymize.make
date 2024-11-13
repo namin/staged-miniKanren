@@ -16,7 +16,7 @@ anonymous-submission: docs/README.anonymous.md private/faster-minikanren
 
 anonymous-submission.tar: anonymous-submission
 	{ \
-	matches=$$(grep -n -H -E -R -i --exclude-dir="faster-minikanren" "michael|ballantyne|jason|hemann|nada|\bamin\b|william|byrd|raffi|sanna|harvard|indiana|northeastern|seton|alabama|UAB|birmingham" $^) ;\
+	matches=$$(grep -n -H -E -R -i --exclude "README.md" --exclude-dir="faster-minikanren" "michael|ballantyne|jason|hemann|nada|\bamin\b|william|byrd|raffi|sanna|harvard|indiana|northeastern|seton|alabama|UAB|birmingham" $^) ;\
 	if [ -n "$$matches" ] ;\
 	then echo "FAILING, found references to personal information:" ;\
 		echo "$$matches" ;\
