@@ -88,3 +88,10 @@ let f = Runcode.run .< fun a -> .~(eval_or (App ((Lam ("x", (Or ((Sym "x"), (Sym
 
 f true;;
 f false;;
+
+let code2 = eval_or (App ((Lam ("f", (Or ((App ((Sym "f"), (Lit true))),
+                                          (App ((Sym "f"), (Lit false))))))),
+                          (Lam ("x", (Sym "x")))))
+                    [];;
+let f2 = Runcode.run code2;;
+  
