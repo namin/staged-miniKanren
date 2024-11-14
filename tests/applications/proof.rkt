@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../../all.rkt")
+(require "../../all.rkt" racket/list plot)
 
 (define-term-syntax-rule (prover body)
   `(letrec ([member?
@@ -19,8 +19,7 @@
                          (proof? (list A assms r2 ants2)))]
                    [`((,A => ,B) ,assms conditional
                       ((,B (,A . ,assms) ,rule ,ants)))
-                    (proof? (list B (cons A assms) rule ants))]
-                   ))])
+                    (proof? (list B (cons A assms) rule ants))]))])
        ,body)))
 
 (defrel/staged (proof-staged prf)
@@ -40,101 +39,144 @@
     (prover `(proof? ',prf))
     b)))
 
-(define ex-proof1
-  '((C (A (A => B) (B => C))
-       modus-ponens
-       (((B => C) (A (A => B) (B => C)) assumption ())
-        (B (A (A => B) (B => C))
-           modus-ponens
-           (((A => B) (A (A => B) (B => C)) assumption ())
-            (A (A (A => B) (B => C)) assumption ())))))))
-(record-bench 'staged 'proofo 1)
-(time-test
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(C (A (A => B) (B => C)) . ,body))
-      (proofo prf #t)))
-  ex-proof1)
+(defrel (valid-proofo prf)
+  (staged
+   (evalo-staged
+    (prover `(proof? ',prf))
+    #t)))
 
-(record-bench 'run-staged 'proofo 1)
-(time-test
- (run 1 (prf)
-   (staged
-    (fresh (body)
-      (== prf `(C (A (A => B) (B => C)) . ,body))
-      (proof-staged prf))))
-  ex-proof1)
-
-(record-bench 'unstaged 'proofo 1)
-(time-test
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(C (A (A => B) (B => C)) . ,body))
-      (proof-unstaged prf)))
-  ex-proof1)
-
-(define ex-proof2
-  '((((A => B) => ((B => C) => (A => C)))
-     ()
-     conditional
-     ((((B => C) => (A => C))
-       ((A => B))
-       conditional
-       (((A => C)
-         ((B => C) (A => B))
-         conditional
-         ((C (A (B => C) (A => B))
+(define (run-proofs)
+  (define ex-proof1
+    '((C (A (A => B) (B => C))
+         modus-ponens
+         (((B => C) (A (A => B) (B => C)) assumption ())
+          (B (A (A => B) (B => C))
              modus-ponens
-             (((B => C) (A (B => C) (A => B)) assumption ())
-              (B (A (B => C) (A => B))
-                 modus-ponens
-                 (((A => B) (A (B => C) (A => B)) assumption ())
-                  (A (A (B => C) (A => B)) assumption ())))))))))))))
+             (((A => B) (A (A => B) (B => C)) assumption ())
+              (A (A (A => B) (B => C)) assumption ())))))))
+  (record-bench 'staged 'proofo 1)
+  (time-test
+    (run 1 (prf)
+      (fresh (body)
+        (== prf `(C (A (A => B) (B => C)) . ,body))
+        (proofo prf #t)))
+    ex-proof1)
 
-(record-bench 'staged 'proofo 2)
-(time-test
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-      (proofo prf #t)))
-  ex-proof2)
+  (record-bench 'run-staged 'proofo 1)
+  (time-test
+   (run 1 (prf)
+     (staged
+      (fresh (body)
+        (== prf `(C (A (A => B) (B => C)) . ,body))
+        (proof-staged prf))))
+   ex-proof1)
 
-(record-bench 'run-staged 'proofo 2)
-(time-test
- (run 1 (prf)
-   (staged
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-      (proof-staged prf))))
-  ex-proof2)
+  (record-bench 'unstaged 'proofo 1)
+  (time-test
+    (run 1 (prf)
+      (fresh (body)
+        (== prf `(C (A (A => B) (B => C)) . ,body))
+        (proof-unstaged prf)))
+    ex-proof1)
 
-(record-bench 'unstaged 'proofo 2)
-(time-test
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-      (proof-unstaged prf)))
-  ex-proof2)
+  (define ex-proof2
+    '((((A => B) => ((B => C) => (A => C)))
+       ()
+       conditional
+       ((((B => C) => (A => C))
+         ((A => B))
+         conditional
+         (((A => C)
+           ((B => C) (A => B))
+           conditional
+           ((C (A (B => C) (A => B))
+               modus-ponens
+               (((B => C) (A (B => C) (A => B)) assumption ())
+                (B (A (B => C) (A => B))
+                   modus-ponens
+                   (((A => B) (A (B => C) (A => B)) assumption ())
+                    (A (A (B => C) (A => B)) assumption ())))))))))))))
 
-(record-bench 'staged 'proofo 3)
-(time-test
- (length
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => ((C => D) => ((D => E) => (A => E))))) () . ,body))
-      (proofo prf #t))))
-  1)
+  (record-bench 'staged 'proofo 2)
+  (time-test
+    (run 1 (prf)
+      (fresh (body)
+        (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
+        (proofo prf #t)))
+    ex-proof2)
 
-(record-bench 'run-staged 'proofo 3)
-(time-test
- (length
-  (run 1 (prf)
-    (staged
-     (fresh (body)
-       (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
-       (proof-staged prf)
-       ))))
- 1)
+  (record-bench 'run-staged 'proofo 2)
+  (time-test
+   (run 1 (prf)
+     (staged
+      (fresh (body)
+        (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
+        (proof-staged prf))))
+   ex-proof2)
+
+  (record-bench 'unstaged 'proofo 2)
+  (time-test
+    (run 1 (prf)
+      (fresh (body)
+        (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
+        (proof-unstaged prf)))
+    ex-proof2)
+
+  (record-bench 'staged 'proofo 3)
+  (time-test
+   (length
+    (run 1 (prf)
+      (fresh (body)
+        (== prf `(((A => B) => ((B => C) => ((C => D) => ((D => E) => (A => E))))) () . ,body))
+        (proofo prf #t))))
+   1)
+
+  (record-bench 'run-staged 'proofo 3)
+  (time-test
+   (length
+    (run 1 (prf)
+      (staged
+       (fresh (body)
+         (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
+         (proof-staged prf)))))
+       
+   1))
+
+(define (implication-chain size premise conclusion)
+  (let loop ([previous premise] [acc '()] [size size])
+    (if (zero? size)
+        (cons `(,previous => ,conclusion) acc)
+        (let ([new (gensym)])
+          (loop new (cons `(,previous => ,new) acc) (sub1 size))))))
+
+(define (time-proof-of-size size)
+  (define-syntax-rule (proof-time-of proof-rel)
+    (let-values
+        ([(_ __ wall-clock-time ___)
+          (time-apply
+           (lambda ()
+             (run 1 (prf)
+               (fresh (body)
+                 (== prf `(End (Start . ,(racket-term (implication-chain size 'Start 'End))) . ,body))
+                 (proof-rel prf))))
+           '())])
+      wall-clock-time))
+
+  (values (proof-time-of proof-unstaged) (proof-time-of valid-proofo)))
+
+(define (proof-chart [sizes (in-range 1 5)])
+  (define-values (unstaged staged)
+    (for/lists (unstaged staged)
+               ([size sizes])
+      (printf "Timing proof of size ~a~%" size)
+      (define-values (unstaged staged) (time-proof-of-size size))
+      (values (list size unstaged) (list size staged))))
+  (parameterize ([plot-x-ticks (fraction-ticks #:divisors '(1))])
+    (plot (list (lines unstaged #:color 'red #:label "Unstaged")
+                (lines staged #:color 'blue #:label "Staged"))
+          #:x-label "Proof Size"
+          #:y-label "Time (ms)"
+          #:title "Unstaged/Staged Runtime vs Proof Size")))
 
 #| doesn't come back
 (record-bench 'unstaged 'proofo 3)

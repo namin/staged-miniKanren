@@ -4,7 +4,7 @@
  quote
  cons
  list
- #;racket-term
+ racket-term
  define-term-syntax-rule
  ==
  =/=
