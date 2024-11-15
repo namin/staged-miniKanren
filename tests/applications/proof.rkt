@@ -2,6 +2,8 @@
 
 (require "../../all.rkt" racket/list plot)
 
+(provide proof-chart)
+
 (define-term-syntax-rule (prover body)
   `(letrec ([member?
              (lambda (x ls)
@@ -142,6 +144,8 @@
        
    1))
 
+(run-proofs)
+
 (define (implication-chain size premise conclusion)
   (let loop ([previous premise] [acc '()] [size size])
     (if (zero? size)
@@ -164,7 +168,7 @@
 
   (values (proof-time-of proof-unstaged) (proof-time-of valid-proofo)))
 
-(define (proof-chart [sizes (in-range 1 5)])
+(define (proof-chart [sizes (in-range 1 5)] [filename #f])
   (define-values (unstaged staged)
     (for/lists (unstaged staged)
                ([size sizes])
@@ -176,7 +180,8 @@
                 (lines staged #:color 'blue #:label "Staged"))
           #:x-label "Proof Size"
           #:y-label "Time (ms)"
-          #:title "Unstaged/Staged Runtime vs Proof Size")))
+          #:title "Unstaged/Staged Runtime vs Proof Size"
+          #:out-file filename)))
 
 #| doesn't come back
 (record-bench 'unstaged 'proofo 3)

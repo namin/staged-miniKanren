@@ -3,6 +3,8 @@
 (require "../../main.rkt"
          "../../test-check.rkt")
 
+(provide plot-timing-test)
+
 #|
 Grammar syntax:
 - (or A B C) is disjunction
@@ -148,7 +150,7 @@ expression to be evalued.
 (plot-new-window? #t)
 
 (define (plot-timing-test [timing-range (in-range 0 1000 20)]
-                          [trials 1])
+                          [out-file #f])
   (define dataset
     (for/list ([size timing-range])
       (printf "Testing size ~a~%" size)
@@ -159,4 +161,5 @@ expression to be evalued.
                      #:color 'blue #:label "Staged"))
         #:x-label "Output Size"
         #:y-label "Time (ms)"
-        #:title "Unstaged/Staged Runtime vs Output Size"))
+        #:title "Unstaged/Staged Runtime vs Output Size"
+        #:out-file out-file))
