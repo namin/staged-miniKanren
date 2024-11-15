@@ -5,17 +5,17 @@
          "./interpreter/basics.rkt"
          plot)
 
-(define paper-dir "../../../staged-mk-paper/")
+(define paper-dir "../staged-mk-paper/")
 
 (define (main)
-  (define plot-dir
-    (string-append (if (file-exists? paper-dir)
-                       paper-dir
-                       "../")
-                   "bench-results/"))
+  (define plot-dir paper-dir)
 
-  (unless (directory-exists? plot-dir)
-    (make-directory plot-dir))
+  (display "PLOT DIR:")
+  (display plot-dir)
+  (newline)
+
+  ;; (unless (directory-exists? plot-dir)
+  ;;   (make-directory plot-dir))
 
   (plot-timing-test (in-range 0 1000 20) (string-append plot-dir "grammars.svg"))
   (proof-chart (in-range 1 10) (string-append plot-dir "proofs.svg"))
