@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../../all.rkt")
+(require "../../all.rkt" racket/list plot)
 
 (test
     (length
@@ -198,6 +198,17 @@
   (staged
    (evalo-staged `(cons ,e '()) '(5))))
 
+(defrel (appendo-unstaged xs ys zs)
+  (evalo-unstaged
+   `(letrec ((append
+              (lambda (xs ys)
+                (if (null? xs)
+                    ys
+                    (cons (car xs)
+                          (append (cdr xs) ys))))))
+      (append ',xs ',ys))
+   zs))
+
 (defrel (appendo-staged xs ys zs)
   (staged
    (evalo-staged
@@ -209,6 +220,37 @@
                            (append (cdr xs) ys))))))
        (append ',xs ',ys))
     zs)))
+
+(define-syntax-rule (time-form body ...)
+  (let-values ([(_ __ wall-clock-time ___)
+                (time-apply
+                 (lambda ()
+                   body ...)
+                 '())])
+    wall-clock-time))
+
+(define (appendo-size-timed size)
+  (define lst (range size))
+  (values
+   (time-form (run* (p q) (appendo p q (racket-term lst))))
+   (time-form (run* (p q) (appendo-staged p q (racket-term lst))))
+   (time-form (run* (p q) (appendo-unstaged p q (racket-term lst))))))
+
+(define (plot-appendo-sizes [sizes (in-range 100 500 10)])
+  (define-values (handwritten staged unstaged)
+    (for/lists (handwritten staged unstaged)
+               ([size sizes])
+      (printf "Plotting appendo sizes ~a~%" size)
+      (define-values (handwritten staged unstaged) (appendo-size-timed size))
+      (values (list size handwritten)
+              (list size staged)
+              (list size unstaged))))
+  (plot (list (lines handwritten #:color 'green #:label "Handwritten")
+              (lines staged #:color 'blue #:label "Staged")
+              (lines unstaged #:color 'red #:label "Unstaged"))
+        #:x-label "List Size"
+        #:y-label "Time (ms)"
+        #:title "Handwritten/Staged/Unstaged Runtime vs List Size"))
 
 (test
     (run* (xs ys)
