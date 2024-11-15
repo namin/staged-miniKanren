@@ -2,6 +2,8 @@
 
 (require "../../all.rkt" racket/list plot)
 
+(provide plot-appendo-sizes)
+
 (test
     (length
      (run 1 (q)
@@ -99,7 +101,7 @@
        (evalo-staged
         `(and ,q #t)
         q)))
-  '(#t #f))
+   '(#t #f))
 
 (test
     ;; run 4 should generate a quine
@@ -189,6 +191,7 @@
        (== (cons xa xd) xs)
        (== (cons xa zd) zs)
        (appendo xd ys zd)))))
+
 (test
     (run* (xs ys)
       (appendo xs ys '(a b c)))
@@ -236,7 +239,7 @@
    (time-form (run* (p q) (appendo-staged p q (racket-term lst))))
    (time-form (run* (p q) (appendo-unstaged p q (racket-term lst))))))
 
-(define (plot-appendo-sizes [sizes (in-range 100 500 10)])
+(define (plot-appendo-sizes [sizes (in-range 100 500 10)] [out-file #f])
   (define-values (handwritten staged unstaged)
     (for/lists (handwritten staged unstaged)
                ([size sizes])
@@ -250,7 +253,8 @@
               (lines unstaged #:color 'red #:label "Unstaged"))
         #:x-label "List Size"
         #:y-label "Time (ms)"
-        #:title "Handwritten/Staged/Unstaged Runtime vs List Size"))
+        #:title "Handwritten/Staged/Unstaged Runtime vs List Size"
+        #:out-file out-file))
 
 (test
     (run* (xs ys)
@@ -262,8 +266,8 @@
       (staged
        (fresh ()
          (later (== q '(lambda () (lambda (x) x))))
-         (evalo-staged `((,q) 1) 1)))
-      )
+         (evalo-staged `((,q) 1) 1))))
+      
   '((lambda () (lambda (x) x))))
 
 (test
@@ -271,28 +275,28 @@
       (staged
        (fresh ()
          (evalo-staged `((,q) 1) 1)
-         (later (== q '(lambda () (lambda (x) x))))))
-      )
+         (later (== q '(lambda () (lambda (x) x)))))))
+      
     '((lambda () (lambda (x) x))))
 
 (test
     (run 1 (q)
-      (evalo-unstaged `(((lambda () car)) (cons 1 2)) 1)
-      )
+      (evalo-unstaged `(((lambda () car)) (cons 1 2)) 1))
+      
   '(_.0))
 
 (test
     (run 1 (q)
       (staged
-       (evalo-staged `((lambda () car)) q))
-      )
+       (evalo-staged `((lambda () car)) q)))
+      
   '((struct prim . car)))
 
 (test
     (run 1 (q)
       (staged
-       (evalo-staged `(((lambda () car)) (cons 1 2)) 1))
-      )
+       (evalo-staged `(((lambda () car)) (cons 1 2)) 1)))
+      
   '(_.0))
 
 (test
@@ -300,8 +304,8 @@
       (staged
        (fresh ()
          (== q '(lambda () car))
-         (evalo-staged `((,q) (cons 1 2)) 1)))
-      )
+         (evalo-staged `((,q) (cons 1 2)) 1))))
+      
   '((lambda () car)))
 
 (test
@@ -309,8 +313,8 @@
       (staged
        (fresh ()
          (later (== q '(lambda () car)))
-         (evalo-staged `((,q) (cons 1 2)) 1)))
-      )
+         (evalo-staged `((,q) (cons 1 2)) 1))))
+      
     '((lambda () car)))
 
 (test
@@ -318,8 +322,8 @@
       (staged
        (fresh ()
          (evalo-staged `((,q) (cons 1 2)) 1)
-         (later (== q '(lambda () car)))))
-      )
+         (later (== q '(lambda () car))))))
+      
   '((lambda () car)))
 
 (test
@@ -396,15 +400,15 @@
     (run 1 (q)
       (staged
        (evalo-staged '(match '(hello) [`(hello ,x) 1]) q)))
-  '()
-  )
+  '())
+  
 
 (test
     (run 1 (q)
       (staged
        (evalo-staged '(match '(hello) [`(hello ,x) 1] [`(,x) 2]) q)))
-  '(2)
-  )
+  '(2))
+  
 
 ;; regression test---this raised a problem when reflecting datums to quasiquotes
 ;; because fix-scope special cased `quote` and didn't understand quasiquote.
