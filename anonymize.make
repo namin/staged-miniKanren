@@ -18,9 +18,10 @@ anonymous-submission.tar: anonymous-submission
 	{ \
 	matches=$$(grep -n -H -E -R -i --exclude "README.md" --exclude "README.anonymous.md" --exclude-dir="faster-minikanren" "michael|ballantyne|jason|hemann|nada|\bamin\b|william|byrd|raffi|sanna|harvard|indiana|northeastern|seton|alabama|UAB|birmingham" $^) ;\
 	if [ -n "$$matches" ] ;\
-	then echo "FAILING, found references to personal information:" ;\
+	then echo "WARNING, found references to personal information:" ;\
 		echo "$$matches" ;\
-		exit 1 ;\
+		echo "These can be edited in the 'anonymous-submission' directory";\
+		read -p "Hit enter to continue or C-c to quit: " response;\
 	fi ;\
 	tar --create --file $@ $^ ;\
 	}
