@@ -235,9 +235,9 @@
 (define (appendo-size-timed size)
   (define lst (range size))
   (values
-   (time-form (run* (p q) (appendo p q (racket-term lst))))
-   (time-form (run* (p q) (appendo-staged p q (racket-term lst))))
-   (time-form (run* (p q) (appendo-unstaged p q (racket-term lst))))))
+   (time-form (run* (p q) (appendo p q lst)))
+   (time-form (run* (p q) (appendo-staged p q lst)))
+   (time-form (run* (p q) (appendo-unstaged p q lst)))))
 
 (define (plot-appendo-sizes [sizes (in-range 100 500 10)] [out-file #f])
   (define-values (handwritten staged unstaged)

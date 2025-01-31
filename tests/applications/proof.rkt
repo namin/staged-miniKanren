@@ -154,6 +154,7 @@
           (loop new (cons `(,previous => ,new) acc) (sub1 size))))))
 
 (define (time-proof-of-size size)
+  (define impl-chain (implication-chain size 'Start 'End))
   (define-syntax-rule (proof-time-of proof-rel)
     (let-values
         ([(_ __ wall-clock-time ___)
@@ -161,7 +162,7 @@
            (lambda ()
              (run 1 (prf)
                (fresh (body)
-                 (== prf `(End (Start . ,(racket-term (implication-chain size 'Start 'End))) . ,body))
+                 (== prf `(End (Start . ,impl-chain) . ,body))
                  (proof-rel prf))))
            '())])
       wall-clock-time))
