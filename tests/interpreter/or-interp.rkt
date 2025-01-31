@@ -14,9 +14,9 @@
      ((=/= y x) (lookupo x env^ v)))))
 
 
-#;(defrel-partial/staged (applyo rep [x e env] [arg v])
+(defrel-partial/staged (applyo rep [x e env] [arg v])
   (evalo e (cons (cons x arg) env) v))
-  
+
 (defrel/staged (evalo e env v)
   (fallback
    (conde
