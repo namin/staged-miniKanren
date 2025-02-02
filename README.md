@@ -11,3 +11,7 @@ A novel framework for staging interpreters written as relations, in which the pr
 ## Running
 - `racket tests/all.rkt`
 - `racket tests/all-bench.rkt`
+
+## Benchmarks
+- `./benchrun.sh`
+
