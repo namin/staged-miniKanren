@@ -2,20 +2,19 @@
 
 (require "../../all.rkt")
 
-(record-bench 'staging 'eval-or)
+(record-bench 'eval-eval 'staging 'eval-or)
 (defrel (or-evalo expr val)
   (time-staged
     (evalo-staged
       `(letrec ([eval-or
          (lambda (expr env)
            (match expr
-             [`(boolean? ,e)
-              (boolean? (eval-or e env))]
+		     [#t #t]
+		     [#f #f]
              [`(or ,e1 ,e2)
-               (let ((v (eval-or e1 env)))
-                 (if v
-                     v
-                     (eval-or e2 env)))]
+               (match (eval-or e1 env)
+				 [#f (eval-or e2 env)]
+				 [v v])]
              [(? symbol? x) (env x)]
              [`(lambda (,(? symbol? x)) ,body)
                (lambda (a)
@@ -32,7 +31,6 @@
 ;; (run 90 (p r) (or-evalo p r))
 ;; The original bench has 90; 9 will suffice.
 (run 9 (p r) (or-evalo p r))
-
 
 (run 1 (v) (or-evalo '(or #f #t) v))
 
