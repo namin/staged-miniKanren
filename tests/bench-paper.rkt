@@ -15,10 +15,10 @@
 ;; (require "applications/dl.rkt") ;; Negation-normal form
 ;;
 ;; sub-block: eval-like relations on program-like arguments
-(require "applications/grammars.rkt")
+(require "applications/jbh_grammars.rkt") ;; Done
 ;; Staging the evalo relation running on (eval <program-text>) (thus faster eval functions in particular)
 (require "applications/or-lang-interp.rkt")
-(require "applications/proof.rkt")
+(require "applications/jbh_proof.rkt") ;; Done
 (require "applications/jbh_parsing-with-derivatives.rkt") ;; Done, already there
 (require "applications/jbh_double-eval.rkt") ;; quines w/quasiquotes ;; Done, already there.
 

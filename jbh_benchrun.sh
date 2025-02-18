@@ -9,20 +9,15 @@ else
     BENCH_DIR="./jbh_bench-results"
 fi
 
-# (require "applications/parsing-with-derivatives.rkt")
-# (require "applications/proof.rkt")
-# (require "applications/dl.rkt") # d... logic?
-# (require "applications/peano-fib.rkt")
-# (require "applications/grammars.rkt")
-racket tests/bench-rel.rkt | tee bench-log-ex.txt
-python3 benchread.py >$BENCH_DIR/bench_rel.tex
-cp bench-log-ex.txt bench-log-ex-rel.txt
+racket tests/bench-paper.rkt | tee bench-log-ex.txt
+python3 benchread.py >$BENCH_DIR/bench_paper.tex
+cp bench-log-ex.txt bench-log-ex-paper.txt
 
 
 # These must be the ones from the document.
-racket tests/doc-bench.rkt | tee bench-log-ex.txt
-python3 benchread.py >$BENCH_DIR/bench_doc.tex
-cp bench-log-ex.txt bench-log-ex-doc.txt
+# racket tests/doc-bench.rkt | tee bench-log-ex.txt
+# python3 benchread.py >$BENCH_DIR/bench_doc.tex
+# cp bench-log-ex.txt bench-log-ex-doc.txt
 
 
 # These belong, among others, in the benchmark table for the paper.
