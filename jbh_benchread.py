@@ -5,19 +5,21 @@ header = """
 \\begin{figure}[htbp]
 \\begin{adjustbox}{max width=\\textwidth}
 \\small
-\\begin{tabular}{@{}p{1.5cm} l c c c c@{}}
+\\begin{tabular}{@{}p{1.5cm} l c c c c c@{}}
 \\toprule
 {} &
 \\textbf{Name} &
 \\rotatebox{90}{\\textbf{Staging}} &
 \\rotatebox{90}{\\textbf{Staged}} &
 \\rotatebox{90}{\\textbf{Unstaged}} &
+\\rotatebox{90}{\\textbf{Gain}} &
 \\textbf{Description} \\\\
 \\midrule
 
 """
 
 footer = """
+\\bottomrule
 \\end{tabular}
 \\end{adjustbox}
 \\caption{Performance Chart with Vertical Subdivision Labels}
@@ -66,7 +68,8 @@ for line in open('bench-log-ex.txt'):
 
 for name in all_names:
     for id in all_ids:
-        s = name
+        s = ' & '  # right now just to get the columns right
+        s += name
         if id:
             s += ' (%s)' % id
         times = {}
