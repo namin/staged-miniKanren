@@ -2,15 +2,26 @@
 import re
 
 header = """
-\\begin{tabular}{|l|r|r|r|r|r|}
-\\hline
-{\\it name} & {\\it staging} & {\\it staged} & {\\it unstaged} & {\\it gain} & {\\it description}\\\\
-\\hline
+\\begin{figure}[htbp]
+\\begin{adjustbox}{max width=\\textwidth}
+\\small
+\\begin{tabular}{@{}p{1.5cm} l c c c c@{}}
+\\toprule
+{} &
+\\textbf{Name} &
+\\rotatebox{90}{\\textbf{Staging}} &
+\\rotatebox{90}{\\textbf{Staged}} &
+\\rotatebox{90}{\\textbf{Unstaged}} &
+\\textbf{Description} \\\\
+\\midrule
 
 """
 
 footer = """
 \\end{tabular}
+\\end{adjustbox}
+\\caption{Performance Chart with Vertical Subdivision Labels}
+\\end{figure}
 """
 
 re_bench = re.compile(r'^BENCH (?P<phase>\S+) (?P<name>\S+)( (?P<id>\S+))?$')
@@ -65,7 +76,7 @@ for name in all_names:
             if key in all_times:
                 time = all_times[key]
                 times[phase] = time
-                s += '$%d$ms' % time
+                s += '$%d$' % time
             elif (phase == 'unstaged' and (
                   (name, 'staged', id) in all_times or
                   (name, 'run-staged', id) in all_times)):
