@@ -11,7 +11,7 @@ fi
 
 # (require "applications/parsing-with-derivatives.rkt")
 # (require "applications/proof.rkt")
-# (require "applications/dl.rkt")
+# (require "applications/dl.rkt") # d... logic?
 # (require "applications/peano-fib.rkt")
 # (require "applications/grammars.rkt")
 racket tests/bench-rel.rkt | tee bench-log-ex.txt
