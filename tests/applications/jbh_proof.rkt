@@ -34,7 +34,7 @@
    (prover `(proof? ',prf))
    #t))
 
-(record-bench 'staging 'proofo)
+(record-bench 'eval-eval 'staging 'proofo)
 (defrel (proofo prf b)
   (time-staged
    (evalo-staged
@@ -56,7 +56,7 @@
              modus-ponens
              (((A => B) (A (A => B) (B => C)) assumption ())
               (A (A (A => B) (B => C)) assumption ())))))))
-  (record-bench 'staged 'proofo 1)
+  (record-bench 'eval-eval 'staged 'proofo 1)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -64,7 +64,7 @@
         (proofo prf #t)))
     ex-proof1)
 
-  (record-bench 'unstaged 'proofo 1)
+  (record-bench 'eval-eval 'unstaged 'proofo 1)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -90,7 +90,7 @@
                    (((A => B) (A (B => C) (A => B)) assumption ())
                     (A (A (B => C) (A => B)) assumption ())))))))))))))
 
-  (record-bench 'staged 'proofo 2)
+  (record-bench 'eval-eval 'staged 'proofo 2)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -98,7 +98,7 @@
         (proofo prf #t)))
     ex-proof2)
 
-  (record-bench 'unstaged 'proofo 2)
+  (record-bench 'eval-eval 'unstaged 'proofo 2)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -106,7 +106,7 @@
         (proof-unstaged prf)))
     ex-proof2)
 
-  (record-bench 'staged 'proofo 3)
+  (record-bench 'eval-eval 'staged 'proofo 3)
   (time-test
    (length
     (run 1 (prf)
@@ -157,7 +157,7 @@
           #:out-file filename)))
 
 #| doesn't come back
-(record-bench 'unstaged 'proofo 3)
+(record-bench 'eval-eval 'unstaged 'proofo 3)
 (time-test
  (length
   (run 1 (prf)

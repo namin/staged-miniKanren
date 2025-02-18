@@ -121,17 +121,17 @@ expression to be evalued.
         '((+ 0 >) (> + 0) (* 0 >) (> * 0)))
   (pretty-print (generated-code)))
 
-(record-bench 'staging 'grammar-synthesis)
+(record-bench 'eval/program 'staging 'grammar-synthesis)
 (defrel (interp-E-staged r)
   (time-staged (interp-E r)))
 
 (let ((size 200))
-  (record-bench 'unstaged 'grammar-synthesis)
+  (record-bench 'eval/program 'unstaged 'grammar-synthesis)
   (time
    (run size (r)
      (interp-E r)))
 
-  (record-bench 'staged 'grammar-synthesis)
+  (record-bench 'eval/program 'staged 'grammar-synthesis)
   (time
    (run size (r)
      (interp-E-staged r))))

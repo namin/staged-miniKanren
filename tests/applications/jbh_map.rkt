@@ -2,7 +2,7 @@
 
 (require "../../all.rkt")
 
-(record-bench 'unstaged 'evalo-map)
+(record-bench 'synth/ground-context 'unstaged 'evalo-map)
 (time-test
  (run 1 (q)
    (evalo-staged
@@ -20,7 +20,7 @@
       ((a . a) (b . b)))))
    '((cons x x)))
 
-(record-bench 'staging 'evalo-map)
+(record-bench 'synth/ground-context 'staging 'evalo-map)
 (defrel (staged-map-query q)
   (time-staged
    (evalo-staged
@@ -38,7 +38,7 @@
       ((a . a) (b . b))))))
 
 
-(record-bench 'staged  'evalo-map)
+(record-bench 'synth/ground-context 'staged  'evalo-map)
 (time-test
  (run 1 (q)
    (staged-map-query q))

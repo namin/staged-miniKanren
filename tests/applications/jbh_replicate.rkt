@@ -26,26 +26,26 @@
        (== res (cons v rec-res))
        (cons-n n-1 v l rec-res))]))
 
-(record-bench 'unstaged 'cons-n)
+(record-bench 'simple 'unstaged 'cons-n)
 (time-test
  (run 1 (q)
    (cons-n '(S (S (S Z))) 1 '(2 2 2 3 3 3) q))
  '((1 1 1 2 2 2 3 3 3)))
 
-(record-bench 'unstaged 'replicate 1)
+(record-bench 'simple 'unstaged 'replicate 1)
 (time-test
  (run 1 (q)
    (replicate '(S (S (S Z))) '(1 2 3) q))
  '((1 1 1 2 2 2 3 3 3)))
 
-(record-bench 'unstaged 'replicate 4)
+(record-bench 'simple 'unstaged 'replicate 4)
 (time-test
  (run 3 (q)
    (fresh (n-2)
      (replicate `(S (S ,n-2)) '(1 2 3) q)))
  '((1 1 2 2 3 3) (1 1 1 2 2 2 3 3 3) (1 1 1 1 2 2 2 2 3 3 3 3)))
 
-(record-bench 'unstaged 'replicate 3)
+(record-bench 'simple 'unstaged 'replicate 3)
 (time-test
  (run 2 (n l)
    (fresh (n-2)
@@ -98,14 +98,14 @@
 
 
 ;; Runtime-only test of the cons-n helper
-(record-bench 'staged 'cons-n)
+(record-bench 'simple 'staged 'cons-n)
 (time-test
  (run 1 (q)
    (cons-n/staged '(S (S (S Z))) 1 '(2 2 2 3 3 3) q))
  '((1 1 1 2 2 2 3 3 3)))
 
 ;; Runtime-only test of replicate
-(record-bench 'unstaged 'replicate 1)
+(record-bench 'simple 'unstaged 'replicate 1)
 (time-test
  (run 1 (q)
    (fresh (rep)
@@ -113,14 +113,14 @@
      (finish-apply rep replicate/staged '(1 2 3) q)))
  '((1 1 1 2 2 2 3 3 3)))
 
-(record-bench 'staging 'replicate 1)
+(record-bench 'simple 'staging 'replicate 1)
 (defrel (replicate/staged-basic-staged q)
   (time-staged
     (fresh (rep)
       (specialize-partial-apply rep replicate/staged '(S (S (S Z))))
       (later (finish-apply rep replicate/staged '(1 2 3) q)))))
 
-(record-bench 'staged 'replicate 1)
+(record-bench 'simple 'staged 'replicate 1)
 ;; Basic staged
 (time-test
  (run 1 (q)
@@ -128,13 +128,13 @@
  '((1 1 1 2 2 2 3 3 3)))
 
 ;; Unstaged, running backwards in runtime portion
-(record-bench 'unstaged 'replicate 2)
+(record-bench 'simple 'unstaged 'replicate 2)
 (time-test
  (run 1 (q)
    (replicate '(S (S (S Z))) q '(1 1 1 2 2 2 3 3 3)))
  '((1 2 3)))
 
-(record-bench 'staging 'replicate 2)
+(record-bench 'simple 'staging 'replicate 2)
 (defrel (replicated/staged-backwards-runtime q)
   (time-staged
     (fresh (rep)
@@ -142,13 +142,13 @@
       (later (finish-apply rep replicate/staged q '(1 1 1 2 2 2 3 3 3))))))
 
 ;; Staged, running backwards in runtime portion
-(record-bench 'staged 'replicate 2)
+(record-bench 'simple 'staged 'replicate 2)
 (time-test
  (run 1 (q)
    (replicated/staged-backwards-runtime q))
  '((1 2 3)))
 
-(record-bench 'staging 'replicate 4)
+(record-bench 'simple 'staging 'replicate 4)
 (defrel (replicate/staged-partially-staged q)
   (time-staged
     (fresh (rep n)
@@ -159,13 +159,13 @@
 ;; The generated code has two unfolded `cons`es.
 ;; This relies on the fallback to terminate at staging-time; otherwise the take*
 ;;   done by the gather would unfold cons-n forever.
-(record-bench 'staged 'replicate 4)
+(record-bench 'simple 'staged 'replicate 4)
 (time-test
  (run 3 (q)
    (replicate/staged-partially-staged q))
  '((1 1 2 2 3 3) (1 1 1 2 2 2 3 3 3) (1 1 1 1 2 2 2 2 3 3 3 3)))
 
-(record-bench 'staging' replicate 3)
+(record-bench 'simple 'staging 'replicate 3)
 (defrel (replicate/staged-no-specialization n l)
   (time-staged
     (fresh (rep)
@@ -174,7 +174,7 @@
 
 ;; We don't expect any specialization in this fully-backwards example,
 ;; but it should still work.
-(record-bench 'staged 'replicate 3)
+(record-bench 'simple 'staged 'replicate 3)
 (time-test
  (run 2 (n l)
    (replicate/staged-no-specialization n l))
@@ -211,14 +211,14 @@
              (== res (cons v rec-res))
              (replicate-helper `(cons-n ,n-1 ,v ,l ,rec-res)))])))]))
 
-(record-bench 'staging 'replicate-single)
+(record-bench 'simple 'staging 'replicate-single)
 (defrel (test-replicate/staged-single q)
   (time-staged
     (fresh (rep)
       (specialize-partial-apply rep replicate/staged-single '(S (S (S Z))))
       (later (finish-apply rep replicate/staged-single '(1 2 3) q)))))
 
-(record-bench 'staged 'replicate-single)
+(record-bench 'simple 'staged 'replicate-single)
 (time-test
  (run 1 (q) (test-replicate/staged-single q))
  '((1 1 1 2 2 2 3 3 3)))
@@ -241,12 +241,12 @@
         (replicate/staged2 d n rec-res))])))
 
 ;; We can't / don't know how to write a replicate/staged that will specialize in both modes.
-(record-bench 'staging 'replicate2)
+(record-bench 'simple 'staging 'replicate2)
 (defrel (test-replicate/staged2 n q)
   (time-staged
    (replicate/staged2 '(1 2 3) n q)))
 
-(record-bench 'staged 'replicate2)
+(record-bench 'simple 'staged 'replicate2)
 (time-test
  (run 1 (q)
    (fresh (n)

@@ -1,5 +1,7 @@
 
 import re
+from collections import defaultdict
+
 
 header = """
 \\begin{figure}[htbp]
@@ -14,8 +16,6 @@ header = """
 \\rotatebox{90}{\\textbf{Unstaged}} &
 \\rotatebox{90}{\\textbf{Gain}} &
 \\textbf{Description} \\\\
-\\midrule
-
 """
 
 footer = """
@@ -25,19 +25,19 @@ footer = """
 \\caption{Performance Chart with Vertical Subdivision Labels}
 \\end{figure}
 """
+def nested_dict():
+    return defaultdict(nested_dict)
 
-re_bench = re.compile(r'^BENCH (?P<phase>\S+) (?P<name>\S+)( (?P<id>\S+))?$')
+re_bench = re.compile(r'^BENCH (?P<category>\S+) (?P<phase>\S+) (?P<name>\S+)( (?P<id>\S+))?$')
 #re_time = re.compile(r'\s*(?P<time>\d+\.\d+)s elapsed cpu time')
 re_time = re.compile(r'\s*cpu time:\s*(?P<time>\d+)')
 re_int_count = re.compile(r'^generated code u-eval-expo count: (?P<count>\d+)')
 #MAX_TIME = 100000.0
 MAX_TIME = 100000
 
+all_categories = ['simple', 'eval/program', 'eval-eval', 'synth/ground-context']
 all_phases = ['staging', 'staged', 'unstaged']
-all_times = {}
-all_int_counts = {}
-all_names = []
-all_ids = []
+all_times = nested_dict()
 cur_phase = None
 cur_name = None
 cur_id = None
@@ -47,59 +47,45 @@ print(header)
 for line in open('bench-log-ex.txt'):
     m = re_bench.match(line)
     if m:
+        cur_category = m['category']
+        assert cur_category in all_categories, "invalid category %s" % (cur_category)
         cur_phase = m['phase']
         assert cur_phase in all_phases, "invalid phase %s" % (cur_phase)
         cur_name = m['name']
         cur_id = m['id']
-        if cur_name not in all_names:
-            all_names.append(cur_name)
-        if cur_id not in all_ids:
-            all_ids.append(cur_id)
         continue
-    key = (cur_name, cur_phase, cur_id)
     m = re_time.match(line)
     if m:
         time = int(m['time'])
-        all_times[key] = time
-    m = re_int_count.match(line)
-    if m:
-        int_count = int(m['count'])
-        all_int_counts[key] = int_count
+        all_times[cur_category][cur_name][cur_id][cur_phase] = time
 
-for name in all_names:
-    for id in all_ids:
-        s = ' & '  # right now just to get the columns right
-        s += name
-        if id:
-            s += ' (%s)' % id
-        times = {}
-        for phase in all_phases:
-            s += ' & '
-            key = (name, phase, id)
-            if key in all_times:
-                time = all_times[key]
-                times[phase] = time
-                s += '$%d$' % time
-            elif (phase == 'unstaged' and (
-                  (name, 'staged', id) in all_times or
-                  (name, 'run-staged', id) in all_times)):
-                s += '\\timeout{$>5$ min}'
-            if key in all_int_counts:
-                s += ' ($%d$)' % all_int_counts[key]
-        s += ' & '
-        if times:
-            min_time = times.get('staged', MAX_TIME)
-            if 0 < min_time:
-                if min_time < MAX_TIME:
-                    if 'unstaged' in times:
-                        gain = (1.0*times['unstaged']) / min_time
-                        s += '$%.3f$' % gain
-                    else:
-                        gain = 5*60*1000 / min_time
-                        s += '\\timeout{>$%.3f$}' % gain
-
-            s += '\\\\'
-            print(s)
-            print('\\hline')
+for category in all_categories:
+   print('\\midrule')
+   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (len(all_times[category]),category))
+   for name in all_times[category]:
+       for id in all_times[category][name]:
+           s = f" & {name}"
+           times = {}
+           for phase in all_phases:
+               s += ' & '
+               if phase in all_times[category][name][id]:
+                   time = all_times[category][name][id][phase]
+                   times[phase] = time
+                   s += '$%d$' % time
+               elif (phase == 'unstaged' and ('staged' in all_times[category][name][id])):
+                   s += '\\timeout{$>5$ min}'
+           s += ' & '
+           if times:
+               min_time = times.get('staged', MAX_TIME)
+               if 0 < min_time:
+                   if min_time < MAX_TIME:
+                       if 'unstaged' in times:
+                           gain = (1.0*times['unstaged']) / min_time
+                           s += '$%.3f$' % gain
+                       else:
+                           gain = 5*60*1000 / min_time
+                           s += '\\timeout{>$%.3f$}' % gain
+               s += '\\\\'
+               print(s)
 
 print(footer)

@@ -43,7 +43,7 @@
      '(() (a b) (c d e f)))))
  '((car xs)))
 
-(record-bench 'staging 'synth/context 1)
+(record-bench 'synth/ground-context 'staging 'synth/context 1)
 (defrel (synth/context e)
   (time-staged
     (evalo-staged
@@ -58,7 +58,7 @@
          (append '(c d) '(e f))))
      '(() (a b) (c d e f)))))
 
-(record-bench 'staged 'synth/context 1)
+(record-bench 'synth/ground-context 'staged 'synth/context 1)
 (time-test
  (run 1 (e)
    (synth/context e))

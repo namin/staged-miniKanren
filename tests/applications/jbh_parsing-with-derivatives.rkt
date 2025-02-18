@@ -122,27 +122,27 @@
 
                                      ))))))))))))))))))
 
-(record-bench 'staging 'parse)
+(record-bench 'eval-eval 'staging 'parse)
 (defrel (d/dc-o re c parse-result)
   (time-staged
    (evalo-staged
     (parse `(d/dc ',re ',c))
     parse-result)))
 
-;;(record-bench 'staging 'match)
+;;(record-bench 'eval-eval 'staging 'match)
 (defrel (regex-matcho pattern data parse-result)
   (time-staged
    (evalo-staged
     (parse `(regex-match ',pattern ',data))
     parse-result)))
 
-(record-bench 'staged 'parse 0)
+(record-bench 'eval-eval 'staged 'parse 0)
 (time-test
   (run #f (parse-result)
     (d/dc-o 'baz 'f parse-result))
   '(#f))
 
-(record-bench 'unstaged 'parse 0)
+(record-bench 'eval-eval 'unstaged 'parse 0)
 (time-test
   (run #f (parse-result)
     (evalo-unstaged
@@ -151,13 +151,13 @@
   '(#f))
 
 
-(record-bench 'staged 'parse 1)
+(record-bench 'eval-eval 'staged 'parse 1)
 (time-test
   (run #f (parse-result)
     (d/dc-o '(seq foo barn) 'foo parse-result))
   '(barn))
 
-(record-bench 'unstaged 'parse 1)
+(record-bench 'eval-eval 'unstaged 'parse 1)
 (time-test
   (run #f (parse-result)
     (evalo-unstaged
@@ -165,13 +165,13 @@
       parse-result))
   '(barn))
 
-(record-bench 'staged 'parse 2)
+(record-bench 'eval-eval 'staged 'parse 2)
 (time-test
   (run #f (parse-result)
     (d/dc-o '(alt (seq foo bar) (seq foo (rep baz))) 'foo parse-result))
   '((alt bar (rep baz))))
 
-(record-bench 'unstaged 'parse 2)
+(record-bench 'eval-eval 'unstaged 'parse 2)
 (time-test
   (run #f (parse-result)
     (evalo-unstaged
@@ -180,7 +180,7 @@
   '((alt bar (rep baz))))
 
 
-(record-bench 'staged 'parse 3)
+(record-bench 'eval-eval 'staged 'parse 3)
 (time-test
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep bar)) 
@@ -188,7 +188,7 @@
                   parse-result))
   '(#t))
 
-(record-bench 'unstaged 'parse 3)
+(record-bench 'eval-eval 'unstaged 'parse 3)
 (time-test
   (run #f (parse-result)
     (evalo-unstaged
@@ -197,7 +197,7 @@
       parse-result))
   '(#t))
 
-(record-bench 'staged 'parse 4)
+(record-bench 'eval-eval 'staged 'parse 4)
 (time-test
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep bar)) 
@@ -205,7 +205,7 @@
                   parse-result))
   '(#f))
 
-(record-bench 'unstaged 'parse 4)
+(record-bench 'eval-eval 'unstaged 'parse 4)
 (time-test
   (run #f (parse-result)
     (evalo-unstaged
@@ -214,7 +214,7 @@
       parse-result))
   '(#f))
 
-(record-bench 'staged 'parse 5)
+(record-bench 'eval-eval 'staged 'parse 5)
 (time-test
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep (alt bar baz))) 
@@ -223,7 +223,7 @@
   '(#t))
 
 
-(record-bench 'unstaged 'parse 5)
+(record-bench 'eval-eval 'unstaged 'parse 5)
 (time-test
   (run #f (parse-result)
     (evalo-unstaged
@@ -237,7 +237,7 @@
 ;; Running backwards
 ;;
 ;; the orginal regex running forward was the symbol 'baz'
-(record-bench 'staged 'parse-backwards 0)
+(record-bench 'eval-eval 'staged 'parse-backwards 0)
 (time-test
   (run 1 (regex)
     (d/dc-o regex 'f '(#f)))
@@ -245,7 +245,7 @@
      $$
      ,absento-tags0)))
 
-(record-bench 'unstaged 'parse-backwards 0)
+(record-bench 'eval-eval 'unstaged 'parse-backwards 0)
 (time-test
   (run 1 (regex)
     (evalo-unstaged
@@ -257,7 +257,7 @@
 
 
 ;; the orginal regex running forward was '(seq foo barn)'
-(record-bench 'staged 'parse-backwards 1)
+(record-bench 'eval-eval 'staged 'parse-backwards 1)
 (time-test
   (run 1 (regex)
     (d/dc-o regex 'foo 'barn))
@@ -265,7 +265,7 @@
      $$
      ,absento-tags0)))
 
-(record-bench 'unstaged 'parse-backwards 1)
+(record-bench 'eval-eval 'unstaged 'parse-backwards 1)
 (time-test
   (run 1 (regex)
     (evalo-unstaged
@@ -276,7 +276,7 @@
      ,absento-tags0)))
 
 
-(record-bench 'staged 'parse-backwards 2)
+(record-bench 'eval-eval 'staged 'parse-backwards 2)
 (time-test
   (run 1 (regex)
     (d/dc-o regex 'foo '(alt bar (rep baz))))
@@ -287,7 +287,7 @@
 
 ;; didn't come back after 5+ minutes
 #|
-(record-bench 'unstaged 'parse-backwards 2)
+(record-bench 'eval-eval 'unstaged 'parse-backwards 2)
 (time-test
   (run 1 (regex)
     (evalo-unstaged
