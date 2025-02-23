@@ -114,6 +114,15 @@
         (== prf `(((A => B) => ((B => C) => ((C => D) => ((D => E) => (A => E))))) () . ,body))
         (proofo prf #t))))
    1)
+
+  (record-bench 'eval-eval 'unstaged 'proofo 3)
+  (time-test
+   (length
+	(run 1 (prf)
+	  (fresh (body)
+		(== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
+		 (proof-unstaged prf))))
+	'timeout)
 )
 
 (run-proofs)
@@ -155,14 +164,3 @@
           #:y-label "Time (ms)"
           #:title "Unstaged/Staged Runtime vs Proof Size"
           #:out-file filename)))
-
-#| doesn't come back
-(record-bench 'eval-eval 'unstaged 'proofo 3)
-(time-test
- (length
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
-       (prover prf))))
-  1)
-|#

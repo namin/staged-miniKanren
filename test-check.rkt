@@ -7,6 +7,7 @@
          *test-result-same?*)
 
 (require "private/internals.rkt"
+		 racket/sandbox
          (for-syntax racket/base syntax/parse))
 
 (define (tree-contains tree atom)
@@ -42,6 +43,17 @@
 
 (define *test-result-same?* (make-parameter equal?))
 
+;; Timeout limit (5 minutes)
+(define timeout-limit-seconds (* 5 60))
+
+(define (timeout-thunk thunk)
+  (with-handlers ([exn:fail:resource?
+                   (lambda (ex)
+                     ;; Print a message similar to the (time) output:
+                     (printf "cpu time: -1 real time: -1 gc time: -1\n")
+                     'timeout)])
+    (call-with-limits timeout-limit-seconds #f thunk)))
+
 (define-syntax test
   (syntax-parser
     ((~and test-case (_ tested-expression expected-result))
@@ -62,7 +74,7 @@
   (syntax-rules ()
     ((_ tested-expression expected-result)
      (test
-         (time tested-expression)
+       (timeout-thunk (lambda () (time tested-expression)))
        expected-result))))
      
 (define-syntax todo

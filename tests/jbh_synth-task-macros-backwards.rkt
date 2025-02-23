@@ -64,3 +64,23 @@
    ((a) (b c))
    ((a b) (c))
    ((a b c) ())))
+
+(defrel (invert-execute-append-unstaged xs ys)
+  (evalo-unstaged
+   `(letrec
+		([append
+		  (lambda (xs ys)
+			(if (null? xs) ys
+				(cons (car xs)
+					  (append (cdr xs) ys))))])
+	  (append ',xs ',ys))
+   '(a b c)))
+
+(record-bench 'eval/program 'unstaged 'invert-execute-append 1)
+(time-test
+ (run* (xs ys)
+   (invert-execute-append-unstaged xs ys))
+ '((() (a b c))
+   ((a) (b c))
+   ((a b) (c))
+   ((a b c) ())))

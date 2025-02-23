@@ -217,6 +217,7 @@
       (append ',xs ',ys))
    zs))
 
+(record-bench 'eval/program 'staging 'eval-append-synth-all-args)
 (defrel (appendo-staged xs ys zs)
   (time-staged
    (evalo-staged

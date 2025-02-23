@@ -105,8 +105,7 @@
  '((1 1 1 2 2 2 3 3 3)))
 
 ;; Runtime-only test of replicate
-(record-bench 'simple 'unstaged 'replicate 1)
-(time-test
+(test
  (run 1 (q)
    (fresh (rep)
      (partial-apply rep replicate/staged '(S (S (S Z))))

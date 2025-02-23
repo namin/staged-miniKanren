@@ -63,3 +63,22 @@
  (run 1 (e)
    (synth/context e))
  '((car xs)))
+
+(defrel (synth/context-unstaged e)
+    (evalo-unstaged
+     `(letrec
+          ([append
+            (lambda (xs ys)
+              (if (null? xs) ys
+                  (cons ,e (append (cdr xs) ys))))])
+        (list
+         (append '() '())
+         (append '(a) '(b))
+         (append '(c d) '(e f))))
+     '(() (a b) (c d e f))))
+
+(record-bench 'synth/ground-context 'unstaged 'synth/context 1)
+(time-test
+ (run 1 (e)
+   (synth/context-unstaged e))
+ '((car xs)))

@@ -129,7 +129,7 @@
     (parse `(d/dc ',re ',c))
     parse-result)))
 
-;;(record-bench 'eval-eval 'staging 'match)
+(record-bench 'eval-eval 'staging 'match)
 (defrel (regex-matcho pattern data parse-result)
   (time-staged
    (evalo-staged
@@ -284,14 +284,10 @@
      $$
      ,absento-tags0)))
 
-
-;; didn't come back after 5+ minutes
-#|
 (record-bench 'eval-eval 'unstaged 'parse-backwards 2)
 (time-test
   (run 1 (regex)
     (evalo-unstaged
       (parse `(d/dc ',regex 'foo))
       '(alt bar (rep baz))))
-  '???)
-|#
+  'timeout)
