@@ -100,8 +100,12 @@ for category in all_categories:
                if 0 < min_time:
                    if min_time < MAX_TIME:
                        if 'unstaged' in times:
-                           gain = (1.0*times['unstaged']) / min_time
-                           s += '$%.3f$' % gain
+                           time = times['unstaged']
+                           if Decimal(time) == -1:
+                               s += '$\\infty{}$ '
+                           else:
+                               gain = (1.0*time) / min_time
+                               s += '$%.3f$' % gain
                        else:
                            #gain = 5*60*1000 / min_time
                            #s += '\\timeout{>$%.3f$}' % gain
