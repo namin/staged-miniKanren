@@ -365,6 +365,14 @@
  (run 1 (q1 q2) (pow4/2 num2 q1) (pow4/2 num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
+(defrel (pow4/2-unstaged n nq)
+  (pow/staged2 n num4 nq))
+
+(record-bench 'simple 'unstaged 'pow4 2)
+(time-test
+ (run 1 (q1 q2) (pow4/2-unstaged num2 q1) (pow4/2-unstaged num3 q2))
+ '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
+
 ;; fun power n = fn x => if n = -
 ;;     then <1>
 ;;     else if even(n) then
@@ -394,9 +402,17 @@
   (time-staged
    (pow/staged3 n num4 nq)))
 
-(record-bench 'simple 'staged 'pow4 4)
+(record-bench 'simple 'staged 'pow4 3)
 (time-test
  (run 1 (q1 q2) (pow4/3 num2 q1) (pow4/3 num3 q2))
+ '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
+
+(defrel (pow4/3-unstaged n nq)
+  (pow/staged3 n num4 nq))
+
+(record-bench 'simple 'unstaged 'pow4 3)
+(time-test
+ (run 1 (q1 q2) (pow4/3-unstaged num2 q1) (pow4/3-unstaged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
 #;(generated-code)

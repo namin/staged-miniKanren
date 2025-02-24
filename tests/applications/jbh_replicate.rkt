@@ -210,25 +210,22 @@
              (== res (cons v rec-res))
              (replicate-helper `(cons-n ,n-1 ,v ,l ,rec-res)))])))]))
 
-(record-bench 'simple 'staging 'replicate-single)
 (defrel (test-replicate/staged-single q)
-  (time-staged
+  (staged
     (fresh (rep)
       (specialize-partial-apply rep replicate/staged-single '(S (S (S Z))))
       (later (finish-apply rep replicate/staged-single '(1 2 3) q)))))
 
-(record-bench 'simple 'staged 'replicate-single)
-(time-test
+
+(test
  (run 1 (q) (test-replicate/staged-single q))
  '((1 1 1 2 2 2 3 3 3)))
-
 
 ;;
 ;; Staged for a different mode: where we know `l` but not `n`.
 ;;
 
 ;; Note the asymmetry, due to the fact that cons-n doesn't call replicate.
-
 (defrel/staged (replicate/staged2 l n res)
   (fallback
    (conde
@@ -251,6 +248,15 @@
    (fresh (n)
      (== n '(S (S (S Z))))
 	 (test-replicate/staged2 n q)))
+   '((1 1 1 2 2 2 3 3 3)))
+
+(record-bench 'simple 'unstaged 'replicate2)
+(time-test
+ (run 1 (q)
+   (fresh (n)
+     (== n '(S (S (S Z))))
+	 (time-staged
+	  (replicate/staged2 '(1 2 3) n q))))
    '((1 1 1 2 2 2 3 3 3)))
 
 #;(generated-code)
