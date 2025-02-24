@@ -153,9 +153,24 @@
 
 (record-bench 'eval/program 'staged 'eval-append-synth-base)
 (time-test
-    (run 1 (q)
-	  (eval-on-append-synth-base q))
+  (run 1 (q)
+	(eval-on-append-synth-base q))
   '(ys))
+
+
+(record-bench 'eval/program 'unstaged 'eval-append-synth-base)
+(time-test
+  (run 1 (q)
+	(evalo-unstaged
+	 `(letrec ((append
+				(lambda (xs ys)
+				  (if (null? xs) ,q
+					  (cons (car xs) (append (cdr xs) ys))))))
+		(append '(1 2) '(3 4)))
+	 '(1 2 3 4)))
+  '(ys))
+
+
 
 (test
     (run 1 (q)
@@ -262,10 +277,18 @@
         #:title "Handwritten/Staged/Unstaged Runtime vs List Size"
         #:out-file out-file))
 
-(test
+(record-bench 'eval/program 'staged 'eval-append-synth-all-args)
+(time-test
     (run* (xs ys)
       (appendo-staged xs ys '(a b c)))
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
+
+(record-bench 'eval/program 'unstaged 'eval-append-synth-all-args)
+(time-test
+  (run* (xs ys)
+	(appendo-unstaged xs ys '(a b c)))
+  '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
+
 
 (test
     (run 1 (q)
