@@ -58,9 +58,9 @@
 
 (record-bench 'eval/program 'staged 'invert-execute-append 1)
 (time-test
- (for/last ([i (in-range 0 1000)])
-   (run* (xs ys)
-     (invert-execute-append xs ys)))
+ #:times 1000
+ (run* (xs ys)
+   (invert-execute-append xs ys))
  '((() (a b c))
    ((a) (b c))
    ((a b) (c))
@@ -79,9 +79,9 @@
 
 (record-bench 'eval/program 'unstaged 'invert-execute-append 1)
 (time-test
- (for/last ([i (in-range 0 1000)])
-   (run* (xs ys)
-     (invert-execute-append-unstaged xs ys)))
+ #:times 1000
+ (run* (xs ys)
+   (invert-execute-append-unstaged xs ys))
  '((() (a b c))
    ((a) (b c))
    ((a b) (c))

@@ -26,31 +26,43 @@
        (== res (cons v rec-res))
        (cons-n n-1 v l rec-res))]))
 
-(record-bench 'simple 'unstaged 'cons-n)
-(time-test
+
+(test
  (run 1 (q)
    (cons-n '(S (S (S Z))) 1 '(2 2 2 3 3 3) q))
  '((1 1 1 2 2 2 3 3 3)))
 
+
 (record-bench 'simple 'unstaged 'replicate 1)
 (time-test
+ #:times 1000
  (run 1 (q)
    (replicate '(S (S (S Z))) '(1 2 3) q))
  '((1 1 1 2 2 2 3 3 3)))
 
+(record-bench 'simple 'unstaged 'replicate 2)
+(time-test
+ #:times 1000
+ (run 1 (q)
+   (replicate '(S (S (S Z))) q '(1 1 1 2 2 2 3 3 3)))
+ '((1 2 3)))
+
+(record-bench 'simple 'unstaged 'replicate 3)
+(time-test
+ #:times 1000
+ (run 2 (n l)
+   (fresh (n-2)
+     (replicate n l '(1 1 1 2 2 2 3 3 3))))
+ '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
+
 (record-bench 'simple 'unstaged 'replicate 4)
 (time-test
+ #:times 1000
  (run 3 (q)
    (fresh (n-2)
      (replicate `(S (S ,n-2)) '(1 2 3) q)))
  '((1 1 2 2 3 3) (1 1 1 2 2 2 3 3 3) (1 1 1 1 2 2 2 2 3 3 3 3)))
 
-(record-bench 'simple 'unstaged 'replicate 3)
-(time-test
- (run 2 (n l)
-   (fresh (n-2)
-     (replicate n l '(1 1 1 2 2 2 3 3 3))))
- '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
 
 
 ;;
@@ -98,8 +110,7 @@
 
 
 ;; Runtime-only test of the cons-n helper
-(record-bench 'simple 'staged 'cons-n)
-(time-test
+(test
  (run 1 (q)
    (cons-n/staged '(S (S (S Z))) 1 '(2 2 2 3 3 3) q))
  '((1 1 1 2 2 2 3 3 3)))
@@ -122,16 +133,11 @@
 (record-bench 'simple 'staged 'replicate 1)
 ;; Basic staged
 (time-test
+ #:times 1000
  (run 1 (q)
    (replicate/staged-basic-staged q))
  '((1 1 1 2 2 2 3 3 3)))
 
-;; Unstaged, running backwards in runtime portion
-(record-bench 'simple 'unstaged 'replicate 2)
-(time-test
- (run 1 (q)
-   (replicate '(S (S (S Z))) q '(1 1 1 2 2 2 3 3 3)))
- '((1 2 3)))
 
 (record-bench 'simple 'staging 'replicate 2)
 (defrel (replicated/staged-backwards-runtime q)
@@ -143,9 +149,26 @@
 ;; Staged, running backwards in runtime portion
 (record-bench 'simple 'staged 'replicate 2)
 (time-test
+ #:times 1000
  (run 1 (q)
    (replicated/staged-backwards-runtime q))
  '((1 2 3)))
+
+(record-bench 'simple 'staging 'replicate 3)
+(defrel (replicate/staged-no-specialization n l)
+  (time-staged
+    (fresh (rep)
+      (specialize-partial-apply rep replicate/staged n)
+      (later (finish-apply rep replicate/staged l '(1 1 1 2 2 2 3 3 3))))))
+
+;; We don't expect any specialization in this fully-backwards example,
+;; but it should still work.
+(record-bench 'simple 'staged 'replicate 3)
+(time-test
+ #:times 1000
+ (run 2 (n l)
+   (replicate/staged-no-specialization n l))
+ '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
 
 (record-bench 'simple 'staging 'replicate 4)
 (defrel (replicate/staged-partially-staged q)
@@ -160,24 +183,10 @@
 ;;   done by the gather would unfold cons-n forever.
 (record-bench 'simple 'staged 'replicate 4)
 (time-test
+ #:times 1000
  (run 3 (q)
    (replicate/staged-partially-staged q))
  '((1 1 2 2 3 3) (1 1 1 2 2 2 3 3 3) (1 1 1 1 2 2 2 2 3 3 3 3)))
-
-(record-bench 'simple 'staging 'replicate 3)
-(defrel (replicate/staged-no-specialization n l)
-  (time-staged
-    (fresh (rep)
-      (specialize-partial-apply rep replicate/staged n)
-      (later (finish-apply rep replicate/staged l '(1 1 1 2 2 2 3 3 3))))))
-
-;; We don't expect any specialization in this fully-backwards example,
-;; but it should still work.
-(record-bench 'simple 'staged 'replicate 3)
-(time-test
- (run 2 (n l)
-   (replicate/staged-no-specialization n l))
- '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
 
 ;;
 ;; As a single relation
@@ -244,6 +253,7 @@
 
 (record-bench 'simple 'staged 'replicate2)
 (time-test
+ #:times 1000
  (run 1 (q)
    (fresh (n)
      (== n '(S (S (S Z))))
@@ -252,11 +262,11 @@
 
 (record-bench 'simple 'unstaged 'replicate2)
 (time-test
+ #:times 1000
  (run 1 (q)
    (fresh (n)
      (== n '(S (S (S Z))))
-	 (time-staged
-	  (replicate/staged2 '(1 2 3) n q))))
+	 (replicate/staged2 '(1 2 3) n q)))
    '((1 1 1 2 2 2 3 3 3)))
 
 #;(generated-code)

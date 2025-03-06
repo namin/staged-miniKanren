@@ -72,6 +72,11 @@
 
 (define-syntax time-test
   (syntax-rules ()
+    ((_ #:times repeat-count tested-expression expected-result)
+     (time-test
+      (for/last ([i (in-range repeat-count)])
+        tested-expression)
+      expected-result))
     ((_ tested-expression expected-result)
      (test
        (timeout-thunk (lambda () (time tested-expression)))

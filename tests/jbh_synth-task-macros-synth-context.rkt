@@ -60,9 +60,9 @@
 
 (record-bench 'synth/ground-context 'staged 'synth/context 1)
 (time-test
- (for/last ([i (in-range 0 100)])
-   (run 1 (e)
-     (synth/context e)))
+ #:times 100
+ (run 1 (e)
+   (synth/context e))
  '((car xs)))
 
 
@@ -82,7 +82,7 @@
 
 (record-bench 'synth/ground-context 'unstaged 'synth/context 1)
 (time-test
- (for/last ([i (in-range 0 100)])
-   (run 1 (e)
-     (synth/context-unstaged e)))
+ #:times 100
+ (run 1 (e)
+   (synth/context-unstaged e))
  '((car xs)))
