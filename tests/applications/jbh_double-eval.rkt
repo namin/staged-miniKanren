@@ -577,18 +577,6 @@
      ,not-tags0+error
      (sym _.0))))
 
-;; JBH - commented b/c we aren't doing run-staged
-;; (record-bench 'eval-eval 'run-staged 'quasi-quine-evalo)
-;; (time-test
-;;   (run 1 (q)
-;;     (absento 'error q)
-;;     (absento 'struct q)
-;;     (staged (evalo-staged (quasi-quine-eval q) q)))
-;;   `((((lambda (_.0) `(,_.0 ',_.0)) '(lambda (_.0) `(,_.0 ',_.0)))
-;;      $$
-;;      ,not-tags0+error
-;;      (sym _.0))))
-
 (record-bench 'eval-eval 'unstaged 'quasi-quine-evalo)
 (time-test
  (run 1 (q)
@@ -1067,6 +1055,16 @@
      $$
      ,not-tags0+clo
      (sym _.0))))
+
+(record-bench 'eval-eval 'unstaged 'double-evalo-variadic-list-fo-better)
+(time-test
+  (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous-unstaged q q))
+  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
+      '(lambda (_.0) (list _.0 (list 'quote _.0))))
+     $$
+     ,not-tags0+clo
+     (sym _.0))))
+
 
 (define-term-syntax-rule (double-evalo-variadic-list-ho-fun letrec-body)
   `(letrec ([lookup

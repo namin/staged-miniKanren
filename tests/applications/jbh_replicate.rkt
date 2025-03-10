@@ -121,9 +121,8 @@
      (finish-apply rep replicate/staged '(1 2 3) q)))
  '((1 1 1 2 2 2 3 3 3)))
 
-(record-bench 'simple 'staging 'replicate/staged-basic-staged)
 (defrel (replicate/staged-basic-staged q)
-  (time-staged
+  (staged
     (fresh (rep)
       (specialize-partial-apply rep replicate/staged '(S (S (S (S (S (S (S (S Z)))))))))
       (later (finish-apply rep replicate/staged '(1 2 3) q)))))
@@ -134,9 +133,8 @@
  '((1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)))
 
 
-(record-bench 'simple 'staging 'replicated/staged-backwards-runtime)
 (defrel (replicated/staged-backwards-runtime q)
-  (time-staged
+  (staged
     (fresh (rep)
       (specialize-partial-apply rep replicate/staged '(S (S (S (S (S (S (S (S Z)))))))))
       (later (finish-apply rep replicate/staged q '(1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3))))))
