@@ -7,7 +7,7 @@
 
 (define paper-dir "../staged-mk-paper/")
 
-(define (main)
+(module+ main
   (define plot-dir
     (if (directory-exists? paper-dir)
         paper-dir
@@ -21,5 +21,3 @@
   (plot-timing-test (in-range 0 1000 20) (string-append plot-dir "grammars.svg"))
   (proof-chart (in-range 1 10) (string-append plot-dir "proofs.svg"))
   (plot-appendo-sizes (in-range 100 500 10) (string-append plot-dir "appendo.svg")))
-
-(main)

@@ -8,7 +8,7 @@ private/faster-minikanren:
 
 anonymous-submission: private/faster-minikanren
 	mkdir -p $@
-	cp README.anonymous.md $@/README.md
+	cp README.md $@/README.md
 
 	cp *.scm *.py *.sh *.rkt $@
 	cp -r private tests $@
@@ -16,7 +16,7 @@ anonymous-submission: private/faster-minikanren
 
 anonymous-submission.tar: anonymous-submission
 	{ \
-	matches=$$(grep -n -H -E -R -i --exclude "README.md" --exclude "README.anonymous.md" --exclude-dir="faster-minikanren" "michael|ballantyne|jason|hemann|nada|\bamin\b|william|byrd|raffi|sanna|harvard|indiana|northeastern|seton|alabama|UAB|birmingham" $^) ;\
+	matches=$$(grep -n -H -E -R -i --exclude "README.md" --exclude-dir="faster-minikanren" "michael|ballantyne|jason|hemann|nada|\bamin\b|william|byrd|raffi|sanna|harvard|indiana|northeastern|seton|alabama|UAB|birmingham" $^) ;\
 	if [ -n "$$matches" ] ;\
 	then echo "WARNING, found references to personal information:" ;\
 		echo "$$matches" ;\
