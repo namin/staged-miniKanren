@@ -42,12 +42,62 @@
          (eval-expr ',expr (lambda (y) 'error))))
     val)))
 
+(defrel (eval-and-map-evalo-unstaged expr val)
+   (evalo-unstaged
+    `(letrec ([map (lambda (f l)
+                     (if (null? l)
+                         '()
+                         (cons (f (car l))
+                               (map f (cdr l)))))])
+       (letrec ([eval-expr
+                 (lambda (expr env)
+                   (match expr
+                     [`(quote ,datum) datum]
+                     [`(null? ,e)
+                      (null? (eval-expr e env))]
+                     [`(car ,e)
+                      (car (eval-expr e env))]
+                     [`(cdr ,e)
+                      (cdr (eval-expr e env))]
+                     [`(cons ,e1 ,e2)
+                      (cons (eval-expr e1 env)
+                            (eval-expr e2 env))]
+                     [`(if ,e1 ,e2 ,e3)
+                      (if (eval-expr e1 env)
+                          (eval-expr e2 env)
+                          (eval-expr e3 env))]
+                     [`(lambda (,(? symbol? x)) ,body)
+                      (lambda (a)
+                        (eval-expr body (lambda (y)
+                                          (if (equal? x y)
+                                              a
+                                              (env y)))))]
+                     [(? symbol? x) (env x)]
+                     [`(map ,e1 ,e2)
+                      (map (eval-expr e1 env) (eval-expr e2 env))]
+                     [`(,rator ,rand)
+                      ((eval-expr rator env) (eval-expr rand env))]))])
+         (eval-expr ',expr (lambda (y) 'error))))
+    val))
+
+
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 1)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
     (eval-and-map-evalo `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
+  `(((lambda (_.0) (cons _.0 _.0))
+     $$
+     ,not-tags0+error
+     (sym _.0))))
+
+(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 1)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'struct q)
+    (eval-and-map-evalo-unstaged `(map ,q '(a b c)) '((a . a) (b . b) (c . c))))
   `(((lambda (_.0) (cons _.0 _.0))
      $$
      ,not-tags0+error
@@ -61,6 +111,16 @@
     (eval-and-map-evalo `(map (lambda (x) ,q) '(a b c)) '((a . a) (b . b) (c . c))))
   '((cons x x)))
 
+
+(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 2)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'struct q)
+    (eval-and-map-evalo-unstaged `(map (lambda (x) ,q) '(a b c)) '((a . a) (b . b) (c . c))))
+  '((cons x x)))
+
+
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 3)
 (time-test
   (run 1 (q)
@@ -71,6 +131,19 @@
     (absento 'c q)
     (eval-and-map-evalo `(map (lambda (x) ,q) '(a b c)) '((a . a) (b . b) (c . c))))
   '((cons x x)))
+
+
+(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 3)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'struct q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (eval-and-map-evalo-unstaged `(map (lambda (x) ,q) '(a b c)) '((a . a) (b . b) (c . c))))
+  '((cons x x)))
+
 
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 4)
 (time-test
@@ -90,6 +163,26 @@
                         '(((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
+
+(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 4)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'struct q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-evalo-unstaged `(cons (map (lambda (x) ,q) '(a))
+                               (cons (map (lambda (x) ,q) '(b c))
+                                     (cons (map (lambda (x) ,q) '(d e f))
+                                           '())))
+                        '(((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
+  '((cons x x)))
+
+
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 5)
 (time-test
   (run 1 (q)
@@ -108,6 +201,28 @@
                                                  '()))))
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
+
+(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 5)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'struct q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-evalo-unstaged `(cons (map (lambda (x) ,q) '())
+                               (cons (map (lambda (x) ,q) '(a))
+                                     (cons (map (lambda (x) ,q) '(b c))
+                                           (cons (map (lambda (x) ,q) '(d e f))
+                                                 '()))))
+                        '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
+  '((cons x x)))
+
+
+
 
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 6)
 (time-test
@@ -130,6 +245,30 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
+
+(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 6)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'struct q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-evalo-unstaged `((lambda (proc)
+                            (cons (map proc '())
+                                  (cons (map proc '(a))
+                                        (cons (map proc '(b c))
+                                              (cons (map proc '(d e f))
+                                                    '())))))
+                          (lambda (x) ,q))
+                        '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
+  '((cons x x)))
+
+
+
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 7)
 (time-test
   (run 1 (q)
@@ -151,6 +290,7 @@
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
 
+
 (record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 7)
 (time-test
   (run 1 (q)
@@ -162,49 +302,17 @@
     (absento 'd q)
     (absento 'e q)
     (absento 'f q)
-    (evalo-unstaged
-     `(letrec ([map (lambda (f l)
-                      (if (null? l)
-                          '()
-                          (cons (f (car l))
-                                (map f (cdr l)))))])
-        (letrec ([eval-expr
-                  (lambda (expr env)
-                    (match expr
-                      [`(quote ,datum) datum]
-                      [`(null? ,e)
-                       (null? (eval-expr e env))]
-                      [`(car ,e)
-                       (car (eval-expr e env))]
-                      [`(cdr ,e)
-                       (cdr (eval-expr e env))]
-                      [`(cons ,e1 ,e2)
-                       (cons (eval-expr e1 env)
-                             (eval-expr e2 env))]
-                      [`(if ,e1 ,e2 ,e3)
-                       (if (eval-expr e1 env)
-                           (eval-expr e2 env)
-                           (eval-expr e3 env))]
-                      [`(lambda (,(? symbol? x)) ,body)
-                       (lambda (a)
-                         (eval-expr body (lambda (y)
-                                           (if (equal? x y)
-                                               a
-                                               (env y)))))]
-                      [(? symbol? x) (env x)]
-                      [`(map ,e1 ,e2)
-                       (map (eval-expr e1 env) (eval-expr e2 env))]
-                      [`(,rator ,rand)
-                       ((eval-expr rator env) (eval-expr rand env))]))])
-          (eval-expr '((lambda (proc)
-                         (cons (map proc '())
-                               (cons (map proc '(a))
-                                     (cons (map proc '(b c))
-                                           (cons (map proc '(d e f))
-                                                 '())))))
-                       (lambda (x) ,q)) (lambda (y) 'error))))
-     '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
+    (eval-and-map-evalo-unstaged `((lambda (proc)
+                            (cons (map proc '())
+                                  (cons (map proc '(a))
+                                        (cons (map proc '(b c))
+                                              (cons (map proc '(d e f))
+                                                    '())))))
+                          (lambda (x) ,q))
+                        '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((cons x (cons (cons x '()) (cons x '())))))
+
+
 
 (define-term-syntax-rule (eval-and-map-and-list-eval letrec-body)
   `(letrec ([map (lambda (f l)
@@ -251,6 +359,11 @@
     (eval-and-map-and-list-eval `(eval-expr ',expr (lambda (y) 'error)))
     val)))
 
+(defrel (eval-and-map-and-list-evalo-unstaged expr val)
+  (evalo-unstaged
+   (eval-and-map-and-list-eval `(eval-expr ',expr (lambda (y) 'error)))
+   val))
+
 (record-bench 'eval-eval 'staged 'eval-and-map-and-list-evalo 1)
 (time-test
   (run 1 (q)
@@ -263,6 +376,26 @@
     (absento 'e q)
     (absento 'f q)
     (eval-and-map-and-list-evalo `((lambda (proc)
+                                     (list (map proc '())
+                                           (map proc '(a))
+                                           (map proc '(b c))
+                                           (map proc '(d e f))))
+                                   (lambda (x) ,q))
+                        '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
+  '((cons x x)))
+
+(record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo 1)
+(time-test
+  (run 1 (q)
+    (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
+    (absento 'struct q)
+    (absento 'a q)
+    (absento 'b q)
+    (absento 'c q)
+    (absento 'd q)
+    (absento 'e q)
+    (absento 'f q)
+    (eval-and-map-and-list-evalo-unstaged `((lambda (proc)
                                      (list (map proc '())
                                            (map proc '(a))
                                            (map proc '(b c))
@@ -291,6 +424,7 @@
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((list x (cons x '()) x)))
 
+
 (record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo 2)
 (time-test
   (run 1 (q)
@@ -302,15 +436,13 @@
     (absento 'd q)
     (absento 'e q)
     (absento 'f q)
-    (evalo-unstaged
-     (eval-and-map-and-list-eval
-      `(eval-expr '((lambda (proc)
-                      (list (map proc '())
-                            (map proc '(a))
-                            (map proc '(b c))
-                            (map proc '(d e f))))
-                   (lambda (x) ,q)) (lambda (y) 'error)))
-     '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
+    (eval-and-map-and-list-evalo-unstaged `((lambda (proc)
+                                     (list (map proc '())
+                                           (map proc '(a))
+                                           (map proc '(b c))
+                                           (map proc '(d e f))))
+                                   (lambda (x) ,q))
+                        '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((list x (cons x '()) x)))
 
 
@@ -552,10 +684,21 @@
      (ho-double-eval `(eval-expr ',expr (lambda (y) 'error)))
      val)))
 
+(defrel (ho-double-evalo-unstaged expr val)
+  (evalo-unstaged
+   (ho-double-eval `(eval-expr ',expr (lambda (y) 'error)))
+   val))
+
 (record-bench 'eval-eval 'staged 'ho-double-evalo 1)
 (time-test
   (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
   '(hello))
+
+(record-bench 'eval-eval 'unstaged 'ho-double-evalo 1)
+(time-test
+  (run 1 (q) (ho-double-evalo-unstaged '((lambda (x) x) 'hello) q))
+  '(hello))
+
 
 (record-bench 'eval-eval 'staged 'ho-double-evalo 2)
 (time-test
@@ -568,12 +711,7 @@
 
 (record-bench 'eval-eval 'unstaged 'ho-double-evalo 2)
 (time-test
- (run 1 (q)
-   (absento 'error q)
-   (absento 'struct q)
-      (evalo-unstaged
-       (ho-double-eval `(eval-expr ',q (lambda (y) 'error)))
-       q))
+ (run 1 (q) (absento 'error q) (absento 'struct q) (ho-double-evalo-unstaged q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
@@ -670,6 +808,11 @@
      (map-in-double-eval-fun `(eval-expr ',expr '()))
      val)))
 
+(defrel (map-in-double-eval-unstaged expr val)
+  (evalo-unstaged
+   (map-in-double-eval-fun `(eval-expr ',expr '()))
+   val))
+
 (record-bench 'eval-eval 'staged 'map-in-double-eval 1)
 (time-test
  (run 1 (q)
@@ -687,6 +830,25 @@
                     (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
         expr)
     (map-in-double-eval expr q)))
+ '(((a . a) (b . b) (c . c))))
+
+(record-bench 'eval-eval 'unstaged 'map-in-double-eval 1)
+(time-test
+ (run 1 (q)
+   (fresh (expr)
+    (absento 'clo q)
+    (== '((lambda (f)
+            (((f f)
+              (lambda (x) (cons x x)))
+             '(a b c)))
+          (lambda (f)
+            (lambda (f^)
+              (lambda (l)
+                (if (null? l)
+                    '()
+                    (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
+        expr)
+    (map-in-double-eval-unstaged expr q)))
  '(((a . a) (b . b) (c . c))))
 
 (record-bench 'eval-eval 'staged 'map-in-double-eval 2)
@@ -724,10 +886,8 @@
                     '()
                     (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
         expr)
-    (evalo-unstaged
-     (map-in-double-eval-fun `(eval-expr ,expr '()))
-     '((a . a) (b . b) (c . c)))))
- 'timeout)
+    (map-in-double-eval-unstaged expr '((a . a) (b . b) (c . c)))))
+ '((cons x x)))
 
 (record-bench 'eval-eval 'staging 'double-evalo)
 (defrel (double-evalo expr val)
@@ -757,6 +917,33 @@
     val))
   )
 
+
+(defrel (double-evalo-unstaged expr val)
+  (evalo-unstaged
+   `(letrec ([lookup
+			  (lambda (x env)
+				(match env
+				  [`((,y . ,v) . ,renv)
+				   (if (equal? x y)
+					   v
+					   (lookup x renv))]))])
+	  (letrec ([eval-expr
+				(lambda (expr env)
+				  (match expr
+					[`(quote ,datum) datum]
+					[`(lambda (,(? symbol? x)) ,body)
+					 (list 'clo x body env)]
+					[`(list ,e1 ,e2)
+					 (list (eval-expr e1 env) (eval-expr e2 env))]
+					[(? symbol? x) (lookup x env)]
+					[`(,rator ,rand)
+					 (match (eval-expr rator env)
+					   [`(clo ,x ,body ,clo-env)
+						(eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
+		(eval-expr ',expr '())))
+   val))
+
+
 (record-bench 'eval-eval 'staged 'double-evalo)
 (time-test
  (run 1 (q) (absento 'clo q) (double-evalo q q))
@@ -768,38 +955,12 @@
 
 (record-bench 'eval-eval 'unstaged 'double-evalo)
 (time-test
-  (run 1 (q)
-    (fresh (expr)
-      (absento 'clo expr)
-      (== q expr)
-      (evalo-unstaged
-       `(letrec ([lookup
-                  (lambda (x env)
-                    (match env
-                      [`((,y . ,v) . ,renv)
-                       (if (equal? x y)
-                           v
-                           (lookup x renv))]))])
-          (letrec ([eval-expr
-                    (lambda (expr env)
-                      (match expr
-                        [`(quote ,datum) datum]
-                        [`(lambda (,(? symbol? x)) ,body)
-                         (list 'clo x body env)]
-                        [`(list ,e1 ,e2)
-                         (list (eval-expr e1 env) (eval-expr e2 env))]
-                        [(? symbol? x) (lookup x env)]
-                        [`(,rator ,rand)
-                         (match (eval-expr rator env)
-                           [`(clo ,x ,body ,clo-env)
-                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
-            (eval-expr ',expr '())))
-       q)))
-  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
-      '(lambda (_.0) (list _.0 (list 'quote _.0))))
-     $$
-     ,not-tags0+clo
-     (sym _.0))))
+ (run 1 (q) (absento 'clo q) (double-evalo-unstaged q q))
+ `((((lambda (_.0) (list _.0 (list 'quote _.0)))
+     '(lambda (_.0) (list _.0 (list 'quote _.0))))
+    $$
+    ,not-tags0+clo
+    (sym _.0))))
 
 (define-term-syntax-rule (double-evalo-variadic-list-fo-fun letrec-body)
           `(letrec ([lookup
@@ -834,6 +995,12 @@
      (double-evalo-variadic-list-fo-fun `(eval-expr ',expr '()))
      val)))
 
+(defrel (double-evalo-variadic-list-fo-unstaged expr val)
+  (evalo-unstaged
+   (double-evalo-variadic-list-fo-fun `(eval-expr ',expr '()))
+   val))
+
+
 (record-bench 'eval-eval 'staged 'double-evalo-variadic-list-fo)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo q q))
@@ -845,10 +1012,8 @@
 
 (record-bench 'eval-eval 'unstaged 'double-evalo-variadic-list-fo)
 (time-test
- (run 1 (q) (absento 'clo q)
-      (evalo-unstaged
-       (double-evalo-variadic-list-fo-fun `(eval-expr ',q '())) q))
- `((((lambda (_.0) (list _.0 (list 'quote _.0)))
+  (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-unstaged q q))
+  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
      ,not-tags0+clo
@@ -881,6 +1046,7 @@
                           [`(clo ,x ,body ,clo-env)
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,letrec-body)))
+
 (record-bench 'eval-eval 'staging 'double-evalo-variadic-list-fo-better)
 (defrel (double-evalo-variadic-list-fo-less-ridiculous expr val)
   (time-staged
@@ -888,21 +1054,15 @@
      (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',expr '()))
      val)))
 
+(defrel (double-evalo-variadic-list-fo-less-ridiculous-unstaged expr val)
+  (evalo-unstaged
+   (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',expr '()))
+   val))
+
 (record-bench 'eval-eval 'staged 'double-evalo-variadic-list-fo-better)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
-      '(lambda (_.0) (list _.0 (list 'quote _.0))))
-     $$
-     ,not-tags0+clo
-     (sym _.0))))
-
-(record-bench 'eval-eval 'unstaged 'double-evalo-variadic-list-fo-better)
-(time-test
- (run 1 (q) (absento 'clo q)
-      (evalo-unstaged
-       (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',q '())) q))
- `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
      $$
      ,not-tags0+clo
@@ -944,6 +1104,12 @@
      (double-evalo-variadic-list-ho-fun `(eval-expr ',expr '()))
      val)))
 
+(defrel (double-evalo-variadic-list-ho-unstaged expr val)
+  (evalo-unstaged
+   (double-evalo-variadic-list-ho-fun `(eval-expr ',expr '()))
+   val))
+
+
 (record-bench 'eval-eval 'staged 'double-evalo-variadic-list-ho)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
@@ -955,11 +1121,8 @@
 
 (record-bench 'eval-eval 'unstaged 'double-evalo-variadic-list-ho)
 (time-test
- (run 1 (q) (absento 'clo q)
-      (evalo-unstaged
-       (double-evalo-variadic-list-ho-fun `(eval-expr ',q '()))
-       q))
- `((((lambda (_.0) (list _.0 (list 'quote _.0)))
+  (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho-unstaged q q))
+  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
    $$
    ,not-tags0+clo
@@ -995,6 +1158,11 @@
      (double-evalo-cons-fun `(eval-expr ',expr '()))
      val)))
 
+(defrel (double-evalo-cons-unstaged expr val)
+  (evalo-unstaged
+   (double-evalo-cons-fun `(eval-expr ',expr '()))
+   val))
+
 (record-bench 'eval-eval 'staged 'double-evalo-cons)
 (time-test
   (run 1 (q) (absento 'clo q) (double-evalo-cons q q))
@@ -1008,11 +1176,8 @@
 
 (record-bench 'eval-eval 'unstaged 'double-evalo-cons)
 (time-test
- (run 1 (q) (absento 'clo q)
-      (evalo-unstaged
-       (double-evalo-cons-fun `(eval-expr ',q '()))
-       q))
- `((((lambda (_.0)
+  (run 1 (q) (absento 'clo q) (double-evalo-cons-unstaged q q))
+  `((((lambda (_.0)
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
       '(lambda (_.0)
          (cons _.0 (cons (cons 'quote (cons _.0 '())) '()))))

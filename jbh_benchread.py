@@ -6,7 +6,7 @@ from decimal import Decimal
 header = """
 \\begin{figure}[htbp]
 \\begin{adjustbox}{max width=\\textwidth}
-\\small
+\\tiny
 \\begin{tabular}{@{}p{1.5cm} l c c c c c c@{}}
 \\toprule
 {} &

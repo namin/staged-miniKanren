@@ -26,12 +26,10 @@
        (== res (cons v rec-res))
        (cons-n n-1 v l rec-res))]))
 
-
 (test
  (run 1 (q)
    (cons-n '(S (S (S Z))) 1 '(2 2 2 3 3 3) q))
  '((1 1 1 2 2 2 3 3 3)))
-
 
 (test
  (run 1 (q)
@@ -59,7 +57,11 @@
      (replicate `(S (S (S (S (S (S (S (S ,n)))))))) '(1 2 3) q)))
  '((1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3) (1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3) (1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3)))
 
-
+(test
+ (run 2 (n l)
+   (fresh (n-2)
+     (replicate n l '(1 1 1 2 2 2 3 3 3))))
+ '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
 
 ;;
 ;; Equivalent MetaOCaml code (also in replicate.ml)
@@ -83,7 +85,6 @@
 ;; Staged
 ;;
 
-
 (defrel-partial/staged (replicate/staged rep [n] [l res])
   (gather
    (conde
@@ -93,6 +94,7 @@
         (== l (cons a d))
         (cons-n/staged n a rec-res res)
         (later (finish-apply rep replicate/staged d rec-res)))])))
+
 
 (defrel/staged (cons-n/staged n v l res)
   (fallback
@@ -119,6 +121,7 @@
      (finish-apply rep replicate/staged '(1 2 3) q)))
  '((1 1 1 2 2 2 3 3 3)))
 
+(record-bench 'simple 'staging 'replicate/staged-basic-staged)
 (defrel (replicate/staged-basic-staged q)
   (time-staged
     (fresh (rep)
@@ -131,6 +134,7 @@
  '((1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)))
 
 
+(record-bench 'simple 'staging 'replicated/staged-backwards-runtime)
 (defrel (replicated/staged-backwards-runtime q)
   (time-staged
     (fresh (rep)

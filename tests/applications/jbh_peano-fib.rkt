@@ -59,6 +59,24 @@
          (s s s s s . z))))))
 
 
+(defrel (test-peano-synth-fib-direct-unstaged fib-direct)
+  (fresh ()
+	(== `(lambda (n)
+		   (if (zero? n)
+			   'z
+			   (if (zero? (sub1 n))
+				   '(s . z)
+				   (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
+		fib-direct)
+	(evalo-unstaged
+	 (peano-synth-fib-direct fib-direct)
+	 '(z
+	   (s . z)
+	   (s . z)
+	   (s s . z)
+	   (s s s . z)
+	   (s s s s s . z)))))
+
 (record-bench 'staged 'peano-synth-fib-direct 1)
 (time-test
  (run* (fib-direct)
@@ -72,29 +90,14 @@
 
 (record-bench 'unstaged 'peano-synth-fib-direct 1)
 (time-test
-  (run* (fib-direct)
-    (== `(lambda (n)
-           (if (zero? n)
-               'z
-               (if (zero? (sub1 n))
-                   '(s . z)
-                   (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
-        fib-direct)
-    (evalo-unstaged
-     (peano-synth-fib-direct fib-direct)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)                   
-       (s s s s s . z))))
+ (run* (fib-direct)
+   (test-peano-synth-fib-direct-unstaged fib-direct))
   '((lambda (n)
        (if (zero? n)
            'z
            (if (zero? (sub1 n))
                '(s . z)
                (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))))
-
 
 ;; Attempt to synthesize part of the definition of fib-aps.
 ;; Can try to synthesize the initial accumulator arguments as well.

@@ -283,6 +283,7 @@
       (appendo-staged xs ys '(a b c)))
   '((() (a b c)) ((a) (b c)) ((a b) (c)) ((a b c) ())))
 
+;; ***** JBH-MB 2025-03-06 good one to model, use w/a larger list.
 (record-bench 'eval/program 'unstaged 'eval-append-synth-all-args)
 (time-test
   (run* (xs ys)
