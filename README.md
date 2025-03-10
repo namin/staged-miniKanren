@@ -1,4 +1,4 @@
-# Multi-stage miniKanren Code Artifact
+# Multi-stage miniKanren
 
 ## Abstract
 
