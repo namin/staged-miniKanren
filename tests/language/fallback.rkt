@@ -130,6 +130,23 @@
 ;; This is the first of two constraints that make the implementation tricky.
 
 
+
+(defrel/staged (membero2 x l)
+  (fallback
+   (fresh (first rest)
+     (== `(,first . ,rest) l)
+     (conde
+       [(=/= x first)
+        (membero2 x rest)]
+       [(== x first)]))))
+(test
+ (run 1 (l)
+   (staged
+    (membero2 'x l)))
+ '((x . _.0)))
+
+
+
 ;; In general it is not enough to simply know that an inner fallback has an answer.
 ;; Determining whether an outer fallback should trigger may require running further
 ;; goals in a conjunction with the result of an inner fallback.
