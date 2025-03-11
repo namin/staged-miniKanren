@@ -81,8 +81,7 @@
     val))
 
 
-(record-bench 'eval-eval 'staged 'eval-and-map-evalo 1)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -92,8 +91,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 1)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
