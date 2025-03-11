@@ -136,14 +136,16 @@
     (parse `(regex-match ',pattern ',data))
     parse-result)))
 
-(record-bench 'eval-eval 'staged 'parse 0)
+(record-bench 'eval-eval 'staged 'parse 1)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (d/dc-o 'baz 'f parse-result))
   '(#f))
 
-(record-bench 'eval-eval 'unstaged 'parse 0)
+(record-bench 'eval-eval 'unstaged 'parse 1)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc 'baz 'f))
@@ -151,28 +153,32 @@
   '(#f))
 
 
-(record-bench 'eval-eval 'staged 'parse 1)
+(record-bench 'eval-eval 'staged 'parse 2)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (d/dc-o '(seq foo barn) 'foo parse-result))
   '(barn))
 
-(record-bench 'eval-eval 'unstaged 'parse 1)
+(record-bench 'eval-eval 'unstaged 'parse 2)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc '(seq foo barn) 'foo))
       parse-result))
   '(barn))
 
-(record-bench 'eval-eval 'staged 'parse 2)
+(record-bench 'eval-eval 'staged 'parse 3)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (d/dc-o '(alt (seq foo bar) (seq foo (rep baz))) 'foo parse-result))
   '((alt bar (rep baz))))
 
-(record-bench 'eval-eval 'unstaged 'parse 2)
+(record-bench 'eval-eval 'unstaged 'parse 3)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
@@ -180,16 +186,18 @@
   '((alt bar (rep baz))))
 
 
-(record-bench 'eval-eval 'staged 'parse 3)
+(record-bench 'eval-eval 'staged 'match 1)
 (time-test
+  #:times 100
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep bar)) 
                   '(foo bar bar bar)
                   parse-result))
   '(#t))
 
-(record-bench 'eval-eval 'unstaged 'parse 3)
+(record-bench 'eval-eval 'unstaged 'match 1)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(regex-match '(seq foo (rep bar)) 
@@ -197,16 +205,18 @@
       parse-result))
   '(#t))
 
-(record-bench 'eval-eval 'staged 'parse 4)
+(record-bench 'eval-eval 'staged 'match 2)
 (time-test
+  #:times 100
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep bar)) 
                   '(foo bar baz bar bar)
                   parse-result))
   '(#f))
 
-(record-bench 'eval-eval 'unstaged 'parse 4)
+(record-bench 'eval-eval 'unstaged 'match 2)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(regex-match '(seq foo (rep bar)) 
@@ -214,8 +224,9 @@
       parse-result))
   '(#f))
 
-(record-bench 'eval-eval 'staged 'parse 5)
+(record-bench 'eval-eval 'staged 'match 3)
 (time-test
+  #:times 100
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep (alt bar baz))) 
                   '(foo bar baz bar bar)
@@ -223,8 +234,9 @@
   '(#t))
 
 
-(record-bench 'eval-eval 'unstaged 'parse 5)
+(record-bench 'eval-eval 'unstaged 'match 3)
 (time-test
+  #:times 100
   (run #f (parse-result)
     (evalo-unstaged
      (parse '(regex-match '(seq foo (rep (alt bar baz))) 
@@ -237,7 +249,7 @@
 ;; Running backwards
 ;;
 ;; the orginal regex running forward was the symbol 'baz'
-(record-bench 'eval-eval 'staged 'parse-backwards 0)
+(record-bench 'eval-eval 'staged 'parse-backwards 1)
 (time-test
   (run 1 (regex)
     (d/dc-o regex 'f '(#f)))
@@ -245,7 +257,7 @@
      $$
      ,absento-tags0)))
 
-(record-bench 'eval-eval 'unstaged 'parse-backwards 0)
+(record-bench 'eval-eval 'unstaged 'parse-backwards 1)
 (time-test
   (run 1 (regex)
     (evalo-unstaged
@@ -257,16 +269,14 @@
 
 
 ;; the orginal regex running forward was '(seq foo barn)'
-(record-bench 'eval-eval 'staged 'parse-backwards 1)
-(time-test
+(test
   (run 1 (regex)
     (d/dc-o regex 'foo 'barn))
   `(((seq foo barn . _.0)
      $$
      ,absento-tags0)))
 
-(record-bench 'eval-eval 'unstaged 'parse-backwards 1)
-(time-test
+(test
   (run 1 (regex)
     (evalo-unstaged
       (parse `(d/dc ',regex 'foo))

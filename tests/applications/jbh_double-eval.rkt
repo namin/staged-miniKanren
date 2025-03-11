@@ -364,8 +364,7 @@
    (eval-and-map-and-list-eval `(eval-expr ',expr (lambda (y) 'error)))
    val))
 
-(record-bench 'eval-eval 'staged 'eval-and-map-and-list-evalo 1)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -384,8 +383,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo 1)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -404,7 +402,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
-(record-bench 'eval-eval 'staged 'eval-and-map-and-list-evalo 2)
+(record-bench 'eval-eval 'staged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -425,7 +423,7 @@
   '((list x (cons x '()) x)))
 
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo 2)
+(record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
