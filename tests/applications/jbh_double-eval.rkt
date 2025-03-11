@@ -101,6 +101,7 @@
      ,not-tags0+error
      (sym _.0))))
 
+;; Synthesize the body of a simple function call in map. Remember the interpreter implements map in terms of a host-language function map (the letrec there) that's all interpreted in evalo
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 2)
 (time-test
   (run 1 (q)
@@ -119,8 +120,7 @@
   '((cons x x)))
 
 
-(record-bench 'eval-eval 'staged 'eval-and-map-evalo 3)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -131,8 +131,7 @@
   '((cons x x)))
 
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 3)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -143,8 +142,7 @@
   '((cons x x)))
 
 
-(record-bench 'eval-eval 'staged 'eval-and-map-evalo 4)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -162,8 +160,7 @@
   '((cons x x)))
 
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 4)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -181,8 +178,7 @@
   '((cons x x)))
 
 
-(record-bench 'eval-eval 'staged 'eval-and-map-evalo 5)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -200,8 +196,8 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 5)
-(time-test
+
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -221,9 +217,7 @@
 
 
 
-
-(record-bench 'eval-eval 'staged 'eval-and-map-evalo 6)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -244,8 +238,7 @@
   '((cons x x)))
 
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 6)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -266,7 +259,7 @@
   '((cons x x)))
 
 
-
+;; synthesize the body of a somewhat complicated higher-order function that is used multiple times over in several calls to map that all produce a list of outputs
 (record-bench 'eval-eval 'staged 'eval-and-map-evalo 7)
 (time-test
   (run 1 (q)
