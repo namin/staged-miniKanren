@@ -38,8 +38,8 @@
        (fib '(s s s s s . z)))
      )))))))
 
-(record-bench 'staging 'peano-synth-fib-direct 1)
-(defrel (test-peano-synth-fib-direct fib-direct)
+(record-bench 'eval-eval 'staging 'peano-synth-fib-direct)
+(defrel (peano-synth-fib-direct-staged fib-direct)
   (time-staged
     (fresh ()
       (== `(lambda (n)
@@ -59,28 +59,10 @@
          (s s s s s . z))))))
 
 
-(defrel (test-peano-synth-fib-direct-unstaged fib-direct)
-  (fresh ()
-	(== `(lambda (n)
-		   (if (zero? n)
-			   'z
-			   (if (zero? (sub1 n))
-				   '(s . z)
-				   (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
-		fib-direct)
-	(evalo-unstaged
-	 (peano-synth-fib-direct fib-direct)
-	 '(z
-	   (s . z)
-	   (s . z)
-	   (s s . z)
-	   (s s s . z)
-	   (s s s s s . z)))))
-
-(record-bench 'staged 'peano-synth-fib-direct 1)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-direct)
 (time-test
  (run* (fib-direct)
-   (test-peano-synth-fib-direct fib-direct))
+   (peano-synth-fib-direct-staged fib-direct))
   '((lambda (n)
        (if (zero? n)
            'z
@@ -88,10 +70,24 @@
                '(s . z)
                (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))))
 
-(record-bench 'unstaged 'peano-synth-fib-direct 1)
+(record-bench 'eval-eval 'unstaged 'peano-synth-fib-direct)
 (time-test
- (run* (fib-direct)
-   (test-peano-synth-fib-direct-unstaged fib-direct))
+  (run* (fib-direct)
+    (== `(lambda (n)
+           (if (zero? n)
+               'z
+               (if (zero? (sub1 n))
+                   '(s . z)
+                   (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))
+        fib-direct)
+    (evalo-unstaged
+     (peano-synth-fib-direct fib-direct)
+     '(z
+       (s . z)
+       (s . z)
+       (s s . z)
+       (s s s . z)
+       (s s s s s . z))))
   '((lambda (n)
        (if (zero? n)
            'z
@@ -135,8 +131,8 @@
        (fib-aps '(s s s s s . z) ',ACC1 ',ACC2))
      )))))))
 
-(record-bench 'staging 'peano-synth-fib-aps 0)
-(defrel (test-peano-synth-fib-aps/ACC fib-acc ACC1 ACC2)
+(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 1)
+(defrel (peano-synth-fib-aps-staged1 fib-acc ACC1 ACC2)
   (time-staged
     (fresh ()
       (== `(lambda (n a1 a2)
@@ -156,10 +152,10 @@
          (s s s s s . z))))))
 
 
-(record-bench 'staged 'peano-synth-fib-aps 0)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 0)
 (time-test
  (run* (fib-acc)
-   (test-peano-synth-fib-aps/ACC fib-acc 'z '(s . z)))
+   (peano-synth-fib-aps-staged1 fib-acc 'z '(s . z)))
   '((lambda (n a1 a2)
       (if (zero? n)
           a1
@@ -168,7 +164,7 @@
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
 
 
-(record-bench 'unstaged 'peano-synth-fib-aps 0)
+(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 0)
 (time-test
   (run* (fib-acc)
     (== `(lambda (n a1 a2)
@@ -193,22 +189,20 @@
               a2
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
 
-(record-bench 'staged 'peano-synth-fib-aps 1)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 1)
 (time-test
  (run* (fib-acc ACC1 ACC2)
-   (test-peano-synth-fib-aps/ACC fib-acc ACC1 ACC2))
-  '(((lambda (n a1 a2)
-       (if (zero? n)
-           a1
-           (if (zero? (sub1 n))
-               a2
-               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-     z
-     (s . z))))
+   (peano-synth-fib-aps-staged1 fib-acc ACC1 ACC2))
+   '(((lambda (n a1 a2)
+		(if (zero? n)
+			a1
+			(if (zero? (sub1 n))
+				a2
+				(fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+	  z
+	  (s . z))))
 
-;; run 1 returns    run 2 is either very slow, or diverges
-#|
-(record-bench 'unstaged 'peano-synth-fib-aps 1)
+(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 1)
 (time-test
   (run* (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
@@ -234,7 +228,6 @@
                (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
      z
      (s . z))))
-|#
 
 
 
@@ -269,7 +262,7 @@
 
 
 
-(record-bench 'staging 'peano-synth-fib-aps)
+(record-bench 'eval-eval 'staging 'peano-synth-fib-aps)
 (defrel (peano-synth-fib-apso e ACC1 ACC2 result)
   (time-staged
    (evalo-staged
@@ -311,7 +304,7 @@
                  ))))))
     result)))
 
-(record-bench 'staged 'peano-synth-fib-aps 2)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 2)
 (time-test
   (run 1 (e ACC1 ACC2)
     (peano-synth-fib-apso
@@ -327,11 +320,11 @@
   '((a2 z (s . z))))
 
 
-(record-bench 'staging 'peano-synth-fib-aps 2)
-(defrel (test-peano-synth-fib-aps/ACC-synth-conseq fib-acc ACC1 ACC2)
+(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 2)
+(defrel (peano-synth-fib-aps2 fib-acc ACC1 ACC2)
   (time-staged
     (fresh ()
-      (fresh (B)
+      (fresh (A B)
         (== `(lambda (n a1 a2)
                (if (zero? n)
                    a1
@@ -348,9 +341,10 @@
          (s s s . z)
          (s s s s s . z))))))
 
-(record-bench 'staged 'peano-synth-fib-aps 2)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 2)
 (time-test
- (run 1 (fib-acc ACC1 ACC2) (test-peano-synth-fib-aps/ACC-synth-conseq fib-acc ACC1 ACC2))
+ (run 1 (fib-acc ACC1 ACC2)
+   (peano-synth-fib-aps2 fib-acc ACC1 ACC2))
   '(((lambda (n a1 a2)
        (if (zero? n)
            a1
@@ -360,7 +354,7 @@
      z
      (s . z))))
 
-(record-bench 'unstaged 'peano-synth-fib-aps 2)
+(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 2)
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B)
@@ -389,7 +383,7 @@
      (s . z))))
 
 
-(record-bench 'staging 'peano-synth-fib-aps-step)
+(record-bench 'eval-eval 'staging 'peano-synth-fib-aps-step)
 (defrel (peano-synth-fib-aps-stepo step1 step2 ACC1 ACC2 result)
   (time-staged
    (evalo-staged
@@ -431,7 +425,7 @@
                  ))))))
     result)))
 
-(record-bench 'staged 'peano-synth-fib-aps 3)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps-step 1)
 (time-test
   (run 1 (step1 step2 ACC1 ACC2)
     (peano-synth-fib-aps-stepo
@@ -451,8 +445,8 @@
      (s . z))))
 
 
-(record-bench 'staging 'peano-synth-fib-aps 3)
-(defrel (test-peano-synth-fib-aps/ACC-synth-alt-accs fib-acc ACC1 ACC2)
+(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 3)
+(defrel (peano-synth-aps-staged3 fib-acc ACC1 ACC2)
   (time-staged
     (fresh (A B)
       (== `(lambda (n a1 a2)
@@ -472,23 +466,22 @@
          (s s s s s . z))))))
 
 
-(record-bench 'staged 'peano-synth-fib-aps 3)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 3)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
-   (test-peano-synth-fib-aps/ACC-synth-alt-accs fib-acc ACC1 ACC2))
-  '(((lambda (n a1 a2)
-       (if (zero? n)
-           a1
-           (if (zero? (sub1 n))
-               a2
-               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-     z
-     (s . z))))
+   (peano-synth-aps-staged3 fib-acc ACC1 ACC2))
+   '(((lambda (n a1 a2)
+		(if (zero? n)
+			a1
+			(if (zero? (sub1 n))
+				a2
+				(fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+	  z
+	  (s . z))))
 
-;; Seems to take a loooong time...
-#|
-(record-bench 'unstaged 'peano-synth-fib-aps 3)
-(time-test
+;; *** WTF, MB?
+#;(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 3)
+#;(time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B)
       (== `(lambda (n a1 a2)
@@ -514,10 +507,9 @@
                (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
      z
      (s . z))))
-|#
 
-(record-bench 'staging 'peano-synth-fib-aps 4)
-(defrel (test-peano-synth-fib-aps/ACC-synth-base-case-and-fib-accs fib-acc ACC1 ACC2)
+(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 4)
+(defrel (peano-synth-fib-abs4 fib-acc ACC1 ACC2)
   (time-staged
     (fresh (A B C)
       (== `(lambda (n a1 a2)
@@ -537,23 +529,22 @@
          (s s s . z)
          (s s s s s . z))))))
 
-(record-bench 'staged 'peano-synth-fib-aps 4)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 4)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
-   (test-peano-synth-fib-aps/ACC-synth-base-case-and-fib-accs fib-acc ACC1 ACC2))
-  '(((lambda (n a1 a2)
-       (if (zero? n)
-           a1
-           (if (zero? (sub1 n))
-               a2
-               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-     z
-     (s . z))))
+   (peano-synth-fib-abs4 fib-acc ACC1 ACC2))
+   '(((lambda (n a1 a2)
+		(if (zero? n)
+			a1
+			(if (zero? (sub1 n))
+				a2
+				(fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+	  z
+	  (s . z))))
 
-;;; Sloooooowww
-#|
-(record-bench 'unstaged 'peano-synth-fib-aps 4)
-(time-test
+;; *** WTF, MB?
+#;(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 4)
+#;(time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B C)
       (== `(lambda (n a1 a2)
@@ -579,7 +570,6 @@
                (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
      z
      (s . z))))
-|#
 
 
 (define-term-syntax-rule (peano-fib query)
@@ -617,32 +607,20 @@
 
 ;;(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
 
-(record-bench 'staging 'peano-fib)
+(record-bench 'eval-eval 'staging 'peano-fib)
 (defrel (fib-apso n a1 a2 result)
   (time-staged
    (evalo-staged
     (peano-fib `(fib-aps ',n ',a1 ',a2))
     result)))
 
-(record-bench 'staged 'peano-fib 1)
+(record-bench 'eval-eval 'staged 'peano-fib 1)
 (time-test
  (run* (v)
    (fib-apso '(s s s s s s . z) 'z '(s . z) v))
   '((s s s s s s s s . z)))
 
-(record-bench 'staging 'peano-fib 1)
-(defrel (test-peano-fib-forward v)
-  (time-staged
-    (evalo-staged
-     (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
-     v)))
-
-(record-bench 'staged 'peano-fib 1)
-(time-test
-  (run* (v) (test-peano-fib-forward v))
-   '((s s s s s s s s . z)))
-
-(record-bench 'unstaged 'peano-fib 1)
+(record-bench 'eval-eval 'unstaged 'peano-fib 1)
 (time-test
   (run* (v)
     (evalo-unstaged
@@ -651,27 +629,14 @@
   '((s s s s s s s s . z)))
 
 
-(record-bench 'staged 'peano-fib 2)
+(record-bench 'eval-eval 'staged 'peano-fib 2)
 (time-test
   (run 1 (q)
     (fib-apso q 'z '(s . z)
               '(s s s s s s s s . z)))
   '((s s s s s s . z)))
 
-(record-bench 'staging 'peano-fib 2)
-(defrel (test-peano-fib-backward q)
-  (time-staged
-    (evalo-staged
-     (peano-fib `(fib-aps ',q 'z '(s . z)))
-     '(s s s s s s s s . z))))
-
-(record-bench 'staged 'peano-fib 2)
-(time-test
- (run 1 (q)
-   (test-peano-fib-backward q))
-  '((s s s s s s . z)))
-
-(record-bench 'unstaged 'peano-fib 2)
+(record-bench 'eval-eval 'unstaged 'peano-fib 2)
 (time-test
   (run 1 (q)
     (evalo-unstaged
@@ -680,27 +645,14 @@
   '((s s s s s s . z)))
 
 
-(record-bench 'staged 'peano-fib 3)
+(record-bench  'eval-eval 'staged 'peano-fib 3)
 (time-test
   (run 1 (q)
     (fib-apso q 'z '(s . z)
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'staging 'peano-fib 3)
-(defrel (test-peano-fib-backward-longer q)
-  (time-staged
-    (evalo-staged
-     (peano-fib `(fib-aps ',q 'z '(s . z)))
-     '(s s s s s s s s s s s s s . z))))
-
-(record-bench 'staged 'peano-fib 3)
-(time-test
- (run 1 (q)
-   (test-peano-fib-backward-longer q))
-  '((s s s s s s s . z)))
-
-(record-bench 'unstaged 'peano-fib 3)
+(record-bench  'eval-eval 'unstaged 'peano-fib 3)
 (time-test
   (run 1 (q)
     (evalo-unstaged
@@ -708,18 +660,18 @@
      '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'staging 'peano-fib 4)
-(defrel (test-peano-fib-backward-longer-no-quote q)
+(record-bench  'eval-eval 'staging 'peano-fib 4)
+(defrel (peano-fib4 q)
   (time-staged
     (evalo-staged
      (peano-fib `(fib-aps ,q 'z '(s . z)))
      '(s s s s s s s s s s s s s . z))))
 
 
-(record-bench 'staged 'peano-fib 4)
+(record-bench  'eval-eval 'staged 'peano-fib 4)
 (time-test
  (run 5 (q)
-   (test-peano-fib-backward-longer-no-quote q))
+   (peano-fib4 q))
  '('(s s s s s s s . z)
    ((letrec ((_.0 (lambda _.1 _.2))) '(s s s s s s s . z))
     $$
@@ -732,7 +684,7 @@
     (sym _.0))
    ((lambda () '(s s s s s s s . z)))))
 
-(record-bench 'unstaged 'peano-fib 4)
+(record-bench 'eval-eval 'unstaged 'peano-fib 4)
 (time-test
   (run 5 (q)
     (evalo-unstaged

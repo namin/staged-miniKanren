@@ -11,8 +11,6 @@
 (require "interpreter/jbh_basics.rkt") ;; get append examples ;; Done + category
 ;; --(require "../small-interp/staged.rkt")
 ;; -- (require "../small-interp/unstaged.rkt")
-;; SKIP
-;; (require "applications/dl.rkt") ;; Negation-normal form
 ;;
 ;; sub-block: eval-like relations on program-like arguments
 (require "applications/jbh_grammars.rkt") ;; Done + category
@@ -22,6 +20,7 @@
 (require "applications/jbh_proof.rkt") ;; Done + category
 (require "applications/jbh_parsing-with-derivatives.rkt") ;; Done, already there + category
 (require "applications/jbh_double-eval.rkt") ;; quines w/quasiquotes ;; Done, already there. + category
+(require "applications/jbh_dl.rkt") ;; Negation-normal form
 
 ;; Synthesis w/ground context
 ;; When we rely on a built-in primitive implemented in the object 'eval', you get a neat multi-level compiled-interpreted interaction
