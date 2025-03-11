@@ -7,6 +7,7 @@
          *test-result-same?*)
 
 (require "private/internals.rkt"
+		 racket/sandbox
          (for-syntax racket/base syntax/parse))
 
 (define (tree-contains tree atom)
@@ -27,13 +28,13 @@
     (else 0)))
 
 
-(define (record-bench phase name . args)
+(define (record-bench collection phase name . args)
   (when (generated-code)
     (printf "generated code u-eval-expo count: ~a~%"
             (tree-count (generated-code) 'invoke-fallback)))
   (if (null? args)
-      (printf "BENCH ~a ~a\n" phase name)
-      (printf "BENCH ~a ~a ~a\n" phase name (car args)))
+      (printf "BENCH ~a ~a ~a\n" collection phase name)
+      (printf "BENCH ~a ~a ~a ~a\n" collection phase name (car args)))
   (reset-generated-code!))
 
 (define test-failed #f)
@@ -41,6 +42,17 @@
   (set! test-failed #t))
 
 (define *test-result-same?* (make-parameter equal?))
+
+;; Timeout limit (5 minutes)
+(define timeout-limit-seconds (* 5 60))
+
+(define (timeout-thunk thunk)
+  (with-handlers ([exn:fail:resource?
+                   (lambda (ex)
+                     ;; Print a message similar to the (time) output:
+                     (printf "cpu time: -1 real time: -1 gc time: -1\n")
+                     'timeout)])
+    (call-with-limits timeout-limit-seconds #f thunk)))
 
 (define-syntax test
   (syntax-parser
@@ -60,9 +72,14 @@
 
 (define-syntax time-test
   (syntax-rules ()
+    ((_ #:times repeat-count tested-expression expected-result)
+     (time-test
+      (for/last ([i (in-range repeat-count)])
+        tested-expression)
+      expected-result))
     ((_ tested-expression expected-result)
      (test
-         (time tested-expression)
+       (timeout-thunk (lambda () (time tested-expression)))
        expected-result))))
      
 (define-syntax todo

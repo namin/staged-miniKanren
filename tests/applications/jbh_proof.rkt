@@ -34,7 +34,7 @@
    (prover `(proof? ',prf))
    #t))
 
-(record-bench 'staging 'proofo)
+(record-bench 'eval-eval 'staging 'proofo)
 (defrel (proofo prf b)
   (time-staged
    (evalo-staged
@@ -56,25 +56,15 @@
              modus-ponens
              (((A => B) (A (A => B) (B => C)) assumption ())
               (A (A (A => B) (B => C)) assumption ())))))))
-  (record-bench 'staged 'proofo 1)
-  (time-test
+
+  (test
     (run 1 (prf)
       (fresh (body)
         (== prf `(C (A (A => B) (B => C)) . ,body))
         (proofo prf #t)))
     ex-proof1)
 
-  (record-bench 'run-staged 'proofo 1)
-  (time-test
-   (run 1 (prf)
-     (staged
-      (fresh (body)
-        (== prf `(C (A (A => B) (B => C)) . ,body))
-        (proof-staged prf))))
-   ex-proof1)
-
-  (record-bench 'unstaged 'proofo 1)
-  (time-test
+  (test
     (run 1 (prf)
       (fresh (body)
         (== prf `(C (A (A => B) (B => C)) . ,body))
@@ -99,7 +89,7 @@
                    (((A => B) (A (B => C) (A => B)) assumption ())
                     (A (A (B => C) (A => B)) assumption ())))))))))))))
 
-  (record-bench 'staged 'proofo 2)
+  (record-bench 'eval-eval 'staged 'proofo 1)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -107,16 +97,7 @@
         (proofo prf #t)))
     ex-proof2)
 
-  (record-bench 'run-staged 'proofo 2)
-  (time-test
-   (run 1 (prf)
-     (staged
-      (fresh (body)
-        (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-        (proof-staged prf))))
-   ex-proof2)
-
-  (record-bench 'unstaged 'proofo 2)
+  (record-bench 'eval-eval 'unstaged 'proofo 1)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -124,7 +105,7 @@
         (proof-unstaged prf)))
     ex-proof2)
 
-  (record-bench 'staged 'proofo 3)
+  (record-bench 'eval-eval 'staged 'proofo 2)
   (time-test
    (length
     (run 1 (prf)
@@ -133,16 +114,15 @@
         (proofo prf #t))))
    1)
 
-  (record-bench 'run-staged 'proofo 3)
+  (record-bench 'eval-eval 'unstaged 'proofo 2)
   (time-test
    (length
-    (run 1 (prf)
-      (staged
-       (fresh (body)
-         (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
-         (proof-staged prf)))))
-       
-   1))
+	(run 1 (prf)
+	  (fresh (body)
+		(== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
+		 (proof-unstaged prf))))
+	'timeout)
+)
 
 (run-proofs)
 
@@ -183,14 +163,3 @@
           #:y-label "Time (ms)"
           #:title "Unstaged/Staged Runtime vs Proof Size"
           #:out-file filename)))
-
-#| doesn't come back
-(record-bench 'unstaged 'proofo 3)
-(time-test
- (length
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
-       (prover prf))))
-  1)
-|#
