@@ -136,16 +136,16 @@
     (parse `(regex-match ',pattern ',data))
     parse-result)))
 
-(record-bench 'eval-eval 'staged 'parse 1)
-(time-test
-  #:times 100
+
+(test
+
   (run #f (parse-result)
     (d/dc-o 'baz 'f parse-result))
   '(#f))
 
-(record-bench 'eval-eval 'unstaged 'parse 1)
-(time-test
-  #:times 100
+
+(test
+
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc 'baz 'f))
@@ -153,14 +153,14 @@
   '(#f))
 
 
-(record-bench 'eval-eval 'staged 'parse 2)
+(record-bench 'eval-eval 'staged 'parse 1)
 (time-test
   #:times 100
   (run #f (parse-result)
     (d/dc-o '(seq foo barn) 'foo parse-result))
   '(barn))
 
-(record-bench 'eval-eval 'unstaged 'parse 2)
+(record-bench 'eval-eval 'unstaged 'parse 1)
 (time-test
   #:times 100
   (run #f (parse-result)
@@ -169,14 +169,14 @@
       parse-result))
   '(barn))
 
-(record-bench 'eval-eval 'staged 'parse 3)
+(record-bench 'eval-eval 'staged 'parse 2)
 (time-test
   #:times 100
   (run #f (parse-result)
     (d/dc-o '(alt (seq foo bar) (seq foo (rep baz))) 'foo parse-result))
   '((alt bar (rep baz))))
 
-(record-bench 'eval-eval 'unstaged 'parse 3)
+(record-bench 'eval-eval 'unstaged 'parse 2)
 (time-test
   #:times 100
   (run #f (parse-result)

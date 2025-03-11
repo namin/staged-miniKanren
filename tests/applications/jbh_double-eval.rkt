@@ -792,12 +792,20 @@
      (map-in-double-eval-fun `(eval-expr ',expr '()))
      val)))
 
+(record-bench 'synth/ground-context 'staging 'map-in-double-eval)
+(defrel (map-in-double-eval-used-for-synth expr val)
+  (time-staged
+    (evalo-staged
+     (map-in-double-eval-fun `(eval-expr ',expr '()))
+     val)))
+
+
 (defrel (map-in-double-eval-unstaged expr val)
   (evalo-unstaged
    (map-in-double-eval-fun `(eval-expr ',expr '()))
    val))
 
-(record-bench 'eval-eval 'staged 'map-in-double-eval 1)
+(record-bench 'eval-eval 'staged 'map-in-double-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
@@ -816,7 +824,7 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
-(record-bench 'eval-eval 'unstaged 'map-in-double-eval 1)
+(record-bench 'eval-eval 'unstaged 'map-in-double-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
@@ -835,7 +843,7 @@
     (map-in-double-eval-unstaged expr q)))
  '(((a . a) (b . b) (c . c))))
 
-(record-bench 'eval-eval 'staged 'map-in-double-eval 2)
+(record-bench 'synth/ground-context 'staged 'map-in-double-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
@@ -851,10 +859,10 @@
                     '()
                     (cons (f^ (car l)) (((f f) f^) (cdr l))))))))
         expr)
-    (map-in-double-eval expr '((a . a) (b . b) (c . c)))))
+    (map-in-double-eval-used-for-synth expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
-(record-bench 'eval-eval 'unstaged 'map-in-double-eval 2)
+(record-bench 'synth/ground-context 'unstaged 'map-in-double-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
