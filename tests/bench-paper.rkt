@@ -18,6 +18,7 @@
 ;; Staging the evalo relation running on (eval <program-text>) (thus faster eval functions in particular)
 (require "applications/jbh_or-lang-interp.rkt") ;; Done + category
 (require "applications/jbh_proof.rkt") ;; Done + category
+(require "applications/jbh_peano-fib.rkt") ;; Done + category
 (require "applications/jbh_parsing-with-derivatives.rkt") ;; Done, already there + category
 (require "applications/jbh_double-eval.rkt") ;; quines w/quasiquotes ;; Done, already there. + category
 (require "applications/jbh_dl.rkt") ;; Negation-normal form
