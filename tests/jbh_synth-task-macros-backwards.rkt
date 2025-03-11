@@ -43,7 +43,7 @@
    ((a b c) ())))
 
 
-(record-bench 'eval/program 'staging 'invert-execute-append 1)
+(record-bench 'eval/program 'staging 'invert-execute-append)
 (defrel (invert-execute-append xs ys)
   (time-staged
    (evalo-staged
@@ -56,7 +56,7 @@
        (append ',xs ',ys))
     '(a b c))))
 
-(record-bench 'eval/program 'staged 'invert-execute-append 1)
+(record-bench 'eval/program 'staged 'invert-execute-append)
 (time-test
  #:times 1000
  (run* (xs ys)
@@ -77,7 +77,7 @@
       (append ',xs ',ys))
    '(a b c)))
 
-(record-bench 'eval/program 'unstaged 'invert-execute-append 1)
+(record-bench 'eval/program 'unstaged 'invert-execute-append)
 (time-test
  #:times 1000
  (run* (xs ys)

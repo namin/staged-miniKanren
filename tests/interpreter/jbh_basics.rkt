@@ -275,7 +275,7 @@
 
 (record-bench 'eval/program 'staged 'eval-append-synth-all-args)
 (time-test
- (time (last-pair (run* (xs ys)
+  (last-pair (run* (xs ys)
 	(appendo-staged ys xs '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 							  AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ
 							  BA BB BC BD BE BF BG BH BI BJ BK BL BM BN BO BP BQ BR BS BT BU BV BW BX BY BZ
@@ -286,7 +286,7 @@
 							  GA GB GC GD GE GF GG GH GI GJ GK GL GM GN GO GP GQ GR GS GT GU GV GW GX GY GZ
 							  HA HB HC HD HE HF HG HH HI HJ HK HL HM HN HO HP HQ HR HS HT HU HV HW HX HY HZ
 							  IA IB IC ID IE IF IG IH II IJ IK IL IM IN IO IP IQ IR IS IT IU IV IW IX IY IZ
-							  JA JB JC JD JE JF JG JH JI JJ JK JL JM)))))
+							  JA JB JC JD JE JF JG JH JI JJ JK JL JM))))
 '((()
    (A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 	AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ
@@ -302,7 +302,7 @@
 
 (record-bench 'eval/program 'unstaged 'eval-append-synth-all-args)
 (time-test
- (time (last-pair (run* (xs ys)
+  (last-pair (run* (xs ys)
 	(appendo-unstaged ys xs '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 							  AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ
 							  BA BB BC BD BE BF BG BH BI BJ BK BL BM BN BO BP BQ BR BS BT BU BV BW BX BY BZ
@@ -313,7 +313,7 @@
 							  GA GB GC GD GE GF GG GH GI GJ GK GL GM GN GO GP GQ GR GS GT GU GV GW GX GY GZ
 							  HA HB HC HD HE HF HG HH HI HJ HK HL HM HN HO HP HQ HR HS HT HU HV HW HX HY HZ
 							  IA IB IC ID IE IF IG IH II IJ IK IL IM IN IO IP IQ IR IS IT IU IV IW IX IY IZ
-							  JA JB JC JD JE JF JG JH JI JJ JK JL JM)))))
+							  JA JB JC JD JE JF JG JH JI JJ JK JL JM))))
 '((()
    (A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 	AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ

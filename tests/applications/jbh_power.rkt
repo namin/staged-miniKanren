@@ -317,7 +317,7 @@
 (define num3 (build-num 3))
 (define num4 (build-num 4))
 
-(record-bench 'simple 'staging 'pow4)
+(record-bench 'simple 'staging 'pow4 1)
 (defrel (pow4-staged n nq)
   (time-staged
    (pow/staged n num4 nq)))
@@ -325,13 +325,13 @@
 (defrel (pow4-unstaged n nq)
   (pow/staged n num4 nq))
 
-(record-bench 'simple 'staged 'pow4)
+(record-bench 'simple 'staged 'pow4 1)
 (time-test
  #:times 1000
  (run 1 (q1 q2) (pow4-staged num2 q1) (pow4-staged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
-(record-bench 'simple 'unstaged 'pow4)
+(record-bench 'simple 'unstaged 'pow4 1)
 (time-test
  #:times 1000
  (run 1 (q1 q2) (pow4-unstaged num2 q1) (pow4-unstaged num3 q2))

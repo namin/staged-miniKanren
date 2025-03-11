@@ -3,7 +3,7 @@
 (require "../../all.rkt")
 
 (record-bench 'eval-eval 'staging 'eval-or)
-(defrel (or-evalo expr val)
+(defrel (or-evalo-staged expr val)
   (time-staged
     (evalo-staged
       `(letrec ([eval-or
@@ -32,9 +32,10 @@
 #;(run 1 (q v e) (staged (evalo-or-staged `(or a ,e) `((a . ,q)) v)))
 #;(run* (x v) (staged (evalo-or-staged `(or #f x) `((x . ,x)) v)))
 
-(record-bench 'eval-eval 'staged 'eval-or)
+(record-bench 'eval-eval 'staged 'eval-or 1)
 (time-test
-  (run 2 (q v) (or-evalo `((lambda (x) (or x x)) ,q) v))
+  #:times 1000
+  (run 2 (q v) (or-evalo-staged `((lambda (x) (or x x)) ,q) v))
   '((#t #t) (#f #f)))
 
 
@@ -61,8 +62,9 @@
 		(eval-or ',expr (lambda (y) 'error)))
    val))
 
-(record-bench 'eval-eval 'unstaged 'eval-or)
+(record-bench 'eval-eval 'unstaged 'eval-or 1)
 (time-test
+  #:times 1000
   (run 2 (q v) (or-evalo-unstaged `((lambda (x) (or x x)) ,q) v))
   '((#t #t) (#f #f)))
 
@@ -70,13 +72,15 @@
 
 (record-bench 'eval-eval 'staged 'eval-or 2)
 (time-test
-(run 5 (p r) (or-evalo p '#t))
-'((#t _.0) (((or #t _.0) _.1) $$ (absento (struct _.0))) ((or #f #t) _.0) (((or (or #t _.0) _.1) _.2) $$ (absento (struct _.0) (struct _.1))) (((or #f (or #t _.0)) _.1) $$ (absento (struct _.0)))))
+  #:times 1000
+  (run 5 (p r) (or-evalo-staged p '#t))
+  '((#t _.0) (((or #t _.0) _.1) $$ (absento (struct _.0))) ((or #f #t) _.0) (((or (or #t _.0) _.1) _.2) $$ (absento (struct _.0) (struct _.1))) (((or #f (or #t _.0)) _.1) $$ (absento (struct _.0)))))
 
 (record-bench 'eval-eval 'unstaged 'eval-or 2)
 (time-test
-(run 5 (p r) (or-evalo-unstaged p '#t))
-'((#t _.0) (((or #t _.0) _.1) $$ (absento (struct _.0))) ((or #f #t) _.0) (((or (or #t _.0) _.1) _.2) $$ (absento (struct _.0) (struct _.1))) (((or #f (or #t _.0)) _.1) $$ (absento (struct _.0)))))
+  #:times 1000
+  (run 5 (p r) (or-evalo-unstaged p '#t))
+  '((#t _.0) (((or #t _.0) _.1) $$ (absento (struct _.0))) ((or #f #t) _.0) (((or (or #t _.0) _.1) _.2) $$ (absento (struct _.0) (struct _.1))) (((or #f (or #t _.0)) _.1) $$ (absento (struct _.0)))))
 
 ;; (record-bench 'eval-eval 'staged 'eval-or 2)
 ;; (time-test
@@ -91,5 +95,5 @@
 ;; )
 
 (test
-(run 1 (v) (or-evalo '(or #f #t) v))
+(run 1 (v) (or-evalo-staged '(or #f #t) v))
 '(#t))
