@@ -677,18 +677,16 @@
    (ho-double-eval `(eval-expr ',expr (lambda (y) 'error)))
    val))
 
-(record-bench 'eval-eval 'staged 'ho-double-evalo 1)
-(time-test
+(test
   (run 1 (q) (ho-double-evalo '((lambda (x) x) 'hello) q))
   '(hello))
 
-(record-bench 'eval-eval 'unstaged 'ho-double-evalo 1)
-(time-test
+(test
   (run 1 (q) (ho-double-evalo-unstaged '((lambda (x) x) 'hello) q))
   '(hello))
 
 
-(record-bench 'eval-eval 'staged 'ho-double-evalo 2)
+(record-bench 'eval-eval 'staged 'ho-double-evalo)
 (time-test
  (run 1 (q) (absento 'error q) (absento 'struct q) (ho-double-evalo q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
@@ -697,7 +695,7 @@
    ,not-tags0+error
    (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'ho-double-evalo 2)
+(record-bench 'eval-eval 'unstaged 'ho-double-evalo)
 (time-test
  (run 1 (q) (absento 'error q) (absento 'struct q) (ho-double-evalo-unstaged q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))

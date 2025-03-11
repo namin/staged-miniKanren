@@ -509,7 +509,7 @@
      (s . z))))
 
 (record-bench 'eval-eval 'staging 'peano-synth-fib-aps 4)
-(defrel (peano-synth-fib-abs4 fib-acc ACC1 ACC2)
+(defrel (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2)
   (time-staged
     (fresh (A B C)
       (== `(lambda (n a1 a2)
@@ -532,7 +532,7 @@
 (record-bench 'eval-eval 'staged 'peano-synth-fib-aps 4)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
-   (peano-synth-fib-abs4 fib-acc ACC1 ACC2))
+   (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2))
    '(((lambda (n a1 a2)
 		(if (zero? n)
 			a1
