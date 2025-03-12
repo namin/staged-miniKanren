@@ -38,9 +38,8 @@
        (fib '(s s s s s . z)))
      )))))))
 
-(record-bench 'eval-eval 'staging 'peano-synth-fib-direct)
 (defrel (peano-synth-fib-direct-staged fib-direct)
-  (time-staged
+  (staged
     (fresh ()
       (== `(lambda (n)
              (if (zero? n)
@@ -59,8 +58,7 @@
          (s s s s s . z))))))
 
 
-(record-bench 'eval-eval 'staged 'peano-synth-fib-direct)
-(time-test
+(test
  (run* (fib-direct)
    (peano-synth-fib-direct-staged fib-direct))
   '((lambda (n)
@@ -70,8 +68,7 @@
                '(s . z)
                (+ (fib (sub1 n)) (fib (sub1 (sub1 n)))))))))
 
-(record-bench 'eval-eval 'unstaged 'peano-synth-fib-direct)
-(time-test
+(test
   (run* (fib-direct)
     (== `(lambda (n)
            (if (zero? n)
@@ -166,9 +163,8 @@
      )))))))
 
 
-(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 1)
 (defrel (peano-synth-fib-aps-staged1 fib-acc ACC1 ACC2)
-  (time-staged
+  (staged
     (fresh ()
       (== `(lambda (n a1 a2)
              (if (zero? n)
@@ -187,8 +183,7 @@
          (s s s s s . z))))))
 
 
-(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 0)
-(time-test
+(test
  (run* (fib-acc)
    (peano-synth-fib-aps-staged1 fib-acc 'z '(s . z)))
   '((lambda (n a1 a2)
@@ -199,8 +194,7 @@
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
 
 
-(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 0)
-(time-test
+(test
   (run* (fib-acc)
     (== `(lambda (n a1 a2)
            (if (zero? n)
@@ -224,8 +218,7 @@
               a2
               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
 
-(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 1)
-(time-test
+(test
  (run* (fib-acc ACC1 ACC2)
    (peano-synth-fib-aps-staged1 fib-acc ACC1 ACC2))
    '(((lambda (n a1 a2)
@@ -237,8 +230,7 @@
 	  z
 	  (s . z))))
 
-(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 1)
-(time-test
+(test
   (run* (fib-acc ACC1 ACC2)
     (== `(lambda (n a1 a2)
            (if (zero? n)
@@ -481,9 +473,8 @@
      (s . z))))
 
 
-(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 3)
 (defrel (peano-synth-aps-staged3 fib-acc ACC1 ACC2)
-  (time-staged
+  (staged
     (fresh (A B)
       (== `(lambda (n a1 a2)
              (if (zero? n)
@@ -503,8 +494,7 @@
          (s s s s s s s s . z))))))
 
 
-(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 3)
-(time-test
+(test
  (run 1 (fib-acc ACC1 ACC2)
    (peano-synth-aps-staged3 fib-acc ACC1 ACC2))
    '(((lambda (n a1 a2)
@@ -517,29 +507,28 @@
 	  (s . z))))
 
 
-(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 3)
-(time-test
-  (run 1 (fib-acc ACC1 ACC2)
-    (fresh (A B)
-      (== `(lambda (n a1 a2)
-             (if (zero? n)
-                 a1
-                 (if (zero? (sub1 n))
-                     a2
-                     (fib-aps (- n '(s . z)) ,A ,B))))
-          fib-acc))
-    (evalo-unstaged
-     (peano-synth-fib-aps-with-an-extra-example fib-acc ACC1 ACC2)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)
-       (s s s s s . z)
-       (s s s s s s s s . z))))
-  'timeout)
+;; (test
+;;   (run 1 (fib-acc ACC1 ACC2)
+;;     (fresh (A B)
+;;       (== `(lambda (n a1 a2)
+;;              (if (zero? n)
+;;                  a1
+;;                  (if (zero? (sub1 n))
+;;                      a2
+;;                      (fib-aps (- n '(s . z)) ,A ,B))))
+;;           fib-acc))
+;;     (evalo-unstaged
+;;      (peano-synth-fib-aps-with-an-extra-example fib-acc ACC1 ACC2)
+;;      '(z
+;;        (s . z)
+;;        (s . z)
+;;        (s s . z)
+;;        (s s s . z)
+;;        (s s s s s . z)
+;;        (s s s s s s s s . z))))
+;;   'timeout)
 
-(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 4)
+(record-bench 'synth/ground-context 'staging 'peano-synth-fib-aps 4)
 (defrel (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2)
   (time-staged
     (fresh (A B C)
@@ -562,7 +551,7 @@
          (s s s s s s s s . z))))))
 
 ;; synthesizes the accumulator and three holes in the program
-(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 4)
+(record-bench 'synth/ground-context 'staged 'peano-synth-fib-aps 4)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
    (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2))
@@ -575,7 +564,7 @@
 	  z
 	  (s . z))))
 
-(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 4)
+(record-bench 'synth/ground-context 'unstaged 'peano-synth-fib-aps 4)
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B C)
