@@ -339,6 +339,7 @@
                  ))))))
     result)))
 
+;; a small-one-hole version synthesis w/synth accs; small enough for unstaged to do it
 (record-bench 'synth/ground-context 'staged 'peano-synth-fib-aps 2)
 (time-test
   (run 1 (e ACC1 ACC2)
@@ -460,7 +461,7 @@
                  ))))))
     result)))
 
-(record-bench 'eval-eval 'staged 'peano-synth-fib-aps-step 1)
+(record-bench 'eval-eval 'staged 'peano-synth-fib-aps-step)
 (time-test
   (run 1 (step1 step2 ACC1 ACC2)
     (peano-synth-fib-aps-stepo
@@ -560,6 +561,7 @@
          (s s s s s . z)
          (s s s s s s s s . z))))))
 
+;; synthesizes the accumulator and three holes in the program
 (record-bench 'eval-eval 'staged 'peano-synth-fib-aps 4)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
@@ -638,14 +640,12 @@
     (peano-fib `(fib-aps ',n ',a1 ',a2))
     result)))
 
-(record-bench 'eval-eval 'staged 'peano-fib 1)
-(time-test
+(test
  (run* (v)
    (fib-apso '(s s s s s s . z) 'z '(s . z) v))
   '((s s s s s s s s . z)))
 
-(record-bench 'eval-eval 'unstaged 'peano-fib 1)
-(time-test
+(test
   (run* (v)
     (evalo-unstaged
      (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z)))
@@ -653,22 +653,20 @@
   '((s s s s s s s s . z)))
 
 
-(record-bench 'eval-eval 'staged 'peano-fib 2)
-(time-test
+(test
   (run 1 (q)
     (fib-apso q 'z '(s . z)
               '(s s s s s s s s . z)))
   '((s s s s s s . z)))
 
-(record-bench 'eval-eval 'unstaged 'peano-fib 2)
-(time-test
+(test
   (run 1 (q)
     (evalo-unstaged
      (peano-fib `(fib-aps ',q 'z '(s . z)))
      '(s s s s s s s s . z)))
   '((s s s s s s . z)))
 
-
+;; running backwards synthesize an input value that makes the peano-fib function produce the expected value.
 (record-bench  'eval-eval 'staged 'peano-fib 3)
 (time-test
   (run 1 (q)
@@ -692,6 +690,7 @@
      '(s s s s s s s s s s s s s . z))))
 
 
+;; instead of synthesizing a value, we instead synth arb expressions that have the appropriate value
 (record-bench  'eval-eval 'staged 'peano-fib 4)
 (time-test
  (run 5 (q)
