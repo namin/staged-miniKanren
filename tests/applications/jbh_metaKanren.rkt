@@ -624,8 +624,7 @@ Syntax
 (begin
 
 
-(record-bench 'eval/program 'unstaged 'mm 1)
-(time-test
+(test
   (run* (x)
     (eval-programo
      `(run* (z)
@@ -646,7 +645,7 @@ Syntax
 
 ;; running-metakanren-query-to-appendo-relation-forward-works
 (defrel (running-metakanren-query-to-appendo-relation-forward-works x)
-  (time-staged
+  (staged
      (eval-programo
       `(run* (z)
          (letrec-rel ((appendo (l1 l2 l)
@@ -663,15 +662,13 @@ Syntax
                      (call-rel appendo '(1 2) '(3 4) z)))
       x)))
 
-(record-bench 'eval/program 'staged 'mm 1)
-(time-test
+(test
   (run* (x)
     (running-metakanren-query-to-appendo-relation-forward-works x))
   '(((1 2 3 4))))
 
 
-(record-bench 'synth/ground-context 'unstaged 'mm 2)
-(time-test
+(test
   (run* (x)
     (eval-programo
      `(run* (z)
@@ -690,9 +687,9 @@ Syntax
      '((_.))))
   '(conj))
 
-(record-bench 'synth/ground-context 'staging 'mm 2)
+
 (defrel (synth-conj-in-appendo-relation-definition x)
-  (time-staged
+  (staged
     (eval-programo
      `(run* (z)
         (letrec-rel ((appendo (l1 l2 l)
@@ -709,14 +706,14 @@ Syntax
                     (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
      '((_.)))))
 
-(record-bench 'synth/ground-context 'staged 'mm 2)
-(time-test
+
+(test
  (run* (x)
    (synth-conj-in-appendo-relation-definition x))
   '(conj))
 
-(record-bench 'eval/program 'unstaged 'mm 3)
-(time-test
+
+(test
   (run 1 (x)
     (eval-programo
      `(run* (z)
@@ -727,9 +724,8 @@ Syntax
   '((5)))
 
 ;; demonstrates we can run the interpreter forward and get the answer
-(record-bench 'eval/program 'staging 'mm 3)
 (defrel (run-interpreter-forward-get-answer-to-query x)
-  (time-staged
+  (staged
     (eval-programo
      `(run* (z)
         (letrec-rel ((five (f)
@@ -737,15 +733,13 @@ Syntax
                     (call-rel five z)))
      x)))
 
-(record-bench 'eval/program 'staged 'mm 3)
-(time-test
+(test
  (run 1 (x)
    (run-interpreter-forward-get-answer-to-query x))
   '((5)))
 
 ; Don't get what we expect when all examples are internally ground
-(record-bench 'synth/ground-context 'unstaged 'mm 4)
-(time-test
+(test
   (run 1 (e1 e2)
     (eval-programo
      `(run* (z)
@@ -755,9 +749,8 @@ Syntax
      '((_.))))
   '(((_.0 _.0) $$ (num _.0))))
 
-(record-bench 'synth/ground-context 'staging 'mm 4)
 (defrel (synth-equation-parts-for-relation-call-to-constant-query-does-not-use-query-variable-one-answer e1 e2)
-  (time-staged
+  (staged
     (eval-programo
      `(run* (z)
         (letrec-rel ((five (f)
@@ -765,15 +758,13 @@ Syntax
                     (call-rel five 5)))
      '((_.)))))
 
-(record-bench 'synth/ground-context 'staged 'mm 4)
-(time-test
+(test
  (run 1 (e1 e2)
    (synth-equation-parts-for-relation-call-to-constant-query-does-not-use-query-variable-one-answer e1 e2))
   '(((_.0 _.0) $$ (num _.0))))
 
 ;; Aha!
-(record-bench 'eval/program 'unstaged 'mm 5)
-(time-test
+(test
   (run 1 (x)
     (eval-programo
      `(run* (z)
@@ -783,9 +774,8 @@ Syntax
      x))
   '(((_.))))
 
-(record-bench 'eval/program 'staging 'mm 5)
 (defrel (ensure-that-running-the-metakanren-query-produces-the-right-answer x)
-  (time-staged
+  (staged
     (eval-programo
      `(run* (z)
         (letrec-rel ((five (f)
@@ -793,14 +783,12 @@ Syntax
                     (call-rel five 5)))
      x)))
 
-(record-bench 'eval/program 'staged 'mm 5)
-(time-test
+(test
  (run 1 (x)
    (ensure-that-running-the-metakanren-query-produces-the-right-answer x))
   '(((_.))))
 
-(record-bench 'synth/ground-context 'unstaged 'mm 6)
-(time-test
+(test
   (run 3 (e1 e2)
     (eval-programo
      `(run* (z)
@@ -810,9 +798,8 @@ Syntax
      '((_.))))
   '(((_.0 _.0) $$ (num _.0)) (#t #t) (5 f)))
 
-(record-bench 'synth/ground-context 'staging 'mm 6)
 (defrel (synth-equation-parts-for-relation-call-to-constant-query-does-not-use-query-variable-3-answers e1 e2)
-  (time-staged
+  (staged
     (eval-programo
      `(run* (z)
         (letrec-rel ((five (f)
@@ -820,14 +807,12 @@ Syntax
                     (call-rel five 5)))
      '((_.)))))
 
-(record-bench 'synth/ground-context 'staged 'mm 6)
-(time-test
+(test
  (run 3 (e1 e2)
    (synth-equation-parts-for-relation-call-to-constant-query-does-not-use-query-variable-3-answers e1 e2))
   '(((_.0 _.0) $$ (num _.0)) (#t #t) (5 f)))
 
-(record-bench 'synth/ground-context 'unstaged 'mm 7)
-(time-test
+(test
   (run 1 (e1 e2)
     (eval-programo
      `(run* (z)
@@ -838,9 +823,8 @@ Syntax
   '((5 f)))
 
 ;; synth-values-for-equational-constraint-in-a relcall that uses the query variable.
-(record-bench 'synth/ground-context 'staging 'mm 7)
 (defrel (synth-values-for-equational-constraint-in-relcall e1 e2)
-  (time-staged
+  (staged
     (eval-programo
      `(run* (z)
         (letrec-rel ((five (f)
@@ -848,8 +832,7 @@ Syntax
                     (call-rel five z)))
      '(5))))
 
-(record-bench 'synth/ground-context 'staged 'mm 7)
-(time-test
+(test
  (run 1 (e1 e2)
    (synth-values-for-equational-constraint-in-relcall e1 e2))
   '((5 f)))
@@ -913,8 +896,7 @@ Syntax
  '((d l2 l3)))
 
 ; Thanks for the example, @bollu!
-(record-bench 'synth/ground-context 'unstaged 'mm 9)
-(time-test
+(test
   (run* (count)
     (eval-programo
      `(run ,count (z)
@@ -924,17 +906,15 @@ Syntax
   '(((())) (((_.0)) $$ (=/= ((_.0 ()))))))
 
 ;; Synthesizes the count of the run query; finds all possible solutions
-(record-bench 'synth/ground-context 'staging 'mm 9)
 (defrel (synth-count-of-run-query count)
-  (time-staged
+  (staged
     (eval-programo
      `(run ,count (z)
         (disj (== z 1)
               (== z 2)))
      '(1 2))))
 
-(record-bench 'synth/ground-context 'staged 'mm 9)
-(time-test
+(test
  (run* (count)
    (synth-count-of-run-query count))
   '(((())) (((_.0)) $$ (=/= ((_.0 ()))))))

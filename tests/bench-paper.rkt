@@ -25,5 +25,6 @@
 
 ;; Synthesis w/ground context
 ;; When we rely on a built-in primitive implemented in the object 'eval', you get a neat multi-level compiled-interpreted interaction
+(require "applications/jbh_metaKanren.rkt")
 (require "applications/jbh_map.rkt") ;; the example we wrote just for the purpose Done + category
 (require "jbh_synth-task-macros-synth-context.rkt") ;; synthesize part of append from context ;; Done + category
