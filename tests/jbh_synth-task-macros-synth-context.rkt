@@ -43,8 +43,8 @@
      '(() (a b) (c d e f)))))
  '((car xs)))
 
-(record-bench 'synth/ground-context 'staging 'synth/context 1)
-(defrel (synth/context e)
+(record-bench 'synth/ground-context 'staging 'synth-append 1)
+(defrel (synth-append e)
   (time-staged
    (evalo-staged
     `(letrec
@@ -58,16 +58,16 @@
         (append '(c d) '(e f))))
     '(() (a b) (c d e f)))))
 
-(record-bench 'synth/ground-context 'staged 'synth/context 1)
+(record-bench 'synth/ground-context 'staged 'synth-append 1)
 (time-test
  #:times 100
  (run 1 (e)
-   (synth/context e))
+   (synth-append e))
  '((car xs)))
 
 
 
-(defrel (synth/context-unstaged e)
+(defrel (synth-append-unstaged e)
   (evalo-unstaged
    `(letrec
         ([append
@@ -80,9 +80,9 @@
        (append '(c d) '(e f))))
    '(() (a b) (c d e f))))
 
-(record-bench 'synth/ground-context 'unstaged 'synth/context 1)
+(record-bench 'synth/ground-context 'unstaged 'synth-append 1)
 (time-test
  #:times 100
  (run 1 (e)
-   (synth/context-unstaged e))
+   (synth-append-unstaged e))
  '((car xs)))

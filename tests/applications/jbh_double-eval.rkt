@@ -2,9 +2,8 @@
 
 (require "../../all.rkt")
 
-(record-bench 'eval-eval 'staging 'eval-and-map-evalo)
 (defrel (eval-and-map-evalo expr val)
-  (time-staged
+  (staged
    (evalo-staged
     `(letrec ([map (lambda (f l)
                      (if (null? l)
@@ -102,8 +101,7 @@
      (sym _.0))))
 
 ;; Synthesize the body of a simple function call in map. Remember the interpreter implements map in terms of a host-language function map (the letrec there) that's all interpreted in evalo
-(record-bench 'eval-eval 'staged 'eval-and-map-evalo 2)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -111,8 +109,7 @@
   '((cons x x)))
 
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 2)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -260,8 +257,7 @@
 
 
 ;; synthesize the body of a somewhat complicated higher-order function that is used multiple times over in several calls to map that all produce a list of outputs
-(record-bench 'eval-eval 'staged 'eval-and-map-evalo 7)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -282,8 +278,7 @@
   '((cons x (cons (cons x '()) (cons x '())))))
 
 
-(record-bench 'eval-eval 'unstaged 'eval-and-map-evalo 7)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -484,7 +479,7 @@
                           ((eval-expr rator env) (eval-expr rand env))]))])
              (eval-expr expr (lambda (y) 'error)))))))
 
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -502,7 +497,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
-(time-test
+(test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
     (absento 'struct q)
@@ -596,15 +591,14 @@
                         ((eval-expr rator env) (eval-expr rand env))]))])
              ,letrec-body))
 
-(record-bench 'eval-eval 'staging 'ho-quine-interp-cons)
+;; Another way you can do quines a level up: the usual consy-quotey way. This test shows best indicates that what we're doing above w/qq is *not* this thing.
 (defrel (ho-quine-interp-cons expr val)
-  (time-staged
+  (staged
    (evalo-staged
     (ho-quine-interp-cons-fun `(eval-expr ',expr (lambda (y) 'error)))
     val)))
 
-(record-bench 'eval-eval 'staged 'ho-quine-interp-cons)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q)
     (absento 'struct q)
@@ -615,8 +609,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'ho-quine-interp-cons)
-(time-test
+(test
   (run 1 (q)
     (absento 'error q)
     (absento 'struct q)
@@ -654,9 +647,8 @@
                        ))])
              ,letrec-body))
 
-(record-bench 'eval-eval 'staging 'ho-double-evalo)
 (defrel (ho-double-evalo expr val)
-  (time-staged
+  (staged
     (evalo-staged
      (ho-double-eval `(eval-expr ',expr (lambda (y) 'error)))
      val)))
@@ -675,8 +667,7 @@
   '(hello))
 
 
-(record-bench 'eval-eval 'staged 'ho-double-evalo)
-(time-test
+(test
  (run 1 (q) (absento 'error q) (absento 'struct q) (ho-double-evalo q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -684,8 +675,7 @@
    ,not-tags0+error
    (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'ho-double-evalo)
-(time-test
+(test
  (run 1 (q) (absento 'error q) (absento 'struct q) (ho-double-evalo-unstaged q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
     '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -872,9 +862,8 @@
     (map-in-double-eval-unstaged expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
-(record-bench 'eval-eval 'staging 'double-evalo)
 (defrel (double-evalo expr val)
-  (time-staged
+  (staged
    (evalo-staged
     `(letrec ([lookup
                (lambda (x env)
@@ -927,8 +916,7 @@
    val))
 
 
-(record-bench 'eval-eval 'staged 'double-evalo)
-(time-test
+(test
  (run 1 (q) (absento 'clo q) (double-evalo q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -936,8 +924,7 @@
     ,not-tags0+clo
     (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'double-evalo)
-(time-test
+(test
  (run 1 (q) (absento 'clo q) (double-evalo-unstaged q q))
  `((((lambda (_.0) (list _.0 (list 'quote _.0)))
      '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -971,9 +958,8 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,letrec-body)))
 
-(record-bench 'eval-eval 'staging 'double-evalo-variadic-list-fo)
 (defrel (double-evalo-variadic-list-fo expr val)
-  (time-staged
+  (staged
     (evalo-staged
      (double-evalo-variadic-list-fo-fun `(eval-expr ',expr '()))
      val)))
@@ -984,8 +970,7 @@
    val))
 
 
-(record-bench 'eval-eval 'staged 'double-evalo-variadic-list-fo)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo q q))
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -993,8 +978,7 @@
      ,not-tags0+clo
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'double-evalo-variadic-list-fo)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-unstaged q q))
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -1030,9 +1014,8 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,letrec-body)))
 
-(record-bench 'eval-eval 'staging 'double-evalo-variadic-list-fo-better)
 (defrel (double-evalo-variadic-list-fo-less-ridiculous expr val)
-  (time-staged
+  (staged
     (evalo-staged
      (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',expr '()))
      val)))
@@ -1042,8 +1025,7 @@
    (double-evalo-variadic-list-fo-less-ridiculous-fun `(eval-expr ',expr '()))
    val))
 
-(record-bench 'eval-eval 'staged 'double-evalo-variadic-list-fo-better)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous q q))
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -1051,8 +1033,7 @@
      ,not-tags0+clo
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'double-evalo-variadic-list-fo-better)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-fo-less-ridiculous-unstaged q q))
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -1090,9 +1071,8 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
      ,letrec-body))))
 
-(record-bench 'eval-eval 'staging 'double-evalo-variadic-list-ho)
 (defrel (double-evalo-variadic-list-ho expr val)
-  (time-staged
+  (staged
     (evalo-staged
      (double-evalo-variadic-list-ho-fun `(eval-expr ',expr '()))
      val)))
@@ -1103,8 +1083,7 @@
    val))
 
 
-(record-bench 'eval-eval 'staged 'double-evalo-variadic-list-ho)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho q q))
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -1112,8 +1091,7 @@
    ,not-tags0+clo
    (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'double-evalo-variadic-list-ho)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-variadic-list-ho-unstaged q q))
   `((((lambda (_.0) (list _.0 (list 'quote _.0)))
       '(lambda (_.0) (list _.0 (list 'quote _.0))))
@@ -1144,9 +1122,8 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,letrec-body)))
 
-(record-bench 'eval-eval 'staging 'double-evalo-cons)
 (defrel (double-evalo-cons expr val)
-  (time-staged
+  (staged
     (evalo-staged
      (double-evalo-cons-fun `(eval-expr ',expr '()))
      val)))
@@ -1156,8 +1133,7 @@
    (double-evalo-cons-fun `(eval-expr ',expr '()))
    val))
 
-(record-bench 'eval-eval 'staged 'double-evalo-cons)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-cons q q))
   `((((lambda (_.0)
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))
@@ -1167,8 +1143,7 @@
      ,not-tags0+clo
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'double-evalo-cons)
-(time-test
+(test
   (run 1 (q) (absento 'clo q) (double-evalo-cons-unstaged q q))
   `((((lambda (_.0)
         (cons _.0 (cons (cons 'quote (cons _.0 '())) '())))

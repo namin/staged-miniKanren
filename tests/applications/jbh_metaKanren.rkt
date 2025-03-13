@@ -839,7 +839,7 @@ Syntax
 
 ; External grounding, extra examples to avoid overfitting, and with symbolo to
 ; fasten queries
-(record-bench 'synth/ground-context 'unstaged 'mm 8)
+(record-bench 'synth/ground-context 'unstaged 'metakanren)
 (time-test
   (run 1 (x y w)
     (symbolo x)
@@ -865,7 +865,7 @@ Syntax
   '((d l2 l3)))
 
 ;; Synthesize the recursive call to appendo
-(record-bench 'synth/ground-context 'staging 'mm 8)
+(record-bench 'synth/ground-context 'staging 'metakanren)
 (defrel (synth-appendo-recursive-call x y w)
   (time-staged
     (eval-programo
@@ -886,7 +886,7 @@ Syntax
                                 (call-rel appendo '(1 2) '(3 4) z)))))
      '((1 2 3 4)))))
 
-(record-bench 'synth/ground-context 'staged 'mm 8)
+(record-bench 'synth/ground-context 'staged 'metakanren)
 (time-test
  (run 1 (x y w)
    (symbolo x)
@@ -919,8 +919,7 @@ Syntax
    (synth-count-of-run-query count))
   '(((())) (((_.0)) $$ (=/= ((_.0 ()))))))
 
-(record-bench 'synth/ground-context 'unstaged 'mm 10)
-(time-test
+(test
   (run* (count answers)
     (eval-programo `(run ,count (z)
                       (disj (== z 1)
@@ -928,16 +927,14 @@ Syntax
                    answers))
   '((() ()) ((()) (1)) (((())) (1 2)) ((((_.0)) (1 2)) $$ (=/= ((_.0 ()))))))
 
-(record-bench 'synth/ground-context 'staging 'mm 10)
 (defrel (synth-count-and-answers count answers)
-  (time-staged
+  (staged
     (eval-programo `(run ,count (z)
                       (disj (== z 1)
                             (== z 2)))
                    answers)))
 
-(record-bench 'synth/ground-context 'staged 'mm 10)
-(time-test
+(test
  (run* (count answers)
    (synth-count-and-answers count answers))
   '((() ()) ((()) (1)) (((())) (1 2)) ((((_.0)) (1 2)) $$ (=/= ((_.0 ()))))))
@@ -945,8 +942,7 @@ Syntax
 
 ; Gives disj in addition to conj
 (define one (peano 1))
-(record-bench 'synth/ground-context 'unstaged 'mm 11)
-(time-test
+(test
  (run* (x)
    (eval-programo
     `(run ,one (z)
@@ -965,9 +961,8 @@ Syntax
     '((_.))))
  '(disj conj))
 
-(record-bench 'synth/ground-context 'staging 'mm 11)
 (defrel (synth-appendo-portion x)
-  (time-staged
+  (staged
     (eval-programo
      `(run ,one (z)
         (letrec-rel ((appendo (l1 l2 l)
@@ -984,8 +979,7 @@ Syntax
                     (call-rel appendo '(1 2) '(3 4) '(1 2 3 4))))
      '((_.)))))
 
-(record-bench 'synth/ground-context 'staged 'mm 11)
-(time-test
+(test
  (run* (x)
    (synth-appendo-portion x))
  '(disj conj))

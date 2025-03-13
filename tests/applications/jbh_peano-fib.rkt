@@ -257,38 +257,6 @@
      (s . z))))
 
 
-
-#|
-(time-test
-  (run #f (fib-acc ACC1 ACC2)
-    (== `(lambda (n a1 a2)
-           (if (zero? n)
-               a1
-               (if (zero? (sub1 n))
-                   a2
-                   (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-        fib-acc)
-    (evalo-unstaged
-     (peano-synth-fib-aps fib-acc ACC1 ACC2)
-     '(z
-       (s . z)
-       (s . z)
-       (s s . z)
-       (s s s . z)                   
-       (s s s s s . z))))
-  '(((lambda (n a1 a2)
-       (if (zero? n)
-           a1
-           (if (zero? (sub1 n))
-               a2
-               (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-     z
-     (s . z))))
-|#
-
-
-
-
 (record-bench 'synth/ground-context 'staging 'peano-synth-fib-aps)
 (defrel (peano-synth-fib-apso e ACC1 ACC2 result)
   (time-staged
@@ -348,7 +316,7 @@
   '((a2 z (s . z))))
 
 
-(record-bench 'eval-eval 'staging 'peano-synth-fib-aps 2)
+(record-bench 'synth/ground-context 'staging 'peano-synth-fib-aps 2)
 (defrel (peano-synth-fib-aps2 fib-acc ACC1 ACC2)
   (time-staged
     (fresh ()
@@ -369,7 +337,7 @@
          (s s s . z)
          (s s s s s . z))))))
 
-(record-bench 'eval-eval 'staged 'peano-synth-fib-aps 2)
+(record-bench 'synth/ground-context 'staged 'peano-synth-fib-aps 3)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
    (peano-synth-fib-aps2 fib-acc ACC1 ACC2))
@@ -382,7 +350,7 @@
      z
      (s . z))))
 
-(record-bench 'eval-eval 'unstaged 'peano-synth-fib-aps 2)
+(record-bench 'synth/ground-context 'unstaged 'peano-synth-fib-aps 3)
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B)
@@ -411,7 +379,7 @@
      (s . z))))
 
 
-(record-bench 'eval-eval 'staging 'peano-synth-fib-aps-step)
+(record-bench 'synth/ground-context 'staging 'peano-synth-fib-aps-step)
 (defrel (peano-synth-fib-aps-stepo step1 step2 ACC1 ACC2 result)
   (time-staged
    (evalo-staged
@@ -453,7 +421,7 @@
                  ))))))
     result)))
 
-(record-bench 'eval-eval 'staged 'peano-synth-fib-aps-step)
+(record-bench 'synth/ground-context 'staged 'peano-synth-fib-aps-step)
 (time-test
   (run 1 (step1 step2 ACC1 ACC2)
     (peano-synth-fib-aps-stepo
@@ -497,15 +465,14 @@
 (test
  (run 1 (fib-acc ACC1 ACC2)
    (peano-synth-aps-staged3 fib-acc ACC1 ACC2))
-   '(((lambda (n a1 a2)
-		(if (zero? n)
-			a1
-			(if (zero? (sub1 n))
-				a2
-				(fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
-	  z
-	  (s . z))))
-
+ '(((lambda (n a1 a2)
+	  (if (zero? n)
+		  a1
+		  (if (zero? (sub1 n))
+			  a2
+			  (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))
+	z
+	(s . z))))
 
 ;; (test
 ;;   (run 1 (fib-acc ACC1 ACC2)
@@ -587,7 +554,7 @@
   'timeout)
 
 
-(define-term-syntax-rule (peano-fib query)
+(define-term-syntax-rule (peano-fib body)
   `(letrec ((zero?
              (lambda (n)
                (equal? 'z n))))
@@ -617,12 +584,12 @@
                    (if (zero? (sub1 n))
                        a2
                        (fib-aps (- n '(s . z)) a2 (+ a1 a2)))))))
-     ,query
+     ,body
      )))))))
 
 ;;(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
 
-(record-bench 'eval-eval 'staging 'peano-fib)
+(record-bench 'eval/program 'staging 'peano-fib)
 (defrel (fib-apso n a1 a2 result)
   (time-staged
    (evalo-staged
@@ -656,14 +623,14 @@
   '((s s s s s s . z)))
 
 ;; running backwards synthesize an input value that makes the peano-fib function produce the expected value.
-(record-bench  'eval-eval 'staged 'peano-fib 3)
+(record-bench  'eval/program 'staged 'peano-fib 3)
 (time-test
   (run 1 (q)
     (fib-apso q 'z '(s . z)
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench  'eval-eval 'unstaged 'peano-fib 3)
+(record-bench  'eval/program 'unstaged 'peano-fib 3)
 (time-test
   (run 1 (q)
     (evalo-unstaged
@@ -671,7 +638,7 @@
      '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench  'eval-eval 'staging 'peano-fib 4)
+(record-bench  'eval/program 'staging 'peano-fib 4)
 (defrel (peano-fib4 q)
   (time-staged
     (evalo-staged
@@ -680,7 +647,7 @@
 
 
 ;; instead of synthesizing a value, we instead synth arb expressions that have the appropriate value
-(record-bench  'eval-eval 'staged 'peano-fib 4)
+(record-bench  'eval/program 'staged 'peano-fib 4)
 (time-test
  (run 5 (q)
    (peano-fib4 q))
@@ -696,7 +663,7 @@
     (sym _.0))
    ((lambda () '(s s s s s s s . z)))))
 
-(record-bench 'eval-eval 'unstaged 'peano-fib 4)
+(record-bench 'eval/program 'unstaged 'peano-fib 4)
 (time-test
   (run 5 (q)
     (evalo-unstaged
