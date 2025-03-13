@@ -94,25 +94,24 @@
      '(Not Top))))
  10)
 
-;; Normalize something contradictory, that's kinda interesting
-(record-bench 'eval-eval 'unstaged 'nnf 1)
-(time-test
-  #:times 1000
+;; Normalize something contradictory
+(test
+  ;; #:times 1000
   (run* (nnf-concept)
     (evalo-unstaged
      (nnf '(Not (AtLeast z hasChild)))
      nnf-concept))
   '((Not Top)))
 
-(record-bench 'eval-eval 'staged 'nnf 1)
-(time-test
-  #:times 1000
+
+(test
+  ;; #:times 1000
   (run* (nnf-concept)
     (nnfo '(Not (AtLeast z hasChild)) nnf-concept))
   '((Not Top)))
 
 ;; normalize negation through these disjoint predicates that cover the domain
-(record-bench 'eval-eval 'unstaged 'nnf 2)
+(record-bench 'eval-eval 'unstaged 'nnf)
 (time-test
   #:times 1000
   (run* (nnf-concept)
@@ -122,7 +121,7 @@
   '((AtLeast (s s . z) hasChild)))
 
 
-(record-bench 'eval-eval 'staged 'nnf 2)
+(record-bench 'eval-eval 'staged 'nnf)
 (time-test
   #:times 1000
   (run* (nnf-concept)
