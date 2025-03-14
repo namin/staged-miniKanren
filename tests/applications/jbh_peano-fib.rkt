@@ -495,7 +495,7 @@
 ;;        (s s s s s s s s . z))))
 ;;   'timeout)
 
-(record-bench 'synth/ground-context 'staging 'fib-aps/peano-synth-base-and-accs-in-recur)
+(record-bench 'synth/ground-context 'staging 'fib-synth-3-holes)
 (defrel (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2)
   (time-staged
     (fresh (A B C)
@@ -518,7 +518,7 @@
          (s s s s s s s s . z))))))
 
 ;; synthesizes the accumulator and three holes in the program
-(record-bench 'synth/ground-context 'staged 'fib-aps/peano-synth-base-and-accs-in-recur)
+(record-bench 'synth/ground-context 'staged 'fib-synth-3-holes)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
    (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2))
@@ -531,7 +531,7 @@
 	  z
 	  (s . z))))
 
-(record-bench 'synth/ground-context 'unstaged 'fib-aps/peano-synth-base-and-accs-in-recur)
+(record-bench 'synth/ground-context 'unstaged 'fib-synth-3-holes)
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B C)

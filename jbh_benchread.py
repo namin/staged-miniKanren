@@ -6,8 +6,8 @@ from decimal import Decimal
 header = """
 \\begin{figure}[htbp]
 \\begin{adjustbox}{max width=\\textwidth}
-\\tiny
-\\begin{tabular}{@{}p{1.5cm} l c c c c c c@{}}
+
+\\begin{tabular}{@{}p{.75cm} l c c c c c c@{}}
 \\toprule
 {} &
 \\textbf{Name} &
@@ -110,7 +110,7 @@ for category in all_categories:
                            #gain = 5*60*1000 / min_time
                            #s += '\\timeout{>$%.3f$}' % gain
                            s += '$\\bot{}$ '
-               s += "& desc" ## temporarily
+               s += "& this is a somewhat long description just to see" ## temporarily
                s += '\\\\'
                print(s)
 
