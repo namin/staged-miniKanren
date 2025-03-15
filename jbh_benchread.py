@@ -28,7 +28,7 @@ footer = """
 def nested_dict():
     return defaultdict(nested_dict)
 
-re_bench = re.compile(r'^BENCH (?P<category>\S+) (?P<phase>\S+) (?P<name>\S+)( (?P<id>\S+))?$')
+re_bench = re.compile(r'^BENCH (?P<category>\S+) (?P<phase>\S+) (?P<name>\S+) (?P<id>\S+) "(?P<description>[^"]*)"$')
 #re_time = re.compile(r'\s*(?P<time>\d+\.\d+)s elapsed cpu time')
 #re_time = re.compile(r'\s*cpu time:\s*(?P<time>\d+)')
 re_time = re.compile(r"\s*cpu time:\s*(?P<time>-?\d+)")
@@ -44,8 +44,7 @@ all_times = nested_dict()
 cur_phase = None
 cur_name = None
 cur_id = None
-
-print(header)
+cur_desc = None
 
 for line in open('bench-log-ex.txt'):
     m = re_bench.match(line)
@@ -55,7 +54,13 @@ for line in open('bench-log-ex.txt'):
         cur_phase = m['phase']
         assert cur_phase in all_phases, "invalid phase %s" % (cur_phase)
         cur_name = m['name']
-        cur_id = m['id']
+        cur_id = None if m['id'] == '#f' else m['id']
+        cur_desc = m['description']
+        if ((not 'description' in all_times[cur_category][cur_name][cur_id]) or
+            all_times[cur_category][cur_name][cur_id]['description'] == ""):
+            all_times[cur_category][cur_name][cur_id]['description'] = cur_desc
+        elif cur_desc != "":
+            raise f"duplicate descriptions found"
         continue
     m = re_time.match(line)
     if m:
@@ -76,12 +81,12 @@ def lines_in_cat(category_dict):
 for category in all_categories_internal_keys:
     assert lines_in_cat(all_times[category]) > 0, "category missing data %s" % (category)
 
+print(header)
 
-    
 for category, category_name in zip(all_categories_internal_keys, all_categories_print_names):
    category_dict = all_times[category]
    print('\\midrule')
-   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (lines_in_cat(category_dict),category_name))
+   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (lines_in_cat(category_dict),category))
    for name in all_times[category]:
        for id in all_times[category][name]:
            if id is None:
@@ -114,7 +119,7 @@ for category, category_name in zip(all_categories_internal_keys, all_categories_
                            #gain = 5*60*1000 / min_time
                            #s += '\\timeout{>$%.3f$}' % gain
                            s += '$\\bot{}$ '
-               s += "& this is a somewhat long description just to see" ## temporarily
+               s += f" & {all_times[category][name][id]['description']} "
                s += '\\\\'
                print(s)
 

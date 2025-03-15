@@ -28,13 +28,11 @@
     (else 0)))
 
 
-(define (record-bench collection phase name . args)
+(define (record-bench collection phase name [test-number #f] #:description [description ""])
   (when (generated-code)
     (printf "generated code u-eval-expo count: ~a~%"
             (tree-count (generated-code) 'invoke-fallback)))
-  (if (null? args)
-      (printf "BENCH ~a ~a ~a\n" collection phase name)
-      (printf "BENCH ~a ~a ~a ~a\n" collection phase name (car args)))
+  (printf "BENCH ~a ~a ~a ~a ~s\n" collection phase name test-number description)
   (reset-generated-code!))
 
 (define test-failed #f)
