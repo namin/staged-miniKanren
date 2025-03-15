@@ -9,7 +9,7 @@ else
     BENCH_DIR="./jbh_bench-results"
 fi
 
-racket tests/bench-paper.rkt | tee bench-log-ex.txt
+racket -y tests/bench-paper.rkt | tee bench-log-ex.txt
 python3 jbh_benchread.py >$BENCH_DIR/bench_paper.tex
 cp bench-log-ex.txt bench-log-ex-paper.txt
 
