@@ -36,7 +36,9 @@ re_int_count = re.compile(r'^generated code u-eval-expo count: (?P<count>\d+)')
 #MAX_TIME = 100000.0
 MAX_TIME = 100000
 
-all_categories = ['simple', 'eval/program', 'eval-eval', 'synth/ground-context']
+all_categories_internal_keys = ['simple', 'eval/program', 'eval-eval', 'synth/ground-context']
+all_categories_print_names = ['simple', 'functions', 'interpreters', 'ground context']
+
 all_phases = ['staging', 'staged', 'unstaged']
 all_times = nested_dict()
 cur_phase = None
@@ -49,7 +51,7 @@ for line in open('bench-log-ex.txt'):
     m = re_bench.match(line)
     if m:
         cur_category = m['category']
-        assert cur_category in all_categories, "invalid category %s" % (cur_category)
+        assert cur_category in all_categories_internal_keys, "invalid category %s" % (cur_category)
         cur_phase = m['phase']
         assert cur_phase in all_phases, "invalid phase %s" % (cur_phase)
         cur_name = m['name']
@@ -71,13 +73,15 @@ def lines_in_cat(category_dict):
         num += len(category_dict[name])
     return num
 
-for category in all_categories:
+for category in all_categories_internal_keys:
     assert lines_in_cat(all_times[category]) > 0, "category missing data %s" % (category)
 
-for category in all_categories:
+
+    
+for category, category_name in zip(all_categories_internal_keys, all_categories_print_names):
    category_dict = all_times[category]
    print('\\midrule')
-   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (lines_in_cat(category_dict),category))
+   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (lines_in_cat(category_dict),category_name))
    for name in all_times[category]:
        for id in all_times[category][name]:
            if id is None:
