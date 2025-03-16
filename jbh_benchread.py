@@ -7,7 +7,7 @@ header = """
 \\begin{figure}[htbp]
 \\begin{adjustbox}{max width=\\textwidth}
 
-\\begin{tabular}{@{}p{.75cm} l c c c c c c@{}}
+\\begin{tabular}{@{}p{.75cm} l c c c c c l@{}}
 \\toprule
 {} &
 \\textbf{Name} &
