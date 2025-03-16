@@ -2,7 +2,7 @@
 
 (require "../../all.rkt")
 
-(record-bench 'synth/ground-context 'unstaged 'evalo-map)
+(record-bench 'synth/ground-context 'unstaged 'evalo-map #:description "synthesize the body of a function mapped over several examples")
 (time-test
  (run 1 (q)
    (evalo-staged

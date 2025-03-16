@@ -80,7 +80,7 @@
        (append '(c d) '(e f))))
    '(() (a b) (c d e f))))
 
-(record-bench 'synth/ground-context 'unstaged 'synth-append)
+(record-bench 'synth/ground-context 'unstaged 'synth-append #:description "synthesize portion of append from examples as in \\cref{fig:rel-interp-solutions-to-sketch-and-backwards-run} (x100)")
 (time-test
  #:times 100
  (run 1 (e)

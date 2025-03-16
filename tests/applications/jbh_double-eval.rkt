@@ -408,8 +408,8 @@
                         '(() ((a (a) a)) ((b (b) b) (c (c) c)) ((d (d) d) (e (e) e) (f (f) f)))))
   '((list x (cons x '()) x)))
 
-
-(record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo)
+;; uses a metacirc eval w/map and list to synth the body of a procedure passed around in a higher order way and applied to several examples
+(record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo #:description "synthesis in a meta-circular evaluator w/list functions")
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -561,7 +561,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'quasi-quine-evalo)
+(record-bench 'eval-eval 'unstaged 'quasi-quine-evalo #:description "synthesize a quine for a metacirc evaluator that adds \\texttt{quasiquote}")
 (time-test
  (run 1 (q)
    (absento 'error q)
@@ -805,7 +805,7 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
-(record-bench 'eval-eval 'unstaged 'map-in-double-eval)
+(record-bench 'eval-eval 'unstaged 'map-in-double-eval #:description "anonymous recursion definition of \\texttt{map} in a metacircular evaluator")
 (time-test
  (run 1 (q)
    (fresh (expr)

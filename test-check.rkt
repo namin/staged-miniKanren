@@ -32,7 +32,7 @@
   (when (generated-code)
     (printf "generated code u-eval-expo count: ~a~%"
             (tree-count (generated-code) 'invoke-fallback)))
-  (printf "BENCH ~a ~a ~a ~a ~s\n" collection phase name test-number description)
+  (printf "BENCH ~a ~a ~a ~a \"~a\"\n" collection phase name test-number description)
   (reset-generated-code!))
 
 (define test-failed #f)

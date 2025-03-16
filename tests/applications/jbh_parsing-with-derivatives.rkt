@@ -125,7 +125,7 @@
 
                                      ))))))))))))))))))
 
-(record-bench 'eval-eval 'staging 'regex-derivative)
+(record-bench 'eval-eval 'staging 'regex-derivative #:description "take the derivative of a regex wrt a char")
 (defrel (d/dc-o re c parse-result)
   (time-staged
    (evalo-staged
@@ -227,7 +227,7 @@
   '(#t))
 
 
-(record-bench 'eval-eval 'unstaged 'regex-match)
+(record-bench 'eval-eval 'unstaged 'regex-match #:description "check that a string matches a regex (x100)")
 (time-test
   #:times 100
   (run #f (parse-result)
@@ -237,28 +237,24 @@
       parse-result))
   '(#t))
 
-
+'(
 
 ;; This is using the regex-derivative backwards
 ;;
 ;; the orginal regex running forward was the symbol 'baz'
 (record-bench 'eval-eval 'staged 'regex-derivative 1)
 (time-test
-  (run 1 (regex)
-    (d/dc-o regex 'f '(#f)))
-  `(((seq f (#f) . _.0)
-     $$
-     ,absento-tags0)))
+  (run 5 (regex)
+    (d/dc-o regex 'a '(seq b c)))
+  '(((seq a (seq b c) . _.0) $$ (absento (struct _.0)))))
 
-(record-bench 'eval-eval 'unstaged 'regex-derivative 1)
+(record-bench 'eval-eval 'unstaged 'regex-derivative 1 #:description "find a regex whose derivative wrt \\texttt{a} is \\texttt{bc}")
 (time-test
   (run 1 (regex)
     (evalo-unstaged
-      (parse `(d/dc ',regex 'f))
-      '(#f)))
-  `(((seq f (#f) . _.0)
-     $$
-     ,absento-tags0)))
+      (parse `(d/dc ',regex 'a))
+      '(seq b c)))
+  '(((seq a (seq b c) . _.0) $$ (absento (struct _.0)))))
 
 
 ;; the orginal regex running forward was '(seq foo barn)'
@@ -287,10 +283,11 @@
      $$
      ,absento-tags0)))
 
-(record-bench 'eval-eval 'unstaged 'regex-derivative 2)
+(record-bench 'eval-eval 'unstaged 'regex-derivative 2 #:description "harder regex synthesis example, from \\cref{sec:case-studies}")
 (time-test
   (run 1 (regex)
     (evalo-unstaged
       (parse `(d/dc ',regex 'foo))
       '(alt bar (rep baz))))
   'timeout)
+)

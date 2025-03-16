@@ -110,8 +110,7 @@
     (nnfo '(Not (AtLeast z hasChild)) nnf-concept))
   '((Not Top)))
 
-;; normalize negation through these disjoint predicates that cover the domain
-(record-bench 'eval-eval 'unstaged 'nnf)
+(record-bench 'eval-eval 'unstaged 'nnf #:description "rewrite expressions to negation normal form")
 (time-test
   #:times 1000
   (run* (nnf-concept)
