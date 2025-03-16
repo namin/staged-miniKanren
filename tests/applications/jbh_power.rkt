@@ -316,24 +316,26 @@
 (define num2 (build-num 2))
 (define num3 (build-num 3))
 (define num4 (build-num 4))
+(define num8 (build-num 8))
+(define num6561 (build-num 6561))
 
-(record-bench 'simple 'staging 'pow4 1)
+
 (defrel (pow4-staged n nq)
-  (time-staged
+  (staged
    (pow/staged n num4 nq)))
 
 (defrel (pow4-unstaged n nq)
   (pow/staged n num4 nq))
 
-(record-bench 'simple 'staged 'pow4 1)
-(time-test
- #:times 1000
+
+(test
+ ;;#:times 1000
  (run 1 (q1 q2) (pow4-staged num2 q1) (pow4-staged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
-(record-bench 'simple 'unstaged 'pow4 1)
-(time-test
- #:times 1000
+
+(test
+ ;;#:times 1000
  (run 1 (q1 q2) (pow4-unstaged num2 q1) (pow4-unstaged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
@@ -365,23 +367,23 @@
              (later (*o nq1 n nq))))]
       )))))
 
-(record-bench 'simple 'staging 'pow4 2)
+
 (defrel (pow4/2 n nq)
-  (time-staged
+  (staged
    (pow/staged2 n num4 nq)))
 
-(record-bench 'simple 'staged 'pow4 2)
-(time-test
- #:times 1000
+
+(test
+ ;; #:times 1000
  (run 1 (q1 q2) (pow4/2 num2 q1) (pow4/2 num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
 (defrel (pow4/2-unstaged n nq)
   (pow/staged2 n num4 nq))
 
-(record-bench 'simple 'unstaged 'pow4 2)
-(time-test
- #:times 1000
+
+(test
+ ;;#:times 1000
  (run 1 (q1 q2) (pow4/2-unstaged num2 q1) (pow4/2-unstaged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
@@ -409,24 +411,59 @@
              (later (*o nq1 n nq))))]
       )))))
 
-(record-bench 'simple 'staging 'pow4 3)
+
 (defrel (pow4/3 n nq)
-  (time-staged
+  (staged
    (pow/staged3 n num4 nq)))
 
-(record-bench 'simple 'staged 'pow4 3)
-(time-test
- #:times 1000
+
+(test
+ ;;#:times 1000
  (run 1 (q1 q2) (pow4/3 num2 q1) (pow4/3 num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
 (defrel (pow4/3-unstaged n nq)
   (pow/staged3 n num4 nq))
 
-(record-bench 'simple 'unstaged 'pow4 3)
-(time-test
- #:times 1000
+
+(test
+ ;;#:times 1000
  (run 1 (q1 q2) (pow4/3-unstaged num2 q1) (pow4/3-unstaged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
-#;(generated-code)
+
+(record-bench 'simple 'staging 'pow8-backward)
+(defrel (pow8 n nq)
+  (time-staged
+   (pow/staged3 n num8 nq)))
+
+
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q2) (pow8 num3 q2))
+ '((1 0 0 0 0 1 0 1 1 0 0 1 1)))
+
+(defrel (pow8-unstaged n nq)
+  (pow/staged3 n num8 nq))
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q2) (pow8-unstaged num3 q2))
+ '((1 0 0 0 0 1 0 1 1 0 0 1 1)))
+
+
+
+(record-bench 'simple 'staged 'pow8-backward)
+(time-test
+ #:times 1000
+ (run 1 (q2) (pow8 q2 num6561))
+ '((1 1)))
+
+(record-bench 'simple 'unstaged 'pow8-backward #:description "compute $3^8$ (x1000)")
+(time-test
+ #:times 1000
+ (run 1 (q2) (pow8-unstaged q2 num6561))
+ '((1 1)))

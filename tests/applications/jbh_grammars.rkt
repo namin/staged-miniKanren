@@ -126,7 +126,7 @@ expression to be evalued.
   (time-staged (interp-E r)))
 
 (let ((size 200))
-  (record-bench 'eval/program 'unstaged 'grammar-synthesis)
+  (record-bench 'eval/program 'unstaged 'grammar-synthesis #:description "find 400 strings that match a given grammar")
   (time
    (run size (r)
      (interp-E r)))

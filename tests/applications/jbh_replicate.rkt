@@ -41,7 +41,7 @@
    (replicate '(S (S (S (S (S (S (S (S Z)))))))) q '(1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)))
  '((1 2 3)))
 
-(record-bench 'simple 'unstaged 'replicate-unknown #:description "which list and $n$ produce this list w/ $n$ copies of each element")
+(record-bench 'simple 'unstaged 'replicate-unknown #:description "which list and $n$ produce this list w/ $n$ copies of each element (x1000)")
 (time-test
  #:times 1000
  (run 4 (n l)
@@ -49,7 +49,7 @@
      (replicate n l '(1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3))))
  '(((S Z) (1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)) ((S (S Z)) (1 1 1 1 2 2 2 2 3 3 3 3)) ((S (S (S (S Z)))) (1 1 2 2 3 3)) ((S (S (S (S (S (S (S (S Z)))))))) (1 2 3))))
 
-(record-bench 'simple 'unstaged 'replicate-partial #:description "")
+(record-bench 'simple 'unstaged 'replicate-partial #:description "partially instantiated number and unknown output list (x10000)")
 (time-test
  #:times 10000
  (run 3 (q)

@@ -228,9 +228,9 @@
       (append ',xs ',ys))
    zs))
 
-(record-bench 'eval/program 'staging 'eval-append-synth-all-args)
+
 (defrel (appendo-staged xs ys zs)
-  (time-staged
+  (staged
    (evalo-staged
     `(letrec ((append
                (lambda (xs ys)
@@ -273,8 +273,8 @@
         #:title "Handwritten/Staged/Unstaged Runtime vs List Size"
         #:out-file out-file))
 
-(record-bench 'eval/program 'staged 'eval-append-synth-all-args)
-(time-test
+
+(test
   (last-pair (run* (xs ys)
 	(appendo-staged ys xs '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 							  AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ
@@ -300,8 +300,8 @@
 	IA IB IC ID IE IF IG IH II IJ IK IL IM IN IO IP IQ IR IS IT IU IV IW IX IY IZ
 	JA JB JC JD JE JF JG JH JI JJ JK JL JM))))
 
-(record-bench 'eval/program 'unstaged 'eval-append-synth-all-args)
-(time-test
+
+(test
   (last-pair (run* (xs ys)
 	(appendo-unstaged ys xs '(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 							  AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP AQ AR AS AT AU AV AW AX AY AZ
