@@ -602,7 +602,7 @@
     (sym _.0))
    ((lambda () '(s s s s s s s . z)))))
 
-(record-bench 'eval/program 'unstaged 'peano-fib-expressions #:description "synthesize a value that makes the peano-fib function produce the right output.")
+(record-bench 'eval/program 'unstaged 'peano-fib-expressions #:description "synthesize an expression that makes the peano-fib function produce the right output.")
 (time-test
   (run 5 (q)
     (evalo-unstaged

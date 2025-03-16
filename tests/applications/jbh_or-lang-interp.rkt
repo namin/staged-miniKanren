@@ -2,7 +2,8 @@
 
 (require "../../all.rkt")
 
-(record-bench 'eval-eval 'staging 'eval-or)
+(record-bench 'eval-eval 'staging 'eval-or #:description "an interpreter written in scheme for the language of \\cref{fig:basic-evalo}")
+
 (defrel (or-evalo-staged expr val)
   (time-staged
     (evalo-staged
@@ -62,7 +63,7 @@
 		(eval-or ',expr (lambda (y) 'error)))
    val))
 
-(record-bench 'eval-eval 'unstaged 'eval-or 1)
+(record-bench 'eval-eval 'unstaged 'eval-or 1 #:description "synthesize inputs and outputs to $\lambda x.\text{or}~x~x$")
 (time-test
   #:times 1000
   (run 2 (q v) (or-evalo-unstaged `((lambda (x) (or x x)) ,q) v))
@@ -76,7 +77,7 @@
   (run 5 (p r) (or-evalo-staged p '#t))
   '((#t _.0) (((or #t _.0) _.1) $$ (absento (struct _.0))) ((or #f #t) _.0) (((or (or #t _.0) _.1) _.2) $$ (absento (struct _.0) (struct _.1))) (((or #f (or #t _.0)) _.1) $$ (absento (struct _.0)))))
 
-(record-bench 'eval-eval 'unstaged 'eval-or 2)
+(record-bench 'eval-eval 'unstaged 'eval-or 2 #:description "synthesize 5 programs that evaluate to \\texttt{\#t}")
 (time-test
   #:times 1000
   (run 5 (p r) (or-evalo-unstaged p '#t))

@@ -7,9 +7,9 @@ header = """
 \\begin{figure}[htbp]
 \\begin{adjustbox}{max width=\\textwidth}
 
-\\begin{tabular}{@{}p{.75cm} l c c c c c l@{}}
+\\begin{tabular}{ l l c c c c l }
 \\toprule
-{} &
+ &
 \\textbf{Name} &
 \\rotatebox{90}{\\textbf{Staging}} &
 \\rotatebox{90}{\\textbf{Staged}} &
@@ -86,7 +86,7 @@ print(header)
 for category, category_name in zip(all_categories_internal_keys, all_categories_print_names):
    category_dict = all_times[category]
    print('\\midrule')
-   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (lines_in_cat(category_dict),category))
+   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (lines_in_cat(category_dict),category_name))
    for name in all_times[category]:
        for id in all_times[category][name]:
            if id is None:

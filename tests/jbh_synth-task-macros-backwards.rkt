@@ -77,7 +77,7 @@
       (append ',xs ',ys))
    '(a b c)))
 
-(record-bench 'eval/program 'unstaged 'invert-execute-append #:description "using append split a list as in Fig 4 (x1000)")
+(record-bench 'eval/program 'unstaged 'invert-execute-append #:description "using append split a list as in \\cref{fig:rel-interp-solutions-to-sketch-and-backwards-run} (x1000)")
 (time-test
  #:times 1000
  (run* (xs ys)
