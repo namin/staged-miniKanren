@@ -338,7 +338,7 @@
                           ((eval-expr rator env) (eval-expr rand env))]))])
              ,letrec-body)))
 
-(record-bench 'eval-eval 'staging 'eval-and-map-and-list-evalo)
+(record-bench 'eval-eval 'staging 'nested-interps/list-fns)
 (defrel (eval-and-map-and-list-evalo expr val)
   (time-staged
    (evalo-staged
@@ -388,7 +388,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
-(record-bench 'eval-eval 'staged 'eval-and-map-and-list-evalo)
+(record-bench 'eval-eval 'staged 'nested-interps/list-fns)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -409,7 +409,7 @@
   '((list x (cons x '()) x)))
 
 ;; uses a metacirc eval w/map and list to synth the body of a procedure passed around in a higher order way and applied to several examples
-(record-bench 'eval-eval 'unstaged 'eval-and-map-and-list-evalo #:description "synthesis in a meta-circular evaluator w/list functions")
+(record-bench 'eval-eval 'unstaged 'nested-interps/list-fns #:description "synthesis in a meta-circular evaluator w/list functions")
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -843,7 +843,7 @@
     (map-in-double-eval-used-for-synth expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
-(record-bench 'synth/ground-context 'unstaged 'map-in-double-eval)
+(record-bench 'synth/ground-context 'unstaged 'map-in-double-eval #:description "synth fn body for map via anonymous recursion in a metacirc eval")
 (time-test
  (run 1 (q)
    (fresh (expr)

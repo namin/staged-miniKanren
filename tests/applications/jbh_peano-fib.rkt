@@ -282,6 +282,7 @@
 ;; a small-one-hole version synthesis w/synth accs; small enough for unstaged to do it
 (record-bench 'synth/ground-context 'staged 'synth-peano-fib)
 (time-test
+  #:times 1000
   (run 1 (e ACC1 ACC2)
     (synth-peano-fib-base-case
      e
@@ -307,8 +308,9 @@
          (s s s . z)
          (s s s s s . z)))))
 
-(record-bench 'synth/ground-context 'unstaged 'synth-peano-fib #:description "synth fib base case from examples")
+(record-bench 'synth/ground-context 'unstaged 'synth-peano-fib #:description "synth fib base case from examples (x1000)")
 (time-test
+  #:times 1000
   (run 1 (e ACC1 ACC2)
     (synth-peano-fib-base-case-unstaged
      e
@@ -528,7 +530,7 @@
 
 ;;(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
 
-(record-bench 'eval/program 'staging 'peano-fib)
+(record-bench 'eval/program 'staging 'peano-fib-val)
 (defrel (fib-apso n a1 a2 result)
   (time-staged
    (evalo-staged
@@ -562,22 +564,24 @@
   '((s s s s s s . z)))
 
 ;; running backwards synthesize an input value that makes the peano-fib function produce the expected value.
-(record-bench 'eval/program 'staged 'peano-fib)
+(record-bench 'eval/program 'staged 'peano-fib-val)
 (time-test
+  #:times 100
   (run 1 (q)
     (fib-apso q 'z '(s . z)
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'eval/program 'unstaged 'peano-fib #:description "synthesize a value that makes the peano-fib function produce the right output.")
+(record-bench 'eval/program 'unstaged 'peano-fib-val #:description "synthesize a value that makes the peano-fib function produce the right output. (x100)")
 (time-test
+  #:times 100
   (run 1 (q)
     (evalo-unstaged
      (peano-fib `(fib-aps ',q 'z '(s . z)))
      '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'eval/program 'staging 'peano-fib-expressions)
+(record-bench 'eval/program 'staging 'peano-fib-expr)
 (defrel (peano-fib4 q)
   (time-staged
     (evalo-staged
@@ -586,7 +590,7 @@
 
 
 ;; instead of synthesizing a value, we instead synth arb expressions that have the appropriate value
-(record-bench  'eval/program 'staged 'peano-fib-expressions)
+(record-bench  'eval/program 'staged 'peano-fib-expr)
 (time-test
  (run 5 (q)
    (peano-fib4 q))
@@ -602,7 +606,7 @@
     (sym _.0))
    ((lambda () '(s s s s s s s . z)))))
 
-(record-bench 'eval/program 'unstaged 'peano-fib-expressions #:description "synthesize an expression that makes the peano-fib function produce the right output.")
+(record-bench 'eval/program 'unstaged 'peano-fib-expr #:description "synthesize an expression that makes the peano-fib function produce the right output.")
 (time-test
   (run 5 (q)
     (evalo-unstaged
