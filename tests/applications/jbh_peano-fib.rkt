@@ -572,7 +572,7 @@
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'eval/program 'unstaged 'peano-fib-val #:description "synthesize a value that makes the peano-fib function produce the right output. (x100)")
+(record-bench 'eval/program 'unstaged 'peano-fib-val #:description "find a value that makes the peano-fib function produce the right output. (x100)")
 (time-test
   #:times 100
   (run 1 (q)
@@ -606,7 +606,7 @@
     (sym _.0))
    ((lambda () '(s s s s s s s . z)))))
 
-(record-bench 'eval/program 'unstaged 'peano-fib-expr #:description "synthesize an expression that makes the peano-fib function produce the right output.")
+(record-bench 'eval/program 'unstaged 'peano-fib-expr #:description "find 5 expressions on which fib computes 13.")
 (time-test
   (run 5 (q)
     (evalo-unstaged
