@@ -22,7 +22,7 @@ footer = """
 \\bottomrule
 \\end{tabular}
 \\end{adjustbox}
-\\caption{Performance Chart with Vertical Subdivision Labels}
+\\caption{Multi-stage miniKanren performance. Times are in milliseconds. $\\bot{}$ indicates a timeout (>5 minutes).}\\label{fig:performance-chart}
 \\end{figure}
 """
 def nested_dict():
@@ -100,7 +100,7 @@ for category, category_name in zip(all_categories_internal_keys, all_categories_
                    time = all_times[category][name][id][phase]
                    times[phase] = time
                    if (Decimal(time) == -1):
-                       s += '\\timeout{$>5m$}'
+                       s += '$\\bot{}$'
                    else:
                        s += '$%d$' % time
            s += ' & '
