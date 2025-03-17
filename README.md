@@ -33,7 +33,7 @@ The project defines the syntax of multi-stage miniKanren using a `syntax-spec` l
 
 ### Backend
 
-The actual miniKanren implementation which is run once at staging-time and once at run-time is a [modified version of the existing `faster-minikanren` project](./private/faster-minikanren), which implements the traditional miniKanren goal-constructors such as `fresh`, `conde`, `==`, and others (lines 348, 367 and 523 of [`private/faster-minikanren/mk.scm`](./private/faster-minikanren/mk.scm)), but also includes support for unifying against the new `apply-rep` structure type (lines 552 and 233 of the same file), which represents partial relation applications. The [`private/internals.rkt`](./private/internals.rkt) file implements the new goal-constructors added to multi-stage miniKanren, such as `fallback`, `gather`, and partial relation application and specialization (lines 72, 82, 277 and 285, respectively).
+The actual miniKanren implementation which is run once at staging-time and once at run-time is a [modified version of the existing `faster-minikanren` project](./private/faster-minikanren), which implements the traditional miniKanren goal-constructors such as `fresh`, `conde`, `==`, and others (see [`private/faster-minikanren/mk.scm`](./private/faster-minikanren/mk.scm)), but also includes support for unifying against the new `apply-rep` structure type, which represents partial relation applications. The [`private/internals.rkt`](./private/internals.rkt) file implements the new goal-constructors added to multi-stage miniKanren, such as `fallback`, `gather`, and partial relation application and specialization.
 
 ### Relational Interpreters
 
