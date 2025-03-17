@@ -49,7 +49,7 @@ The case-studies presented in section 6.1 of the paper are present in the [`test
 - [Synthesis](./tests/doc-bench.rkt)
 - [Double Evaluators](./tests/applications/double-eval.rkt)
 - [miniKanren-in-miniKanren](./tests/applications/metamk.rkt)
-- [Grammar Parsers](./tests/applications/double-eval.rkt)
+- [Grammar Parsers](./tests/applications/grammars.rkt)
 
 ### Tests and Plots
 
