@@ -841,45 +841,43 @@ Syntax
 ; fasten queries
 (record-bench 'synth/ground-context 'unstaged 'metakanren #:description "synthesize the recursive call arguments in appendo")
 (time-test
-  (run 1 (x y w)
-    (symbolo x)
-    (symbolo y)
-    (symbolo w)
-    (eval-programo
-     `(run* (z)
-        (letrec-rel ((appendo (l1 l2 l)
-                              (disj
-                               (conj (== '() l1) (== l2 l))
-                               (fresh (a)
-                                 (fresh (d)
-                                   (fresh (l3)
-                                     (conj (== (cons a d) l1)
-                                           (conj (== (cons a l3) l)
-                                                 (delay (call-rel appendo ,x
-                                                                  ,y
-                                                                  ,w))))))))))
-                    (conj (call-rel appendo '(cat dog) '() '(cat dog))
-                          (conj (call-rel appendo '(apple) '(peach) '(apple peach))
-                                (call-rel appendo '(1 2) '(3 4) z)))))
-     '((1 2 3 4))))
-  '((d l2 l3)))
+  (run 1 (relcall)
+	(fresh (x y w)
+		(symbolo x)
+		(symbolo y)
+		(symbolo w)
+		(== relcall `(call-rel appendo ,x ,y ,w))
+		(eval-programo
+		 `(run* (z)
+			(letrec-rel ((appendo (xs ys zs)
+								  (disj
+								   (conj (== '() xs) (== ys zs))
+								   (fresh (a)
+									 (fresh (d)
+									   (fresh (res)
+										 (conj (== (cons a d) xs)
+											   (conj (== (cons a res) zs)
+													 (delay ,relcall)))))))))
+						(conj (call-rel appendo '(cat dog) '() '(cat dog))
+							  (conj (call-rel appendo '(apple) '(peach) '(apple peach))
+									(call-rel appendo '(1 2) '(3 4) z)))))
+		 '((1 2 3 4)))))
+  '((call-rel appendo d ys res)))
 
 (record-bench 'synth/ground-context 'staging 'metakanren)
-(defrel (synth-appendo-recursive-call x y w)
+(defrel (synth-appendo-recursive-call relcall)
   (time-staged
     (eval-programo
      `(run* (z)
-        (letrec-rel ((appendo (l1 l2 l)
+        (letrec-rel ((appendo (xs ys zs)
                               (disj
-                               (conj (== '() l1) (== l2 l))
+                               (conj (== '() xs) (== ys zs))
                                (fresh (a)
                                  (fresh (d)
-                                   (fresh (l3)
-                                     (conj (== (cons a d) l1)
-                                           (conj (== (cons a l3) l)
-                                                 (delay (call-rel appendo ,x
-                                                                  ,y
-                                                                  ,w))))))))))
+                                   (fresh (res)
+                                     (conj (== (cons a d) xs)
+                                           (conj (== (cons a res) zs)
+                                                 (delay ,relcall)))))))))
                     (conj (call-rel appendo '(cat dog) '() '(cat dog))
                           (conj (call-rel appendo '(apple) '(peach) '(apple peach))
                                 (call-rel appendo '(1 2) '(3 4) z)))))
@@ -887,12 +885,12 @@ Syntax
 
 (record-bench 'synth/ground-context 'staged 'metakanren)
 (time-test
- (run 1 (x y w)
-   (symbolo x)
-   (symbolo y)
-   (symbolo w)
-   (synth-appendo-recursive-call x y w))
- '((d l2 l3)))
+ (run 1 (relcall)
+   (fresh (x y w)
+	 (symbolo x) (symbolo y) (symbolo w)
+	 (== relcall `(call-rel appendo ,x ,y ,w))
+     (synth-appendo-recursive-call relcall)))
+ '((call-rel appendo d ys res)))
 
 ; Thanks for the example, @bollu!
 (test
