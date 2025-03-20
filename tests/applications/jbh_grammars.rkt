@@ -131,13 +131,13 @@ expression to be evalued.
 (let ((size 200))
   (record-bench 'eval/program 'unstaged 'grammar-synthesis #:description "find 200 strings that match a given grammar")
   (time
-   (run size (r)
-     (recognize-Eo r)))
+   (run size (str)
+     (recognize-Eo str)))
 
   (record-bench 'eval/program 'staged 'grammar-synthesis)
   (time
-   (run size (r)
-     (interp-E-staged r))))
+   (run size (str)
+     (interp-E-staged str))))
 
 (define (get-timing-data size)
   (define-values (ures ucpu ureal ugc)

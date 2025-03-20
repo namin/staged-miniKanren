@@ -842,11 +842,11 @@ Syntax
 (record-bench 'synth/ground-context 'unstaged 'metakanren #:description "synthesize the recursive call arguments in appendo")
 (time-test
   (run 1 (relcall)
-	(fresh (x y w)
+	(fresh (w x y)
+		(symbolo w)
 		(symbolo x)
 		(symbolo y)
-		(symbolo w)
-		(== relcall `(call-rel appendo ,x ,y ,w))
+		(== relcall `(call-rel appendo ,w ,x ,y))
 		(eval-programo
 		 `(run* (z)
 			(letrec-rel ((appendo (xs ys zs)
@@ -886,9 +886,9 @@ Syntax
 (record-bench 'synth/ground-context 'staged 'metakanren)
 (time-test
  (run 1 (relcall)
-   (fresh (x y w)
-	 (symbolo x) (symbolo y) (symbolo w)
-	 (== relcall `(call-rel appendo ,x ,y ,w))
+   (fresh (w x y)
+	 (symbolo w) (symbolo x) (symbolo y) 
+	 (== relcall `(call-rel appendo ,w ,x ,y))
      (synth-appendo-recursive-call relcall)))
  '((call-rel appendo d ys res)))
 
