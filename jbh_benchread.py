@@ -114,10 +114,10 @@ for category, category_name in zip(all_categories_internal_keys, all_categories_
                                s += '$\\infty{}$ '
                            else:
                                gain = (1.0*time) / min_time
-                               s += '$%.3f$' % gain
+                               s += '$%.2f$' % gain
                        else:
                            #gain = 5*60*1000 / min_time
-                           #s += '\\timeout{>$%.3f$}' % gain
+                           #s += '\\timeout{>$%.2f$}' % gain
                            s += '$\\bot{}$ '
                s += f" & {all_times[category][name][id]['description']} "
                s += '\\\\'
