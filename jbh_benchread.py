@@ -100,7 +100,7 @@ for category, category_name in zip(all_categories_internal_keys, all_categories_
                    time = all_times[category][name][id][phase]
                    times[phase] = time
                    if (Decimal(time) == -1):
-                       s += '$\\bot{}$'
+                       s += '\\timeout{$>5$ min}'
                    else:
                        s += '$%d$' % time
            s += ' & '
@@ -111,13 +111,12 @@ for category, category_name in zip(all_categories_internal_keys, all_categories_
                        if 'unstaged' in times:
                            time = times['unstaged']
                            if Decimal(time) == -1:
-                               s += '$\\infty{}$ '
+                               gain = 5*60*1000 / min_time
+                               s += '\\timeout{>$%.2f$}' % gain
                            else:
                                gain = (1.0*time) / min_time
                                s += '$%.2f$' % gain
                        else:
-                           #gain = 5*60*1000 / min_time
-                           #s += '\\timeout{>$%.2f$}' % gain
                            s += '$\\bot{}$ '
                s += f" & {all_times[category][name][id]['description']} "
                s += '\\\\'
