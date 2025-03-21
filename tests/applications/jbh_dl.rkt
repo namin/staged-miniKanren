@@ -110,7 +110,7 @@
     (nnfo '(Not (AtLeast z hasChild)) nnf-concept))
   '((Not Top)))
 
-(record-bench 'eval-eval 'unstaged 'nnf #:description "rewrite expressions to negation normal form")
+(record-bench 'eval-eval 'unstaged 'nnf #:description "rewrite expressions to negation normal form (x1000)")
 (time-test
   #:times 1000
   (run* (nnf-concept)

@@ -247,7 +247,7 @@
   '(((rep (seq foo bar . _.0) . _.1) $$ (absento (struct _.0) (struct _.1)))))
 
 
-(record-bench 'eval-eval 'unstaged 'regex-match 2 #:description "synth regex that matches a given string (x100)")
+(record-bench 'eval-eval 'unstaged 'regex-match 2 #:description "synth regex that matches a given string (x10)")
 (time-test
   #:times 10
   (run 1 (regex)
