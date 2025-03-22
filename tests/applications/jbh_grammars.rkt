@@ -14,12 +14,9 @@ Grammar syntax:
 |#
 
 (define E-grammar
-  '((E . (or (seq 'S * 'S)
-             'S))
-    (S . (or (seq 'T + 'T)
-             'T))
-    (T . (or 0
-             (seq < 'E >)))))
+  '((E . (or 'S (seq 'S * 'S)))
+    (S . (or 'T (seq 'T + 'T)))
+    (T . (or 0 (seq < 'E >)))))
 
 (defrel/staged (lookupo map key res)
   (fresh (first rest)
