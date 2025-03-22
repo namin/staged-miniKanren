@@ -5,9 +5,8 @@ from decimal import Decimal
 
 header = """
 \\begin{figure}[htbp]
-\\begin{adjustbox}{max width=\\textwidth}
-
-\\begin{tabular}{ l l c c c c l }
+\\scriptsize
+\\begin{tabular}{ l l c c c c p{7cm} }
 \\toprule
  &
 \\textbf{Name} &
@@ -21,10 +20,10 @@ header = """
 footer = """
 \\bottomrule
 \\end{tabular}
-\\end{adjustbox}
-\\caption{Multi-stage miniKanren performance. Times are in milliseconds. $\\bot{}$ indicates a timeout (>5 minutes).}\\label{fig:performance-chart}
+\\caption{Times are in milliseconds.\\ \\timeout{$>5m$} indicates an execution that failed to terminate within 5 minutes. Each benchmark represents a single execution on a 2021 Apple MacBook Pro with an M1 Max CPU and 64GB of RAM running macOS 14.2 and Racket v8.15. For benchmarks labeled with a multiplier (e.g., \\(\\times 1000\\)), timings reflect repeatedly running the query that number of times to yield measurable results.}\\label{fig:performance-chart}
 \\end{figure}
 """
+
 def nested_dict():
     return defaultdict(nested_dict)
 
@@ -37,7 +36,10 @@ re_int_count = re.compile(r'^generated code u-eval-expo count: (?P<count>\d+)')
 MAX_TIME = 100000
 
 all_categories_internal_keys = ['simple', 'eval/program', 'eval-eval', 'synth/ground-context']
-all_categories_print_names = ['simple', 'functions', 'interpreters', 'ground context']
+all_categories_print_names = ['\\textbf{relations:} Simple relations staged with respect to one staging-time argument.',
+                              '\\textbf{functions:} Functions written in Racket executing within the \\texttt{evalo-staged} interpreter, exhibiting relational behavior.',
+                              '\\textbf{interpreters:} Queries that leverage interpreters executing within the \\texttt{evalo-staged} interpreter to lift relational behavior to additional languages.',
+                              '\\textbf{ground context:} Synthesis queries in which a provided sketch of the program or library of helper functions can be compiled by staging.']
 
 all_phases = ['staging', 'staged', 'unstaged']
 all_times = nested_dict()
@@ -86,7 +88,7 @@ print(header)
 for category, category_name in zip(all_categories_internal_keys, all_categories_print_names):
    category_dict = all_times[category]
    print('\\midrule')
-   print('\\multirow{%d}{*}{\\rotatebox{90}{%s}}' % (lines_in_cat(category_dict),category_name))
+   print(f"\\multicolumn{{7}}{{l}}{{{category_name}}}\\\\")
    for name in all_times[category]:
        for id in all_times[category][name]:
            if id is None:
