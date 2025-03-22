@@ -462,7 +462,7 @@
  (run 1 (q2) (pow8 q2 num6561))
  '((1 1)))
 
-(record-bench 'simple 'unstaged 'pow8-backward #:description "compute $3^8$ (x1000)")
+(record-bench 'simple 'unstaged 'pow8-backward #:description "Find $n$ such that $n^8=6561$ using relational arithmetic~\\cite{DBLP:conf/flops/KiselyovBFS08} (x1000) ")
 (time-test
  #:times 1000
  (run 1 (q2) (pow8-unstaged q2 num6561))

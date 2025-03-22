@@ -338,7 +338,7 @@
                           ((eval-expr rator env) (eval-expr rand env))]))])
              ,letrec-body)))
 
-(record-bench 'eval-eval 'staging 'nested-interps/list-fns)
+(record-bench 'eval-eval 'staging 'list-eval)
 (defrel (eval-and-map-and-list-evalo expr val)
   (time-staged
    (evalo-staged
@@ -388,7 +388,7 @@
                         '(() ((a . a)) ((b . b) (c . c)) ((d . d) (e . e) (f . f)))))
   '((cons x x)))
 
-(record-bench 'eval-eval 'staged 'nested-interps/list-fns)
+(record-bench 'eval-eval 'staged 'list-eval)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -409,7 +409,7 @@
   '((list x (cons x '()) x)))
 
 ;; uses a metacirc eval w/map and list to synth the body of a procedure passed around in a higher order way and applied to several examples
-(record-bench 'eval-eval 'unstaged 'nested-interps/list-fns #:description "synthesis in a meta-circular evaluator w/list functions")
+(record-bench 'eval-eval 'unstaged 'list-eval #:description "Synthesis within a metacircular evaluator with list functions")
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -545,12 +545,12 @@
                      ((eval-expr rator env) (eval-expr rand env))]))])
         (eval-expr ',initial-expr (lambda (y) 'error)))))
 
-(record-bench 'eval-eval 'staging 'quasi-quine-evalo)
+(record-bench 'eval-eval 'staging 'quasi-quine)
 (defrel (quasi-quine-evalo expr val)
   (time-staged
    (evalo-staged (quasi-quine-eval expr) val)))
 
-(record-bench 'eval-eval 'staged 'quasi-quine-evalo)
+(record-bench 'eval-eval 'staged 'quasi-quine)
 (time-test
   (run 1 (q)
     (absento 'error q) ;; without this constraint, 'error is a quine! (because the empty env returns 'error)
@@ -561,7 +561,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'quasi-quine-evalo #:description "synthesize a quine for a metacirc evaluator that adds \\texttt{quasiquote}")
+(record-bench 'eval-eval 'unstaged 'quasi-quine #:description "Synthesize a quine for a metacircular evaluator that adds \\texttt{quasiquote}")
 (time-test
  (run 1 (q)
    (absento 'error q)
@@ -766,7 +766,7 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,letrec-body)))
 
-(record-bench 'eval-eval 'staging 'map-in-double-eval)
+(record-bench 'eval-eval 'staging 'map-in-eval)
 (defrel (map-in-double-eval expr val)
   (time-staged
     (evalo-staged
@@ -786,7 +786,7 @@
    (map-in-double-eval-fun `(eval-expr ',expr '()))
    val))
 
-(record-bench 'eval-eval 'staged 'map-in-double-eval)
+(record-bench 'eval-eval 'staged 'map-in-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
@@ -805,7 +805,7 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
-(record-bench 'eval-eval 'unstaged 'map-in-double-eval #:description "anonymous recursion definition of \\texttt{map} in a metacircular evaluator")
+(record-bench 'eval-eval 'unstaged 'map-in-eval #:description "Anonymous recursion definition of \\texttt{map} in a metacircular evaluator")
 (time-test
  (run 1 (q)
    (fresh (expr)

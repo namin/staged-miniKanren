@@ -259,7 +259,7 @@
      (s . z))))
 
 
-(record-bench 'synth/ground-context 'staging 'synth-peano-fib)
+(record-bench 'synth/ground-context 'staging 'synth-fib)
 (defrel (synth-peano-fib-base-case e ACC1 ACC2)
   (time-staged
     (fresh (fib-acc)
@@ -280,7 +280,7 @@
          (s s s s s . z))))))
 
 ;; a small-one-hole version synthesis w/synth accs; small enough for unstaged to do it
-(record-bench 'synth/ground-context 'staged 'synth-peano-fib)
+(record-bench 'synth/ground-context 'staged 'synth-fib)
 (time-test
   #:times 1000
   (run 1 (e ACC1 ACC2)
@@ -308,7 +308,7 @@
          (s s s . z)
          (s s s s s . z)))))
 
-(record-bench 'synth/ground-context 'unstaged 'synth-peano-fib #:description "synth fib base case from examples (x1000)")
+(record-bench 'synth/ground-context 'unstaged 'synth-fib #:description "synth fib base case from examples (x1000)")
 (time-test
   #:times 1000
   (run 1 (e ACC1 ACC2)
@@ -436,7 +436,7 @@
 ;;        (s s s s s s s s . z))))
 ;;   'timeout)
 
-(record-bench 'synth/ground-context 'staging 'fib-synth-3-holes)
+(record-bench 'synth/ground-context 'staging 'synth-fib-larger)
 (defrel (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2)
   (time-staged
     (fresh (A B C)
@@ -459,7 +459,7 @@
          (s s s s s s s s . z))))))
 
 
-(record-bench 'synth/ground-context 'staged 'fib-synth-3-holes)
+(record-bench 'synth/ground-context 'staged 'synth-fib-larger)
 (time-test
  (run 1 (fib-acc ACC1 ACC2)
    (peano-synth-fib-aps-staged4 fib-acc ACC1 ACC2))
@@ -472,7 +472,7 @@
 	  z
 	  (s . z))))
 
-(record-bench 'synth/ground-context 'unstaged 'fib-synth-3-holes #:description "synthesizes the accumulators and three holes in the program")
+(record-bench 'synth/ground-context 'unstaged 'synth-fib-larger #:description "Fib function accumulators and three holes in the program")
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B C)
@@ -530,7 +530,7 @@
 
 ;;(eval (peano-fib `(fib-aps '(s s s s s s . z) 'z '(s . z))))
 
-(record-bench 'eval/program 'staging 'peano-fib-val)
+(record-bench 'eval/program 'staging 'fib)
 (defrel (fib-apso n a1 a2 result)
   (time-staged
    (evalo-staged
@@ -564,7 +564,7 @@
   '((s s s s s s . z)))
 
 ;; running backwards synthesize an input value that makes the peano-fib function produce the expected value.
-(record-bench 'eval/program 'staged 'peano-fib-val)
+(record-bench 'eval/program 'staged 'fib)
 (time-test
   #:times 100
   (run 1 (q)
@@ -572,7 +572,7 @@
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'eval/program 'unstaged 'peano-fib-val #:description "find a value that makes the peano-fib function produce the right output. (x100)")
+(record-bench 'eval/program 'unstaged 'fib #:description "Synthesize a value that makes the peano-fib function produce a given output (x100)")
 (time-test
   #:times 100
   (run 1 (q)
@@ -581,7 +581,7 @@
      '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'eval/program 'staging 'peano-fib-expr)
+(record-bench 'eval/program 'staging 'fib-exprs)
 (defrel (peano-fib4 q)
   (time-staged
     (evalo-staged
@@ -590,7 +590,7 @@
 
 
 ;; instead of synthesizing a value, we instead synth arb expressions that have the appropriate value
-(record-bench  'eval/program 'staged 'peano-fib-expr)
+(record-bench  'eval/program 'staged 'fib-exprs)
 (time-test
  (run 5 (q)
    (peano-fib4 q))
@@ -606,7 +606,7 @@
     (sym _.0))
    ((lambda () '(s s s s s s s . z)))))
 
-(record-bench 'eval/program 'unstaged 'peano-fib-expr #:description "find 5 expressions on which fib computes 13.")
+(record-bench 'eval/program 'unstaged 'fib-exprs #:description "Synthesize 5 expressions for which \\texttt{fib} computes 13")
 (time-test
   (run 5 (q)
     (evalo-unstaged

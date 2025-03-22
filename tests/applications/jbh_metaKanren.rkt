@@ -839,7 +839,7 @@ Syntax
 
 ; External grounding, extra examples to avoid overfitting, and with symbolo to
 ; fasten queries
-(record-bench 'synth/ground-context 'unstaged 'metakanren #:description "synthesize the recursive call arguments in appendo")
+(record-bench 'synth/ground-context 'unstaged 'metaKanren #:description "The recursive call arguments in \\texttt{appendo}")
 (time-test
   (run 1 (relcall)
 	(fresh (w x y)
@@ -864,7 +864,7 @@ Syntax
 		 '((1 2 3 4)))))
   '((call-rel appendo d ys res)))
 
-(record-bench 'synth/ground-context 'staging 'metakanren)
+(record-bench 'synth/ground-context 'staging 'metaKanren)
 (defrel (synth-appendo-recursive-call relcall)
   (time-staged
     (eval-programo
@@ -883,7 +883,7 @@ Syntax
                                 (call-rel appendo '(1 2) '(3 4) z)))))
      '((1 2 3 4)))))
 
-(record-bench 'synth/ground-context 'staged 'metakanren)
+(record-bench 'synth/ground-context 'staged 'metaKanren)
 (time-test
  (run 1 (relcall)
    (fresh (w x y)

@@ -34,7 +34,7 @@
    (prover `(proof? ',prf))
    #t))
 
-(record-bench 'eval-eval 'staging 'proofo #:description "classifies putative proofs as valid or invalid")
+(record-bench 'eval-eval 'staging 'proofo #:description "Checks the validity of proofs for implicational predicate calculus")
 (defrel (proofo prf valid-proof?)
   (time-staged
    (evalo-staged
@@ -65,7 +65,7 @@
         (proofo prf #t)))
     ex-proof1)
 
-  (record-bench 'eval-eval 'unstaged 'proofo 1 #:description "synthesize proof of C from assps, from \\cref{fig:proofo}")
+  (record-bench 'eval-eval 'unstaged 'proofo 1 #:description "Synthesize a proof of C from assumptions, from \\cref{fig:proofo}")
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -99,7 +99,7 @@
         (proofo prf #t)))
     ex-proof2)
 
-  (record-bench 'eval-eval 'unstaged 'proofo 2 #:description "prove validity of hypothetical syllogism")
+  (record-bench 'eval-eval 'unstaged 'proofo 2 #:description "Synthesize a proof of \\((A \\Rightarrow B) \\Rightarrow ((B \\Rightarrow C) \\Rightarrow (A \\Rightarrow C))\\)" )
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -116,7 +116,7 @@
         (proofo prf #t))))
    1)
 
-  (record-bench 'eval-eval 'unstaged 'proofo 3 #:description "check a longer chain of inferences")
+  (record-bench 'eval-eval 'unstaged 'proofo 3 #:description "Synthesize a proof of a longer chain of inferences")
   (time-test
    (length
 	(run 1 (prf)

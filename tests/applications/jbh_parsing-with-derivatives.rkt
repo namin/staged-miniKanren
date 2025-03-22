@@ -125,7 +125,7 @@
 
                                      ))))))))))))))))))
 
-(record-bench 'eval-eval 'staging 'regex-derivative #:description "take the derivative of a regex wrt a char")
+(record-bench 'eval-eval 'staging 'regex-derivative #:description "Take the derivative of a regex with respect to a character")
 (defrel (d/dc-o re c parse-result)
   (time-staged
    (evalo-staged
@@ -226,7 +226,7 @@
   '(#t))
 
 ;; runs match sequence w/alt forward against ground input
-(record-bench 'eval-eval 'unstaged 'regex-match 1 #:description "regex match forward against ground input string (x100)")
+(record-bench 'eval-eval 'unstaged 'regex-match 1 #:description "Check that a string matches a regex (x100)")
 (time-test
   #:times 100
   (run 1 (parse-result)
