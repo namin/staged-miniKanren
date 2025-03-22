@@ -121,17 +121,17 @@ expression to be evalued.
         '((+ 0 >) (> + 0) (* 0 >) (> * 0)))
   (pretty-print (generated-code)))
 
-(record-bench 'eval/program 'staging 'grammar-synthesis)
+(record-bench 'simple 'staging 'grammar-synthesis)
 (defrel (interp-E-staged r)
   (time-staged (recognize-Eo r)))
 
 (let ((size 200))
-  (record-bench 'eval/program 'unstaged 'grammar-synthesis #:description "find 200 strings that match a given grammar")
+  (record-bench 'simple 'unstaged 'grammar-synthesis #:description "Find 200 strings that match a given grammar")
   (time
    (run size (str)
      (recognize-Eo str)))
 
-  (record-bench 'eval/program 'staged 'grammar-synthesis)
+  (record-bench 'simple 'staged 'grammar-synthesis)
   (time
    (run size (str)
      (interp-E-staged str))))

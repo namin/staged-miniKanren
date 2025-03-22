@@ -102,7 +102,7 @@ for category, category_name in zip(all_categories_internal_keys, all_categories_
                    time = all_times[category][name][id][phase]
                    times[phase] = time
                    if (Decimal(time) == -1):
-                       s += '\\timeout{$>5$ min}'
+                       s += '\\timeout{$>5$m}'
                    else:
                        s += '$%d$' % time
            s += ' & '

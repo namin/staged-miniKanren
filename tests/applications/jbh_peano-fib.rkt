@@ -308,7 +308,7 @@
          (s s s . z)
          (s s s s s . z)))))
 
-(record-bench 'synth/ground-context 'unstaged 'synth-fib #:description "synth fib base case from examples (x1000)")
+(record-bench 'synth/ground-context 'unstaged 'synth-fib #:description "Fib function base case from examples (x1000)")
 (time-test
   #:times 1000
   (run 1 (e ACC1 ACC2)

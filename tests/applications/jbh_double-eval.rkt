@@ -843,7 +843,7 @@
     (map-in-double-eval-used-for-synth expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
-(record-bench 'synth/ground-context 'unstaged 'map-in-double-eval #:description "synth fn body for map via anonymous recursion in a metacirc eval")
+(record-bench 'synth/ground-context 'unstaged 'map-in-double-eval #:description "fn body for map via anonymous recursion in a metacirc eval")
 (time-test
  (run 1 (q)
    (fresh (expr)

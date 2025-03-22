@@ -132,7 +132,7 @@
     (parse `(d/dc ',re ',c))
     parse-result)))
 
-(record-bench 'eval-eval 'staging 'regex-match #:description "check that a string matches a regex")
+(record-bench 'eval-eval 'staging 'regex-match #:description "Check that a string matches a regex")
 (defrel (regex-matcho pattern data parse-result)
   (time-staged
    (evalo-staged
@@ -247,7 +247,7 @@
   '(((rep (seq foo bar . _.0) . _.1) $$ (absento (struct _.0) (struct _.1)))))
 
 
-(record-bench 'eval-eval 'unstaged 'regex-match 2 #:description "synth regex that matches a given string (x10)")
+(record-bench 'eval-eval 'unstaged 'regex-match 2 #:description "Synth regex that matches a given string (x10)")
 (time-test
   #:times 10
   (run 1 (regex)
@@ -270,7 +270,7 @@
     (d/dc-o regex 'a '(seq b c)))
   '(((seq a (seq b c) . _.0) $$ (absento (struct _.0) (#f _.0) (#t _.0)))))
 
-(record-bench 'eval-eval 'unstaged 'regex-derivative 1 #:description "find a regex whose derivative wrt \\texttt{a} is \\texttt{bc}")
+(record-bench 'eval-eval 'unstaged 'regex-derivative 1 #:description "Find a regex whose derivative wrt \\texttt{a} is \\texttt{bc}")
 (time-test
   (run 1 (regex)
 	(absento #t regex)
@@ -307,7 +307,7 @@
      $$
      ,absento-tags0)))
 
-(record-bench 'eval-eval 'unstaged 'regex-derivative 2 #:description "harder regex synthesis example, from \\cref{sec:case-studies}")
+(record-bench 'eval-eval 'unstaged 'regex-derivative 2 #:description "A harder regex synthesis example, from \\cref{sec:case-studies}")
 (time-test
   (run 1 (regex)
     (evalo-unstaged

@@ -2,7 +2,7 @@
 
 (require "../../all.rkt")
 
-(record-bench 'eval-eval 'staging 'eval-or #:description "An interpreter written in scheme for the language of \\cref{fig:basic-evalo}")
+(record-bench 'eval-eval 'staging 'eval-or #:description "An interpreter written in Racket for the language of \\cref{fig:basic-evalo}")
 
 (defrel (or-evalo-staged expr val)
   (time-staged
