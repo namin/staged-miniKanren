@@ -766,14 +766,13 @@
                            (eval-expr body (cons (cons x (eval-expr rand env)) clo-env))])]))])
              ,letrec-body)))
 
-(record-bench 'eval-eval 'staging 'map-in-eval)
 (defrel (map-in-double-eval expr val)
   (time-staged
     (evalo-staged
      (map-in-double-eval-fun `(eval-expr ',expr '()))
      val)))
 
-(record-bench 'synth/ground-context 'staging 'map-in-double-eval)
+(record-bench 'synth/ground-context 'staging 'map-eval)
 (defrel (map-in-double-eval-used-for-synth expr val)
   (time-staged
     (evalo-staged
@@ -786,7 +785,6 @@
    (map-in-double-eval-fun `(eval-expr ',expr '()))
    val))
 
-(record-bench 'eval-eval 'staged 'map-in-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
@@ -805,7 +803,6 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
-(record-bench 'eval-eval 'unstaged 'map-in-eval #:description "Anonymous recursion definition of \\texttt{map} in a metacircular evaluator")
 (time-test
  (run 1 (q)
    (fresh (expr)
@@ -824,7 +821,7 @@
     (map-in-double-eval-unstaged expr q)))
  '(((a . a) (b . b) (c . c))))
 
-(record-bench 'synth/ground-context 'staged 'map-in-double-eval)
+(record-bench 'synth/ground-context 'staged 'map-eval)
 (time-test
  (run 1 (q)
    (fresh (expr)
@@ -843,7 +840,7 @@
     (map-in-double-eval-used-for-synth expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
-(record-bench 'synth/ground-context 'unstaged 'map-in-double-eval #:description "fn body for map via anonymous recursion in a metacirc eval")
+(record-bench 'synth/ground-context 'unstaged 'map-eval #:description "Body of function mapped via anonymous recursion in a metacircular evaluator")
 (time-test
  (run 1 (q)
    (fresh (expr)
