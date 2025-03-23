@@ -4,16 +4,16 @@ from collections import defaultdict
 from decimal import Decimal
 
 header = """
-\\begin{figure}[htbp]
+\\begin{figure}[b!]
 \\scriptsize
-\\begin{tabular}{ l l c c c c p{7cm} }
+\\begin{tabular}{ l l c c c c p{6.9cm} }
 \\toprule
  &
 \\textbf{Name} &
 \\rotatebox{90}{\\textbf{Staging}} &
 \\rotatebox{90}{\\textbf{Staged}} &
 \\rotatebox{90}{\\textbf{Unstaged}} &
-\\rotatebox{90}{\\textbf{Gain}} &
+\\rotatebox{90}{\\textbf{Speedup}} &
 \\textbf{Description} \\\\
 """
 
@@ -38,8 +38,8 @@ MAX_TIME = 100000
 all_categories_internal_keys = ['simple', 'eval/program', 'eval-eval', 'synth/ground-context']
 all_categories_print_names = ['\\textbf{relations:} Simple relations staged with respect to one staging-time argument.',
                               '\\textbf{functions:} Functions written in Racket executing within the \\texttt{evalo-staged} interpreter, exhibiting relational behavior.',
-                              '\\textbf{interpreters:} Queries that leverage interpreters executing within the \\texttt{evalo-staged} interpreter to lift relational behavior to additional languages.',
-                              '\\textbf{ground context:} Synthesis queries in which a provided sketch of the program or library of helper functions can be compiled by staging.']
+                              '\\textbf{interpreters:} Queries that leverage interpreters executing within the \\texttt{evalo-staged} interpreter to lift relational behavior to new languages.',
+                              '\\textbf{ground context:} Synthesis queries in which a provided sketch of the program or library of helper functions is compiled by staging.']
 
 all_phases = ['staging', 'staged', 'unstaged']
 all_times = nested_dict()

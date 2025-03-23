@@ -472,7 +472,7 @@
 	  z
 	  (s . z))))
 
-(record-bench 'synth/ground-context 'unstaged 'synth-fib-larger #:description "Fib function accumulators and three holes in the program, from \\cref{fig:fibsynth}")
+(record-bench 'synth/ground-context 'unstaged 'synth-fib-larger #:description "Fib function accumulators and three holes as in \\cref{fig:fibsynth}")
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B C)
@@ -572,7 +572,7 @@
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'eval/program 'unstaged 'fib #:description "Synthesize a value that makes the peano-fib function produce a given output (x100)")
+(record-bench 'eval/program 'unstaged 'fib #:description "Synthesize an input value such that fib produce a given output (x100)")
 (time-test
   #:times 100
   (run 1 (q)

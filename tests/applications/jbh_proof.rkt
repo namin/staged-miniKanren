@@ -65,7 +65,7 @@
         (proofo prf #t)))
     ex-proof1)
 
-  (record-bench 'eval-eval 'unstaged 'proofo 1 #:description "Synthesize a proof of C from assumptions, from \\cref{fig:proofo}")
+  (record-bench 'eval-eval 'unstaged 'proofo 1 #:description "Synthesize a proof of C from assumptions as in \\cref{fig:proofo}")
   (time-test
     (run 1 (prf)
       (fresh (body)

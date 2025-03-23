@@ -110,7 +110,7 @@
     (nnfo '(Not (AtLeast z hasChild)) nnf-concept))
   '((Not Top)))
 
-(record-bench 'eval/program 'unstaged 'nnf #:description "Rewrite expressions to negation normal form~\\cite{szeredi_lukacsy_benko_nagy_2014 (x1000)")
+(record-bench 'eval/program 'unstaged 'nnf #:description "Rewrite expressions to negation normal form~\\cite{szeredi_lukacsy_benko_nagy_2014} (x1000)")
 (time-test
   #:times 1000
   (run* (nnf-concept)
