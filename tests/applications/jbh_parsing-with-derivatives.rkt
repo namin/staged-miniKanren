@@ -147,7 +147,6 @@
 
 
 (test
-
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc 'baz 'f))
@@ -168,12 +167,12 @@
   '(barn))
 
 (test
-  (run #f (parse-result)
+  (run 1 (parse-result)
     (d/dc-o '(alt (seq foo bar) (seq foo (rep baz))) 'foo parse-result))
   '((alt bar (rep baz))))
 
 (test
-  (run #f (parse-result)
+  (run 1 (parse-result)
     (evalo-unstaged
       (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
       parse-result))
@@ -190,7 +189,7 @@
 
 (test
 ;;  #:times 100
-  (run #f (parse-result)
+  (run 1 (parse-result)
     (evalo-unstaged
       (parse '(regex-match '(seq foo (rep bar)) 
                            '(foo bar bar bar)))
@@ -206,9 +205,10 @@
                   parse-result))
   '(#f))
 
+
 (test
-;;  #:times 100
-  (run #f (parse-result)
+  ;; #:times 100
+  (run 1 (parse-result)
     (evalo-unstaged
       (parse '(regex-match '(seq foo (rep bar)) 
                           '(foo bar baz bar bar)))
@@ -246,7 +246,7 @@
   '(((rep (seq foo bar . _.0) . _.1) $$ (absento (struct _.0) (struct _.1)))))
 
 
-(record-bench 'eval-eval 'unstaged 'regex-match 2 #:description "Synth regex that matches a given string (x10)")
+(record-bench 'eval-eval 'unstaged 'regex-match 2 #:description "Synth regex that matches a given string, from \\cref{sec:interpretinginterpreters} (x10)")
 (time-test
   #:times 10
   (run 1 (regex)
@@ -261,14 +261,14 @@
 ;; This is using the regex-derivative backwards
 ;;
 ;; the original regex running forward was the symbol 'baz'
-(time-test
+(test
   (run 1 (regex)
 	(absento #t regex)
     (absento #f regex)
     (d/dc-o regex 'a '(seq b c)))
   '(((seq a (seq b c) . _.0) $$ (absento (struct _.0) (#f _.0) (#t _.0)))))
 
-(time-test
+(test
   (run 1 (regex)
 	(absento #t regex)
     (absento #f regex)
@@ -296,14 +296,15 @@
      ,absento-tags0)))
 
 
-(time-test
+(test
   (run 1 (regex)
     (d/dc-o regex 'foo '(alt bar (rep baz))))
   `(((seq foo (alt bar (rep baz)) . _.0)
      $$
      ,absento-tags0)))
 
-(time-test
+;; Timeouts but we do not want to use as a benchmark in the paper
+#;(test
   (run 1 (regex)
     (evalo-unstaged
       (parse `(d/dc ',regex 'foo))

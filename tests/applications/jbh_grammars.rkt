@@ -126,7 +126,7 @@ expression to be evalued.
   (time-staged (recognize-Eo r)))
 
 (let ((size 200))
-  (record-bench 'simple 'unstaged 'grammar-synthesis #:description "Find 200 strings that match a given grammar")
+  (record-bench 'simple 'unstaged 'grammar-synthesis #:description "Find 200 strings that match a given grammar, from \\cref{sec:parser}")
   (time
    (run size (str)
      (recognize-Eo str)))

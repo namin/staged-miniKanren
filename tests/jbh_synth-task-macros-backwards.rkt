@@ -43,7 +43,7 @@
    ((a b c) ())))
 
 
-(record-bench 'eval/program 'staging 'invert-execute-append)
+(record-bench 'eval/program 'staging 'invert-append)
 (defrel (invert-execute-append xs ys)
   (time-staged
    (evalo-staged
@@ -56,7 +56,7 @@
        (append ',xs ',ys))
     '(a b c))))
 
-(record-bench 'eval/program 'staged 'invert-execute-append)
+(record-bench 'eval/program 'staged 'invert-append)
 (time-test
  #:times 1000
  (run* (xs ys)
@@ -77,7 +77,7 @@
       (append ',xs ',ys))
    '(a b c)))
 
-(record-bench 'eval/program 'unstaged 'invert-execute-append #:description "Use \\texttt{append} to split a list as in \\cref{fig:rel-interp-solutions-to-sketch-and-backwards-run} (x1000)")
+(record-bench 'eval/program 'unstaged 'invert-append #:description "Use \\texttt{append} to split a list as in \\cref{fig:rel-interp-solutions-to-sketch-and-backwards-run} (x1000)")
 (time-test
  #:times 1000
  (run* (xs ys)

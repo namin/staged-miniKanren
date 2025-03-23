@@ -472,7 +472,7 @@
 	  z
 	  (s . z))))
 
-(record-bench 'synth/ground-context 'unstaged 'synth-fib-larger #:description "Fib function accumulators and three holes in the program")
+(record-bench 'synth/ground-context 'unstaged 'synth-fib-larger #:description "Fib function accumulators and three holes in the program, from \\cref{fig:fibsynth}")
 (time-test
   (run 1 (fib-acc ACC1 ACC2)
     (fresh (A B C)

@@ -561,7 +561,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'quasi-quine #:description "Synthesize a quine for a metacircular evaluator that adds \\texttt{quasiquote}")
+(record-bench 'eval-eval 'unstaged 'quasi-quine #:description "Synthesize a quine for a metacircular evaluator that adds \\texttt{quasiquote}, from \\cref{sec:interpretinginterpreters}")
 (time-test
  (run 1 (q)
    (absento 'error q)
@@ -785,7 +785,7 @@
    (map-in-double-eval-fun `(eval-expr ',expr '()))
    val))
 
-(time-test
+(test
  (run 1 (q)
    (fresh (expr)
     (absento 'clo q)
@@ -803,7 +803,7 @@
     (map-in-double-eval expr q)))
  '(((a . a) (b . b) (c . c))))
 
-(time-test
+(test
  (run 1 (q)
    (fresh (expr)
     (absento 'clo q)
