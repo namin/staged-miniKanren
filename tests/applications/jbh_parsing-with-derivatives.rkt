@@ -126,7 +126,7 @@
                                      ))))))))))))))))))
 
 (defrel (d/dc-o re c parse-result)
-  (time-staged
+  (staged
    (evalo-staged
     (parse `(d/dc ',re ',c))
     parse-result)))

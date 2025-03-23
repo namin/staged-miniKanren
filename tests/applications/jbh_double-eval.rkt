@@ -767,7 +767,7 @@
              ,letrec-body)))
 
 (defrel (map-in-double-eval expr val)
-  (time-staged
+  (staged
     (evalo-staged
      (map-in-double-eval-fun `(eval-expr ',expr '()))
      val)))
