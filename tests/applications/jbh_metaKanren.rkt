@@ -839,7 +839,7 @@ Syntax
 
 ; External grounding, extra examples to avoid overfitting, and with symbolo to
 ; fasten queries
-(record-bench 'synth/ground-context 'unstaged 'metaKanren #:description "The recursive call arguments in \\texttt{appendo} as in \\cref{fig:metakanren-synth}")
+(record-bench 'synth/ground-context 'unstaged 'metaKanren #:description "The recursive call arguments in \\texttt{appendo} as in \\cref{sec:parser}")
 (time-test
   (run 1 (relcall)
 	(fresh (w x y)
