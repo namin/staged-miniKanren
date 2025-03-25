@@ -561,7 +561,7 @@
      ,not-tags0+error
      (sym _.0))))
 
-(record-bench 'eval-eval 'unstaged 'quasi-quine #:description "Synthesize a quine for a metacircular evaluator that adds \\texttt{quasiquote} as in \\cref{sec:interpretinginterpreters}")
+(record-bench 'eval-eval 'unstaged 'quasi-quine #:description "Synthesize a quine that employs \\texttt{quasiquote} as in \\cref{sec:interpretinginterpreters}")
 (time-test
  (run 1 (q)
    (absento 'error q)
@@ -840,7 +840,7 @@
     (map-in-double-eval-used-for-synth expr '((a . a) (b . b) (c . c)))))
  '((cons x x)))
 
-(record-bench 'synth/ground-context 'unstaged 'map-eval #:description "Body of function mapped via anonymous recursion in a metacircular evaluator")
+(record-bench 'synth/ground-context 'unstaged 'map-eval #:description "Body of function mapped via anonymous recursion in an evaluator")
 (time-test
  (run 1 (q)
    (fresh (expr)

@@ -572,7 +572,7 @@
               '(s s s s s s s s s s s s s . z)))
   '((s s s s s s s . z)))
 
-(record-bench 'eval/program 'unstaged 'fib #:description "Synthesize an input value such that fib produce a given output (x100)")
+(record-bench 'eval/program 'unstaged 'fib #:description "Synthesize an input value for which fib returns 13 (x100)")
 (time-test
   #:times 100
   (run 1 (q)
@@ -606,7 +606,7 @@
     (sym _.0))
    ((lambda () '(s s s s s s s . z)))))
 
-(record-bench 'eval/program 'unstaged 'fib-exprs #:description "Synthesize 5 expressions for which \\texttt{fib} computes 13")
+(record-bench 'eval/program 'unstaged 'fib-exprs #:description "Synthesize 5 input expressions for which \\texttt{fib} returns 13")
 (time-test
   (run 5 (q)
     (evalo-unstaged

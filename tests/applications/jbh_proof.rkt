@@ -34,7 +34,7 @@
    (prover `(proof? ',prf))
    #t))
 
-(record-bench 'eval-eval 'staging 'proofo #:description "Checks the validity of proofs for implicational predicate calculus")
+(record-bench 'eval-eval 'staging 'proofo #:description "Checks the validity of proofs for implicational propositional calculus")
 (defrel (proofo prf valid-proof?)
   (time-staged
    (evalo-staged
