@@ -3,11 +3,13 @@
 (require "../../all.rkt")
 
 ;; Adapted from Matt Might's code for parsing with derivatives.
+;; Cf https://dl.acm.org/doi/10.1145/2034773.2034801
 
+;; Template for derivatives of regex wrt characters, and doing regex matching based off that
 (define-term-syntax-rule
   (parse body-expr)
-  `(letrec ((regex-NULL (lambda () #f)))
-     (letrec ((regex-BLANK (lambda () #t)))
+  `(letrec ((regex-NULL (lambda () #f))) ;; constructor for always-fail regex
+     (letrec ((regex-BLANK (lambda () #t))) ;; constructor for never-fail regex
        (letrec ((regex-alt?
                  (lambda (re) (and (pair? re) (equal? (car re) 'alt)))))
          (letrec ((regex-seq?
@@ -28,6 +30,7 @@
                        (letrec ((match-rep
                                  (lambda (re f)
                                    (and (regex-rep? re) (f (car (cdr re)))))))
+						 ;; Smart constructors that simplify as they go
                          (letrec ((seq
                                    (lambda (pat1 pat2)
                                      (if (regex-null? pat1)
@@ -122,37 +125,28 @@
 
                                      ))))))))))))))))))
 
-(record-bench 'staging 'parse)
 (defrel (d/dc-o re c parse-result)
-  (time-staged
+  (staged
    (evalo-staged
     (parse `(d/dc ',re ',c))
     parse-result)))
 
-;;(record-bench 'staging 'match)
+(record-bench 'eval-eval 'staging 'regex-match #:description "Check that a string matches a regex")
 (defrel (regex-matcho pattern data parse-result)
   (time-staged
    (evalo-staged
     (parse `(regex-match ',pattern ',data))
     parse-result)))
 
-(record-bench 'staged 'parse 0)
-(time-test
+
+(test
+
   (run #f (parse-result)
     (d/dc-o 'baz 'f parse-result))
   '(#f))
 
-(record-bench 'run-staged 'parse 0)
-(time-test
-  (run #f (parse-result)
-    (staged
-     (evalo-staged
-      (parse '(d/dc 'baz 'f))
-      parse-result)))
-  '(#f))
 
-(record-bench 'unstaged 'parse 0)
-(time-test
+(test
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc 'baz 'f))
@@ -160,191 +154,139 @@
   '(#f))
 
 
-(record-bench 'staged 'parse 1)
-(time-test
+(test
   (run #f (parse-result)
     (d/dc-o '(seq foo barn) 'foo parse-result))
   '(barn))
 
-(record-bench 'run-staged 'parse 1)
-(time-test
-  (run #f (parse-result)
-    (staged
-     (evalo-staged
-      (parse '(d/dc '(seq foo barn) 'foo))
-      parse-result)))
-  '(barn))
-
-(record-bench 'unstaged 'parse 1)
-(time-test
+(test
   (run #f (parse-result)
     (evalo-unstaged
       (parse '(d/dc '(seq foo barn) 'foo))
       parse-result))
   '(barn))
 
-(record-bench 'staged 'parse 2)
-(time-test
-  (run #f (parse-result)
+(test
+  (run 1 (parse-result)
     (d/dc-o '(alt (seq foo bar) (seq foo (rep baz))) 'foo parse-result))
   '((alt bar (rep baz))))
 
-(record-bench 'run-staged 'parse 2)
-(time-test
-  (run #f (parse-result)
-    (staged
-     (evalo-staged
-      (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
-      parse-result)))
-  '((alt bar (rep baz))))
-
-(record-bench 'unstaged 'parse 2)
-(time-test
-  (run #f (parse-result)
+(test
+  (run 1 (parse-result)
     (evalo-unstaged
       (parse '(d/dc '(alt (seq foo bar) (seq foo (rep baz))) 'foo))
       parse-result))
   '((alt bar (rep baz))))
 
-
-(record-bench 'staged 'parse 3)
-(time-test
+;; runs match sequence forward against ground input
+(test
+;;  #:times 100
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep bar)) 
                   '(foo bar bar bar)
                   parse-result))
   '(#t))
 
-(record-bench 'run-staged 'parse 3)
-(time-test
-  (run #f (parse-result)
-    (staged
-     (evalo-staged
-      (parse '(regex-match '(seq foo (rep bar)) 
-                           '(foo bar bar bar)))
-      parse-result)))
-  '(#t))
-
-(record-bench 'unstaged 'parse 3)
-(time-test
-  (run #f (parse-result)
+(test
+;;  #:times 100
+  (run 1 (parse-result)
     (evalo-unstaged
       (parse '(regex-match '(seq foo (rep bar)) 
                            '(foo bar bar bar)))
       parse-result))
   '(#t))
 
-(record-bench 'staged 'parse 4)
-(time-test
+;; runs match sequence forward against ground input that fails
+(test
+;;  #:times 100
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep bar)) 
                   '(foo bar baz bar bar)
                   parse-result))
   '(#f))
 
-(record-bench 'run-staged 'parse 4)
-(time-test
-  (run #f (parse-result)
-    (staged
-     (evalo-staged
-      (parse '(regex-match '(seq foo (rep bar)) 
-                           '(foo bar baz bar bar)))
-     parse-result)))
-  '(#f))
 
-(record-bench 'unstaged 'parse 4)
-(time-test
-  (run #f (parse-result)
+(test
+  ;; #:times 100
+  (run 1 (parse-result)
     (evalo-unstaged
       (parse '(regex-match '(seq foo (rep bar)) 
                           '(foo bar baz bar bar)))
       parse-result))
   '(#f))
 
-(record-bench 'staged 'parse 5)
+(record-bench 'eval-eval 'staged 'regex-match 1)
 (time-test
+  #:times 100
   (run 1 (parse-result)
     (regex-matcho '(seq foo (rep (alt bar baz))) 
                   '(foo bar baz bar bar)
                   parse-result))
   '(#t))
 
-(record-bench 'run-staged 'parse 5)
+;; runs match sequence w/alt forward against ground input
+(record-bench 'eval-eval 'unstaged 'regex-match 1 #:description "Check that a string matches a regex (x100)")
 (time-test
-  (run #f (parse-result)
-    (staged
-     (evalo-staged
-      (parse '(regex-match '(seq foo (rep (alt bar baz))) 
-                           '(foo bar baz bar bar)))
-     parse-result)))
-  '(#t))
-
-(record-bench 'unstaged 'parse 5)
-(time-test
-  (run #f (parse-result)
+  #:times 100
+  (run 1 (parse-result)
     (evalo-unstaged
-     (parse '(regex-match '(seq foo (rep (alt bar baz))) 
+     (parse '(regex-match '(seq foo (rep (alt bar baz)))
                           '(foo bar baz bar bar)))
       parse-result))
   '(#t))
 
 
-
-;; Running backwards
-;;
-;; the orginal regex running forward was the symbol 'baz'
-(record-bench 'staged 'parse-backwards 0)
+(record-bench 'eval-eval 'staged 'regex-match 2)
 (time-test
+  #:times 10
   (run 1 (regex)
-    (d/dc-o regex 'f '(#f)))
-  `(((seq f (#f) . _.0)
-     $$
-     ,absento-tags0)))
+    (regex-matcho regex
+                  '(foo bar foo bar foo bar)
+                  #t))
+  '(((rep (seq foo bar . _.0) . _.1) $$ (absento (struct _.0) (struct _.1)))))
 
-(record-bench 'run-staged 'parse-backwards 0)
-(time-test
-  (run 1 (regex)
-    (staged
-     (evalo-staged
-      (parse `(d/dc ',regex 'f))
-      '(#f))))
-  `(((seq f (#f) . _.0)
-     $$
-     ,absento-tags0)))
 
-(record-bench 'unstaged 'parse-backwards 0)
+(record-bench 'eval-eval 'unstaged 'regex-match 2 #:description "Synthesize a regex that matches a given string as in \\cref{sec:interpretinginterpreters} (x10)")
 (time-test
+  #:times 10
   (run 1 (regex)
     (evalo-unstaged
-      (parse `(d/dc ',regex 'f))
-      '(#f)))
-  `(((seq f (#f) . _.0)
-     $$
-     ,absento-tags0)))
+     (parse `(regex-match ',regex '(foo bar foo bar foo bar)))
+      #t))
+  '(((rep (seq foo bar . _.0) . _.1) $$ (absento (struct _.0) (struct _.1)))))
+
+
+
+
+;; This is using the regex-derivative backwards
+;;
+;; the original regex running forward was the symbol 'baz'
+(test
+  (run 1 (regex)
+	(absento #t regex)
+    (absento #f regex)
+    (d/dc-o regex 'a '(seq b c)))
+  '(((seq a (seq b c) . _.0) $$ (absento (struct _.0) (#f _.0) (#t _.0)))))
+
+(test
+  (run 1 (regex)
+	(absento #t regex)
+    (absento #f regex)
+    (evalo-unstaged
+      (parse `(d/dc ',regex 'a))
+      '(seq b c)))
+  '(((seq a (seq b c) . _.0) $$ (absento (struct _.0) (#f _.0) (#t _.0)))))
 
 
 ;; the orginal regex running forward was '(seq foo barn)'
-(record-bench 'staged 'parse-backwards 1)
-(time-test
+(test
   (run 1 (regex)
     (d/dc-o regex 'foo 'barn))
   `(((seq foo barn . _.0)
      $$
      ,absento-tags0)))
 
-(record-bench 'run-staged 'parse-backwards 1)
-(time-test
-  (run 1 (regex)
-    (staged
-     (evalo-staged
-      (parse `(d/dc ',regex 'foo))
-      'barn)))
-  `(((seq foo barn . _.0)
-     $$
-     ,absento-tags0)))
-
-(record-bench 'unstaged 'parse-backwards 1)
-(time-test
+(test
   (run 1 (regex)
     (evalo-unstaged
       (parse `(d/dc ',regex 'foo))
@@ -354,36 +296,17 @@
      ,absento-tags0)))
 
 
-
-
-
-
-(record-bench 'staged 'parse-backwards 2)
-(time-test
+(test
   (run 1 (regex)
     (d/dc-o regex 'foo '(alt bar (rep baz))))
   `(((seq foo (alt bar (rep baz)) . _.0)
      $$
      ,absento-tags0)))
 
-(record-bench 'run-staged 'parse-backwards 2)
-(time-test
-  (run 1 (regex)
-    (staged
-     (evalo-staged
-      (parse `(d/dc ',regex 'foo))
-      '(alt bar (rep baz)))))
-  `(((seq foo (alt bar (rep baz)) . _.0)
-     $$
-     ,absento-tags0)))
-
-;; didn't come back after 5+ minutes
-#|
-(record-bench 'unstaged 'parse-backwards 2)
-(time-test
+;; Timeouts but we do not want to use as a benchmark in the paper
+#;(test
   (run 1 (regex)
     (evalo-unstaged
       (parse `(d/dc ',regex 'foo))
       '(alt bar (rep baz))))
-  '???)
-|#
+  'timeout)

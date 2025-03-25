@@ -35,7 +35,7 @@
                        [`(Not (AtLeast ,k ,(? symbol? r)))
                         (if (positive? k)
                             (list 'AtMost (sub1 k) r)
-                            (list 'Not 'Top))]    
+                            (list 'Not 'Top))]
                        [`(And ,c1 ,c2)
                         (list 'And (nnf c1) (nnf c2))]
                        [`(Or ,c1 ,c2)
@@ -47,7 +47,7 @@
                        [concept concept]))))
            (nnf ',the-concept))))))
 
-(record-bench 'staging 'nnf)
+(record-bench 'eval/program 'staging 'nnf)
 (defrel (nnfo concept nnf-concept)
   (time-staged
    (evalo-staged
@@ -81,14 +81,12 @@
    ,not-tags0
    (sym _.0))))
 
-(record-bench 'staged 'nnf 0)
-(time-test
+(test
  (length (run 10 (concept)
            (nnfo concept '(Not Top))))
  10)
 
-(record-bench 'unstaged 'nnf 0)
-(time-test
+(test
  (length
   (run 10 (concept)
     (evalo-unstaged
@@ -96,44 +94,25 @@
      '(Not Top))))
  10)
 
-(record-bench 'run-staged 'nnf 0)
-(time-test
- (length
-  (run 10 (concept)
-    (staged
-     (evalo-staged
-      (nnf concept)
-      '(Not Top)))))
- 10)
-
-
-
-(record-bench 'unstaged 'nnf 1)
-(time-test
+;; Normalize something contradictory
+(test
+  ;; #:times 1000
   (run* (nnf-concept)
     (evalo-unstaged
      (nnf '(Not (AtLeast z hasChild)))
      nnf-concept))
   '((Not Top)))
 
-(record-bench 'run-staged 'nnf 1)
-(time-test
- (run* (nnf-concept)
-   (staged
-    (evalo-staged
-     (nnf '(Not (AtLeast z hasChild)))
-     nnf-concept)))
-  '((Not Top)))
 
-(record-bench 'staged 'nnf 1)
-(time-test
+(test
+  ;; #:times 1000
   (run* (nnf-concept)
     (nnfo '(Not (AtLeast z hasChild)) nnf-concept))
   '((Not Top)))
 
-
-(record-bench 'unstaged 'nnf 2)
+(record-bench 'eval/program 'unstaged 'nnf #:description "Transformation to negation normal form~\\cite{szeredi_lukacsy_benko_nagy_2014} (x1000)")
 (time-test
+  #:times 1000
   (run* (nnf-concept)
     (evalo-unstaged
      (nnf '(Not (AtMost (s . z) hasChild)))
@@ -141,40 +120,23 @@
   '((AtLeast (s s . z) hasChild)))
 
 
-(record-bench 'run-staged 'nnf 2)
+(record-bench 'eval/program 'staged 'nnf)
 (time-test
- (run* (nnf-concept)
-   (staged
-    (evalo-staged
-     (nnf '(Not (AtMost (s . z) hasChild)))
-     nnf-concept)))
-  '((AtLeast (s s . z) hasChild)))
-
-(record-bench 'staged 'nnf 2)
-(time-test
+  #:times 1000
   (run* (nnf-concept)
     (nnfo '(Not (AtMost (s . z) hasChild)) nnf-concept))
   '((AtLeast (s s . z) hasChild)))
 
-
-(record-bench 'unstaged 'nnf 3)
-(time-test
+(test
+;;  #:times 1000
   (run* (nnf-concept)
     (evalo-unstaged
      (nnf '(Not (AtLeast (s s s . z) hasChild)))
      nnf-concept))
   '((AtMost (s s . z) hasChild)))
 
-(record-bench 'run-staged 'nnf 3)
-(time-test
- (run* (nnf-concept)
-   (staged
-    (evalo-staged
-     (nnf '(Not (AtLeast (s s s . z) hasChild))) nnf-concept)))
-  '((AtMost (s s . z) hasChild)))
-
-(record-bench 'staged 'nnf 3)
-(time-test
+(test
+;;  #:times 1000
   (run* (nnf-concept)
     (nnfo '(Not (AtLeast (s s s . z) hasChild)) nnf-concept))
   '((AtMost (s s . z) hasChild)))

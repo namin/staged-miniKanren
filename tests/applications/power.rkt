@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../../main.rkt" "../../test-check.rkt")
+(require "../../all.rkt")
 
 
 
@@ -316,13 +316,27 @@
 (define num2 (build-num 2))
 (define num3 (build-num 3))
 (define num4 (build-num 4))
+(define num8 (build-num 8))
+(define num6561 (build-num 6561))
 
-(defrel (pow4 n nq)
+
+(defrel (pow4-staged n nq)
   (staged
    (pow/staged n num4 nq)))
 
+(defrel (pow4-unstaged n nq)
+  (pow/staged n num4 nq))
+
+
 (test
- (run 1 (q1 q2) (pow4 num2 q1) (pow4 num3 q2))
+ ;;#:times 1000
+ (run 1 (q1 q2) (pow4-staged num2 q1) (pow4-staged num3 q2))
+ '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q1 q2) (pow4-unstaged num2 q1) (pow4-unstaged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
 (defrel/staged (eveno n)
@@ -353,12 +367,24 @@
              (later (*o nq1 n nq))))]
       )))))
 
+
 (defrel (pow4/2 n nq)
   (staged
    (pow/staged2 n num4 nq)))
 
+
 (test
+ ;; #:times 1000
  (run 1 (q1 q2) (pow4/2 num2 q1) (pow4/2 num3 q2))
+ '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
+
+(defrel (pow4/2-unstaged n nq)
+  (pow/staged2 n num4 nq))
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q1 q2) (pow4/2-unstaged num2 q1) (pow4/2-unstaged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
 ;; fun power n = fn x => if n = -
@@ -385,12 +411,59 @@
              (later (*o nq1 n nq))))]
       )))))
 
+
 (defrel (pow4/3 n nq)
   (staged
    (pow/staged3 n num4 nq)))
 
+
 (test
+ ;;#:times 1000
  (run 1 (q1 q2) (pow4/3 num2 q1) (pow4/3 num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
-(generated-code)
+(defrel (pow4/3-unstaged n nq)
+  (pow/staged3 n num4 nq))
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q1 q2) (pow4/3-unstaged num2 q1) (pow4/3-unstaged num3 q2))
+ '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
+
+
+(record-bench 'simple 'staging 'pow8-backward)
+(defrel (pow8 n nq)
+  (time-staged
+   (pow/staged3 n num8 nq)))
+
+
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q2) (pow8 num3 q2))
+ '((1 0 0 0 0 1 0 1 1 0 0 1 1)))
+
+(defrel (pow8-unstaged n nq)
+  (pow/staged3 n num8 nq))
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q2) (pow8-unstaged num3 q2))
+ '((1 0 0 0 0 1 0 1 1 0 0 1 1)))
+
+
+
+(record-bench 'simple 'staged 'pow8-backward)
+(time-test
+ #:times 1000
+ (run 1 (q2) (pow8 q2 num6561))
+ '((1 1)))
+
+(record-bench 'simple 'unstaged 'pow8-backward #:description "Solve $n^8=6561$ via relational arithmetic~\\cite{DBLP:conf/flops/KiselyovBFS08} (x1000)")
+(time-test
+ #:times 1000
+ (run 1 (q2) (pow8-unstaged q2 num6561))
+ '((1 1)))

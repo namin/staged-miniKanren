@@ -13,13 +13,10 @@ Grammar syntax:
 - A (where A is a symbol/number) refers to the terminal written 'A'
 |#
 
-(define grammar
-  '((E . (or (seq 'S * 'S)
-             'S))
-    (S . (or (seq 'T + 'T)
-             'T))
-    (T . (or 0
-             (seq < 'E >)))))
+(define E-grammar
+  '((E . (or 'S (seq 'S * 'S)))
+    (S . (or 'T (seq 'T + 'T)))
+    (T . (or 0 (seq < 'E >)))))
 
 (defrel/staged (lookupo map key res)
   (fresh (first rest)
@@ -81,68 +78,76 @@ expression to be evalued.
     (later (finish-apply c interp-grammar res))))
 |#
 
-(defrel-partial/staged (interp-nt rel [grammar] [nt res])
+(defrel-partial/staged (interp-grammar rel [grammar] [nt res])
   (gather
    (fresh (expr)
      (lookupo grammar nt expr)
-     (interp-grammar rel expr res))))
+     (interp-rhs rel expr res))))
 
-(defrel/staged (interp-grammar nts expr res)
+(defrel/staged (interp-rhs recur expr res)
   (conde
    [(conde [(symbolo expr)] [(numbero expr)])
     (== res (list expr))]
    [(fresh (first rest)
       (== expr `(or ,first . ,rest))
       (conde
-       [(interp-grammar nts first res)]
-       [(interp-grammar nts `(or . ,rest) res)]))]
+       [(interp-rhs recur first res)]
+       [(interp-rhs recur `(or . ,rest) res)]))]
    [(== expr '(seq))
     (== res '())]
    [(fresh (first rest c1 c2 c3)
       (== expr `(seq ,first . ,rest))
-      (interp-grammar nts first c1)
-      (interp-grammar nts `(seq . ,rest) c2)
+      (interp-rhs recur first c1)
+      (interp-rhs recur `(seq . ,rest) c2)
       (later (appendo c1 c2 res)))]
    [(fresh (nt)
       (== expr `(quote ,nt))
-      (later (finish-apply nts interp-nt nt res)))]))
+      (later (finish-apply recur interp-grammar nt res)))]))
 
-(defrel/staged (interp-E res)
+(defrel/staged (recognizeo grammar nt str)
   (fresh (rel)
-    (specialize-partial-apply rel interp-nt grammar)
-    (later (finish-apply rel interp-nt 'E res))))
+    (specialize-partial-apply rel interp-grammar grammar)
+    (later (finish-apply rel interp-grammar nt str))))
+
+(defrel/staged (recognize-Eo str)
+  (recognizeo E-grammar 'E str))
 
 (parameterize ([*test-result-same?* set=?])
   (test (run 4 (q r s)
-          (interp-E `(< 0 ,q ,r ,s)))
+          (recognize-Eo `(< 0 ,q ,r ,s)))
         '((+ 0 >) (> + 0) (* 0 >) (> * 0)))
   (test (run 4 (q r s)
-          (staged (interp-E `(< 0 ,q ,r ,s))))
+          (staged (recognize-Eo `(< 0 ,q ,r ,s))))
         '((+ 0 >) (> + 0) (* 0 >) (> * 0)))
   (pretty-print (generated-code)))
 
+(record-bench 'simple 'staging 'grammar-synthesis)
+(defrel (interp-E-staged r)
+  (time-staged (recognize-Eo r)))
+
 (let ((size 200))
-  (record-bench 'unstaged 'grammar-synthesis)
+  (record-bench 'simple 'unstaged 'grammar-synthesis #:description "Find 200 strings that match a given grammar as in \\cref{sec:parser}")
   (time
-   (run size (r)
-     (interp-E r)))
-  (record-bench 'run-staged 'grammar-synthesis)
+   (run size (str)
+     (recognize-Eo str)))
+
+  (record-bench 'simple 'staged 'grammar-synthesis)
   (time
-   (run size (r)
-     (staged (interp-E r)))))
+   (run size (str)
+     (interp-E-staged str))))
 
 (define (get-timing-data size)
   (define-values (ures ucpu ureal ugc)
     (time-apply
      (lambda ()
        (run size (r)
-         (interp-E r)))
+         (recognize-Eo r)))
      '()))
   (define-values (sres scpu sreal sgc)
     (time-apply
      (lambda ()
        (run size (r)
-         (staged (interp-E r))))
+         (staged (recognize-Eo r))))
      '()))
   (list ureal sreal))
 
