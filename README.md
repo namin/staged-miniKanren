@@ -19,7 +19,7 @@ An interactive Racket session can be ran with `docker run -it namin/staged-minik
 
 For a larger example, see [small-interp](small-interp).
 
-The tests and benchmarks should run with `docker run namin/staged-minikanren` and these additional arguments:
+The tests and benchmarks should run with `docker run -i namin/staged-minikanren` and these additional arguments:
 - `racket tests/all.rkt`
 - `./benchrun.sh`
 
