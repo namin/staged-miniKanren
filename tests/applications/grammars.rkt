@@ -152,7 +152,6 @@ expression to be evalued.
   (list ureal sreal))
 
 (require plot)
-(plot-new-window? #t)
 
 (define (plot-timing-test [timing-range (in-range 0 1000 20)]
                           [out-file #f])
