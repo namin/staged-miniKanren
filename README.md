@@ -10,14 +10,16 @@ The docker image can be pulled with `git pull namin/staged-minikanren` or build 
 
 Note: on Mac, _disable_ Rosetta in the Docker Desktop settings. [See this thread.](https://racket.discourse.group/t/racket-docker-m1-rosetta/2947/6)
 
-An interactive Racket session can be ran with `docker run -it namin/staged-minikanren` and the benchmarks can be ran with the additional argument `/app/staged-miniKanren/benchrun.sh`.
-
-For the interactive session, try a sanity check with the following lines:
+An interactive Racket session can be ran with `docker run -it namin/staged-minikanren`. Try a sanity check with the following lines:
 ```
 > (require "all.rkt")
 > (run 1 (q) (staged (== q 'fun)))
 '(fun)
 ```
+
+The tests and benchmarks should run with `docker run namin/staged-minikanren` and these additional arguments:
+- `racket tests/all.rkt`
+- `./benchrun.sh`
 
 ## Dependencies
 
