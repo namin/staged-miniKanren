@@ -6,7 +6,7 @@ We introduce multi-stage miniKanren, which augments miniKanren with staging cons
 
 ## Getting started with Docker (optional)
 
-The docker image can be pulled with `git pull namin/staged-minikanren` or build here with `docker build -t namin/staged-minikanren .`.
+The docker image can be pulled with `git pull namin/staged-minikanren` or build here with `docker build --platform=linux/amd64 -t namin/staged-minikanren .`.
 
 Note: on Mac, _disable_ Rosetta in the Docker Desktop settings. [See this thread.](https://racket.discourse.group/t/racket-docker-m1-rosetta/2947/6)
 
@@ -16,6 +16,8 @@ An interactive Racket session can be ran with `docker run -it namin/staged-minik
 > (run 1 (q) (staged (== q 'fun)))
 '(fun)
 ```
+
+For a larger example, see [small-interp](small-interp).
 
 The tests and benchmarks should run with `docker run namin/staged-minikanren` and these additional arguments:
 - `racket tests/all.rkt`

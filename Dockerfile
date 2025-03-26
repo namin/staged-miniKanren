@@ -1,5 +1,9 @@
 FROM racket/racket:8.15-full
 
+# for benchmark collation
+RUN apt-get update
+RUN apt-get install -y python3
+
 RUN raco pkg install --auto --no-docs syntax-spec-v2
 
 WORKDIR /app
