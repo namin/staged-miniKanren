@@ -10,4 +10,7 @@ ADD . staged-miniKanren
 
 WORKDIR /app/staged-miniKanren
 
+# warm-up
+RUN racket all.rkt
+
 CMD ["racket"]
