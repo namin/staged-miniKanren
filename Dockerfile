@@ -1,9 +1,24 @@
-FROM ubuntu:latest
+FROM debian:bullseye-slim
 
-RUN apt update -y
-RUN apt-get install -y software-properties-common
-RUN add-apt-repository ppa:plt/racket
-RUN apt-get install -y racket
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    libffi-dev \
+    libncurses-dev \
+    libjpeg-dev \
+    libx11-dev \
+    libgl1-mesa-dev \
+    libglu1-mesa-dev \
+    x11-xserver-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fL -o racket-8.15.sh \
+    https://mirror.racket-lang.org/installers/8.15/racket-8.15-x86_64-linux.sh && \
+    chmod +x racket-8.15.sh && \
+    ./racket-8.15.sh --in-place --dest /usr/racket && \
+    rm racket-8.15.sh
+
+ENV PATH="/usr/racket/bin:${PATH}"
 
 RUN raco pkg install --auto syntax-spec-v2
 
