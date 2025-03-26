@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../../main.rkt" "../../test-check.rkt")
+(require "../../all.rkt")
 
 ;;
 ;; Original unstaged program
@@ -33,21 +33,35 @@
 
 (test
  (run 1 (q)
-   (replicate '(S (S (S Z))) '(1 2 3) q))
- '((1 1 1 2 2 2 3 3 3)))
+   (replicate '(S (S (S (S (S (S (S (S Z)))))))) '(1 2 3) q))
+ '((1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)))
 
 (test
- (run 3 (q)
+ (run 1 (q)
+   (replicate '(S (S (S (S (S (S (S (S Z)))))))) q '(1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)))
+ '((1 2 3)))
+
+(record-bench 'simple 'unstaged 'replicate-unknown #:description "Find a Peano numeral $n$ and a list of values $l$ such that replicating $n$ times each value in $l$ gives a given output (x1000)")
+(time-test
+ #:times 1000
+ (run 4 (n l)
    (fresh (n-2)
-     (replicate `(S (S ,n-2)) '(1 2 3) q)))
- '((1 1 2 2 3 3) (1 1 1 2 2 2 3 3 3) (1 1 1 1 2 2 2 2 3 3 3 3)))
+     (replicate n l '(1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3))))
+ '(((S Z) (1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)) ((S (S Z)) (1 1 1 1 2 2 2 2 3 3 3 3)) ((S (S (S (S Z)))) (1 1 2 2 3 3)) ((S (S (S (S (S (S (S (S Z)))))))) (1 2 3))))
+
+(record-bench 'simple 'unstaged 'replicate-partial #:description "Given a partially-instantiated Peano numeral and fixed input list, replicate $n$ times each value in $l$ (x10000)")
+(time-test
+ #:times 10000
+ (run 3 (q)
+   (fresh (n)
+     (replicate `(S (S (S (S (S (S (S (S ,n)))))))) '(1 2 3) q)))
+ '((1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3) (1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3) (1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3)))
 
 (test
  (run 2 (n l)
    (fresh (n-2)
      (replicate n l '(1 1 1 2 2 2 3 3 3))))
  '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
-
 
 ;;
 ;; Equivalent MetaOCaml code (also in replicate.ml)
@@ -71,7 +85,6 @@
 ;; Staged
 ;;
 
-
 (defrel-partial/staged (replicate/staged rep [n] [l res])
   (gather
    (conde
@@ -81,6 +94,7 @@
         (== l (cons a d))
         (cons-n/staged n a rec-res res)
         (later (finish-apply rep replicate/staged d rec-res)))])))
+
 
 (defrel/staged (cons-n/staged n v l res)
   (fallback
@@ -107,45 +121,62 @@
      (finish-apply rep replicate/staged '(1 2 3) q)))
  '((1 1 1 2 2 2 3 3 3)))
 
-;; Basic staged
-(test
- (run 1 (q)
-   (staged
+(defrel (replicate/staged-basic-staged q)
+  (staged
     (fresh (rep)
-      (specialize-partial-apply rep replicate/staged '(S (S (S Z))))
+      (specialize-partial-apply rep replicate/staged '(S (S (S (S (S (S (S (S Z)))))))))
       (later (finish-apply rep replicate/staged '(1 2 3) q)))))
- '((1 1 1 2 2 2 3 3 3)))
 
-;; Staged, running backwards in runtime portion
 (test
  (run 1 (q)
-   (staged
+   (replicate/staged-basic-staged q))
+ '((1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)))
+
+
+(defrel (replicated/staged-backwards-runtime q)
+  (staged
     (fresh (rep)
-      (specialize-partial-apply rep replicate/staged '(S (S (S Z))))
-      (later (finish-apply rep replicate/staged q '(1 1 1 2 2 2 3 3 3))))))
+      (specialize-partial-apply rep replicate/staged '(S (S (S (S (S (S (S (S Z)))))))))
+      (later (finish-apply rep replicate/staged q '(1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3))))))
+
+(test
+ (run 1 (q)
+   (replicated/staged-backwards-runtime q))
  '((1 2 3)))
+
+(record-bench 'simple 'staging 'replicate-unknown)
+(defrel (replicate/staged-no-specialization n l)
+  (time-staged
+    (fresh (rep)
+      (specialize-partial-apply rep replicate/staged n)
+      (later (finish-apply rep replicate/staged l '(1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3))))))
+
+;; We don't expect any specialization in this fully-backwards example,
+;; but it should still work.
+(record-bench 'simple 'staged 'replicate-unknown)
+(time-test
+ #:times 1000
+ (run 4 (n l)
+   (replicate/staged-no-specialization n l))
+ '(((S Z) (1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3)) ((S (S Z)) (1 1 1 1 2 2 2 2 3 3 3 3)) ((S (S (S (S Z)))) (1 1 2 2 3 3)) ((S (S (S (S (S (S (S (S Z)))))))) (1 2 3))))
+
+(record-bench 'simple 'staging 'replicate-partial)
+(defrel (replicate/staged-partially-staged q)
+  (time-staged
+    (fresh (rep n)
+      (specialize-partial-apply rep replicate/staged `(S (S (S (S (S (S (S (S ,n)))))))))
+      (later (finish-apply rep replicate/staged '(1 2 3) q)))))
 
 ;; Partially-staged: will replicate each element at least twice, but perhaps more.
 ;; The generated code has two unfolded `cons`es.
 ;; This relies on the fallback to terminate at staging-time; otherwise the take*
 ;;   done by the gather would unfold cons-n forever.
-(test
+(record-bench 'simple 'staged 'replicate-partial)
+(time-test
+ #:times 10000
  (run 3 (q)
-   (staged
-    (fresh (rep n)
-      (specialize-partial-apply rep replicate/staged `(S (S ,n)))
-      (later (finish-apply rep replicate/staged '(1 2 3) q)))))
- '((1 1 2 2 3 3) (1 1 1 2 2 2 3 3 3) (1 1 1 1 2 2 2 2 3 3 3 3)))
-
-;; We don't expect any specialization in this fully-backwards example,
-;; but it should still work.
-(test
- (run 2 (n l)
-   (staged
-    (fresh (rep)
-      (specialize-partial-apply rep replicate/staged n)
-      (later (finish-apply rep replicate/staged l '(1 1 1 2 2 2 3 3 3))))))
- '(((S (S (S Z))) (1 2 3)) ((S Z) (1 1 1 2 2 2 3 3 3))))
+   (replicate/staged-partially-staged q))
+ '((1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3) (1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3) (1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3)))
 
 ;;
 ;; As a single relation
@@ -178,23 +209,22 @@
              (== res (cons v rec-res))
              (replicate-helper `(cons-n ,n-1 ,v ,l ,rec-res)))])))]))
 
-(test
- (run 1 (q)
-   (staged
+(defrel (test-replicate/staged-single q)
+  (staged
     (fresh (rep)
       (specialize-partial-apply rep replicate/staged-single '(S (S (S Z))))
       (later (finish-apply rep replicate/staged-single '(1 2 3) q)))))
+
+
+(test
+ (run 1 (q) (test-replicate/staged-single q))
  '((1 1 1 2 2 2 3 3 3)))
-
-
-
 
 ;;
 ;; Staged for a different mode: where we know `l` but not `n`.
 ;;
 
 ;; Note the asymmetry, due to the fact that cons-n doesn't call replicate.
-
 (defrel/staged (replicate/staged2 l n res)
   (fallback
    (conde
@@ -206,14 +236,21 @@
         (replicate/staged2 d n rec-res))])))
 
 ;; We can't / don't know how to write a replicate/staged that will specialize in both modes.
+(defrel (test-replicate/staged2 n q)
+  (staged
+   (replicate/staged2 '(1 2 3) n q)))
 
 (test
  (run 1 (q)
    (fresh (n)
      (== n '(S (S (S Z))))
-     (staged
-      (replicate/staged2 '(1 2 3) n q))))
+	 (test-replicate/staged2 n q)))
    '((1 1 1 2 2 2 3 3 3)))
 
-(generated-code)
+(test
+ (run 1 (q)
+   (fresh (n)
+     (== n '(S (S (S Z))))
+	 (replicate/staged2 '(1 2 3) n q)))
+   '((1 1 1 2 2 2 3 3 3)))
 

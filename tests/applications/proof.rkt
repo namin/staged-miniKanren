@@ -34,12 +34,12 @@
    (prover `(proof? ',prf))
    #t))
 
-(record-bench 'staging 'proofo)
-(defrel (proofo prf b)
+(record-bench 'eval-eval 'staging 'proofo #:description "Checks the validity of proofs for implicational propositional calculus")
+(defrel (proofo prf valid-proof?)
   (time-staged
    (evalo-staged
     (prover `(proof? ',prf))
-    b)))
+    valid-proof?)))
 
 (defrel (valid-proofo prf)
   (staged
@@ -56,7 +56,8 @@
              modus-ponens
              (((A => B) (A (A => B) (B => C)) assumption ())
               (A (A (A => B) (B => C)) assumption ())))))))
-  (record-bench 'staged 'proofo 1)
+
+  (record-bench 'eval-eval 'staged 'proofo 1)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -64,16 +65,7 @@
         (proofo prf #t)))
     ex-proof1)
 
-  (record-bench 'run-staged 'proofo 1)
-  (time-test
-   (run 1 (prf)
-     (staged
-      (fresh (body)
-        (== prf `(C (A (A => B) (B => C)) . ,body))
-        (proof-staged prf))))
-   ex-proof1)
-
-  (record-bench 'unstaged 'proofo 1)
+  (record-bench 'eval-eval 'unstaged 'proofo 1 #:description "Synthesize a proof of C from assumptions as in \\cref{fig:proofo}")
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -99,7 +91,7 @@
                    (((A => B) (A (B => C) (A => B)) assumption ())
                     (A (A (B => C) (A => B)) assumption ())))))))))))))
 
-  (record-bench 'staged 'proofo 2)
+  (record-bench 'eval-eval 'staged 'proofo 2)
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -107,16 +99,7 @@
         (proofo prf #t)))
     ex-proof2)
 
-  (record-bench 'run-staged 'proofo 2)
-  (time-test
-   (run 1 (prf)
-     (staged
-      (fresh (body)
-        (== prf `(((A => B) => ((B => C) => (A => C))) () . ,body))
-        (proof-staged prf))))
-   ex-proof2)
-
-  (record-bench 'unstaged 'proofo 2)
+  (record-bench 'eval-eval 'unstaged 'proofo 2 #:description "Synthesize a proof of \\((A \\Rightarrow B) \\Rightarrow ((B \\Rightarrow C) \\Rightarrow (A \\Rightarrow C))\\)" )
   (time-test
     (run 1 (prf)
       (fresh (body)
@@ -124,7 +107,7 @@
         (proof-unstaged prf)))
     ex-proof2)
 
-  (record-bench 'staged 'proofo 3)
+  (record-bench 'eval-eval 'staged 'proofo 3)
   (time-test
    (length
     (run 1 (prf)
@@ -133,16 +116,15 @@
         (proofo prf #t))))
    1)
 
-  (record-bench 'run-staged 'proofo 3)
+  (record-bench 'eval-eval 'unstaged 'proofo 3 #:description "Synthesize a proof of a longer chain of inferences")
   (time-test
    (length
-    (run 1 (prf)
-      (staged
-       (fresh (body)
-         (== prf `(((A => B) => ((B => C) => ((C => D)  => ((D => E) => (A => E))))) () . ,body))
-         (proof-staged prf)))))
-       
-   1))
+	(run 1 (prf)
+	  (fresh (body)
+		(== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
+		 (proof-unstaged prf))))
+	'timeout)
+)
 
 (run-proofs)
 
@@ -154,6 +136,7 @@
           (loop new (cons `(,previous => ,new) acc) (sub1 size))))))
 
 (define (time-proof-of-size size)
+  (define impl-chain (implication-chain size 'Start 'End))
   (define-syntax-rule (proof-time-of proof-rel)
     (let-values
         ([(_ __ wall-clock-time ___)
@@ -161,7 +144,7 @@
            (lambda ()
              (run 1 (prf)
                (fresh (body)
-                 (== prf `(End (Start . ,(racket-term (implication-chain size 'Start 'End))) . ,body))
+                 (== prf `(End (Start . ,impl-chain) . ,body))
                  (proof-rel prf))))
            '())])
       wall-clock-time))
@@ -182,14 +165,3 @@
           #:y-label "Time (ms)"
           #:title "Unstaged/Staged Runtime vs Proof Size"
           #:out-file filename)))
-
-#| doesn't come back
-(record-bench 'unstaged 'proofo 3)
-(time-test
- (length
-  (run 1 (prf)
-    (fresh (body)
-      (== prf `(((A => B) => ((B => C) => ((C => D) ((D => E)  => (A => E))))) () . ,body))
-       (prover prf))))
-  1)
-|#

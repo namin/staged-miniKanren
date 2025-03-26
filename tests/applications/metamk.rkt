@@ -4,6 +4,7 @@
          "../../all.rkt")
 
 ;; simplified https://github.com/namin/metamk/blob/master/cycler-tests.scm
+;; Prolog-style meta-interpreters in miniKanren
 
 (defrel/staged/fallback (edgeo x y)
   (conde
