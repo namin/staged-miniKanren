@@ -152,5 +152,4 @@ expression to be evalued.
   (list ureal sreal))
 
 (require plot)
-(plot-new-window? #t)
 
