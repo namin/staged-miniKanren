@@ -23,6 +23,8 @@ The tests and benchmarks should run with `docker run -i namin/staged-minikanren`
 - `racket tests/all.rkt`
 - `./benchrun.sh`
 
+You can copy the benchmark table out of the docker container with `docker cp CONTAINER_ID:/app/staged-miniKanren/bench-results/bench_paper.tex .`, where the `CONTAINER_ID` can be obtained by inspecting `docker ps -a`.
+
 ## Dependencies
 
 Multi-stage miniKanren is a [Racket](https://racket-lang.org/) library which relies on two existing pieces of software: [syntax-spec-v2](https://pkgs.racket-lang.org/package/syntax-spec-v2), a metalanguage for implementing DSLs in Racket; and a modified version of [faster-minikanren](https://github.com/michaelballantyne/faster-minikanren), an efficient implementation of miniKanren with constraint solving. The former dependency can be installed using Racket's builtin package manager, [raco](https://docs.racket-lang.org/raco/index.html), by running the shell command:

@@ -9,7 +9,14 @@ else
     BENCH_DIR="./bench-results"
 fi
 
-xvfb-run racket -y tests/bench-paper.rkt | tee bench-log-ex.txt
+if command -v xvfb-run >/dev/null 2>&1; then
+    CMD_PREFIX="xvfb-run"
+else
+    CMD_PREFIX=""
+fi
+
+$CMD_PREFIX racket -y tests/bench-paper.rkt | tee bench-log-ex.txt
+
 python3 benchread.py >$BENCH_DIR/bench_paper.tex
 cp bench-log-ex.txt bench-log-ex-paper.txt
 
