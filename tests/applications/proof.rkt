@@ -1,8 +1,8 @@
 #lang racket/base
 
-(require "../../all.rkt" racket/list plot)
+(require "../../all.rkt" racket/list)
 
-(provide proof-chart)
+(provide time-proof-of-size)
 
 (define-term-syntax-rule (prover body)
   `(letrec ([member?
@@ -152,17 +152,3 @@
 
   (values (proof-time-of proof-unstaged) (proof-time-of valid-proofo)))
 
-(define (proof-chart [sizes (in-range 1 5)] [filename #f])
-  (define-values (unstaged staged)
-    (for/lists (unstaged staged)
-               ([size sizes])
-      (printf "Timing proof of size ~a~%" size)
-      (define-values (unstaged staged) (time-proof-of-size size))
-      (values (list size unstaged) (list size staged))))
-  (parameterize ([plot-x-ticks (fraction-ticks #:divisors '(1))])
-    (plot (list (lines unstaged #:color 'red #:label "Unstaged")
-                (lines staged #:color 'blue #:label "Staged"))
-          #:x-label "Proof Size"
-          #:y-label "Time (ms)"
-          #:title "Unstaged/Staged Runtime vs Proof Size"
-          #:out-file filename)))
