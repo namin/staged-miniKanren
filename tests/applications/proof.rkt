@@ -34,20 +34,20 @@
    (prover `(proof? ',prf))
    #t))
 
-(module+ benchmark
-  (record-bench 'eval-eval 'staging 'proofo #:description "Checks the validity of proofs for implicational propositional calculus"))
-
-(defrel (proofo prf valid-proof?)
-  (time-staged
-   (evalo-staged
-    (prover `(proof? ',prf))
-    valid-proof?)))
 
 (defrel (valid-proofo prf)
   (staged
    (evalo-staged
     (prover `(proof? ',prf))
     #t)))
+
+(module+ benchmark
+  (record-bench 'eval-eval 'staging 'proofo #:description "Checks the validity of proofs for implicational propositional calculus")
+  (defrel (proofo prf valid-proof?)
+	(time-staged
+	 (evalo-staged
+	  (prover `(proof? ',prf))
+	  valid-proof?)))
 
 (define (run-proofs)
   (define ex-proof1
@@ -127,8 +127,7 @@
 		 (proof-unstaged prf))))
 	'timeout))
 
-(module+ benchmark
-  (run-proofs))
+(run-proofs))
 
 (define (implication-chain size premise conclusion)
   (let loop ([previous premise] [acc '()] [size size])

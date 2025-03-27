@@ -17,7 +17,7 @@
 
 ;; Staging the evalo relation running on (eval <program-text>) (thus faster eval functions in particular)
 (require "applications/or-lang-interp.rkt")
-(require "applications/proof.rkt")
+(require (submod "applications/proof.rkt" benchmark))
 (require "applications/peano-fib.rkt")
 (require "applications/parsing-with-derivatives.rkt")
 (require "applications/double-eval.rkt") ;; quines w/quasiquotes
