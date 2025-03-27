@@ -1,8 +1,8 @@
 #lang racket/base
 
-(require "../../all.rkt" racket/list plot)
+(require "../../all.rkt" racket/list)
 
-(provide plot-appendo-sizes)
+(provide appendo-size-timed)
 
 (test
     (length
@@ -256,22 +256,6 @@
    (time-form (run* (p q) (appendo-staged p q lst)))
    (time-form (run* (p q) (appendo-unstaged p q lst)))))
 
-(define (plot-appendo-sizes [sizes (in-range 100 500 10)] [out-file #f])
-  (define-values (handwritten staged unstaged)
-    (for/lists (handwritten staged unstaged)
-               ([size sizes])
-      (printf "Plotting appendo sizes ~a~%" size)
-      (define-values (handwritten staged unstaged) (appendo-size-timed size))
-      (values (list size handwritten)
-              (list size staged)
-              (list size unstaged))))
-  (plot (list (lines handwritten #:color 'green #:label "Handwritten")
-              (lines staged #:color 'blue #:label "Staged")
-              (lines unstaged #:color 'red #:label "Unstaged"))
-        #:x-label "List Size"
-        #:y-label "Time (ms)"
-        #:title "Handwritten/Staged/Unstaged Runtime vs List Size"
-        #:out-file out-file))
 
 
 (test

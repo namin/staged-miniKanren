@@ -3,7 +3,7 @@
 (require "../../main.rkt"
          "../../test-check.rkt")
 
-(provide plot-timing-test)
+(provide get-timing-data)
 
 #|
 Grammar syntax:
@@ -154,17 +154,3 @@ expression to be evalued.
 (require plot)
 (plot-new-window? #t)
 
-(define (plot-timing-test [timing-range (in-range 0 1000 20)]
-                          [out-file #f])
-  (define dataset
-    (for/list ([size timing-range])
-      (printf "Testing size ~a~%" size)
-      (cons size (get-timing-data size))))
-  (plot (list (lines (map (lambda (ks) (list (first ks) (second ks))) dataset)
-                     #:color 'red #:label "Unstaged")
-              (lines (map (lambda (ks) (list (first ks) (third ks))) dataset)
-                     #:color 'blue #:label "Staged"))
-        #:x-label "Output Size"
-        #:y-label "Time (ms)"
-        #:title "Unstaged/Staged Runtime vs Output Size"
-        #:out-file out-file))
