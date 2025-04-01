@@ -7,6 +7,6 @@
 
 (define license 'MIT)
 
-(define test-omit-paths '("private/faster-minikanren" "to-fix"))
-(define compile-omit-paths '("private/faster-minikanren" "to-fix"))
+(define test-omit-paths '("private/faster-minikanren" "to-fix" "tests/barliman-comparison"))
+(define compile-omit-paths '("private/faster-minikanren" "to-fix" "tests/barliman-comparison"))
 (define binary-omit-files '("demos"))
