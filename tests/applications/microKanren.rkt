@@ -260,8 +260,9 @@
      (evalo-staged
       (micro `(,q (empty-state)))
       '((() . z)))))
-  '(unit ((lambda _.0 _.0) $$ (sym _.0)) list)
-)
+  '(unit
+	((lambda _.0 _.0) $$ (sym _.0))
+	((lambda _.0 (quote ((() . z)))) $$ (=/= ((_.0 quote))) (sym _.0))))
 
 (test
     (run 3 (q)
@@ -484,36 +485,38 @@
       (valid-ge? q)
       #t)))
   '(((=== '_.0 '_.1) $$ (absento (struct _.0) (struct _.1)))
-  ((=== '_.0 (cons '_.1 '_.2))
-   $$
-   (absento (struct _.0) (struct _.1) (struct _.2)))
-  ((=== (cons '_.0 '_.1) '_.2)
-   $$
-   (absento (struct _.0) (struct _.1) (struct _.2)))
-  ((=== '_.0 _.1) $$ (=/= ((_.1 struct))) (sym _.1) (absento (struct _.0)))
-  ((=== _.0 '_.1) $$ (=/= ((_.0 struct))) (sym _.0) (absento (struct _.1)))
-  ((=== (cons '_.0 '_.1) (cons '_.2 '_.3))
-   $$
-   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
-  ((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
-   $$
-   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
-  ((=== (cons '_.0 '_.1) _.2)
-   $$
-   (=/= ((_.2 struct)))
-   (sym _.2)
-   (absento (struct _.0) (struct _.1)))
-  ((=== '_.0 (cons '_.1 (cons '_.2 '_.3)))
-   $$
-   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
-  ((=== '_.0 (cons (cons '_.1 '_.2) '_.3))
-   $$
-   (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
-  ((=== _.0 (cons '_.1 '_.2))
-   $$
-   (=/= ((_.0 struct)))
-   (sym _.0)
-   (absento (struct _.1) (struct _.2)))))
+	((=== '_.0 _.1) $$ (=/= ((_.1 struct))) (sym _.1) (absento (struct _.0)))
+	((=== _.0 '_.1) $$ (=/= ((_.0 struct))) (sym _.0) (absento (struct _.1)))
+	((=== _.0 _.1) $$ (=/= ((_.0 struct)) ((_.1 struct))) (sym _.0 _.1))
+	((=== '_.0 (cons '_.1 '_.2))
+	 $$
+	 (absento (struct _.0) (struct _.1) (struct _.2)))
+	((conj (=== '_.0 '_.1) (=== '_.2 '_.3))
+	 $$
+	 (absento (struct _.0) (struct _.1) (struct _.2) (struct _.3)))
+	((=== (cons '_.0 '_.1) '_.2)
+	 $$
+	 (absento (struct _.0) (struct _.1) (struct _.2)))
+	((=== _.0 (cons '_.1 '_.2))
+	 $$
+	 (=/= ((_.0 struct)))
+	 (sym _.0)
+	 (absento (struct _.1) (struct _.2)))
+	((=== '_.0 (cons '_.1 _.2))
+	 $$
+	 (=/= ((_.2 struct)))
+	 (sym _.2)
+	 (absento (struct _.0) (struct _.1)))
+	((=== '_.0 (cons _.1 '_.2))
+	 $$
+	 (=/= ((_.1 struct)))
+	 (sym _.1)
+	 (absento (struct _.0) (struct _.2)))
+	((=== (cons '_.0 '_.1) _.2)
+	 $$
+	 (=/= ((_.2 struct)))
+	 (sym _.2)
+	 (absento (struct _.0) (struct _.1)))))
 
 (test
     (run 10 (q)
