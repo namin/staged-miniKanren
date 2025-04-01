@@ -70,6 +70,15 @@
     
       ((fresh (rator rands a* rep)
          (== `(,rator . ,rands) expr)
+         ;; A little hack needed to make dispatch deterministic:
+         ;; When performing the determinism check, fallback will not evaluate
+         ;; within the eval-expo below. So we need to more eagerly check that
+         ;; the `rator` is either bound in the environment or a complex expression,
+         ;; and not something like `letrec`.
+         (conde
+           [(symbolo rator)
+            (fresh (proc) (lookupo rator env proc))]
+           [(fresh (a d) (== (cons a d) rator))])
          (eval-expo rator env `(struct rec-closure ,rep))
          (eval-listo rands env a*)
          (later (finish-apply rep eval-apply-rec a* val))))
@@ -89,7 +98,7 @@
     (ext-env*o x* a* env-self env^)
     (eval-expo e env^ res)))
 
-(defrel/staged (eval-listo expr env val)
+(defrel/staged/fallback (eval-listo expr env val)
   (conde
     ((== '() expr)
      (== '() val))
@@ -105,37 +114,38 @@
   (test
    (run 0 (x y)
      (time-staged
-       (evalo
-        `(letrec ((loop (lambda ()
-                          (loop))))
-           (loop))
-        'hukarz)))
+      (evalo
+       `(letrec ((loop (lambda ()
+                         (loop))))
+          (loop))
+       'hukarz)))
    '())
   
-  (pretty-print (generated-code))
-
   (test
    (run* (x y)
      (time-staged
-       (evalo
-        `(letrec ((append (lambda (xs ys)
-                            (if (null? xs)
-                                ys
-                                (cons (car xs) (append (cdr xs) ys))))))
-           (append ',x ',y))
-      '(a b c d e))))
+      (evalo
+       `(letrec ((append (lambda (xs ys)
+                           (if (null? xs)
+                               ys
+                               (cons (car xs) (append (cdr xs) ys))))))
+          (append ',x ',y))
+       '(a b c d e))))
    '((() (a b c d e))
      ((a) (b c d e))
      ((a b) (c d e))
      ((a b c) (d e))
      ((a b c d) (e))
      ((a b c d e) ())))
-  
-  (pretty-print (generated-code))
+  )
 
-  (time
-   (run 0 (q)
-     (time-staged
+(module+ main
+  (require "../test-check.rkt")
+
+  ;; A little synthesis query that doesn't come back; here we just run 0
+  ;; so that we can look at the generated code and see that it's specialized nicely.
+  (run 0 (q)
+     (staged
       (fresh ()
         (absento 1 q)
         (evalo
@@ -144,19 +154,17 @@
                                  (cons (car xs) ,q)))))
             (cons (append '() '())
                   (cons
-                    (append '(a) '(b))
+                   (append '(a) '(b))
+                   (cons
+                    (append '(c d) '(e f))
                     (cons
-                      (append '(c d) '(e f))
-                      (cons
-                        (append '(a 1 c d) '(e f))
-                        '())))))
+                     (append '(a 1 c d) '(e f))
+                     '())))))
          '(()
            (a b)
            (c d e f)
-           (a 1 c d e f)))))))
+           (a 1 c d e f))))))
 
-  (pretty-print (generated-code))
-  
-  )
+  (pretty-print (generated-code)))
 
 

@@ -112,26 +112,4 @@
      ((a b) (c d e))
      ((a b c) (d e))
      ((a b c d) (e))
-     ((a b c d e) ())))
-
-  (time
-   (run 1 (q)
-     (absento 1 q)
-     (evalo
-      `(letrec ((append (lambda (xs ys)
-                          (if (null? xs) ys
-                              (cons (car xs) ,q)))))
-         (cons (append '() '())
-               (cons
-                (append '(a) '(b))
-                (cons
-                 (append '(c d) '(e f))
-                 (cons
-                  (append '(a 1 c d) '(e f))
-                  '())))))
-      '(()
-        (a b)
-        (c d e f)
-        (a 1 c d e f))))))
-
-
+     ((a b c d e) ()))))
