@@ -43,6 +43,22 @@
   '(5))
 
 (let ()
+  (defrel (same a b)
+    (== a b))
+  (test
+   (run 1 (p q) (same 'dog p))
+   '((dog _.0)))
+  (test
+   (run 1 (q) (== 5 6))
+   '())
+  (test
+   (run 1 (p q) (same (cons 'dog p) (cons p q)))
+   '((dog dog)))
+  (test
+   (run 1 (p q) (same (cons p (cons p 'dog)) q))
+   '((_.0 (_.0 _.0 . dog)))))
+
+(let ()
   (defrel (appendo xs ys zs)
     (conde
      ((== xs '()) (== ys zs))
@@ -176,6 +192,29 @@
 |#
 
 (test
+ (run 1 (q)
+   (staged
+    (fresh (p r)
+      (== q (list p r))
+      (== p 'dog)
+      (later (== r 'fish)))))
+ '((dog fish)))
+
+(generated-code)
+
+(defrel/staged (pet q)
+  (== q 'dog))
+(test
+ (run 1 (q)
+   (staged (pet q)))
+ '(dog))
+(test
+ (run 1 (q)
+   (staged (pet q))
+   (pet q))
+ '(dog))
+
+(test
     (run 2 (q)
       (staged
         (gather (conde
@@ -193,10 +232,12 @@
     '(1 2))
 (generated-code)
 
-    (run 2 (q)
-      (staged
-        (fallback (conde
-                    ((later (== q 1)))))))
+(test
+ (run 2 (q)
+   (staged
+    (fallback (conde
+               ((later (== q 1)))))))
+ '(1))
 (generated-code)
 
 ;; ## Staged Relational Interpreter

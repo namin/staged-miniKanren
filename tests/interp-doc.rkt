@@ -72,7 +72,20 @@
 
 (run 3 (e v) (staged (evalo `((lambda (x) (or ,e x)) #f) '()  v)))
 
-(run* (e v) (staged (evalo `((lambda (f) (or (f #t) (f #f))) (lambda (x) x)) '() v)))
+(run* (x-val v) (staged (evalo `(or #f x) `((x . ,x-val)) v)))
+
+(generated-code)
+
+(run 3 (e v) (staged (evalo `(or (or #f ,e) #f) '() v)))
+
+(generated-code)
+
+(run* (x-val v) (staged (evalo `(or x #t) `((x . ,x-val)) v)))
+
+(generated-code)
+
+(run* (e v) (staged (evalo `((lambda (f) (or (f #t) (f #f)))
+                             (lambda (x) x)) '() v)))
 (generated-code)
 #|
 (lambda (v)

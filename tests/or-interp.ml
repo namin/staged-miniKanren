@@ -1,3 +1,5 @@
+[@@@ocaml.warning "-8"]
+
 type orexp1 =
   | Lit of bool
   | Or of orexp1 * orexp1
@@ -11,8 +13,7 @@ let rec eval_or1 (e : orexp1) (env : env1) =
   | Or (e1, e2) -> eval_or1 e1 env || eval_or1 e2 env
   | Sym s -> List.assoc s env ;;
 
-eval_or1 (Or ((Sym "a"), (Lit true))) [("a", true)] ;;
-
+assert ((eval_or1 (Or ((Sym "a"), (Lit true))) [("a", true)]) = true);;
 
 type orexp2 =
   | Lit of bool
@@ -38,7 +39,7 @@ let rec eval_or2 (e : orexp2) (env : env2) =
                      | Closure f -> f (eval_or2 e2 env))
   | Sym s -> List.assoc s env ;;
 
-eval_or2 (App ((Lam ("x", (Or ((Sym "x"), (Sym "x"))))), (Sym "a"))) [("a", Bool true)];;
+assert ((eval_or2 (App ((Lam ("x", (Or ((Sym "x"), (Sym "x"))))), (Sym "a"))) [("a", Bool true)]) = Bool true);;
 
 
 type env1_staged = (string * bool code) list ;;
@@ -51,8 +52,9 @@ let rec eval_or1_staged (e : orexp1) (env : env1_staged) =
 
 
 let f = Runcode.run .< fun a -> .~(eval_or1_staged (Or ((Sym "a"), (Lit true))) [("a", .< a >.)]) >. ;;
-f true;;
-f false;;
+
+assert (f true = true);;
+assert (f false = true);;
 
 (** The ordecls.ml file has to be separately compiled with this command first:
    metaocamlc -c ordecls.ml   *)
@@ -86,12 +88,11 @@ let rec eval_or (e : orexp) (env : env) : orval code =
 
 let f = Runcode.run .< fun a -> .~(eval_or (App ((Lam ("x", (Or ((Sym "x"), (Sym "x"))))), (Sym "a"))) [("a", .< Bool a >.)]) >.;;
 
-f true;;
-f false;;
+assert (f true = Bool true);;
+assert (f false = Bool false);;
 
 let code2 = eval_or (App ((Lam ("f", (Or ((App ((Sym "f"), (Lit true))),
                                           (App ((Sym "f"), (Lit false))))))),
                           (Lam ("x", (Sym "x")))))
                     [];;
-let f2 = Runcode.run code2;;
-  
+assert (Runcode.run code2 = Bool true);;
