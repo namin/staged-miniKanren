@@ -57,8 +57,8 @@ There are a number of relational interpreters for different languages in this pr
 ### Case Studies
 
 The case studies presented in section 6.1 of the paper are present in the [`tests/applications/`](./tests/applications) sub-directory. These include:
-- [parsing with derivatives](./tests/applications/parsing-with-derivatives.rkt)
-- [Theorem checker turned prover](./tests/applications/proof.rkt)
+- [Parsing with Derivatives](./tests/applications/parsing-with-derivatives.rkt)
+- [Theorem Checker Turned Prover](./tests/applications/proof.rkt)
 - [Negation Normal Form (NNF)](./tests/applications/dl.rkt)
 - [Peano](./tests/applications/peano-fib.rkt)
 - [Synthesis](./tests/doc-bench.rkt)
