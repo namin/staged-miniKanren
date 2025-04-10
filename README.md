@@ -10,7 +10,7 @@ The docker image can be pulled with `git pull namin/staged-minikanren` or build 
 
 Note: on Mac, _disable_ Rosetta in the Docker Desktop settings. [See this thread.](https://racket.discourse.group/t/racket-docker-m1-rosetta/2947/6)
 
-An interactive Racket session can be ran with `docker run -it namin/staged-minikanren`. Try a sanity check with the following lines:
+An interactive Racket session can be run with `docker run -it namin/staged-minikanren`. Try a sanity check with the following lines:
 ```
 > (require "all.rkt")
 > (run 1 (q) (staged (== q 'fun)))
@@ -46,23 +46,17 @@ To build the plots used in the paper, an additional dependency, [`plot`: the rac
 raco pkg install plot
 ```
 
-## Artifact Contents
-<!-- TODO: What should we do with this section? -->
-### Frontend
+## Tests and Examples
 
-The project defines the syntax of multi-stage miniKanren using a `syntax-spec` language in [`main.rkt`](./main.rkt). That file dispatches each of the different syntactic forms present in Figure 13 in the paper to their corresponding internal implementations. The $$g\_r$$ nonterminal corresponds to the `compile-runtime-goal` DSL syntax, the $$g\_s$$ nonterminal corresponds to the `compile-now-goal` DSL syntax, and the $$g\_l$$ nonterminal corresponds to the `compile-later-goal` DSL syntax. Each of these calls different procedures prefixed with `i:`, which refer to different parts of the internal representation.
-
-### Backend
-
-The actual miniKanren implementation which is run once at staging-time and once at run-time is a [modified version of the existing `faster-minikanren` project](./private/faster-minikanren), which implements the traditional miniKanren goal-constructors such as `fresh`, `conde`, `==`, and others (see [`private/faster-minikanren/mk.scm`](./private/faster-minikanren/mk.scm)), but also includes support for unifying against the new `apply-rep` structure type, which represents partial relation applications. The [`private/internals.rkt`](./private/internals.rkt) file implements the new goal-constructors added to multi-stage miniKanren, such as `fallback`, `gather`, and partial relation application and specialization.
+Tests for the project are available under the [`tests/`](./tests/) directory. A test file can be run individually by running `racket FILE_TO_TEST`. Running the file [`tests/all.rkt`](./tests/all.rkt) will run the full test suite.
 
 ### Relational Interpreters
 
-There are a number of relational interpreters for different languages in this project. The largest interpreter is for the subset of racket used in Byrd et. al; it is used in Figures 19, 20 and 21 to demonstrate relational synthesis. The version of this interpreter without annotations is in [`unstaged-interp.scm`](./unstaged-interp.scm), and the version with staging annotations is in [`staged-interp.scm`](./staged-interp.scm). Interpreters for a smaller dialect of racket are present in the [`small-interp`](./small-interp.scm) directory. The relational interpreter for the λ-or language from Figure 8 of the paper is defined in [`tests/interp-doc.rkt`](./tests/interp-doc.rkt).
+There are a number of relational interpreters for different languages in this project. The largest interpreter is for the subset of Racket used in prior papers to demonstrate relational synthesis. The version of this interpreter without annotations is in [`unstaged-interp.scm`](./unstaged-interp.scm), and the version with staging annotations is in [`staged-interp.scm`](./staged-interp.scm). Interpreters for a smaller dialect of Racket are present in the [`small-interp`](./small-interp.scm) directory. The relational interpreter for the λ-or language from Figure 8 of the paper is defined in [`tests/interp-doc.rkt`](./tests/interp-doc.rkt).
 
-### Case-Studies
+### Case Studies
 
-The case-studies presented in section 6.1 of the paper are present in the [`tests/applications/`](./tests/applications) sub-directory. These include:
+The case studies presented in section 6.1 of the paper are present in the [`tests/applications/`](./tests/applications) sub-directory. These include:
 - [parsing with derivatives](./tests/applications/parsing-with-derivatives.rkt)
 - [Theorem checker turned prover](./tests/applications/proof.rkt)
 - [Negation Normal Form (NNF)](./tests/applications/dl.rkt)
@@ -72,25 +66,23 @@ The case-studies presented in section 6.1 of the paper are present in the [`test
 - [miniKanren-in-miniKanren](./tests/applications/metamk.rkt)
 - [Grammar Parsers](./tests/applications/grammars.rkt)
 
-### Tests and Plots
-
-Tests for the project are available under the [`tests/`](./tests/) directory. Running the file [`tests/all.rkt`](./tests/all.rkt) will run the tests. To replicate the benchmarks as they appear in the paper, run the shell script [`benchrun.sh`](./benchrun.sh), which will run the tests, printing raw results to `STDOUT` and to log files of the form `bench-log-*.txt` and printing formatted results to `bench-results/*`. 
+### Plots
 
 The plots are generated by running [`tests/graphs.rkt`](./tests/graphs.rkt). 
 
 ## Correspondences with paper
 
-Here, we map the various claims and examples posited in the paper to corresponding tests/benchmarks in the implementation. A test file can be run individually by running `racket FILE_TO_TEST`. All tests included with the project can be executed in one go by running `racket ./tests/all.rkt`.
+Here, we map the various claims and examples posited in the paper to corresponding tests/benchmarks in the implementation. 
 
 ### Introduction
 
-The introduction briefly discusses the problems the paper attempts to solve, the mechanisms for solving them, as well as the contributions of the paper. It does not make major references to the implementation itself, mainly containing pointers to further into the paper. It does include Figure 1, which present the `synth/sketch` and `invert-execute` constructs. These are syntactic sugar for various applications of the relational interpreter. The definition of and tests using the `synth/sketch` and `invert-execute` forms are in [`./tests/synth-task-macros-synth-context.rkt`](./tests/synth-task-macros-synth-context.rkt) and [`./tests/synth-task-macros-backwards.rkt`](./tests/synth-task-macros-backwards.rkt), respectively. 
+The introduction briefly discusses the problems the paper attempts to solve, the mechanisms for solving them, as well as the contributions of the paper. It does not make major references to the implementation itself, mainly containing pointers to further into the paper. It does include Figure 1, which presents the `synth/sketch` and `invert-execute` constructs. These are syntactic sugar for various applications of the relational interpreter. The definition of and tests using the `synth/sketch` and `invert-execute` forms are in [`./tests/synth-task-macros-synth-context.rkt`](./tests/synth-task-macros-synth-context.rkt) and [`./tests/synth-task-macros-backwards.rkt`](./tests/synth-task-macros-backwards.rkt), respectively. 
 
 ### Background
 
 #### Relational Programming in miniKanren
 
-This section introduces prior work on the relational programming language miniKanren. The short example present in the paper used to introduce miniKanren is present as a test in [`./tests/doc.rkt`](./tests/doc.rkt). This section also contains Figure 2b, an implementation of the λ-or language as a relation, demonstrating the use of forms such as quasi-quote unquote. This implementation is also present in [`./tests/or-interp-unstaged.rkt`](./tests/or-interp-unstaged.rkt), including a short test demonstrating synthesis of terms in the language.
+This section introduces prior work on the relational programming language miniKanren. The short example present in the paper used to introduce the language miniKanren is present as a test in [`./tests/doc.rkt`](./tests/doc.rkt). This section also contains Figure 2b, an implementation of the λ-or language as a relation, demonstrating the use of forms such as quasi-quote unquote. This implementation is also present in [`./tests/or-interp-unstaged.rkt`](./tests/or-interp-unstaged.rkt), including a short test demonstrating synthesis of terms in the language.
 
 ##### Synthesis with Relational Interpreters
 
@@ -98,7 +90,7 @@ This section introduces the use of relational interpreters, both for synthesis a
 
 #### Program Staging
 
-This section introduces traditional functional program staging using the MetaOCaml programming language. It includes Figure 4, an implementation of the language in Figure 2 in MetaOCaml, using staging to remove the overhead of interpretation. MetaOCaml can be downloaded using the [`opam` package manager](https://opam.ocaml.org/) for OCaml projects. With Opam installed, MetaOCaml can be installed using the following commands, a modified version of those from the [MetaOCaml Website](https://okmij.org/ftp/ML/MetaOCaml.html#install):
+This section introduces traditional functional program staging using the MetaOCaml programming language. It includes Figure 4, an implementation of the language from Figure 2 in MetaOCaml, using staging to remove the overhead of interpretation. MetaOCaml can be downloaded using the [`opam` package manager](https://opam.ocaml.org/) for OCaml projects. With `opam` installed, MetaOCaml can be installed using the following commands, a modified version of those from the [MetaOCaml Website](https://okmij.org/ftp/ML/MetaOCaml.html#install):
 
 ```
 opam update
