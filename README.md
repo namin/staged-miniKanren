@@ -84,17 +84,17 @@ Here, we map the various claims and examples posited in the paper to correspondi
 
 ### Introduction
 
-The introduction briefly discusses the problems the paper attempts to solve, the mechanisms for solving them, as well as the contributions of the paper. It does not make major references to the implementation itself, mainly containing pointers to further into the paper. It does include Figure 1, which present the `synth/sketch` and `invert-execute` constructs. These are syntactic sugar for various applications of the relational interpreter. The definition of and tests using the `synth/sketch` and `invert-execute` forms are in <./tests/synth-task-macros-synth-context.rkt> and <./tests/synth-task-macros-backwards.rkt>, respectively. 
+The introduction briefly discusses the problems the paper attempts to solve, the mechanisms for solving them, as well as the contributions of the paper. It does not make major references to the implementation itself, mainly containing pointers to further into the paper. It does include Figure 1, which present the `synth/sketch` and `invert-execute` constructs. These are syntactic sugar for various applications of the relational interpreter. The definition of and tests using the `synth/sketch` and `invert-execute` forms are in [`./tests/synth-task-macros-synth-context.rkt`](./tests/synth-task-macros-synth-context.rkt) and [`./tests/synth-task-macros-backwards.rkt`](./tests/synth-task-macros-backwards.rkt), respectively. 
 
 ### Background
 
 #### Relational Programming in miniKanren
 
-This section introduces prior work on the relational programming language miniKanren. The short example present in the paper used to introduce miniKanren is present as a test in <./tests/doc.rkt>. This section also contains Figure 2b, an implementation of the λ-or language as a relation, demonstrating the use of forms such as quasi-quote unquote. This implementation is also present in <./tests/or-interp-unstaged.rkt>, including a short test demonstrating synthesis of terms in the language.
+This section introduces prior work on the relational programming language miniKanren. The short example present in the paper used to introduce miniKanren is present as a test in [`./tests/doc.rkt`](./tests/doc.rkt). This section also contains Figure 2b, an implementation of the λ-or language as a relation, demonstrating the use of forms such as quasi-quote unquote. This implementation is also present in [`./tests/or-interp-unstaged.rkt`](./tests/or-interp-unstaged.rkt), including a short test demonstrating synthesis of terms in the language.
 
 ##### Synthesis with Relational Interpreters
 
-This section introduces the use of relational interpreters, both for synthesis and program inversion. It includes Figure 3, which demonstrates how the examples of Figure 1 are implemented in terms of the relational interpreter. These definitions, as well as a number of variations thereof, are present in <./tests/doc-bench.rkt> <tests/doc.rkt>, respectively. The short example of synthesizing the `lambda` keyword is in <./tests/or-interp-unstaged.rkt>.
+This section introduces the use of relational interpreters, both for synthesis and program inversion. It includes Figure 3, which demonstrates how the examples of Figure 1 are implemented in terms of the relational interpreter. These definitions, as well as a number of variations thereof, are present in [`./tests/doc-bench.rkt`](./tests/doc-bench.rkt) and [`tests/doc.rkt`](tests/doc.rkt), respectively. The short example of synthesizing the `lambda` keyword is in [`./tests/or-interp-unstaged.rkt`](./tests/or-interp-unstaged.rkt).
 
 #### Program Staging
 
@@ -116,21 +116,21 @@ metaocaml ./or-interp.ml
 
 ### Introduction to Multi-stage miniKanren
 
-This section informally introduces the syntax and semantics of multi-stage miniKanren language, mainly through use of prose and examples. The first example, which introduces the `staged` and `later` annotations, is Figure 5. A test for this figure is present in <./tests/doc.rkt>. Tests for the short `pet` relation example are available in the same file. 
+This section informally introduces the syntax and semantics of multi-stage miniKanren language, mainly through use of prose and examples. The first example, which introduces the `staged` and `later` annotations, is Figure 5. A test for this figure is present in [`./tests/doc.rkt`](./tests/doc.rkt). Tests for the short `pet` relation example are available in the same file. 
 
-Figures 6 and 7 present a number of variations of the `noto` relation, demonstrating the different mechanisms for dealing with non-determinism. The definitions and tests for each variation are in <./tests/doc-noto.rkt>.
+Figures 6 and 7 present a number of variations of the `noto` relation, demonstrating the different mechanisms for dealing with non-determinism. The definitions and tests for each variation are in [`./tests/doc-noto.rkt`](./tests/doc-noto.rkt).
 
 #### Staged Interpreters in Multi-stage miniKanren
 
-This section introduces the practice of writing interpreters in multi-stage miniKanren using a staged variant of the λ-or interpreter presented in Figure 2. Figure 8 gives the definition of the staged interpreter. This is equivalent to that of the prior interpreter, but now with added annotations. The definition of this interpreter and tests for it (including the example used in the paragraph before) are in <./tests/interp-doc.rkt>.
+This section introduces the practice of writing interpreters in multi-stage miniKanren using a staged variant of the λ-or interpreter presented in Figure 2. Figure 8 gives the definition of the staged interpreter. This is equivalent to that of the prior interpreter, but now with added annotations. The definition of this interpreter and tests for it (including the example used in the paragraph before) are in [`./tests/interp-doc.rkt`](./tests/interp-doc.rkt).
 
 ##### Handling non-determinism
 
-This section introduces the mechanisms by which nondeterminism can arise in relational interpreters; namely by the presence of non-ground staging-time terms or the use of staging-time nondeterminism to remove staging-time control-flow. The examples in this paper which demonstrate both of these phenomena are also in <./tests/interp-doc.rkt>.
+This section introduces the mechanisms by which nondeterminism can arise in relational interpreters; namely by the presence of non-ground staging-time terms or the use of staging-time nondeterminism to remove staging-time control-flow. The examples in this paper which demonstrate both of these phenomena are also in [`./tests/interp-doc.rkt`](./tests/interp-doc.rkt).
 
 ##### Sharing code for abstractions
 
-This section introduces the use of higher-order relations in multi-stage miniKanren through the `partial-apply`, `finish-apply` and `specialize-partial-apply` forms. In relational interpreters, they are often used to represent first-class function objects, including those in the λ-or interpreter, as shown in Figure 9. Figure 10 demonstrates how function application in the λ-or language corresponds to partially-applied relations in the generated code. Code for both figures is present in <./tests/interp-doc.rkt>.
+This section introduces the use of higher-order relations in multi-stage miniKanren through the `partial-apply`, `finish-apply` and `specialize-partial-apply` forms. In relational interpreters, they are often used to represent first-class function objects, including those in the λ-or interpreter, as shown in Figure 9. Figure 10 demonstrates how function application in the λ-or language corresponds to partially-applied relations in the generated code. Code for both figures is present in [`./tests/interp-doc.rkt`](./tests/interp-doc.rkt).
 
 ### Semantics
 
@@ -144,18 +144,18 @@ The actual miniKanren implementation which is run once at staging-time and once 
 
 #### Interpreting Functions Relationally
 
-This section presents how functions written in languages defined by staged relational interpreters can be used as relations without interpretive overhead. Figure 16 presents a staged adaptation of the second example of Figure 3. A hand-written version of the `appendo` relation, a version written as a function in a unstaged interpreter, as well as a version written in a staged interpreter are available in <./tests/interpreter/basics.rkt>. Evidence for the claim that the version written in a staged interpreter is nearly as efficient as the hand-written version is given in section 6.
+This section presents how functions written in languages defined by staged relational interpreters can be used as relations without interpretive overhead. Figure 16 presents a staged adaptation of the second example of Figure 3. A hand-written version of the `appendo` relation, a version written as a function in a unstaged interpreter, as well as a version written in a staged interpreter are available in [`./tests/interpreter/basics.rkt`](./tests/interpreter/basics.rkt). Evidence for the claim that the version written in a staged interpreter is nearly as efficient as the hand-written version is given in section 6.
 
 #### Accelerating Program Synthesis by Sketch
 
-This section presents how program synthesis using relational interpreters can be accelerated by the use of staging. It includes Figure 17, a staged adaptation of the first example of Figure 3. Several versions of the `fib` function, including the one in Figure 17, are present in <./tests/applications/peano-fib.rkt>. 
+This section presents how program synthesis using relational interpreters can be accelerated by the use of staging. It includes Figure 17, a staged adaptation of the first example of Figure 3. Several versions of the `fib` function, including the one in Figure 17, are present in [`./tests/applications/peano-fib.rkt`](./tests/applications/peano-fib.rkt). 
 
 #### Other Staged Interpreters
 
-This section includes two further applications of staging to relational interpretation: a relational interpreter for miniKanren itself, as well as a relational parsing mechanism. The source of both applications, including the listed examples, are present in <./tests/applications/metamk.rkt> and <./tests/applications/grammars.rkt>, respectively.
+This section includes two further applications of staging to relational interpretation: a relational interpreter for miniKanren itself, as well as a relational parsing mechanism. The source of both applications, including the listed examples, are present in [`./tests/applications/metamk.rkt`](./tests/applications/metamk.rkt) and [`./tests/applications/grammars.rkt`](./tests/applications/grammars.rkt), respectively.
 
 ### Evaluation
 
-This section presents Figure 19, a table listing a number of benchmarks, showing the time taken by staged and unstaged versions of various multi-stage miniKanren queries. All of these benchmarks can be run in sequence by running <./tests/bench-paper.rkt>. Each of the benchmarks prints debug information and results to `STDOUT`. To generate the exact figure used in the paper, the `benchrun.sh` bash file runs the tests, saves the results to a file, then runs the python script `benchread.py`. This script reads that file, parses the results and outputs the tex used in the figure.
+This section presents Figure 19, a table listing a number of benchmarks, showing the time taken by staged and unstaged versions of various multi-stage miniKanren queries. All of these benchmarks can be run in sequence by running [`./tests/bench-paper.rkt`](./tests/bench-paper.rkt). Each of the benchmarks prints debug information and results to `STDOUT`. To generate the exact figure used in the paper, the `benchrun.sh` bash file runs the tests, saves the results to a file, then runs the python script `benchread.py`. This script reads that file, parses the results and outputs the tex used in the figure.
 
-The benchmarks should run in less than an hour on common commercial hardware, but can be shortened if need be. In order to decrease the timeout limit on the larger tests, modify the `timeout-limit-seconds` variable of <./test-check.rkt>. 
+The benchmarks should run in less than an hour on common commercial hardware, but can be shortened if need be. In order to decrease the timeout limit on the larger tests, modify the `timeout-limit-seconds` variable of [`./test-check.rkt`](./test-check.rkt). 
