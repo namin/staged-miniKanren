@@ -343,7 +343,7 @@
   (fresh (rest)
     (== n `[0 . ,rest])))
 
-;; fun power n =  fn x => if n = -
+;; fun power n =  fn x => if n = 0
 ;;     then <1>
 ;;     else if even(n) then
 ;;             < sqr(~(power(n / 2) x)) >
