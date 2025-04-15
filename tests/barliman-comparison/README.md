@@ -1,8 +1,13 @@
 # Barliman Comparison
 
-This directory contains code and queries used for comparing Barliman against the optimized `evalo` interpreter (`evalo-optimized.scm`) from the artifact accompanying the paper "A Unified Approach to Solving Seven Programming Problems" (Oxford, ICFP 2017).
+This directory contains code and queries used for comparing against Barliman. This comparison uses the optimized `evalo` interpreter (`evalo-optimized.scm`) from the artifact accompanying the paper "A Unified Approach to Solving Seven Programming Problems" (Oxford, ICFP 2017).
 
 Many files included here are directly taken from that artifact.
+
+To generate the Barliman comparison table in the paper accompanying this artifact:
+- The numbers for Multi-stage miniKanren come from the [general benchmarking script](../../benchrun.sh).
+- The numbers for Barliman come from the script described below.
+- The comparison and speedup numbers were then manually calculated, and table was then manually generated.
 
 ## Quick Start
 
@@ -30,7 +35,7 @@ The following files are unchanged and maintain the same relative paths as in the
 
 ### Files from Barliman Repository
 
-The following files were sourced directly from Barliman pull request [#32](https://github.com/webyrd/Barliman/pull/32):
+The following files were sourced directly from [Barliman](https://github.com/webyrd/Barliman/tree/master/cocoa/Barliman/mk-and-rel-interp):
 
 - `test-fib-aps-synth.scm`
 - `test-proofo.scm`
