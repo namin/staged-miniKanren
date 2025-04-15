@@ -300,9 +300,13 @@
        (repeated-mul n q1 nq1)
        (*o nq1 n nq)))))
 
-;; fun power n = fn x => if n=0
-;;    then <1>
-;;    else < ~x * ~(power (n-1) x) >)
+;; let rec power (n : int) : int code -> int code =
+;;   fun x ->
+;;     if n = 0 then .<1>.
+;;     else .<.~x * .~(power (n - 1) x)>.;;
+;; 
+;; .<fun x -> .~((power 5) .<x>.)>.;;
+;; (* fun x_1 -> x_1 * (x_1 * (x_1 * (x_1 * (x_1 * 1)))) *)
 (defrel/staged (pow/staged n q nq)
   (fallback
    (conde
@@ -343,12 +347,16 @@
   (fresh (rest)
     (== n `[0 . ,rest])))
 
-;; fun power n =  fn x => if n = 0
-;;     then <1>
-;;     else if even(n) then
-;;             < sqr(~(power(n / 2) x)) >
-;;          else
-;;             < ~x * ~(power (n-1) x) >
+;; let rec power2 (n : int) : int code -> int code =
+;;   fun x ->
+;;     if n = 0 then
+;;       .<1>.
+;;     else if n mod 2 = 0 then
+;;       .< (let v = .~(power2 (n / 2) x) in v * v) >.
+;;     else
+;;       .< .~x * .~(power2 (n - 1) x) >.;;
+;; .<fun x -> .~((power2 5) .<x>.)>.;;
+;; (* fun x_2 -> x_2 * (let v_4 = (let v_3 = (x_2 * 1) in v_3 * v_3) in v_4 * v_4) *)
 (defrel/staged (pow/staged2 n q nq)
   (fallback
    (conde
@@ -387,12 +395,16 @@
  (run 1 (q1 q2) (pow4/2-unstaged num2 q1) (pow4/2-unstaged num3 q2))
  '(((0 0 0 0 1) (1 0 0 0 1 0 1))))
 
-;; fun power n = fn x => if n = -
-;;     then <1>
-;;     else if even(n) then
-;;             < ~(power (n / 2) <sqr ~x>) >
-;;          else
-;;             < ~x * ~(power (n-1) x) >
+;; let rec power3 (n : int) : int code -> int code =
+;;   fun x ->
+;;     if n = 0 then
+;;       .<1>.
+;;     else if n mod 2 = 0 then
+;;       power3 (n / 2) .<let v = .~x in v * v>.
+;;     else
+;;       .< .~x * .~(power3 (n - 1) x) >.;;
+;; .<fun x -> .~((power3 5) .<x>.)>.;;
+;; (* fun x_8 -> x_8 * ((let v_10 = (let v_9 = x_8 in v_9 * v_9) in v_10 * v_10) * 1) *)
 (defrel/staged (pow/staged3 n q nq)
   (fallback
    (conde
