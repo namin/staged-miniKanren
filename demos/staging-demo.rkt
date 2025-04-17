@@ -1,6 +1,7 @@
 #lang racket
 
-(require "../all.rkt")
+(require "../all.rkt"
+         (submod "../main.rkt" private))
 
 (run* (q)
   (staged
@@ -10,7 +11,7 @@
 
 (run* (q)
   (staged
-   (fallback
+   (fallback/internal
     (later (== q 3))
     (conde
       ((== q 1) (later (== q 1)))
@@ -20,7 +21,7 @@
   (staged
    (fresh ()
      (== q 1)
-     (fallback
+     (fallback/internal
       (later (== q 3))
       (conde
         ((== q 1) (later (== q 1)))
@@ -42,7 +43,7 @@
 (run* (q) (u-minio q '(SYM 1)))
 
 (defrel/staged (minio expr val)
-  (fallback
+  (fallback/internal
    (later (u-minio expr val))
    (conde
      ((numbero expr) (later (== expr val)))

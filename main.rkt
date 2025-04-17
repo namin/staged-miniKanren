@@ -40,6 +40,9 @@
  (for-space mk quasiquote)
  unquote)
 
+(module+ private
+  (provide fallback/internal))
+
 ;; https://github.com/michaelballantyne/syntax-spec
 (require syntax-spec-v2
          ;; for a nasty workaround
@@ -142,7 +145,7 @@
     (finish-apply v:term-var rel:relation-name arg:term ...)
 
     (fallback body:goal)
-    (fallback fb:goal body:goal)
+    (fallback/internal fb:goal body:goal)
     (gather body:goal)
     
     (staged g:goal)
@@ -330,11 +333,11 @@
          #:with bodyl (recur (attribute body))
          #:with lifted (syntax-local-lift-expression
                         #'(lambda (var ...) (compile-now-for-runtime-goal bodyl)))
-         #'(fallback (later (#%rel-app/fallback fallback-name lifted (#%term-var var) ...)) bodyl)]
+         #'(fallback/internal (later (#%rel-app/fallback fallback-name lifted (#%term-var var) ...)) bodyl)]
 
-        [(fallback fb body)
+        [(fallback/internal fb body)
          #:with bodyl (recur (attribute body))
-         #'(fallback fb bodyl)]
+         #'(fallback/internal fb bodyl)]
         [(fresh (x:id ...) g ...)
          #:with (gl ...) (map recur (attribute g))
          #'(fresh (x ...) gl ...)]
@@ -407,7 +410,7 @@
      #:with (gl) (lift-fallbacks! (list #'g) #'staged '())
      #:with staged-f (syntax-local-lift-expression #'(time (i:generate-staged (var ...) (compile-now-goal gl))))
      #'(staged-f var ...)]
-    [(_ (~and stx (~or (later . _) (fallback . _) (gather . _))))
+    [(_ (~and stx (~or (later . _) (fallback . _) (fallback/internal . _) (gather . _))))
      (raise-syntax-error #f "not allowed in runtime goal" #'stx)]
     [_ (raise-syntax-error #f "unexpected goal syntax" this-syntax)]))
 
@@ -451,7 +454,7 @@
     [(_ (conde [g ...] ...))
      #'(i:conde [(compile-now-goal g) ...] ...)]
     
-    [(_ (fallback fb body))
+    [(_ (fallback/internal fb body))
      #'(i:fallback
         (compile-now-goal fb)
         (compile-now-goal body))]
@@ -499,8 +502,7 @@
       [(_ (conde [g ...] ...))
        #'(i:conde [(compile-now-for-runtime-goal g) ...] ...)]
      
-      [(_ (~and stx (fallback fb body)))
-       #;(raise-syntax-error #f "fallback not supported in multistage code" #'stx)
+      [(_ (fallback/internal fb body))
        #'(compile-now-for-runtime-goal fb)]
 
       [(_ (gather body))
@@ -563,6 +565,7 @@
     [(_ fail) #'i:lfail]
     
     [(_ (~and stx (~or (fallback . _)
+                       (fallback/internal . _)
                        (gather . _)
                        (staged . _)
                        (later . _))))

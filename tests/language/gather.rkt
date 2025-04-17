@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require "../../main.rkt"
+         (submod "../../main.rkt" private)
          "../../test-check.rkt")
 
 ;; When the goal produces two answers, generate a conde with two branches
@@ -21,7 +22,7 @@
  (length
   (run* (q)
     (staged
-     (fallback
+     (fallback/internal
       (later (== q 'fallback))
       (fresh (x)
         (gather
@@ -102,7 +103,7 @@
 (test
  (run* (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback))
      (conde
        ((== q 'branch-1))
@@ -115,7 +116,7 @@
 (test
  (run* (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback))
      (conde
        ((== q 'branch-1))

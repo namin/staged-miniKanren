@@ -1,13 +1,14 @@
 #lang racket/base
 
 (require "../../main.rkt"
+         (submod "../../main.rkt" private)
          "../../test-check.rkt")
 
 ;; When there's only one branch, produce that answer.
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback))
      (conde
        ((== q 'single-branch) (later (== q 'single-branch)))))))
@@ -17,7 +18,7 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback))
      (conde
        ((== q 'branch-1) (later (== q 'branch-1)))
@@ -30,7 +31,7 @@
    (staged
     (fresh (x)
       (== x 1)
-      (fallback
+      (fallback/internal
        (later (== q 'fallback))
        (conde
          ((== x 1) (later (== q 'branch-1)))
@@ -41,7 +42,7 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback))
      (fresh (x)
        (conde
@@ -56,7 +57,7 @@
  (run 1 (q)
    (staged
     (fresh (x)
-      (fallback
+      (fallback/internal
        (later (== q 'fallback))
        (conde
          ((== x 1) (later (== q 'branch-1)))
@@ -85,11 +86,11 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback-1))
      (conde
        [(== q 'branch-1)]
-       [(fallback
+       [(fallback/internal
          (later (== q 'fallback-2))
          (conde
            [(== q 'branch-2)]
@@ -98,7 +99,7 @@
 ;;
 ;; To see why the above behavior matters in practice, consider `membero`:
 (defrel/staged (membero x l log)
-  (fallback
+  (fallback/internal
    (later (== log 'fallback))
    (fresh (first rest log-rest)
      (== `(,first . ,rest) l)
@@ -157,12 +158,12 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback-1))
      (conde
        [(== q 'branch-1)]
        [(fresh (x)
-          (fallback
+          (fallback/internal
            (later (== q 'fallback-2))
            (conde
              [(== x 2) (== q 'branch-2)]
@@ -207,7 +208,7 @@
    (staged
     (fresh (x)
       (== x 2)
-      (fallback
+      (fallback/internal
        (later (== q 'fallback))
        (conde
          ((== 1 1) (== x 1) (later (== q 'branch-1)))
@@ -219,7 +220,7 @@
  (run 1 (q)
    (staged
     (fresh (x)
-      (fallback
+      (fallback/internal
        (later (== q 'fallback))
        (conde
          ((== 1 1) (== x 1) (later (== q 'branch-1)))
@@ -235,7 +236,7 @@
  (run 1 (x)
    (staged
     (fresh ()
-      (fallback
+      (fallback/internal
        (later (== x 'fallback))
        (later (== x 'only-answer)))
       (== 1 1))))
@@ -255,14 +256,14 @@
 ;; that notify out to avoid making the outer fallback think this second outer branch
 ;; succeeded twice.
 (defrel/staged (r x y outer inner)
-  (fallback
+  (fallback/internal
    (later (== outer 'outer-fallback))
    (conde
      ((== x 1)
       (later (== outer 'outer-commit-1)))
      ((== x 2)
       (later (== outer 'outer-commit-2))
-      (fallback
+      (fallback/internal
        (later (== inner 'inner-fallback))
        (conde
          ((== y 1)
@@ -318,7 +319,7 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback))
      (conde
        ((fresh (rep)
@@ -330,7 +331,7 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 'fallback))
      (fresh (rep)
        (later (partial-apply rep p 'partial-value))
@@ -343,7 +344,7 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 4))
      (conde
        ((later (== q 1)))
@@ -361,7 +362,7 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== 1 q))
      (conde
        ((== 2 q) (later (== 3 q)))))))
@@ -371,7 +372,7 @@
 (test
  (run 1 (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== 1 q))
      (conde
        ((fresh (x)
@@ -391,7 +392,7 @@
 (test
  (run* (q)
    (staged
-    (fallback
+    (fallback/internal
      (later (== q 2))
      (fresh ()
        (== q 1)
