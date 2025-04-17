@@ -299,16 +299,10 @@
         rep 'rel (list x ...) (list #'y-arg ...))]))
 
 (define (specialize-partial-apply-rt goal-thunk rep rel-name x-vals y-ids)
-  (capture-later-and-then
-   goal-thunk
-   (lambda (result)
-     (l== rep (apply-rep rel-name x-vals #`(lambda #,y-ids #,result))))))
-
-;; (-> Goal), (-> SyntaxWithData Goal) -> Goal
-(define (capture-later-and-then goal-thunk k)
   (lambda (st)
-    (bind ((capture-later goal-thunk) st)
-          (lambda (L) ((k L) st)))))
+    (define L (check-unique-result 'specialize-partial-apply
+                                   (take 2 ((capture-later goal-thunk) st))))
+    ((l== rep (apply-rep rel-name x-vals #`(lambda #,y-ids #,L))) st)))
 
 (define-syntax finish-apply
   (syntax-parser
@@ -408,18 +402,18 @@
   (define stream (lambda () ((capture-later goal-thunk) empty-state)))
   (define (reflect-result result)
     #`(lambda #,var-ids #,(reflect-data-in-syntax result)))
-  (define stx (check-unique-result (map reflect-result (take 2 stream))))
+  (define stx (check-unique-result 'staged (map reflect-result (take 2 stream))))
   (set! res stx)
   (eval-syntax stx))
 
-(define (check-unique-result r)
+(define (check-unique-result who r)
   (match r
     [(list v) v]
-    ['() (error 'staged "staging failed")]
+    ['() (error who "staging failed")]
     [else
      (for ([x r] [i (range (length r))])
        (printf "result ~a: ~a\n" (+ 1 i) x))
-     (error 'staged "staging non-deterministic")]))
+     (error who "staging non-deterministic")]))
 
 (define (generated-code)
   (and res (syntax->datum res)))
