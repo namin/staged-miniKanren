@@ -424,6 +424,16 @@
       )))))
 
 
+(defrel (pow3/3 n nq)
+  (staged
+   (pow/staged3 n num3 nq)))
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q1) (pow3/3 num2 q1))
+ '((0 0 0 1)))
+
 (defrel (pow4/3 n nq)
   (staged
    (pow/staged3 n num4 nq)))
