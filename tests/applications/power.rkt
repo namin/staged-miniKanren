@@ -368,7 +368,7 @@
            (pow/staged2 n q/2 nq1)
            (later (*o nq1 nq1 nq)))]
         [(fresh (rest)
-           (== q `(1 . rest))
+           (== q `(1 . ,rest))
            (fresh (q1 nq1)
              (minuso q '(1) q1)
              (pow/staged2 n q1 nq1)
@@ -423,6 +423,16 @@
              (later (*o nq1 n nq))))]
       )))))
 
+
+(defrel (pow3/3 n nq)
+  (staged
+   (pow/staged3 n num3 nq)))
+
+
+(test
+ ;;#:times 1000
+ (run 1 (q1) (pow3/3 num2 q1))
+ '((0 0 0 1)))
 
 (defrel (pow4/3 n nq)
   (staged
