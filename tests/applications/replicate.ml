@@ -1,10 +1,13 @@
-(* Run this file by starting the metaocaml command, then running #use "replicate.ml" ;; *)
 
-let rec cons_n (n : int) (v : 'a) (l : 'a list) =
+(* Run this file by starting the metaocaml command, then running #use "replicate.ml" ;; *)
+(* Tested in 5.3.0+BER *)
+
+
+let rec cons_n (n : int) (v : 'a) (l : 'a list) : 'a list =
   if n <= 0 then l
   else v :: cons_n (n - 1) v l;;
 
-let rec replicate (n : int) (l : 'a list) =
+let rec replicate (n : int) (l : 'a list) : 'a list =
   match l with
   | [] -> []
   | a :: d -> cons_n n a (replicate n d);;
@@ -18,12 +21,12 @@ type peano =
   | Z
   | S of peano ;;
 
-let rec cons_n (n : peano) (v : 'a) (l : 'a list) =
+let rec cons_n (n : peano) (v : 'a) (l : 'a list) : 'a list =
   match n with
   | Z -> l
   | S p -> v :: cons_n p v l ;;
 
-let rec replicate (n : peano) (l : 'a list) =
+let rec replicate (n : peano) (l : 'a list) : 'a list =
   match l with
   | [] -> []
   | a :: d -> cons_n n a (replicate n d) ;;
@@ -33,8 +36,8 @@ replicate (S (S Z)) ["a"; "b"; "c"] ;;
 
 (* Curried definition of replicate, as preparation for staging. *)
 
-let rec replicate_c (n : peano) =
-  let rec replicate_n (l : 'a list) =
+let rec replicate_c (n : peano) : 'a list -> 'a list =
+  let rec replicate_n (l : 'a list) : 'a list =
     match l with
     | [] -> []
     | a :: d -> cons_n n a (replicate_n d)
@@ -45,12 +48,12 @@ replicate_c (S (S Z)) ["a"; "b"; "c"] ;;
 
 (* Staged *)
 
-let rec cons_n_staged (n : peano) (v : 'a code) (l : 'a list code) =
+let rec cons_n_staged (n : peano) (v : 'a code) (l : 'a list code) : 'a list code =
   match n with
   | Z -> l
   | S p -> .<.~v :: .~(cons_n_staged p v l)>. ;;
 
-let rec replicate_staged (n : peano) =
+let rec replicate_staged (n : peano) : ('a list -> 'a list) code =
   .<let rec replicate_n l =
      match l with
      | [] -> []
@@ -72,13 +75,13 @@ type peanoPS =
   | S of peanoPS
   | C of peano code ;;
 
-let rec cons_n_ps (n : peanoPS) (v : 'a code) (l : 'a list code) =
+let rec cons_n_ps (n : peanoPS) (v : 'a code) (l : 'a list code) : 'a list code =
   match n with
   | Z -> l
   | S p -> .<.~v :: .~(cons_n_ps p v l)>.
   | C nC -> .< cons_n .~nC .~v .~l >.;;
 
-let rec replicate_ps (n : peanoPS) =
+let rec replicate_ps (n : peanoPS) : ('a list -> 'a list) code =
   .<let rec replicate_n l =
      match l with
      | [] -> []
