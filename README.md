@@ -4,6 +4,8 @@
 
 We introduce multi-stage miniKanren, which augments miniKanren with staging constructs that allow us to have precise control over the staging process. We have novel constructs to account for non-determinism. We use multi-stage miniKanren to stage interpreters written as relations, in which the programs under interpretation can contain holes representing unknown values. We apply this staging framework to a relational interpreter for a subset of Racket, and demonstrate significant performance gains across multiple synthesis problems.
 
+[PLDI'25](https://dl.acm.org/doi/10.1145/3729314)
+
 ## Getting started with Docker (optional)
 
 The docker image can be pulled with `git pull namin/staged-minikanren` or build here with `docker build --platform=linux/amd64 -t namin/staged-minikanren .`.
