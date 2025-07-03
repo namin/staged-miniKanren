@@ -1,6 +1,6 @@
 #lang racket
 
-(require "../../all.rkt")
+(require "../../../all.rkt")
 
 (define-term-syntax-rule (peano-synth-fib-aps-with-an-extra-example fib-aps-skeleton ACC1 ACC2)
   `(letrec ((zero?

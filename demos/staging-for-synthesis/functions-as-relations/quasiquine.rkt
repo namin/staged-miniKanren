@@ -1,6 +1,6 @@
 #lang racket
 
-(require "../../all.rkt")
+(require "../../../all.rkt")
 
 (define-term-syntax-rule (quasi-quine-evalo initial-expr)
   `(letrec ([eval-quasi (lambda (q eval)
