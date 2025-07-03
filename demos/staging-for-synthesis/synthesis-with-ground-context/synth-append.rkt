@@ -1,6 +1,6 @@
 #lang racket
 
-(require "../../all.rkt")
+(require "../../../all.rkt")
 
 (define-term-syntax-rule (append-sketch-and-calls hole)
   `(letrec ([append

@@ -1,6 +1,6 @@
 #lang racket
 
-(require "../../all.rkt")
+(require "../../../all.rkt")
 
 (defrel (appendo xs ys zs)
   (conde
