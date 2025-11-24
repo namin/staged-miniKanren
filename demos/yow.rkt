@@ -15,10 +15,10 @@
 ;; if function is itself an interpreter, get a synthesizer
 ;; ex: pldi/regex.rkt
 
-;; functional synthesis with relational interpreters
+;; functional synthesis with the relational interpreter
 ;; ex: pldi/synth-append.rkt
 
-;; staging: a staged interpreters becomes a compiler
+;; staging: a staged interpreter becomes a compiler
 ;; we stage the relational interpreter
 ;; we get a compiler from functions to relations
 ;; ex: pldi/proofo.rkt
