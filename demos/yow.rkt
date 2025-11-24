@@ -7,7 +7,7 @@
 ;; append vs appendo
 ;; run in multiple directions
 ;; run with partially instantiated terms
-;; so far, similar in miniKanren than Prolog
+;; so far, similar in miniKanren as in Prolog
 
 ;; relational interpreter
 ;; turning functions into relations
