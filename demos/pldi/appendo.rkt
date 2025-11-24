@@ -1,6 +1,7 @@
 #lang racket
 
 (require "../../all.rkt")
+(provide appendo)
 
 (defrel (appendo xs ys zs)
   (conde
