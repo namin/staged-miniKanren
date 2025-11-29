@@ -1,6 +1,7 @@
 #lang racket
 
 (require "../../all.rkt")
+(provide quasi-quine-evalo-staged)
 
 (define-term-syntax-rule (quasi-quine-evalo initial-expr)
   `(letrec ([eval-quasi (lambda (q eval)
